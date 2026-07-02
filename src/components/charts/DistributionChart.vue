@@ -42,7 +42,7 @@ async function render() {
       paper_bgcolor: '#fafafa',
       plot_bgcolor: '#ffffff',
     },
-    { responsive: true, displaylogo: false },
+    { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 

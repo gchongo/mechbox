@@ -7,16 +7,11 @@
       <span class="home-card__label">{{ tool.label }}</span>
       <span class="home-card__desc">{{ tool.desc }}</span>
     </div>
-    <el-tag v-if="badge || tool.badge" size="small" :type="badgeType" class="home-card__tag">
-      {{ badge || tool.badge }}
-    </el-tag>
   </div>
 </template>
 
 <script setup>
 defineProps({
   tool: { type: Object, required: true },
-  badge: { type: String, default: '' },
-  badgeType: { type: String, default: 'info' },
 })
 </script>

@@ -167,7 +167,7 @@
         @close="isDemoLoaded = false"
       />
 
-      <div class="grid min-h-[420px] gap-4 lg:grid-cols-2">
+      <div class="grid min-h-[400px] gap-4 xl:grid-cols-[minmax(300px,1fr)_minmax(520px,1.35fr)]">
         <div class="flex flex-col rounded-xl border border-gray-200 p-3 dark:border-gray-700">
           <h3 class="mb-2 font-semibold">尺寸链链路模型</h3>
           <SizeChainCanvas
@@ -214,49 +214,28 @@
 
     <!-- 步骤 4 -->
     <section v-show="currentStep === 4" class="card-panel">
-      <h2 class="mb-4 text-lg font-semibold">步骤 4：选择计算方法</h2>
-      <el-radio-group v-model="method" class="flex flex-col gap-4">
-        <el-tooltip content="极值法：所有公差代数相加" placement="right">
-          <el-radio value="worst" border class="!mr-0 !h-auto !p-4">
-            <div>
-              <p class="font-medium">极值法（最坏情况）</p>
-              <div class="text-sm text-gray-500">
-                <MathTex expr="T = \sum T_i" /> · 保守，100% 安全
-              </div>
-            </div>
-          </el-radio>
-        </el-tooltip>
-        <el-tooltip content="RSS：独立误差平方和开方" placement="right">
-          <el-radio value="rss" border class="!mr-0 !h-auto !p-4">
-            <div>
-              <p class="font-medium">RSS 法（概率法）</p>
-              <div class="text-sm text-gray-500">
-                <MathTex expr="T = \sqrt{\sum T_i^2}" /> · 合理，95% 合格
-              </div>
-            </div>
-          </el-radio>
-        </el-tooltip>
-        <el-tooltip content="修正 RSS：考虑非正态分布修正系数" placement="right">
-          <el-radio value="modified-rss" border class="!mr-0 !h-auto !p-4">
-            <div>
-              <p class="font-medium">修正 RSS 法</p>
-              <div class="text-sm text-gray-500">
-                <MathTex expr="T_{mod} = k \cdot \sqrt{\sum T_i^2}" /> · 偏态/均匀修正
-              </div>
-            </div>
-          </el-radio>
-        </el-tooltip>
-        <el-tooltip content="6σ RSS：考虑各环分布 K 值的统计叠加" placement="right">
-          <el-radio value="sigma6-rss" border class="!mr-0 !h-auto !p-4">
-            <div>
-              <p class="font-medium">6σ RSS 法</p>
-              <div class="text-sm text-gray-500">
-                <MathTex expr="T = 6\sqrt{\sum (T_i/K_i)^2}" /> · 统计公差法
-              </div>
-            </div>
-          </el-radio>
-        </el-tooltip>
+      <h2 class="mb-3 text-lg font-semibold">步骤 4：选择计算方法</h2>
+      <el-radio-group v-model="method" class="method-grid">
+        <el-radio value="worst" border class="method-card">
+          <span class="method-card__title">极值法</span>
+          <span class="method-card__hint">100% 安全 · 最保守</span>
+        </el-radio>
+        <el-radio value="rss" border class="method-card">
+          <span class="method-card__title">RSS 概率法</span>
+          <span class="method-card__hint">约 95% 合格率</span>
+        </el-radio>
+        <el-radio value="modified-rss" border class="method-card">
+          <span class="method-card__title">修正 RSS</span>
+          <span class="method-card__hint">偏态 / 均匀分布</span>
+        </el-radio>
+        <el-radio value="sigma6-rss" border class="method-card">
+          <span class="method-card__title">6σ RSS</span>
+          <span class="method-card__hint">统计公差设计</span>
+        </el-radio>
       </el-radio-group>
+      <p class="mt-2 text-xs text-gray-500">
+        极值法：T=ΣTᵢ · RSS：T=√ΣTᵢ² · 修正 RSS：T=k·√ΣTᵢ² · 6σ：T=6√Σ(Tᵢ/Kᵢ)²
+      </p>
       <div v-if="method === 'modified-rss' || method === 'sigma6-rss'" class="mt-4 max-w-md">
         <el-form label-width="100px">
           <el-form-item label="分布类型">
@@ -952,5 +931,41 @@ async function handleCopy() {
 <style scoped>
 :deep(.ring-error .el-input__wrapper) {
   box-shadow: 0 0 0 1px #e74c3c inset;
+}
+
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .method-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.method-grid :deep(.el-radio) {
+  margin-right: 0 !important;
+  height: auto !important;
+  width: 100%;
+}
+
+.method-grid :deep(.el-radio__label) {
+  width: 100%;
+  padding-left: 8px;
+}
+
+.method-card {
+  @apply flex flex-col items-start py-3 pl-2;
+}
+
+.method-card__title {
+  @apply block text-sm font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.method-card__hint {
+  @apply mt-1 block text-xs text-gray-500;
 }
 </style>

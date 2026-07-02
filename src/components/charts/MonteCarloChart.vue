@@ -98,7 +98,7 @@ async function render() {
       },
       yaxis: { title: props.chartType === 'box' ? '封闭环值' : props.chartType === 'scatter' ? '封闭环值' : '频数 / 概率' },
     },
-    { responsive: true, displaylogo: false },
+    { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 

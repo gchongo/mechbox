@@ -75,7 +75,7 @@ async function render() {
       yaxis: { title: '测量值' },
       legend: { orientation: 'h', y: -0.2 },
     },
-    { responsive: true, displaylogo: false },
+    { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 

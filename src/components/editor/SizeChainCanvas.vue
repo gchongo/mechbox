@@ -1,13 +1,11 @@
 <template>
   <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
     <canvas ref="canvasRef" :width="width" :height="canvasHeight" class="mx-auto block max-w-full" />
-    <p v-if="showFormula && rings.length" class="mt-3 text-center text-xs text-gray-500">
-      封闭环尺寸 = Σ增环 − Σ减环 &nbsp;|&nbsp; 共 {{ rings.length }} 个组成环
-      <span v-if="nominalClosed != null" class="ml-2 font-mono text-primary">
-        → A₀ ≈ {{ nominalClosed.toFixed(2) }} {{ unit }}
-      </span>
+    <p v-if="showFormula && rings.length" class="mt-2 truncate text-center text-sm text-gray-600 dark:text-gray-400">
+      封闭环 = Σ增环 − Σ减环 · 共 {{ rings.length }} 环
+      <span v-if="nominalClosed != null" class="font-mono text-primary"> · A₀≈{{ nominalClosed.toFixed(2) }}{{ unit }}</span>
     </p>
-    <div v-if="showLegend && rings.length && !gdtMode" class="mt-3 flex flex-wrap justify-center gap-4 text-xs">
+    <div v-if="showLegend && rings.length && !gdtMode" class="mt-2 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
       <span class="flex items-center gap-1">
         <span class="inline-block h-3 w-3 rounded-sm bg-[#27ae60]" /> 增环 (+)
       </span>
@@ -51,7 +49,7 @@ const canvasHeight = computed(() => {
   if (stack === '2d-position') return 280
   if (stack === 'radial') return 260
   if (gdtMode.value) return 240
-  return 260
+  return 280
 })
 
 function drawArrow(ctx, x1, y1, x2, y2, color, lineWidth = 2) {
@@ -99,14 +97,14 @@ function drawVectorChain(ctx, height, unitStr) {
     }
 
     ctx.fillStyle = '#2c3e50'
-    ctx.font = 'bold 12px sans-serif'
+    ctx.font = 'bold 14px sans-serif'
     ctx.textAlign = 'center'
     const label = ring.name?.trim() || `A${i + 1}`
-    ctx.fillText(`${label}=${ring.size ?? 0}`, cx, baselineY - arrowH - 8)
+    ctx.fillText(`${label}=${ring.size ?? 0}`, cx, baselineY - arrowH - 10)
 
     ctx.fillStyle = color
-    ctx.font = '10px sans-serif'
-    ctx.fillText(isInc ? '增' : '减', cx, baselineY + 16)
+    ctx.font = '12px sans-serif'
+    ctx.fillText(isInc ? '增环' : '减环', cx, baselineY + 18)
   })
 
   const closeX = width - padX + 8
@@ -117,21 +115,21 @@ function drawVectorChain(ctx, height, unitStr) {
   ctx.setLineDash([])
 
   ctx.fillStyle = '#9b59b6'
-  ctx.font = 'bold 12px sans-serif'
+  ctx.font = 'bold 14px sans-serif'
   ctx.textAlign = 'center'
   const a0 = nominalClosed.value
   const a0Label = props.closedRing.name?.trim() || 'A₀'
-  ctx.fillText(`${a0Label}=${a0 != null ? a0.toFixed(1) : '?'}`, closeX, baselineY - closeH - 8)
-  ctx.font = '10px sans-serif'
-  ctx.fillText('封闭环', closeX, baselineY + 16)
+  ctx.fillText(`${a0Label}=${a0 != null ? a0.toFixed(2) : '?'}`, closeX, baselineY - closeH - 10)
+  ctx.font = '12px sans-serif'
+  ctx.fillText('封闭环', closeX, baselineY + 18)
 
-  ctx.fillStyle = '#7f8c8d'
-  ctx.font = '11px sans-serif'
+  ctx.fillStyle = '#555'
+  ctx.font = '13px sans-serif'
   ctx.textAlign = 'left'
   ctx.fillText(
     `目标 ${props.closedRing.min ?? '?'} ~ ${props.closedRing.max ?? '?'} ${unitStr}`,
     padX - 20,
-    22,
+    24,
   )
 }
 

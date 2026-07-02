@@ -1,6 +1,6 @@
 export const messages = {
   zh: {
-    appName: 'MechBox 机械工具箱',
+    appName: '机械工具箱',
     nav: {
       home: '首页',
       editor: '分析',
@@ -17,7 +17,7 @@ export const messages = {
     },
   },
   en: {
-    appName: 'MechBox Toolbox',
+    appName: 'Mechanical Toolbox',
     nav: {
       home: 'Home',
       editor: 'Analysis',

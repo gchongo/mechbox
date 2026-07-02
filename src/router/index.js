@@ -187,8 +187,8 @@ const router = createRouter({
 
 router.afterEach((to) => {
   document.title = to.meta.title
-    ? `${to.meta.title} - MechBox 机械工具箱`
-    : 'MechBox 机械工具箱'
+    ? `${to.meta.title} - 机械工具箱`
+    : '机械工具箱'
 })
 
 export default router

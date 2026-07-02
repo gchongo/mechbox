@@ -11,22 +11,23 @@
         @change="$emit('update:advanced', $event)"
       />
     </div>
-    <p class="mb-3 text-xs text-gray-500">
-      填写各环公称尺寸与上下偏差；类型决定增环(+)或减环(−)。拖拽左侧 ⠿ 可调整顺序。
+    <p class="mb-2 text-xs text-gray-500">
+      填写公称与上下偏差；拖拽 ⠿ 调整顺序。类型 + 为增环，− 为减环。
     </p>
 
     <div class="min-h-0 flex-1 overflow-x-auto">
       <el-table
         :data="rings"
-        size="small"
+        size="default"
         border
         row-key="uid"
+        class="ring-param-table"
         empty-text="点击「添加组成环」开始"
       >
-        <el-table-column width="40" align="center" fixed>
+        <el-table-column width="44" align="center" fixed>
           <template #default="{ $index }">
             <span
-              class="cursor-grab select-none text-base text-gray-400 active:cursor-grabbing"
+              class="cursor-grab select-none text-lg text-gray-400 active:cursor-grabbing"
               draggable="true"
               title="拖拽排序"
               @dragstart="onDragStart($index, $event)"
@@ -36,59 +37,63 @@
             >⠿</span>
           </template>
         </el-table-column>
-        <el-table-column label="环名" width="72" fixed>
+        <el-table-column label="环名" min-width="72" fixed>
           <template #default="{ row, $index }">
             <el-input
               v-model="row.name"
-              size="small"
+              size="default"
               :placeholder="`A${$index + 1}`"
               :class="{ 'ring-error': invalid(row, 'name') }"
             />
           </template>
         </el-table-column>
-        <el-table-column :label="`公称 (${unit})`" width="88">
+        <el-table-column :label="`公称 (${unit})`" min-width="96">
           <template #default="{ row }">
             <el-input-number
               v-model="row.size"
-              size="small"
+              size="default"
               :precision="2"
-              :controls="false"
-              class="!w-full"
+              :controls="true"
+              controls-position="right"
+              class="ring-num-input"
               :class="{ 'ring-error': invalid(row, 'size') }"
             />
           </template>
         </el-table-column>
-        <el-table-column label="ES" width="76">
+        <el-table-column label="ES" min-width="96">
           <template #default="{ row }">
             <el-input-number
               v-model="row.es"
-              size="small"
+              size="default"
               :precision="3"
               :step="0.01"
-              :controls="false"
-              class="!w-full"
+              :controls="true"
+              controls-position="right"
+              class="ring-num-input"
               @change="onEsEiChange(row)"
             />
           </template>
         </el-table-column>
-        <el-table-column label="EI" width="76">
+        <el-table-column label="EI" min-width="96">
           <template #default="{ row }">
             <el-input-number
               v-model="row.ei"
-              size="small"
+              size="default"
               :precision="3"
               :step="0.01"
-              :controls="false"
-              class="!w-full"
+              :controls="true"
+              controls-position="right"
+              class="ring-num-input"
               @change="onEsEiChange(row)"
             />
           </template>
         </el-table-column>
-        <el-table-column label="类型" width="72">
+        <el-table-column label="类型" width="96">
           <template #default="{ row }">
             <el-select
               v-model="row.type"
-              size="small"
+              size="default"
+              class="w-full"
               @change="onTypeChange(row)"
             >
               <el-option value="increasing" label="+ 增环" />
@@ -96,38 +101,39 @@
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column v-if="advanced" label="系数 k" width="76">
+        <el-table-column v-if="advanced" label="系数 k" min-width="88">
           <template #default="{ row }">
             <el-input-number
               v-model="row.factor"
-              size="small"
+              size="default"
               :min="0"
               :max="10"
               :step="0.1"
               :precision="2"
-              :controls="false"
-              class="!w-full"
+              :controls="true"
+              controls-position="right"
+              class="ring-num-input"
             />
           </template>
         </el-table-column>
-        <el-table-column label="贡献%" min-width="110">
+        <el-table-column label="贡献%" min-width="128">
           <template #default="{ row }">
             <div class="flex items-center gap-2">
               <el-progress
                 :percentage="contributionMap[row.uid] ?? 0"
                 :stroke-width="10"
                 :show-text="false"
-                class="flex-1"
+                class="min-w-[56px] flex-1"
               />
-              <span class="w-10 text-right font-mono text-xs">
+              <span class="w-9 shrink-0 text-right font-mono text-xs">
                 {{ (contributionMap[row.uid] ?? 0).toFixed(0) }}%
               </span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column width="44" fixed="right">
+        <el-table-column width="48" fixed="right" align="center">
           <template #default="{ $index }">
-            <el-button type="danger" text size="small" @click="$emit('remove', $index)">
+            <el-button type="danger" text size="default" @click="$emit('remove', $index)">
               <el-icon><Delete /></el-icon>
             </el-button>
           </template>
@@ -138,7 +144,7 @@
     <el-button
       type="primary"
       plain
-      class="mt-4 w-full"
+      class="mt-3 w-full"
       :disabled="rings.length >= 50"
       @click="$emit('add')"
     >
@@ -206,6 +212,20 @@ function onDragEnd() {
 </script>
 
 <style scoped>
+.ring-param-table {
+  min-width: 640px;
+}
+
+.ring-param-table :deep(.ring-num-input) {
+  width: 100%;
+}
+
+.ring-param-table :deep(.ring-num-input .el-input__inner) {
+  text-align: left;
+  padding-left: 8px;
+  padding-right: 36px;
+}
+
 :deep(.ring-error .el-input__wrapper) {
   box-shadow: 0 0 0 1px #e74c3c inset;
 }

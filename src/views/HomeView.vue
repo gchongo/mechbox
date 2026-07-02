@@ -1,9 +1,8 @@
 <template>
   <div class="home-page">
-    <!-- 顶栏：标题 + 快捷操作 -->
     <section class="home-hero">
       <div class="home-hero__text">
-        <h1 class="home-hero__title">MechBox 机械工具箱</h1>
+        <h1 class="home-hero__title">机械工具箱</h1>
         <p class="home-hero__desc">尺寸链叠加分析 · 概率统计 · 机械强度计算</p>
       </div>
       <div class="home-hero__actions">
@@ -20,7 +19,6 @@
       </div>
     </section>
 
-    <!-- 统计工具 -->
     <section class="home-section">
       <header class="home-section__head">
         <h2 class="home-section__title">统计工具</h2>
@@ -34,122 +32,58 @@
           class="home-card"
           @click="goStatTool(tool)"
         >
-          <HomeToolCard :tool="tool" badge-type="info" />
+          <HomeToolCard :tool="tool" />
         </button>
       </div>
     </section>
 
-    <!-- 机械计算 V2 / V3 / V4 合并为紧凑分区 -->
-    <section class="home-section home-section--tools">
+    <section class="home-section">
       <header class="home-section__head">
         <h2 class="home-section__title">机械计算工具</h2>
       </header>
 
-      <div class="home-tool-block">
-        <h3 class="home-tool-block__label">
-          <el-tag size="small" type="success" effect="plain">V2.0</el-tag>
-          尺寸链 / 强度
-        </h3>
+      <div v-for="group in toolGroups" :key="group.label" class="home-tool-block">
+        <h3 class="home-tool-block__label">{{ group.label }}</h3>
         <div class="home-grid">
           <router-link
-            v-for="tool in mechTools"
+            v-for="tool in group.tools"
             :key="tool.path"
             :to="tool.path"
             class="home-card"
           >
-            <HomeToolCard :tool="tool" badge="V2.0" badge-type="success" />
-          </router-link>
-        </div>
-      </div>
-
-      <div class="home-tool-block">
-        <h3 class="home-tool-block__label">
-          <el-tag size="small" type="warning" effect="plain">V3.0</el-tag>
-          传动与结构
-        </h3>
-        <div class="home-grid">
-          <router-link
-            v-for="tool in v3Tools"
-            :key="tool.path"
-            :to="tool.path"
-            class="home-card"
-          >
-            <HomeToolCard :tool="tool" badge="V3.0" badge-type="warning" />
-          </router-link>
-        </div>
-      </div>
-
-      <div class="home-tool-block home-tool-block--last">
-        <h3 class="home-tool-block__label">
-          <el-tag size="small" type="danger" effect="plain">V4.0</el-tag>
-          流体与材料
-        </h3>
-        <div class="home-grid">
-          <router-link
-            v-for="tool in v4Tools"
-            :key="tool.path"
-            :to="tool.path"
-            class="home-card"
-          >
-            <HomeToolCard :tool="tool" badge="V4.0" badge-type="danger" />
+            <HomeToolCard :tool="tool" />
           </router-link>
         </div>
       </div>
     </section>
 
-    <!-- 底栏：分析类型 + 学习资源 两列 -->
-    <div class="home-bottom">
-      <section class="home-section home-section--analysis">
-        <header class="home-section__head">
-          <h2 class="home-section__title">分析类型</h2>
-          <router-link to="/editor" class="home-section__link">进入编辑器 →</router-link>
-        </header>
-        <div class="home-analysis-grid">
-          <div
-            v-for="group in ANALYSIS_GROUPS"
-            :key="group.id"
-            class="home-analysis-group"
-          >
-            <h3 class="home-analysis-group__title">
-              <el-icon class="text-primary"><component :is="group.icon" /></el-icon>
-              {{ group.label }}
-            </h3>
-            <ul class="home-analysis-list">
-              <li v-for="type in group.types" :key="type.id">
-                <button type="button" class="home-analysis-item" @click="startWithType(type.id)">
-                  <el-icon class="shrink-0 text-primary/60"><component :is="type.icon || 'Document'" /></el-icon>
-                  <span class="truncate">{{ type.name }}</span>
-                  <el-icon class="shrink-0 text-gray-300"><ArrowRight /></el-icon>
-                </button>
-              </li>
-            </ul>
-          </div>
+    <section class="home-section">
+      <header class="home-section__head">
+        <h2 class="home-section__title">分析类型</h2>
+        <router-link to="/editor" class="home-section__link">进入编辑器 →</router-link>
+      </header>
+      <div class="home-analysis-grid">
+        <div
+          v-for="group in ANALYSIS_GROUPS"
+          :key="group.id"
+          class="home-analysis-group"
+        >
+          <h3 class="home-analysis-group__title">
+            <el-icon class="text-primary"><component :is="group.icon" /></el-icon>
+            {{ group.label }}
+          </h3>
+          <ul class="home-analysis-list">
+            <li v-for="type in group.types" :key="type.id">
+              <button type="button" class="home-analysis-item" @click="startWithType(type.id)">
+                <el-icon class="shrink-0 text-primary/60"><component :is="type.icon || 'Document'" /></el-icon>
+                <span class="truncate">{{ type.name }}</span>
+                <el-icon class="shrink-0 text-gray-300"><ArrowRight /></el-icon>
+              </button>
+            </li>
+          </ul>
         </div>
-      </section>
-
-      <section class="home-section">
-        <header class="home-section__head">
-          <h2 class="home-section__title">学习资源</h2>
-        </header>
-        <div class="home-learn-list">
-          <router-link
-            v-for="link in quickLinks"
-            :key="link.path"
-            :to="link.path"
-            class="home-learn-item"
-          >
-            <span class="home-learn-item__icon">
-              <el-icon :size="18"><component :is="link.icon" /></el-icon>
-            </span>
-            <span class="home-learn-item__body">
-              <span class="home-learn-item__label">{{ link.label }}</span>
-              <span class="home-learn-item__desc">{{ link.desc }}</span>
-            </span>
-            <el-icon class="text-gray-300"><ArrowRight /></el-icon>
-          </router-link>
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -165,40 +99,40 @@ const statTools = [
   { query: 'rss', label: 'RSS 计算', desc: '基础 + 加权 + 修正', icon: 'DataAnalysis' },
   { query: 'sigma', label: '西格玛分析', desc: 'C / Cpk / 合格率', icon: 'TrendCharts' },
   { query: 'chart', label: '分布曲线', desc: 'Plotly PDF 图', icon: 'PieChart' },
-  { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟', icon: 'Histogram', badge: 'MC' },
+  { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟', icon: 'Histogram' },
 ]
 
-const mechTools = [
-  { path: '/batch', label: '批量验证', desc: 'RSS/极值批量检验', icon: 'List' },
-  { path: '/allocation', label: '公差分配', desc: '等贡献 / 最小成本', icon: 'ScaleToOriginal' },
-  { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 校核', icon: 'SetUp' },
-  { path: '/thread', label: '螺纹强度', desc: '拉剪应力 / 扭矩', icon: 'Link' },
-  { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 ISO 281', icon: 'Help' },
-]
-
-const v3Tools = [
-  { path: '/shaft', label: '轴强度', desc: '扭转 / 弯扭合成', icon: 'Sort' },
-  { path: '/key', label: '平键连接', desc: '挤压 / 剪切', icon: 'Key' },
-  { path: '/weld', label: '焊缝强度', desc: '角焊 / 对接焊', icon: 'Medal' },
-  { path: '/bolt-group', label: '螺栓组', desc: '偏心载荷分配', icon: 'Grid' },
-  { path: '/spring', label: '弹簧设计', desc: '刚度 / 切应力', icon: 'Refresh' },
-  { path: '/clutch', label: '离合器', desc: '摩擦扭矩', icon: 'Connection' },
-  { path: '/belt', label: '皮带传动', desc: '链长 / 张力', icon: 'Minus' },
-  { path: '/chain', label: '链传动', desc: '节距 / 链张力', icon: 'Link' },
-]
-
-const v4Tools = [
-  { path: '/cylinder', label: '液压/气缸', desc: '推力 / 流量', icon: 'Odometer' },
-  { path: '/materials', label: '材料库', desc: '12 种材料强度', icon: 'Reading' },
-]
-
-const quickLinks = [
-  { path: '/tutorial', label: '教程', desc: '5 篇 + 视频', icon: 'VideoCamera' },
-  { path: '/cases', label: '案例', desc: '12 个预设', icon: 'Collection' },
-  { path: '/quiz', label: '练习', desc: '10 道习题', icon: 'EditPen' },
-  { path: '/manual', label: '公式手册', desc: 'LaTeX 公式', icon: 'Notebook' },
-  { path: '/glossary', label: '术语词典', desc: 'GD&T 术语', icon: 'Reading' },
-  { path: '/faq', label: 'FAQ', desc: '常见问题', icon: 'QuestionFilled' },
+const toolGroups = [
+  {
+    label: '尺寸链与强度',
+    tools: [
+      { path: '/batch', label: '批量验证', desc: 'RSS/极值批量检验', icon: 'List' },
+      { path: '/allocation', label: '公差分配', desc: '等贡献 / 最小成本', icon: 'ScaleToOriginal' },
+      { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 校核', icon: 'SetUp' },
+      { path: '/thread', label: '螺纹强度', desc: '拉剪应力 / 扭矩', icon: 'Link' },
+      { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 ISO 281', icon: 'Help' },
+    ],
+  },
+  {
+    label: '传动与结构',
+    tools: [
+      { path: '/shaft', label: '轴强度', desc: '扭转 / 弯扭合成', icon: 'Sort' },
+      { path: '/key', label: '平键连接', desc: '挤压 / 剪切', icon: 'Key' },
+      { path: '/weld', label: '焊缝强度', desc: '角焊 / 对接焊', icon: 'Medal' },
+      { path: '/bolt-group', label: '螺栓组', desc: '偏心载荷分配', icon: 'Grid' },
+      { path: '/spring', label: '弹簧设计', desc: '刚度 / 切应力', icon: 'Refresh' },
+      { path: '/clutch', label: '离合器', desc: '摩擦扭矩', icon: 'Connection' },
+      { path: '/belt', label: '皮带传动', desc: '链长 / 张力', icon: 'Minus' },
+      { path: '/chain', label: '链传动', desc: '节距 / 链张力', icon: 'Link' },
+    ],
+  },
+  {
+    label: '流体与材料',
+    tools: [
+      { path: '/cylinder', label: '液压/气缸', desc: '推力 / 流量', icon: 'Odometer' },
+      { path: '/materials', label: '材料库', desc: '常用材料强度', icon: 'Reading' },
+    ],
+  },
 ]
 
 function startNewAnalysis() {
@@ -220,10 +154,9 @@ function goStatTool(tool) {
 
 <style scoped>
 .home-page {
-  @apply -mt-1 space-y-4;
+  @apply space-y-3;
 }
 
-/* ── Hero ── */
 .home-hero {
   @apply flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm
     sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 dark:bg-gray-800;
@@ -241,13 +174,8 @@ function goStatTool(tool) {
   @apply flex flex-wrap gap-2;
 }
 
-/* ── Section ── */
 .home-section {
   @apply rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-4;
-}
-
-.home-section--tools {
-  @apply space-y-3;
 }
 
 .home-section__head {
@@ -262,34 +190,22 @@ function goStatTool(tool) {
   @apply shrink-0 text-xs text-primary hover:underline;
 }
 
-/* ── Tool blocks (V2/V3/V4) ── */
 .home-tool-block {
-  @apply border-b border-gray-100 pb-3 dark:border-gray-700/60;
-}
-
-.home-tool-block--last {
-  @apply border-0 pb-0;
+  @apply mb-3 border-b border-gray-100 pb-3 last:mb-0 last:border-0 last:pb-0 dark:border-gray-700/60;
 }
 
 .home-tool-block__label {
-  @apply mb-2 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400;
+  @apply mb-2 text-xs font-medium text-gray-500 dark:text-gray-400;
 }
 
-/* ── Uniform tool card grid ── */
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
   gap: 0.5rem;
 }
 
-@media (min-width: 1280px) {
-  .home-grid {
-    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
-  }
-}
-
 .home-card {
-  @apply flex h-full min-h-[88px] rounded-lg border border-gray-100 bg-gray-50/80 p-2.5 text-left
+  @apply flex h-full min-h-[84px] rounded-lg border border-gray-100 bg-gray-50/80 p-2.5 text-left
     transition-all hover:border-primary/30 hover:bg-white hover:shadow-sm
     dark:border-gray-700/50 dark:bg-gray-900/40 dark:hover:border-primary/40 dark:hover:bg-gray-800;
 }
@@ -302,7 +218,7 @@ a.home-card {
   @apply block no-underline text-inherit;
 }
 
-:deep(.home-card__inner) {
+.home-card :deep(.home-card__inner) {
   @apply flex h-full flex-col;
 }
 
@@ -322,26 +238,9 @@ a.home-card {
   @apply line-clamp-2 text-[11px] leading-snug text-gray-500 dark:text-gray-400;
 }
 
-.home-card :deep(.home-card__tag) {
-  @apply mt-1.5 w-fit;
-}
-
-/* ── Bottom two-column ── */
-.home-bottom {
-  @apply grid gap-4 lg:grid-cols-5;
-}
-
-.home-section--analysis {
-  @apply lg:col-span-3;
-}
-
-.home-bottom > .home-section:last-child {
-  @apply lg:col-span-2;
-}
-
 .home-analysis-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.5rem;
 }
 
@@ -361,36 +260,5 @@ a.home-card {
 .home-analysis-item {
   @apply flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs
     text-gray-700 transition-colors hover:bg-primary/5 dark:text-gray-300;
-}
-
-/* ── Learning list ── */
-.home-learn-list {
-  @apply space-y-1;
-}
-
-.home-learn-item {
-  @apply flex items-center gap-2.5 rounded-lg border border-transparent px-2 py-2
-    transition-colors hover:border-gray-100 hover:bg-gray-50
-    dark:hover:border-gray-700 dark:hover:bg-gray-900/50;
-}
-
-a.home-learn-item {
-  @apply no-underline text-inherit;
-}
-
-.home-learn-item__icon {
-  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary;
-}
-
-.home-learn-item__body {
-  @apply flex min-w-0 flex-1 flex-col;
-}
-
-.home-learn-item__label {
-  @apply text-sm font-medium text-gray-900 dark:text-gray-100;
-}
-
-.home-learn-item__desc {
-  @apply truncate text-[11px] text-gray-500 dark:text-gray-400;
 }
 </style>

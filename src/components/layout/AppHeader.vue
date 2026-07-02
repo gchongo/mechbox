@@ -7,7 +7,7 @@
       >
         <el-icon :size="24" class="text-primary"><Tools /></el-icon>
         <span class="hidden sm:inline">{{ t('appName', locale) }}</span>
-        <span class="sm:hidden">MechBox</span>
+        <span class="sm:hidden">机械工具箱</span>
       </router-link>
 
       <nav class="flex items-center gap-1">

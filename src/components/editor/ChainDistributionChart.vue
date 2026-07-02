@@ -174,7 +174,7 @@ async function render() {
       paper_bgcolor: 'transparent',
       plot_bgcolor: 'transparent',
     },
-    { responsive: true, displaylogo: false },
+    { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 
