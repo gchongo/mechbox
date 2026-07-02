@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="page-title">案例库</h1>
-    <p class="mb-6 text-gray-600">预设尺寸链分析案例，点击加载完整数据到编辑器</p>
+    <p class="mb-6 text-gray-600">6 个预设案例（含 2D/GD&T），点击加载完整数据到编辑器</p>
     <div class="grid gap-4 md:grid-cols-2">
       <div
         v-for="item in CASE_PRESETS"

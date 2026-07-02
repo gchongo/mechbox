@@ -34,9 +34,11 @@ const navItems = [
   { path: '/', label: '首页' },
   { path: '/editor', label: '分析' },
   { path: '/statistics', label: '统计' },
+  { path: '/monte-carlo', label: '模拟' },
   { path: '/tutorial', label: '教程' },
   { path: '/cases', label: '案例' },
   { path: '/manual', label: '手册' },
+  { path: '/glossary', label: '术语' },
 ]
 
 function isActive(path) {

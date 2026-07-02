@@ -16,6 +16,22 @@ export const FORMULAS = [
     tags: ['RSS', '概率', '公差'],
   },
   {
+    id: 'modified-rss',
+    name: '修正 RSS 法',
+    formula: 'T_mod = k × √(T₁² + T₂² + …)',
+    latex: 'T_{mod} = k \\cdot \\sqrt{T_1^2 + T_2^2 + \\cdots}',
+    desc: '在 RSS 基础上乘以分布修正系数 k，适用于均匀/偏态等非正态场景。',
+    tags: ['RSS', '修正', '偏态'],
+  },
+  {
+    id: 'weighted-rss',
+    name: '加权 RSS',
+    formula: 'T = √(Σ(T×f)²)',
+    latex: 'T = \\sqrt{\\sum (T_i \\cdot f_i)^2}',
+    desc: '传递系数加权的 RSS 叠加。',
+    tags: ['RSS', '加权'],
+  },
+  {
     id: 't-to-sigma',
     name: '公差 → 标准差',
     formula: 'σ = T / K',

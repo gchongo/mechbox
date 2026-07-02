@@ -1,0 +1,176 @@
+export const GLOSSARY_TERMS = [
+  {
+    id: 'position',
+    term: '位置度 (Position)',
+    symbol: '⌖',
+    category: 'GD&T',
+    definition:
+      '被测要素（点、线、面）相对于基准的位置偏差。孔组位置度常用尺寸链叠加各孔偏心与基准尺寸公差。',
+    tags: ['GD&T', '基准', '孔组'],
+  },
+  {
+    id: 'parallelism',
+    term: '平行度 (Parallelism)',
+    symbol: '∥',
+    category: 'GD&T',
+    definition:
+      '被测表面与基准面之间的平行偏差。2D 尺寸链中可将各面平面度与厚度公差作为组成环叠加。',
+    tags: ['2D', '平面', '基准面'],
+  },
+  {
+    id: 'perpendicularity',
+    term: '垂直度 (Perpendicularity)',
+    symbol: '⊥',
+    category: 'GD&T',
+    definition: '被测要素相对基准的垂直偏差，常见于轴肩、安装面垂直要求。',
+    tags: ['GD&T', '垂直'],
+  },
+  {
+    id: 'coaxiality',
+    term: '同轴度 (Coaxiality)',
+    symbol: '◎',
+    category: 'GD&T',
+    definition: '被测轴线与基准轴线的同轴偏差，与径向跳动、孔轴配合尺寸链相关。',
+    tags: ['轴系', 'GD&T'],
+  },
+  {
+    id: 'runout',
+    term: '跳动 (Runout)',
+    symbol: '↗',
+    category: 'GD&T',
+    definition: '旋转零件在指定截面上的径向或端面跳动，反映圆度与偏心综合影响。',
+    tags: ['旋转件', '检测'],
+  },
+  {
+    id: 'flatness',
+    term: '平面度 (Flatness)',
+    symbol: '⏥',
+    category: '形状公差',
+    definition: '单一表面的平整程度，不含基准。可作为 2D 平行度链中的组成环。',
+    tags: ['形状', '表面'],
+  },
+  {
+    id: 'profile',
+    term: '轮廓度 (Profile)',
+    symbol: '⌓',
+    category: 'GD&T',
+    definition: '线或面轮廓相对理论轮廓的偏差，可控制整体形状与位置。',
+    tags: ['轮廓', '曲线'],
+  },
+  {
+    id: 'datum',
+    term: '基准 (Datum)',
+    symbol: 'A|B|C',
+    category: 'GD&T',
+    definition: '用于建立参考坐标系的几何要素，尺寸链中封闭环方向常与基准方向对齐。',
+    tags: ['基准系', '装配'],
+  },
+  {
+    id: 'mmc',
+    term: '最大实体 (MMC)',
+    symbol: 'Ⓜ',
+    category: 'GD&T 修饰',
+    definition: '要素处于允许的最大材料状态时的尺寸，位置度公差可获补偿公差。',
+    tags: ['补偿', '孔轴'],
+  },
+  {
+    id: 'lmc',
+    term: '最小实体 (LMC)',
+    symbol: 'Ⓛ',
+    category: 'GD&T 修饰',
+    definition: '要素处于允许的最小材料状态时的尺寸，用于保证最小壁厚等要求。',
+    tags: ['壁厚', '强度'],
+  },
+  {
+    id: 'closed-loop',
+    term: '封闭环',
+    symbol: 'L₀',
+    category: '尺寸链',
+    definition: '尺寸链中最后求解的目标尺寸或公差，如装配间隙、台阶差、位置度总量。',
+    tags: ['尺寸链', '目标'],
+  },
+  {
+    id: 'component-ring',
+    term: '组成环',
+    symbol: 'L₁…Lₙ',
+    category: '尺寸链',
+    definition: '影响封闭环的各个独立尺寸，分为增环（同向）与减环（反向）。',
+    tags: ['增环', '减环'],
+  },
+  {
+    id: 'transfer-factor',
+    term: '传递系数',
+    symbol: 'f',
+    category: '尺寸链',
+    definition: '组成环公差对封闭环的影响权重，2D/GD&T 问题中用于近似几何灵敏度。',
+    tags: ['加权', 'RSS'],
+  },
+  {
+    id: 'worst-case',
+    term: '极值法',
+    symbol: 'T=ΣTᵢ',
+    category: '统计方法',
+    definition: '各环公差代数相加，假设所有环同时处于极限状态，结果最保守。',
+    tags: ['极值', '100%'],
+  },
+  {
+    id: 'rss',
+    term: 'RSS 法',
+    symbol: 'T=√ΣTᵢ²',
+    category: '统计方法',
+    definition: '独立随机变量下的均方根叠加，通常对应约 95% 合格率。',
+    tags: ['概率', '正态'],
+  },
+  {
+    id: 'modified-rss',
+    term: '修正 RSS',
+    symbol: 'T=k·√ΣTᵢ²',
+    category: '统计方法',
+    definition: '在 RSS 基础上乘以分布修正系数 k，适用于均匀、偏态等非正态分布。',
+    tags: ['修正', '均匀分布'],
+  },
+  {
+    id: 'cpk',
+    term: 'Cpk',
+    symbol: 'Cpk',
+    category: '过程能力',
+    definition: '过程能力指数，同时考虑规格中心偏移，Cpk≥1.33 通常视为良好。',
+    tags: ['SPC', '质量'],
+  },
+  {
+    id: 'sigma-level',
+    term: '西格玛水平',
+    symbol: 'σ水平',
+    category: '过程能力',
+    definition: '目标公差与过程变异的比值，用于估算合格率与 DPPM。',
+    tags: ['6σ', '合格率'],
+  },
+  {
+    id: 'monte-carlo',
+    term: 'Monte Carlo 模拟',
+    symbol: 'MC',
+    category: '统计方法',
+    definition: '通过大量随机抽样模拟封闭环分布，验证 RSS/极值法结论并估算合格率。',
+    tags: ['模拟', '随机'],
+  },
+  {
+    id: 'distribution-k',
+    term: '分布系数 K',
+    symbol: 'K',
+    category: '统计方法',
+    definition: '公差与标准差的换算系数：σ=T/K。正态 K=6，均匀 K≈3.46，三角 K≈4.24。',
+    tags: ['转换', '分布'],
+  },
+]
+
+export function searchGlossary(query) {
+  const q = query.trim().toLowerCase()
+  if (!q) return GLOSSARY_TERMS
+  return GLOSSARY_TERMS.filter(
+    (item) =>
+      item.term.toLowerCase().includes(q) ||
+      item.definition.toLowerCase().includes(q) ||
+      item.tags.some((t) => t.toLowerCase().includes(q)) ||
+      item.category.toLowerCase().includes(q),
+  )
+}

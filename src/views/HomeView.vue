@@ -17,9 +17,9 @@
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <button
           v-for="tool in statTools"
-          :key="tool.query"
+          :key="tool.query || tool.path"
           class="card-panel text-left transition-shadow hover:shadow-md"
-          @click="goStatTool(tool.query)"
+          @click="goStatTool(tool)"
         >
           <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
           <p class="font-medium">{{ tool.label }}</p>
@@ -110,9 +110,10 @@ const history = ref([])
 
 const statTools = [
   { query: 'convert', label: '公差转换', desc: 'T ↔ σ', icon: 'Switch' },
-  { query: 'rss', label: 'RSS 计算', desc: '基础 + 加权 RSS', icon: 'DataAnalysis' },
+  { query: 'rss', label: 'RSS 计算', desc: '基础 + 加权 + 修正', icon: 'DataAnalysis' },
   { query: 'sigma', label: '西格玛分析', desc: 'C / Cpk / 合格率', icon: 'TrendCharts' },
   { query: 'chart', label: '分布曲线', desc: 'Plotly PDF 图', icon: 'PieChart' },
+  { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟分析', icon: 'Histogram', badge: 'V2.0' },
 ]
 
 const quickLinks = [
@@ -135,8 +136,12 @@ function startWithType(typeId) {
   router.push({ name: 'editor', query: { type: typeId } })
 }
 
-function goStatTool(query) {
-  router.push({ path: '/statistics', query: { tool: query } })
+function goStatTool(tool) {
+  if (tool.path) {
+    router.push(tool.path)
+  } else {
+    router.push({ path: '/statistics', query: { tool: tool.query } })
+  }
 }
 
 function openHistory(id) {

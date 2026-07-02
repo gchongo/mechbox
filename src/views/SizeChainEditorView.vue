@@ -13,14 +13,14 @@
     <!-- 步骤 1 -->
     <section v-show="currentStep === 1" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 1：选择类型</h2>
-      <el-tabs v-model="activeGroup">
+      <el-tabs v-model="activeGroup" @tab-click="onTabClick">
         <el-tab-pane
           v-for="group in ANALYSIS_GROUPS"
           :key="group.id"
           :label="group.label"
           :name="group.id"
         >
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div v-show="typeGridVisible" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <el-tooltip
               v-for="type in group.types"
               :key="type.id"
@@ -42,8 +42,20 @@
               </button>
             </el-tooltip>
           </div>
+          <p v-if="!typeGridVisible" class="py-6 text-center text-sm text-gray-500">
+            再次点击「{{ activeGroupLabel }}」Tab 可展开类型列表
+          </p>
         </el-tab-pane>
       </el-tabs>
+      <el-alert
+        v-if="isExtendedAnalysis"
+        class="mt-4"
+        type="info"
+        :closable="false"
+        show-icon
+        title="2D/3D/GD&T 分析提示"
+        description="当前类型按 1D 线性尺寸链叠加计算；请用传递系数近似几何影响，或跳转 Monte Carlo 做随机验证。"
+      />
       <p v-if="selectedType" class="mt-4 text-sm text-success">
         ✓ 已选择：{{ selectedType.groupLabel }} → {{ selectedType.name }}
       </p>
@@ -228,7 +240,31 @@
             </div>
           </el-radio>
         </el-tooltip>
+        <el-tooltip content="修正 RSS：考虑非正态分布修正系数" placement="right">
+          <el-radio value="modified-rss" border class="!mr-0 !h-auto !p-4">
+            <div>
+              <p class="font-medium">修正 RSS 法</p>
+              <div class="text-sm text-gray-500">
+                <MathTex expr="T_{mod} = k \cdot \sqrt{\sum T_i^2}" /> · 偏态/均匀修正
+              </div>
+            </div>
+          </el-radio>
+        </el-tooltip>
       </el-radio-group>
+      <div v-if="method === 'modified-rss'" class="mt-4 max-w-md">
+        <el-form label-width="100px">
+          <el-form-item label="分布类型">
+            <el-select v-model="rssDistribution" class="w-full">
+              <el-option
+                v-for="(d, k) in DISTRIBUTIONS"
+                :key="k"
+                :label="d.name"
+                :value="k"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
       <div class="mt-6 flex justify-end gap-2">
         <el-button @click="prevStep">← 返回</el-button>
         <el-button type="primary" @click="nextStep">下一步 →</el-button>
@@ -285,6 +321,7 @@
         <el-button @click="handleExportExcel">📊 导出 Excel</el-button>
         <el-button @click="handleExportPng">🖼️ 导出图片</el-button>
         <el-button @click="handleCopy">📋 复制结果</el-button>
+        <el-button type="success" @click="goToMonteCarlo">🎲 Monte Carlo 验证</el-button>
       </div>
     </section>
   </div>
@@ -299,11 +336,13 @@ import SizeChainCanvas from '@/components/editor/SizeChainCanvas.vue'
 import SigmaSummary from '@/components/editor/SigmaSummary.vue'
 import { ANALYSIS_GROUPS, findAnalysisType } from '@/constants/analysis-types'
 import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+import { MC_STORAGE_KEY, serializeEditorForMonteCarlo } from '@/constants/editor-bridge'
 import {
   calculateSizeChain,
   buildFormulaLines,
   buildFormulaLatex,
   buildSigmaSummary,
+  DISTRIBUTIONS,
 } from '@/utils/size-chain'
 import { inferRingType } from '@/utils/ring-direction'
 import { convertLength, convertRingList, unitLabel } from '@/utils/unit'
@@ -322,8 +361,11 @@ const router = useRouter()
 
 const currentStep = ref(1)
 const activeGroup = ref('1d')
+const typeGridVisible = ref(true)
+const lastTabClick = ref('')
 const selectedType = ref(null)
 const method = ref('rss')
+const rssDistribution = ref('skewed')
 const touched = ref({})
 const showValidation = ref(false)
 const ringValidation = ref(false)
@@ -342,6 +384,39 @@ const closedRing = ref({
 const componentRings = ref([])
 
 const unit = computed(() => unitLabel(closedRing.value.unit))
+
+const activeGroupLabel = computed(
+  () => ANALYSIS_GROUPS.find((g) => g.id === activeGroup.value)?.label ?? '',
+)
+
+const isExtendedAnalysis = computed(() =>
+  ['2d', '3d', 'gdt'].includes(selectedType.value?.groupId ?? ''),
+)
+
+function onTabClick(tab) {
+  const name = tab.paneName
+  if (lastTabClick.value === name) {
+    typeGridVisible.value = !typeGridVisible.value
+  } else {
+    typeGridVisible.value = true
+  }
+  lastTabClick.value = name
+}
+
+function goToMonteCarlo() {
+  sessionStorage.setItem(
+    MC_STORAGE_KEY,
+    JSON.stringify(
+      serializeEditorForMonteCarlo({
+        closedRing: closedRing.value,
+        componentRings: componentRings.value,
+        method: method.value,
+        rssDistribution: rssDistribution.value,
+      }),
+    ),
+  )
+  router.push({ path: '/monte-carlo', query: { from: 'editor' } })
+}
 
 const closedRingTolerance = computed(() => {
   if (closedRing.value.min == null || closedRing.value.max == null) return 0
@@ -372,6 +447,15 @@ const rssResult = computed(() =>
   ),
 )
 
+const modifiedResult = computed(() =>
+  calculateSizeChain(
+    { min: closedRing.value.min, max: closedRing.value.max },
+    componentRings.value,
+    'modified-rss',
+    { distribution: rssDistribution.value },
+  ),
+)
+
 const resultTable = computed(() => [
   {
     method: '极值法',
@@ -387,14 +471,25 @@ const resultTable = computed(() => [
     lower: rssResult.value.lower.toFixed(3),
     pass: rssResult.value.pass,
   },
+  {
+    method: '修正 RSS',
+    tolerance: modifiedResult.value.totalTolerance.toFixed(3),
+    upper: modifiedResult.value.upper.toFixed(3),
+    lower: modifiedResult.value.lower.toFixed(3),
+    pass: modifiedResult.value.pass,
+  },
 ])
 
 const formulaLines = computed(() =>
-  buildFormulaLines(closedRing.value, componentRings.value, method.value, unit.value),
+  buildFormulaLines(closedRing.value, componentRings.value, method.value, unit.value, {
+    distribution: rssDistribution.value,
+  }),
 )
 
 const formulaLatex = computed(() =>
-  buildFormulaLatex(closedRing.value, componentRings.value, method.value, unit.value),
+  buildFormulaLatex(closedRing.value, componentRings.value, method.value, unit.value, {
+    distribution: rssDistribution.value,
+  }),
 )
 
 const sigmaSummary = computed(() =>
@@ -460,6 +555,7 @@ function applyEditorState(state) {
   }
   if (state.componentRings) componentRings.value = state.componentRings
   if (state.method) method.value = state.method
+  if (state.rssDistribution) rssDistribution.value = state.rssDistribution
   if (state.currentStep) currentStep.value = state.currentStep
 }
 
@@ -603,14 +699,21 @@ function saveResult() {
   const title = `${selectedType.value?.name ?? '分析'} ${closedRing.value.name || 'L0'}`
   const entry = saveAnalysis({
     title,
-    status: rssResult.value.pass ? 'pass' : 'fail',
+    status: (method.value === 'modified-rss' ? modifiedResult.value : rssResult.value).pass
+      ? 'pass'
+      : 'fail',
     data: {
       selectedType: selectedType.value,
       closedRing: closedRing.value,
       componentRings: componentRings.value,
       method: method.value,
+      rssDistribution: rssDistribution.value,
       currentStep: currentStep.value,
-      results: { worst: worstResult.value, rss: rssResult.value },
+      results: {
+        worst: worstResult.value,
+        rss: rssResult.value,
+        modifiedRss: modifiedResult.value,
+      },
     },
   })
   ElMessage.success('已保存到本地')

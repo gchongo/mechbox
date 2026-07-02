@@ -12,6 +12,23 @@ export function rssMethod(rings) {
   return Math.sqrt(sumSquares)
 }
 
+/** 分布修正系数（相对正态 RSS） */
+export const RSS_CORRECTION = {
+  normal: 1.0,
+  uniform: 1.15,
+  rectangular: 1.15,
+  triangular: 1.05,
+  skewed: 1.12,
+}
+
+/** 修正 RSS */
+export function modifiedRssMethod(rings, distribution = 'normal', skewness = 0) {
+  const base = rssMethod(rings)
+  const distFactor = RSS_CORRECTION[distribution] ?? 1
+  const skewFactor = 1 + Math.min(Math.abs(skewness) / 6, 0.2)
+  return base * distFactor * skewFactor
+}
+
 /** 极值法：分别叠加上/下限 */
 export function calculateWorstCaseLimits(componentRings) {
   let upper = 0
@@ -59,12 +76,44 @@ export function calculateRssLimits(componentRings) {
   }
 }
 
+/** 修正 RSS 法 */
+export function calculateModifiedRssLimits(
+  componentRings,
+  distribution = 'normal',
+  skewness = 0,
+) {
+  const nominal = componentRings.reduce((sum, ring) => {
+    const sign = ring.type === 'increasing' ? 1 : -1
+    return sum + sign * ring.size * (ring.factor ?? 1)
+  }, 0)
+
+  const tolerances = componentRings.map((r) => ({
+    tolerance: r.tolerance * (r.factor ?? 1),
+  }))
+  const totalTolerance = modifiedRssMethod(tolerances, distribution, skewness)
+
+  return {
+    nominal,
+    upper: nominal + totalTolerance / 2,
+    lower: nominal - totalTolerance / 2,
+    totalTolerance,
+  }
+}
+
 /** 计算尺寸链结果 */
-export function calculateSizeChain(closedRing, componentRings, method = 'rss') {
-  const limits =
-    method === 'worst'
-      ? calculateWorstCaseLimits(componentRings)
-      : calculateRssLimits(componentRings)
+export function calculateSizeChain(closedRing, componentRings, method = 'rss', options = {}) {
+  let limits
+  if (method === 'worst') {
+    limits = calculateWorstCaseLimits(componentRings)
+  } else if (method === 'modified-rss') {
+    limits = calculateModifiedRssLimits(
+      componentRings,
+      options.distribution ?? 'normal',
+      options.skewness ?? 0,
+    )
+  } else {
+    limits = calculateRssLimits(componentRings)
+  }
 
   const pass = limits.lower >= closedRing.min && limits.upper <= closedRing.max
 
@@ -72,7 +121,7 @@ export function calculateSizeChain(closedRing, componentRings, method = 'rss') {
 }
 
 /** 生成公式展示行 */
-export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm') {
+export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm', options = {}) {
   const rings = componentRings
   if (!rings.length) return ['请添加组成环']
 
@@ -86,17 +135,29 @@ export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm
 
   const worst = calculateWorstCaseLimits(rings)
   const rss = calculateRssLimits(rings)
-  const active = method === 'worst' ? worst : rss
+  const modified = calculateModifiedRssLimits(rings, options?.distribution ?? 'normal')
+  let active
+  if (method === 'worst') active = worst
+  else if (method === 'modified-rss') active = modified
+  else active = rss
   const passMark =
     active.lower >= closedRing.min && active.upper <= closedRing.max ? ' ✓' : ' ✗'
 
-  return [
+  const lines = [
     `${closedRing.name || 'L0'} = ${incExpr} - (${decExpr})`,
     `     = ${incSum.toFixed(2)} - ${decSum.toFixed(2)}`,
     `     = ${nominal.toFixed(2)} ${unit}`,
     `总公差 (极值法) = ${worst.totalTolerance.toFixed(3)} ${unit}  →  [${worst.lower.toFixed(3)}, ${worst.upper.toFixed(3)}]`,
-    `总公差 (RSS 法) = ${rss.totalTolerance.toFixed(3)} ${unit}  →  [${rss.lower.toFixed(3)}, ${rss.upper.toFixed(3)}]${passMark}`,
+    `总公差 (RSS 法) = ${rss.totalTolerance.toFixed(3)} ${unit}  →  [${rss.lower.toFixed(3)}, ${rss.upper.toFixed(3)}]`,
   ]
+  if (method === 'modified-rss') {
+    lines.push(
+      `总公差 (修正 RSS) = ${modified.totalTolerance.toFixed(3)} ${unit}  →  [${modified.lower.toFixed(3)}, ${modified.upper.toFixed(3)}]${passMark}`,
+    )
+  } else {
+    lines[lines.length - 1] += passMark
+  }
+  return lines
 }
 
 function texLabel(name) {
@@ -104,7 +165,13 @@ function texLabel(name) {
 }
 
 /** 生成 LaTeX 公式行（用于 KaTeX 渲染） */
-export function buildFormulaLatex(closedRing, componentRings, method, unit = 'mm') {
+export function buildFormulaLatex(
+  closedRing,
+  componentRings,
+  method,
+  unit = 'mm',
+  options = {},
+) {
   const rings = componentRings
   if (!rings.length) return [{ latex: '\\text{请添加组成环}', block: true }]
 
@@ -119,13 +186,21 @@ export function buildFormulaLatex(closedRing, componentRings, method, unit = 'mm
 
   const worst = calculateWorstCaseLimits(rings)
   const rss = calculateRssLimits(rings)
-  const active = method === 'worst' ? worst : rss
+  const modified = calculateModifiedRssLimits(
+    rings,
+    options.distribution ?? 'normal',
+    options.skewness ?? 0,
+  )
+  let active
+  if (method === 'worst') active = worst
+  else if (method === 'modified-rss') active = modified
+  else active = rss
   const passMark =
     active.lower >= closedRing.min && active.upper <= closedRing.max ? '\\checkmark' : '\\times'
 
   const u = unit === 'inch' ? '\\text{inch}' : '\\text{mm}'
 
-  return [
+  const lines = [
     {
       latex: `${l0} = ${incTex} - (${decTex})`,
       block: true,
@@ -139,10 +214,19 @@ export function buildFormulaLatex(closedRing, componentRings, method, unit = 'mm
       block: true,
     },
     {
-      latex: `T_{\\text{RSS}} = ${rss.totalTolerance.toFixed(3)}\\,${u},\\quad [${rss.lower.toFixed(3)},\\, ${rss.upper.toFixed(3)}]\\; ${passMark}`,
+      latex: `T_{\\text{RSS}} = ${rss.totalTolerance.toFixed(3)}\\,${u},\\quad [${rss.lower.toFixed(3)},\\, ${rss.upper.toFixed(3)}]`,
       block: true,
     },
   ]
+  if (method === 'modified-rss') {
+    lines.push({
+      latex: `T_{\\text{mod}} = ${modified.totalTolerance.toFixed(3)}\\,${u},\\quad [${modified.lower.toFixed(3)},\\, ${modified.upper.toFixed(3)}]\\; ${passMark}`,
+      block: true,
+    })
+  } else {
+    lines[lines.length - 1].latex += `\\; ${passMark}`
+  }
+  return lines
 }
 
 function cdfNormal(x) {

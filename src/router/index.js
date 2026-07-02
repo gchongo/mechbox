@@ -50,6 +50,18 @@ const routes = [
     meta: { title: '公式手册' },
   },
   {
+    path: '/monte-carlo',
+    name: 'monte-carlo',
+    component: () => import('@/views/MonteCarloView.vue'),
+    meta: { title: 'Monte Carlo' },
+  },
+  {
+    path: '/glossary',
+    name: 'glossary',
+    component: () => import('@/views/GlossaryView.vue'),
+    meta: { title: '术语词典' },
+  },
+  {
     path: '/faq',
     name: 'faq',
     component: () => import('@/views/FaqView.vue'),

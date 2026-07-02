@@ -110,6 +110,53 @@ export const CASE_PRESETS = [
       method: 'rss',
     },
   },
+  {
+    id: 'parallelism-2d',
+    title: '平行度尺寸链',
+    desc: '2D 平面平行度累积分析（面 A 相对基准面）',
+    type: '2D 平面',
+    typeId: 'parallelism',
+    data: {
+      selectedTypeId: 'parallelism',
+      closedRing: {
+        name: '平行度 L0',
+        min: 0,
+        max: 0.05,
+        direction: 'up',
+        unit: 'mm',
+      },
+      componentRings: [
+        { name: '基准面 flatness', size: 0.02, tolerance: 0.01, factor: 1, direction: 'up' },
+        { name: '上表面 flatness', size: 0.02, tolerance: 0.012, factor: 1, direction: 'down' },
+        { name: '厚度', size: 25, tolerance: 0.03, factor: 0.5, direction: 'up' },
+      ],
+      method: 'modified-rss',
+      rssDistribution: 'uniform',
+    },
+  },
+  {
+    id: 'position-gdt',
+    title: 'GD&T 位置度',
+    desc: '孔组位置度与基准尺寸链叠加',
+    type: 'GD&T 公差',
+    typeId: 'position',
+    data: {
+      selectedTypeId: 'position',
+      closedRing: {
+        name: '位置度 L0',
+        min: 0,
+        max: 0.1,
+        direction: 'right',
+        unit: 'mm',
+      },
+      componentRings: [
+        { name: '孔距名义', size: 50, tolerance: 0.05, factor: 1, direction: 'right' },
+        { name: '位置度公差', size: 0.05, tolerance: 0.05, factor: 1, direction: 'left' },
+        { name: '基准偏移', size: 0.02, tolerance: 0.02, factor: 1, direction: 'left' },
+      ],
+      method: 'rss',
+    },
+  },
 ]
 
 export function findCasePreset(caseId) {
@@ -129,6 +176,7 @@ export function prepareCaseForEditor(preset) {
     closedRing: { ...preset.data.closedRing },
     componentRings,
     method: preset.data.method ?? 'rss',
+    rssDistribution: preset.data.rssDistribution ?? 'skewed',
     currentStep: 5,
   }
 }

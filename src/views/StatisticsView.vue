@@ -132,6 +132,17 @@
           <el-form-item label="加权 RSS">
             <MathTex :expr="`T_{\\text{wRSS}} = ${weightedRssTotal === '-' ? '\\text{—}' : weightedRssTotal}\\,\\text{mm}`" />
           </el-form-item>
+          <el-form-item label="修正 RSS">
+            <el-select v-model="modRssDistribution" class="mb-2 w-full" size="small">
+              <el-option
+                v-for="(d, k) in DISTRIBUTIONS"
+                :key="k"
+                :label="d.name"
+                :value="k"
+              />
+            </el-select>
+            <MathTex :expr="modifiedRssLatexExpr" />
+          </el-form-item>
         </el-form>
       </section>
 
@@ -160,6 +171,162 @@
         </el-form>
       </section>
     </div>
+
+    <!-- 假设检验 -->
+    <section id="hypothesis" class="card-panel mt-6">
+      <h2 class="mb-4 font-semibold">假设检验</h2>
+      <el-tabs v-model="hypothesisTab">
+        <el-tab-pane label="t 检验" name="t">
+          <el-form label-width="100px" class="max-w-2xl">
+            <el-form-item label="检验类型">
+              <el-radio-group v-model="tTestMode">
+                <el-radio value="one">单样本</el-radio>
+                <el-radio value="two">双样本</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="tTestMode === 'one'" label="样本数据">
+              <el-input v-model="tSample1" placeholder="如：10.1,10.2,10.5,10.3" />
+            </el-form-item>
+            <el-form-item v-if="tTestMode === 'one'" label="假设均值 μ₀">
+              <el-input-number v-model="tMu0" :precision="4" :step="0.1" />
+            </el-form-item>
+            <el-form-item v-if="tTestMode === 'two'" label="样本 A">
+              <el-input v-model="tSample1" placeholder="第一组数据" />
+            </el-form-item>
+            <el-form-item v-if="tTestMode === 'two'" label="样本 B">
+              <el-input v-model="tSample2" placeholder="第二组数据" />
+            </el-form-item>
+          </el-form>
+          <div v-if="tTestResult && !tTestResult.error" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">t 统计量</dt>
+              <dd class="mt-1 font-mono">{{ tTestResult.tStatistic?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">p 值</dt>
+              <dd class="mt-1 font-mono">{{ tTestResult.pValue?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">显著性 (α=0.05)</dt>
+              <dd class="mt-1" :class="tTestResult.significant ? 'text-error' : 'text-success'">
+                {{ tTestResult.significant ? '显著' : '不显著' }}
+              </dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2 lg:col-span-1">
+              <dt class="text-gray-500">结论</dt>
+              <dd class="mt-1">{{ tTestResult.conclusion }}</dd>
+            </div>
+          </div>
+          <el-alert v-else-if="tTestResult?.error" :title="tTestResult.error" type="warning" show-icon />
+        </el-tab-pane>
+
+        <el-tab-pane label="卡方检验" name="chi2">
+          <el-form label-width="100px" class="max-w-2xl">
+            <el-form-item label="观测频数">
+              <el-input v-model="chiObserved" placeholder="如：50,30,20" />
+            </el-form-item>
+            <el-form-item label="期望频数">
+              <el-input v-model="chiExpected" placeholder="如：40,40,20" />
+            </el-form-item>
+          </el-form>
+          <div v-if="chiResult && !chiResult.error" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">χ²</dt>
+              <dd class="mt-1 font-mono">{{ chiResult.chi2?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">自由度</dt>
+              <dd class="mt-1 font-mono">{{ chiResult.df }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">p 值</dt>
+              <dd class="mt-1 font-mono">{{ chiResult.pValue?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">结论</dt>
+              <dd class="mt-1">{{ chiResult.conclusion }}</dd>
+            </div>
+          </div>
+          <el-alert v-else-if="chiResult?.error" :title="chiResult.error" type="warning" show-icon />
+        </el-tab-pane>
+
+        <el-tab-pane label="ANOVA" name="anova">
+          <el-form label-width="100px" class="max-w-2xl">
+            <el-form-item label="组 1">
+              <el-input v-model="anovaGroup1" placeholder="如：10,11,12" />
+            </el-form-item>
+            <el-form-item label="组 2">
+              <el-input v-model="anovaGroup2" placeholder="如：9,10,11" />
+            </el-form-item>
+            <el-form-item label="组 3">
+              <el-input v-model="anovaGroup3" placeholder="可选第三组" />
+            </el-form-item>
+          </el-form>
+          <div v-if="anovaResult && !anovaResult.error" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">F 统计量</dt>
+              <dd class="mt-1 font-mono">{{ anovaResult.fStatistic?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">p 值</dt>
+              <dd class="mt-1 font-mono">{{ anovaResult.pValue?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2">
+              <dt class="text-gray-500">结论</dt>
+              <dd class="mt-1">{{ anovaResult.conclusion }}</dd>
+            </div>
+          </div>
+          <el-alert v-else-if="anovaResult?.error" :title="anovaResult.error" type="warning" show-icon />
+        </el-tab-pane>
+
+        <el-tab-pane label="相关性" name="corr">
+          <el-form label-width="100px" class="max-w-2xl">
+            <el-form-item label="变量 X">
+              <el-input v-model="corrX" placeholder="如：1,2,3,4,5" />
+            </el-form-item>
+            <el-form-item label="变量 Y">
+              <el-input v-model="corrY" placeholder="如：2,4,5,4,5" />
+            </el-form-item>
+          </el-form>
+          <div v-if="corrResult && !corrResult.error" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">Pearson r</dt>
+              <dd class="mt-1 font-mono">{{ corrResult.r?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm">
+              <dt class="text-gray-500">p 值</dt>
+              <dd class="mt-1 font-mono">{{ corrResult.pValue?.toFixed(4) }}</dd>
+            </div>
+            <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2">
+              <dt class="text-gray-500">结论</dt>
+              <dd class="mt-1">{{ corrResult.conclusion }}</dd>
+            </div>
+          </div>
+          <el-alert v-else-if="corrResult?.error" :title="corrResult.error" type="warning" show-icon />
+        </el-tab-pane>
+      </el-tabs>
+    </section>
+
+    <!-- 控制图 -->
+    <section id="control" class="card-panel mt-6">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 class="font-semibold">控制图 (X Chart)</h2>
+        <el-button size="small" @click="exportControlChart">导出 PNG</el-button>
+      </div>
+      <el-form label-width="100px" class="mb-4 max-w-xl">
+        <el-form-item label="测量数据">
+          <el-input v-model="controlData" placeholder="如：10.2,10.5,10.1,10.8,10.3" />
+        </el-form-item>
+        <el-form-item label="目标值">
+          <el-input-number v-model="controlTarget" :precision="3" :step="0.1" />
+        </el-form-item>
+      </el-form>
+      <ControlChart
+        ref="controlChartRef"
+        :values="controlValues"
+        :target="controlTarget"
+      />
+    </section>
   </div>
 </template>
 
@@ -168,12 +335,22 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import DistributionChart from '@/components/charts/DistributionChart.vue'
+import ControlChart from '@/components/charts/ControlChart.vue'
 import { calcSkewness, calcKurtosis, weightedRss } from '@/utils/distribution-pdf'
+import {
+  parseNumberList,
+  oneSampleTTest,
+  twoSampleTTest,
+  chiSquareTest,
+  oneWayAnova,
+  pearsonCorrelation,
+} from '@/utils/hypothesis-tests'
 import {
   DISTRIBUTIONS,
   toleranceToSigma,
   sigmaToTolerance,
   rssMethod,
+  modifiedRssMethod,
   calculateSigmaLevel,
   calculatePassRate,
   calculateCpk,
@@ -191,6 +368,23 @@ const factorList = ref('1,1,1')
 const targetTolerance = ref(0.25)
 const actualSigma = ref(0.042)
 const chartTolerance = ref(0.25)
+const modRssDistribution = ref('skewed')
+const controlData = ref('10.2,10.5,10.1,10.8,10.3,10.4,10.6,10.2')
+const controlTarget = ref(10.3)
+const controlChartRef = ref(null)
+
+const hypothesisTab = ref('t')
+const tTestMode = ref('one')
+const tSample1 = ref('10.1,10.2,10.5,10.3,10.4')
+const tSample2 = ref('9.8,10.0,10.1,9.9')
+const tMu0 = ref(10)
+const chiObserved = ref('50,30,20')
+const chiExpected = ref('40,40,20')
+const anovaGroup1 = ref('10,11,12,11')
+const anovaGroup2 = ref('9,10,10,9')
+const anovaGroup3 = ref('12,13,12')
+const corrX = ref('1,2,3,4,5')
+const corrY = ref('2,4,5,4,6')
 
 onMounted(() => {
   const tool = route.query.tool
@@ -278,6 +472,46 @@ const weightedRssTotal = computed(() => {
   return weightedRss(tolerances, f).toFixed(4)
 })
 
+const modifiedRssTotal = computed(() => {
+  const tolerances = parseNumbers(toleranceList.value).map((t) => ({ tolerance: t }))
+  if (!tolerances.length) return null
+  const skew = parseFloat(stats.value.skewness)
+  return modifiedRssMethod(tolerances, modRssDistribution.value, isNaN(skew) ? 0 : skew)
+})
+
+const modifiedRssLatexExpr = computed(() => {
+  const tolerances = parseNumbers(toleranceList.value).map((t) => ({ tolerance: t }))
+  if (!tolerances.length || modifiedRssTotal.value == null) {
+    return 'T_{\\text{mod}} = \\text{—}'
+  }
+  const base = rssMethod(tolerances)
+  return `T_{\\text{mod}} = ${modifiedRssTotal.value.toFixed(4)} \\approx ${base.toFixed(4)} \\times k`
+})
+
+const controlValues = computed(() => parseNumbers(controlData.value))
+
+const tTestResult = computed(() => {
+  const s1 = parseNumberList(tSample1.value)
+  if (tTestMode.value === 'one') return oneSampleTTest(s1, tMu0.value)
+  const s2 = parseNumberList(tSample2.value)
+  return twoSampleTTest(s1, s2)
+})
+
+const chiResult = computed(() =>
+  chiSquareTest(parseNumberList(chiObserved.value), parseNumberList(chiExpected.value)),
+)
+
+const anovaResult = computed(() => {
+  const groups = [anovaGroup1, anovaGroup2, anovaGroup3]
+    .map((g) => parseNumberList(g.value))
+    .filter((g) => g.length > 0)
+  return oneWayAnova(groups)
+})
+
+const corrResult = computed(() =>
+  pearsonCorrelation(parseNumberList(corrX.value), parseNumberList(corrY.value)),
+)
+
 const passRate = computed(() => {
   if (!actualSigma.value) return '-'
   const level = calculateSigmaLevel(targetTolerance.value, actualSigma.value)
@@ -287,5 +521,10 @@ const passRate = computed(() => {
 function exportChart() {
   chartRef.value?.exportPng(`分布曲线_${distribution.value}.png`)
   ElMessage.success('图表已导出')
+}
+
+function exportControlChart() {
+  controlChartRef.value?.exportPng('控制图.png')
+  ElMessage.success('控制图已导出')
 }
 </script>
