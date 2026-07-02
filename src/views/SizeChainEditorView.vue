@@ -68,7 +68,10 @@
 
     <!-- 步骤 2 -->
     <section v-show="currentStep === 2" class="card-panel">
-      <h2 class="mb-4 text-lg font-semibold">步骤 2：定义封闭环</h2>
+      <h2 class="mb-2 text-lg font-semibold">步骤 2：定义封闭环（设计要求）</h2>
+      <p class="mb-4 text-sm text-gray-500">
+        封闭环是装配后最终形成的尺寸（如间隙、过盈）。填写允许的最小值和最大值即可。
+      </p>
       <el-form label-width="130px" class="max-w-xl">
         <el-form-item label="名称" required :error="fieldError('name')">
           <el-input
@@ -100,6 +103,13 @@
         <el-form-item label="公差">
           <span>{{ closedRingTolerance.toFixed(2) }} {{ unit }}（自动计算）</span>
         </el-form-item>
+        <el-form-item v-if="isClosedRingValid" label="等效表述">
+          <span class="text-sm">
+            目标 {{ closedRingDesign.target.toFixed(3) }} {{ unit }}，
+            ES +{{ closedRingDesign.es.toFixed(3) }}，
+            EI {{ closedRingDesign.ei.toFixed(3) }}
+          </span>
+        </el-form-item>
         <el-form-item label="方向">
           <el-radio-group v-model="closedRing.direction" @change="syncAllRingTypes">
             <el-radio-button label="left">←</el-radio-button>
@@ -129,112 +139,54 @@
 
     <!-- 步骤 3 -->
     <section v-show="currentStep === 3" class="card-panel">
-      <h2 class="mb-4 text-lg font-semibold">步骤 3：添加组成环</h2>
-      <el-button type="primary" plain :disabled="componentRings.length >= 50" @click="addRing">
-        + 添加组成环
-      </el-button>
-      <el-button
-        v-if="selectedType && getGdtCalcMode(selectedType.id)"
-        plain
-        @click="loadRingTemplate"
-      >
-        加载 {{ selectedType.name }} 推荐结构
-      </el-button>
-      <p v-if="componentRings.length >= 50" class="mt-2 text-sm text-warning">
-        已达最大数量（50）
+      <h2 class="mb-2 text-lg font-semibold">步骤 3：组成环 & 尺寸链模型</h2>
+      <p class="mb-4 text-sm text-gray-500">
+        左侧为尺寸链矢量示意，右侧填写各环参数；修改任意数值，图形会实时更新。
       </p>
 
-      <el-table :data="componentRings" class="mt-4" empty-text="请添加组成环" row-key="uid">
-        <el-table-column width="44" align="center">
-          <template #default="{ $index }">
-            <span
-              class="cursor-grab select-none text-lg text-gray-400 active:cursor-grabbing"
-              draggable="true"
-              title="拖拽排序"
-              @dragstart="onRingDragStart($index, $event)"
-              @dragend="onRingDragEnd"
-              @dragover.prevent
-              @drop.prevent="onRingDrop($index)"
-            >⠿</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="#" width="50">
-          <template #default="{ $index }">{{ $index + 1 }}</template>
-        </el-table-column>
-        <el-table-column label="名称" min-width="110">
-          <template #default="{ row }">
-            <el-input
-              v-model="row.name"
-              placeholder="如：挡环厚度"
-              size="small"
-              :class="{ 'ring-error': ringFieldInvalid(row, 'name') }"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column :label="`尺寸 (${unit})`" width="110">
-          <template #default="{ row }">
-            <el-input-number
-              v-model="row.size"
-              :precision="2"
-              size="small"
-              :class="{ 'ring-error': ringFieldInvalid(row, 'size') }"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column :label="`公差 (${unit})`" width="110">
-          <template #default="{ row }">
-            <el-input-number
-              v-model="row.tolerance"
-              :precision="2"
-              :min="0"
-              size="small"
-              :class="{ 'ring-error': ringFieldInvalid(row, 'tolerance') }"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="传递系数" width="90">
-          <template #default="{ row }">
-            <el-input-number v-model="row.factor" :min="0" :max="10" :step="0.1" size="small" />
-          </template>
-        </el-table-column>
-        <el-table-column label="方向" width="180">
-          <template #default="{ row }">
-            <el-radio-group v-model="row.direction" size="small" @change="updateRingType(row)">
-              <el-radio-button label="left">←</el-radio-button>
-              <el-radio-button label="up">↑</el-radio-button>
-              <el-radio-button label="right">→</el-radio-button>
-              <el-radio-button label="down">↓</el-radio-button>
-            </el-radio-group>
-          </template>
-        </el-table-column>
-        <el-table-column label="类型" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.type === 'increasing' ? '' : 'success'" size="small">
-              {{ row.type === 'increasing' ? '增环' : '减环' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="" width="50">
-          <template #default="{ $index }">
-            <el-button type="danger" text @click="removeRing($index)">
-              <el-icon><Delete /></el-icon>
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <p class="mt-2 text-xs text-gray-400">⠿ 拖拽左侧手柄可调整组成环顺序</p>
+      <div class="mb-3 flex flex-wrap gap-2">
+        <el-button
+          v-if="selectedType && getGdtCalcMode(selectedType.id)"
+          plain
+          @click="loadRingTemplate"
+        >
+          加载 {{ selectedType.name }} 推荐结构
+        </el-button>
+        <p v-if="componentRings.length >= 50" class="text-sm text-warning">已达最大数量（50）</p>
+      </div>
+
+      <div class="grid min-h-[420px] gap-4 lg:grid-cols-2">
+        <div class="flex flex-col rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+          <h3 class="mb-2 font-semibold">尺寸链链路模型</h3>
+          <SizeChainCanvas
+            :closed-ring="closedRing"
+            :component-rings="componentRings"
+            :rss-tolerance="previewRssTolerance"
+            :analysis-type-id="selectedType?.id"
+            class="flex-1"
+          />
+        </div>
+        <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+          <RingParameterTable
+            :rings="componentRings"
+            :unit="unit"
+            :show-validation="ringValidation"
+            :closed-direction="closedRing.direction"
+            @add="addRing"
+            @remove="removeRing"
+          />
+        </div>
+      </div>
+
       <el-alert
         v-if="isExtendedAnalysis"
-        class="mt-3"
+        class="mt-4"
         type="info"
         :closable="false"
         show-icon
         :title="gdtModeInfo?.label ?? '2D/GD&T 分析'"
         :description="gdtModeInfo?.desc ?? '已启用专用公差叠加模型'"
       />
-      <p class="mt-3 text-sm text-gray-500">
-        💡 与封闭环同向 = 增环（蓝色），反向 = 减环（绿色），自动判断
-      </p>
       <div class="mt-6 flex justify-between">
         <el-button @click="clearRings">清空列表</el-button>
         <div class="flex gap-2">
@@ -334,58 +286,68 @@
       </el-collapse>
 
       <div ref="resultPanelRef">
-        <el-alert
-          v-if="gdtModeInfo"
-          class="mb-4"
-          type="success"
-          :closable="false"
-          show-icon
-          :title="`计算模式：${gdtModeInfo.label}`"
-          :description="gdtModeDesc"
-        />
-
-        <h3 class="mb-2 text-sm font-medium text-gray-600">1. 矢量图</h3>
-        <SizeChainCanvas
-          ref="canvasRef"
-          :closed-ring="closedRing"
-          :component-rings="componentRings"
-          :rss-tolerance="rssResult.totalTolerance"
-          :analysis-type-id="selectedType?.id"
+        <ChainResultDashboard
           class="mb-6"
+          :closed-ring="closedRing"
+          :worst-result="worstResult"
+          :rss-result="rssResult"
+          :sigma-summary="sigmaSummary"
+          :unit="unit"
         />
 
-        <h3 class="mb-2 text-sm font-medium text-gray-600">2. 计算公式</h3>
-        <div class="mb-6 space-y-2 rounded-lg bg-gray-50 p-4">
-          <MathTex
-            v-if="activeResult.formulaNote"
-            :expr="activeResult.formulaNote"
-            block
-          />
-          <MathTex
-            v-for="(item, i) in formulaLatex"
-            :key="i"
-            :expr="item.latex"
-            block
-          />
-        </div>
+        <el-collapse class="mb-6">
+          <el-collapse-item title="查看计算过程（公式与四法对比）" name="detail">
+            <el-alert
+              v-if="gdtModeInfo"
+              class="mb-4"
+              type="success"
+              :closable="false"
+              show-icon
+              :title="`计算模式：${gdtModeInfo.label}`"
+              :description="gdtModeDesc"
+            />
 
-        <h3 class="mb-2 text-sm font-medium text-gray-600">3. 结果对比</h3>
-        <el-table :data="resultTable" border class="mb-6">
-          <el-table-column prop="method" label="方法" />
-          <el-table-column prop="tolerance" :label="`总公差 (${unit})`" />
-          <el-table-column prop="upper" label="上限" />
-          <el-table-column prop="lower" label="下限" />
-          <el-table-column prop="pass" label="合格">
-            <template #default="{ row }">
-              <span :class="row.pass ? 'text-success' : 'text-error'">
-                {{ row.pass ? '✓ 合格' : '✗ 不合格' }}
-              </span>
-            </template>
-          </el-table-column>
-        </el-table>
+            <h3 class="mb-2 text-sm font-medium text-gray-600">尺寸链矢量图</h3>
+            <SizeChainCanvas
+              ref="canvasRef"
+              :closed-ring="closedRing"
+              :component-rings="componentRings"
+              :rss-tolerance="rssResult.totalTolerance"
+              :analysis-type-id="selectedType?.id"
+              class="mb-6"
+            />
 
-        <h3 class="mb-2 text-sm font-medium text-gray-600">4. 西格玛分析</h3>
-        <SigmaSummary :summary="sigmaSummary" />
+            <h3 class="mb-2 text-sm font-medium text-gray-600">计算公式</h3>
+            <div class="mb-6 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+              <MathTex
+                v-if="activeResult.formulaNote"
+                :expr="activeResult.formulaNote"
+                block
+              />
+              <MathTex
+                v-for="(item, i) in formulaLatex"
+                :key="i"
+                :expr="item.latex"
+                block
+              />
+            </div>
+
+            <h3 class="mb-2 text-sm font-medium text-gray-600">四法结果对比</h3>
+            <el-table :data="resultTable" border>
+              <el-table-column prop="method" label="方法" />
+              <el-table-column prop="tolerance" :label="`总公差 (${unit})`" />
+              <el-table-column prop="upper" label="上限" />
+              <el-table-column prop="lower" label="下限" />
+              <el-table-column prop="pass" label="合格">
+                <template #default="{ row }">
+                  <span :class="row.pass ? 'text-success' : 'text-error'">
+                    {{ row.pass ? '✓ 合格' : '✗ 不合格' }}
+                  </span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-collapse-item>
+        </el-collapse>
       </div>
 
       <div class="flex flex-wrap gap-2">
@@ -414,7 +376,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import StepProgress from '@/components/editor/StepProgress.vue'
 import SizeChainCanvas from '@/components/editor/SizeChainCanvas.vue'
-import SigmaSummary from '@/components/editor/SigmaSummary.vue'
+import RingParameterTable from '@/components/editor/RingParameterTable.vue'
+import ChainResultDashboard from '@/components/editor/ChainResultDashboard.vue'
 import { ANALYSIS_GROUPS, findAnalysisType } from '@/constants/analysis-types'
 import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
 import { MC_STORAGE_KEY, serializeEditorForMonteCarlo } from '@/constants/editor-bridge'
@@ -442,6 +405,7 @@ import {
 import { getAnalysisById, saveAnalysis } from '@/utils/storage'
 import { getSettings } from '@/utils/settings'
 import { isFavorite, toggleFavorite } from '@/utils/favorites'
+import { closedRingAsDesign, ensureRingEsEi } from '@/utils/ring-tolerance'
 
 const route = useRoute()
 const router = useRouter()
@@ -607,6 +571,10 @@ const closedRingTolerance = computed(() => {
   return closedRing.value.max - closedRing.value.min
 })
 
+const closedRingDesign = computed(() => closedRingAsDesign(closedRing.value))
+
+const previewRssTolerance = computed(() => rssResult.value?.totalTolerance ?? 0)
+
 const isClosedRingValid = computed(
   () =>
     closedRing.value.name.trim() &&
@@ -704,10 +672,12 @@ function applyEditorState(state) {
     prevUnit.value = closedRing.value.unit
   }
   if (state.componentRings) {
-    componentRings.value = state.componentRings.map((ring) => ({
-      ...ring,
-      uid: ring.uid ?? crypto.randomUUID(),
-    }))
+    componentRings.value = state.componentRings.map((ring) =>
+      ensureRingEsEi({
+        ...ring,
+        uid: ring.uid ?? crypto.randomUUID(),
+      }),
+    )
   }
   if (state.method) method.value = state.method
   if (state.rssDistribution) rssDistribution.value = state.rssDistribution
@@ -779,7 +749,7 @@ function loadRingTemplate() {
     return
   }
   closedRing.value = { ...closedRing.value, ...tpl.closedRing, unit: closedRing.value.unit }
-  componentRings.value = tpl.componentRings
+  componentRings.value = tpl.componentRings.map((ring) => ensureRingEsEi({ ...ring }))
   ElMessage.success(`已加载 ${selectedType.value.name} 推荐组成环`)
 }
 
@@ -821,15 +791,17 @@ function syncAllRingTypes() {
 function addRing() {
   const index = componentRings.value.length
   const defaultDir = index % 2 === 0 ? 'left' : closedRing.value.direction
-  const ring = {
+  const ring = ensureRingEsEi({
     uid: crypto.randomUUID(),
-    name: `环 ${index + 1}`,
-    size: 0,
+    name: `A${index + 1}`,
+    size: 10,
     tolerance: 0.05,
+    es: 0.025,
+    ei: -0.025,
     factor: 1,
     direction: defaultDir,
     type: inferRingType(defaultDir, closedRing.value.direction),
-  }
+  })
   componentRings.value.push(ring)
 }
 

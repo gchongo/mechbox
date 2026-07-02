@@ -1,6 +1,23 @@
 <template>
-  <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4">
-    <canvas ref="canvasRef" :width="width" :height="canvasHeight" class="mx-auto block" />
+  <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+    <canvas ref="canvasRef" :width="width" :height="canvasHeight" class="mx-auto block max-w-full" />
+    <p v-if="showFormula && rings.length" class="mt-3 text-center text-xs text-gray-500">
+      封闭环尺寸 = Σ增环 − Σ减环 &nbsp;|&nbsp; 共 {{ rings.length }} 个组成环
+      <span v-if="nominalClosed != null" class="ml-2 font-mono text-primary">
+        → A₀ ≈ {{ nominalClosed.toFixed(2) }} {{ unit }}
+      </span>
+    </p>
+    <div v-if="showLegend && rings.length && !gdtMode" class="mt-3 flex flex-wrap justify-center gap-4 text-xs">
+      <span class="flex items-center gap-1">
+        <span class="inline-block h-3 w-3 rounded-sm bg-[#27ae60]" /> 增环 (+)
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="inline-block h-3 w-3 rounded-sm bg-[#e74c3c]" /> 减环 (−)
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="inline-block h-3 w-0.5 border border-dashed border-[#9b59b6] bg-[#9b59b6]" style="height:12px" /> 封闭环 A₀
+      </span>
+    </div>
   </div>
 </template>
 
@@ -8,72 +25,117 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { unitLabel } from '@/utils/unit'
 import { getGdtCalcMode } from '@/utils/size-chain'
+import { calcNominalClosed } from '@/utils/ring-tolerance'
 
 const props = defineProps({
   closedRing: { type: Object, required: true },
   componentRings: { type: Array, default: () => [] },
   rssTolerance: { type: Number, default: 0 },
   analysisTypeId: { type: String, default: '' },
+  showLegend: { type: Boolean, default: true },
+  showFormula: { type: Boolean, default: true },
 })
 
 const canvasRef = ref(null)
-const width = 800
+const width = 760
 
+const rings = computed(() => props.componentRings)
+const unit = computed(() => unitLabel(props.closedRing.unit))
 const gdtMode = computed(() => getGdtCalcMode(props.analysisTypeId))
+const nominalClosed = computed(() =>
+  rings.value.length ? calcNominalClosed(rings.value) : null,
+)
 
 const canvasHeight = computed(() => {
   const stack = gdtMode.value?.stack
   if (stack === '2d-position') return 280
   if (stack === 'radial') return 260
   if (gdtMode.value) return 240
-  return 220
+  return 260
 })
 
-function drawArrow(ctx, x1, y1, x2, y2, color) {
+function drawArrow(ctx, x1, y1, x2, y2, color, lineWidth = 2) {
   ctx.strokeStyle = color
   ctx.fillStyle = color
-  ctx.lineWidth = 2
+  ctx.lineWidth = lineWidth
   ctx.beginPath()
   ctx.moveTo(x1, y1)
   ctx.lineTo(x2, y2)
   ctx.stroke()
   const angle = Math.atan2(y2 - y1, x2 - x1)
-  const head = 8
+  const head = 7
   ctx.beginPath()
   ctx.moveTo(x2, y2)
-  ctx.lineTo(x2 - head * Math.cos(angle - 0.4), y2 - head * Math.sin(angle - 0.4))
-  ctx.lineTo(x2 - head * Math.cos(angle + 0.4), y2 - head * Math.sin(angle + 0.4))
+  ctx.lineTo(x2 - head * Math.cos(angle - 0.45), y2 - head * Math.sin(angle - 0.45))
+  ctx.lineTo(x2 - head * Math.cos(angle + 0.45), y2 - head * Math.sin(angle + 0.45))
   ctx.closePath()
   ctx.fill()
 }
 
-function drawClosedRingBar(ctx, height, unit) {
-  const y = height - 28
+function drawVectorChain(ctx, height, unitStr) {
+  const list = rings.value
+  const baselineY = height - 72
+  const padX = 48
+  const slot = (width - padX * 2) / (list.length + 1)
+
+  ctx.strokeStyle = '#bdc3c7'
+  ctx.lineWidth = 2
   ctx.setLineDash([])
-  ctx.strokeStyle = '#e74c3c'
-  ctx.lineWidth = 3
-  drawArrow(ctx, 30, y, width - 30, y, '#e74c3c')
-
-  ctx.fillStyle = '#e74c3c'
-  ctx.font = 'bold 13px sans-serif'
-  ctx.textAlign = 'center'
-  const label = props.closedRing.name || '封闭环 L0'
-  const tol = props.rssTolerance ? ` ± ${props.rssTolerance.toFixed(3)}` : ''
-  ctx.fillText(
-    `${label}  目标 ${props.closedRing.min ?? '?'} ~ ${props.closedRing.max ?? '?'} ${unit}${tol}`,
-    width / 2,
-    y + 22,
-  )
-
-  ctx.strokeStyle = '#e74c3c44'
-  ctx.lineWidth = 6
   ctx.beginPath()
-  ctx.moveTo(30, y)
-  ctx.lineTo(width - 30, y)
+  ctx.moveTo(padX - 20, baselineY)
+  ctx.lineTo(width - padX + 20, baselineY)
   ctx.stroke()
+
+  list.forEach((ring, i) => {
+    const cx = padX + slot * (i + 0.5)
+    const isInc = ring.type === 'increasing'
+    const color = isInc ? '#27ae60' : '#e74c3c'
+    const arrowH = 42 + Math.min((ring.size ?? 0) / 3, 24)
+
+    if (isInc) {
+      drawArrow(ctx, cx, baselineY, cx, baselineY - arrowH, color, 2.5)
+    } else {
+      drawArrow(ctx, cx, baselineY - arrowH, cx, baselineY, color, 2.5)
+    }
+
+    ctx.fillStyle = '#2c3e50'
+    ctx.font = 'bold 12px sans-serif'
+    ctx.textAlign = 'center'
+    const label = ring.name?.trim() || `A${i + 1}`
+    ctx.fillText(`${label}=${ring.size ?? 0}`, cx, baselineY - arrowH - 8)
+
+    ctx.fillStyle = color
+    ctx.font = '10px sans-serif'
+    ctx.fillText(isInc ? '增' : '减', cx, baselineY + 16)
+  })
+
+  const closeX = width - padX + 8
+  const closeH = 50
+  ctx.strokeStyle = '#9b59b6'
+  ctx.setLineDash([5, 4])
+  drawArrow(ctx, closeX, baselineY, closeX, baselineY - closeH, '#9b59b6', 2)
+  ctx.setLineDash([])
+
+  ctx.fillStyle = '#9b59b6'
+  ctx.font = 'bold 12px sans-serif'
+  ctx.textAlign = 'center'
+  const a0 = nominalClosed.value
+  const a0Label = props.closedRing.name?.trim() || 'A₀'
+  ctx.fillText(`${a0Label}=${a0 != null ? a0.toFixed(1) : '?'}`, closeX, baselineY - closeH - 8)
+  ctx.font = '10px sans-serif'
+  ctx.fillText('封闭环', closeX, baselineY + 16)
+
+  ctx.fillStyle = '#7f8c8d'
+  ctx.font = '11px sans-serif'
+  ctx.textAlign = 'left'
+  ctx.fillText(
+    `目标 ${props.closedRing.min ?? '?'} ~ ${props.closedRing.max ?? '?'} ${unitStr}`,
+    padX - 20,
+    22,
+  )
 }
 
-function draw2dPosition(ctx, height, unit) {
+function draw2dPosition(ctx, height, unitStr) {
   const cx = width / 2
   const cy = height / 2 - 20
   const r = 55
@@ -112,10 +174,10 @@ function draw2dPosition(ctx, height, unit) {
 
   ctx.fillStyle = '#e74c3c'
   ctx.font = 'bold 12px sans-serif'
-  ctx.fillText(`位置度公差带 Ø${props.rssTolerance?.toFixed(3) ?? '?'} ${unit}`, cx, cy - r - 12)
+  ctx.fillText(`位置度公差带 Ø${props.rssTolerance?.toFixed(3) ?? '?'} ${unitStr}`, cx, cy - r - 12)
 }
 
-function drawRadial(ctx, height, unit) {
+function drawRadial(ctx, height, unitStr) {
   const cx = width / 2
   const cy = height / 2 - 10
 
@@ -143,45 +205,7 @@ function drawRadial(ctx, height, unit) {
   ctx.fillStyle = '#e74c3c'
   ctx.font = '11px sans-serif'
   ctx.textAlign = 'left'
-  ctx.fillText(`径向 ${props.rssTolerance?.toFixed(3) ?? '?'} ${unit}`, cx + 48, cy + 4)
-}
-
-function drawLinearBlocks(ctx, height, unit) {
-  const rings = props.componentRings
-  const blockWidth = Math.min(130, (width - 60) / rings.length - 12)
-  let x = 30
-
-  rings.forEach((ring) => {
-    const color = ring.type === 'increasing' ? '#3498db' : '#2ecc71'
-    const isInc = ring.type === 'increasing'
-
-    ctx.fillStyle = color + '18'
-    ctx.strokeStyle = color
-    ctx.lineWidth = 2
-    ctx.fillRect(x, 70, blockWidth, 56)
-    ctx.strokeRect(x, 70, blockWidth, 56)
-
-    ctx.fillStyle = '#333'
-    ctx.font = '12px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(ring.name, x + blockWidth / 2, 92)
-    ctx.fillText(`${ring.size}±${ring.tolerance} ${unit}`, x + blockWidth / 2, 108)
-    ctx.fillStyle = color
-    ctx.font = '11px sans-serif'
-    ctx.fillText(isInc ? '增环' : '减环', x + blockWidth / 2, 120)
-    if (ring.factor != null && ring.factor !== 1) {
-      ctx.fillText(`k=${ring.factor}`, x + blockWidth / 2, 132)
-    }
-
-    const ax = x + blockWidth / 2
-    if (isInc) {
-      drawArrow(ctx, ax - 30, 55, ax + 30, 55, color)
-    } else {
-      drawArrow(ctx, ax + 30, 55, ax - 30, 55, color)
-    }
-
-    x += blockWidth + 12
-  })
+  ctx.fillText(`径向 ${props.rssTolerance?.toFixed(3) ?? '?'} ${unitStr}`, cx + 48, cy + 4)
 }
 
 function draw() {
@@ -192,33 +216,32 @@ function draw() {
   const ctx = canvas.getContext('2d')
   ctx.clearRect(0, 0, width, height)
 
-  const rings = props.componentRings
-  const unit = unitLabel(props.closedRing.unit)
+  const unitStr = unit.value
+  const list = rings.value
 
-  if (!rings.length) {
+  if (!list.length) {
     ctx.fillStyle = '#999'
     ctx.font = '14px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('添加组成环后将显示尺寸链示意图', width / 2, height / 2)
+    ctx.fillText('添加组成环后，这里会显示尺寸链矢量图', width / 2, height / 2 - 8)
+    ctx.font = '12px sans-serif'
+    ctx.fillText('绿色向上 = 增环，红色向下 = 减环', width / 2, height / 2 + 16)
     return
   }
 
   if (gdtMode.value?.stack === '2d-position') {
-    draw2dPosition(ctx, height, unit)
+    draw2dPosition(ctx, height, unitStr)
   } else if (gdtMode.value?.stack === 'radial') {
-    drawRadial(ctx, height, unit)
-  } else {
-    drawLinearBlocks(ctx, height, unit)
-  }
-
-  if (gdtMode.value) {
+    drawRadial(ctx, height, unitStr)
+  } else if (gdtMode.value) {
+    drawVectorChain(ctx, height, unitStr)
     ctx.fillStyle = '#7f8c8d'
-    ctx.font = '12px sans-serif'
-    ctx.textAlign = 'left'
-    ctx.fillText(`模式：${gdtMode.value.label}`, 12, 18)
+    ctx.font = '11px sans-serif'
+    ctx.textAlign = 'right'
+    ctx.fillText(`模式：${gdtMode.value.label}`, width - 12, 18)
+  } else {
+    drawVectorChain(ctx, height, unitStr)
   }
-
-  drawClosedRingBar(ctx, height, unit)
 }
 
 watch(
