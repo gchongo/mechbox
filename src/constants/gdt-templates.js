@@ -61,6 +61,22 @@ export const GDT_RING_TEMPLATES = {
       { name: '轴径', size: 30, tolerance: 0.02, factor: 0.5, direction: 'right' },
     ],
   },
+  straightness: {
+    closedRing: { name: '直线度 L0', min: 0, max: 0.04, direction: 'right' },
+    rings: [
+      { name: '段1 直线', size: 0.01, tolerance: 0.008, factor: 1, direction: 'right' },
+      { name: '段2 直线', size: 0.012, tolerance: 0.01, factor: 1, direction: 'right' },
+      { name: '段3 直线', size: 0.009, tolerance: 0.007, factor: 0.8, direction: 'right' },
+    ],
+  },
+  roundness: {
+    closedRing: { name: '圆度 L0', min: 0, max: 0.025, direction: 'right' },
+    rings: [
+      { name: '截面 A 圆度', size: 0.008, tolerance: 0.006, factor: 1, direction: 'right' },
+      { name: '截面 B 圆度', size: 0.007, tolerance: 0.005, factor: 1, direction: 'right' },
+      { name: '径向尺寸', size: 25, tolerance: 0.015, factor: 0.5, direction: 'up' },
+    ],
+  },
 }
 
 export function getRingTemplate(typeId) {

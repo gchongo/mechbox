@@ -19,6 +19,7 @@ export const ANALYSIS_GROUPS = [
       { id: 'perpendicularity', name: '垂直度', desc: '适用于平面垂直度分析', icon: 'Sort' },
       { id: 'profile-2d', name: '轮廓度', desc: '适用于2D轮廓度分析', icon: 'Crop' },
       { id: 'flatness', name: '平面度', desc: '适用于平面度分析', icon: 'Grid' },
+      { id: 'straightness', name: '直线度', desc: '适用于直线要素直线度分析', icon: 'Minus' },
     ],
   },
   {
@@ -41,6 +42,7 @@ export const ANALYSIS_GROUPS = [
       { id: 'coaxiality', name: '同轴度', desc: '适用于GD&T同轴度分析', icon: 'Connection' },
       { id: 'profile-gdt', name: '轮廓度', desc: '适用于GD&T轮廓度分析', icon: 'Crop' },
       { id: 'runout', name: '跳动', desc: '适用于GD&T跳动分析', icon: 'Refresh' },
+      { id: 'roundness', name: '圆度', desc: '适用于圆要素圆度分析', icon: 'Aim' },
     ],
   },
 ]

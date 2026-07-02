@@ -32,7 +32,7 @@
     <!-- 机械计算工具 V2.0 -->
     <section class="mb-8">
       <h2 class="mb-4 text-lg font-semibold">机械计算工具 (V2.0)</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <router-link
           v-for="tool in mechTools"
           :key="tool.path"
@@ -177,6 +177,7 @@ const mechTools = [
   { path: '/batch', label: '批量公差验证', desc: '多方案 RSS/极值批量检验', icon: 'List', badge: 'V2.0' },
   { path: '/allocation', label: '公差分配', desc: 'RSS 等贡献 / 最小成本分配', icon: 'ScaleToOriginal', badge: 'V2.0' },
   { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 完整校核', icon: 'SetUp', badge: 'V2.0' },
+  { path: '/thread', label: '螺纹强度', desc: '拉/剪应力 + 拧紧扭矩', icon: 'Link', badge: 'V2.0' },
   { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 + ISO 281', icon: 'Help', badge: 'V2.0' },
 ]
 
@@ -195,7 +196,7 @@ const v4Tools = [
 
 const quickLinks = [
   { path: '/tutorial', label: '教程', desc: '5 篇教程 + Bilibili 视频', icon: 'VideoCamera' },
-  { path: '/cases', label: '案例', desc: '10 个预设案例', icon: 'Collection' },
+  { path: '/cases', label: '案例', desc: '12 个预设案例', icon: 'Collection' },
   { path: '/quiz', label: '练习', desc: '10 道练习题', icon: 'EditPen' },
   { path: '/manual', label: '公式手册', desc: 'LaTeX 公式', icon: 'Notebook' },
   { path: '/glossary', label: '术语词典', desc: 'GD&T 术语', icon: 'Reading' },

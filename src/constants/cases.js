@@ -272,6 +272,53 @@ export const CASE_PRESETS = [
       rssDistribution: 'triangular',
     },
   },
+  {
+    id: 'straightness-2d',
+    title: '直线度尺寸链',
+    desc: '多段直线要素偏差沿长度方向叠加',
+    type: '2D 平面',
+    typeId: 'straightness',
+    data: {
+      selectedTypeId: 'straightness',
+      closedRing: {
+        name: '直线度 L0',
+        min: 0,
+        max: 0.04,
+        direction: 'right',
+        unit: 'mm',
+      },
+      componentRings: [
+        { name: '段1 直线', size: 0.01, tolerance: 0.008, factor: 1, direction: 'right' },
+        { name: '段2 直线', size: 0.012, tolerance: 0.01, factor: 1, direction: 'right' },
+        { name: '段3 直线', size: 0.009, tolerance: 0.007, factor: 0.8, direction: 'right' },
+      ],
+      method: 'rss',
+    },
+  },
+  {
+    id: 'roundness-gdt',
+    title: '圆度尺寸链',
+    desc: '多截面圆度径向误差 RSS 合成',
+    type: 'GD&T 公差',
+    typeId: 'roundness',
+    data: {
+      selectedTypeId: 'roundness',
+      closedRing: {
+        name: '圆度 L0',
+        min: 0,
+        max: 0.025,
+        direction: 'right',
+        unit: 'mm',
+      },
+      componentRings: [
+        { name: '截面 A 圆度', size: 0.008, tolerance: 0.006, factor: 1, direction: 'right' },
+        { name: '截面 B 圆度', size: 0.007, tolerance: 0.005, factor: 1, direction: 'right' },
+        { name: '径向尺寸', size: 25, tolerance: 0.015, factor: 0.5, direction: 'up' },
+      ],
+      method: 'modified-rss',
+      rssDistribution: 'normal',
+    },
+  },
 ]
 
 export function findCasePreset(caseId) {

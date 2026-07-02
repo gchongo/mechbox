@@ -92,6 +92,12 @@ const routes = [
     meta: { title: '齿轮计算' },
   },
   {
+    path: '/thread',
+    name: 'thread',
+    component: () => import('@/views/ThreadCalcView.vue'),
+    meta: { title: '螺纹强度' },
+  },
+  {
     path: '/bearing',
     name: 'bearing',
     component: () => import('@/views/BearingCalcView.vue'),

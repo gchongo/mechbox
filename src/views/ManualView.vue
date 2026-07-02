@@ -47,6 +47,9 @@
         <div v-if="item.category === '轴承'" class="mt-3">
           <router-link to="/bearing" class="text-sm text-primary hover:underline">→ 打开轴承计算器</router-link>
         </div>
+        <div v-if="item.category === '螺纹'" class="mt-3">
+          <router-link to="/thread" class="text-sm text-primary hover:underline">→ 打开螺纹计算器</router-link>
+        </div>
       </div>
     </div>
     <el-empty v-if="!filtered.length" description="未找到匹配公式" />
@@ -60,7 +63,7 @@ import { FORMULAS } from '@/constants/formulas'
 const keyword = ref('')
 const activeCategory = ref('全部')
 
-const categories = ['全部', '尺寸链', '统计', '齿轮', '轴承', '结构', '传动', '流体']
+const categories = ['全部', '尺寸链', '统计', '齿轮', '轴承', '螺纹', '结构', '传动', '流体']
 
 const filtered = computed(() => {
   let list = FORMULAS

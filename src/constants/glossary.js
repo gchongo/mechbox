@@ -50,6 +50,22 @@ export const GLOSSARY_TERMS = [
     tags: ['形状', '表面'],
   },
   {
+    id: 'straightness',
+    term: '直线度 (Straightness)',
+    symbol: '—',
+    category: '形状公差',
+    definition: '单一直线要素的直线形状偏差，不含基准。多段直线要素可沿长度方向叠加分析。',
+    tags: ['形状', '2D'],
+  },
+  {
+    id: 'roundness',
+    term: '圆度 (Roundness)',
+    symbol: '○',
+    category: '形状公差',
+    definition: '单一圆截面的圆形状偏差。多截面圆度可通过径向 RSS 合成至封闭环。',
+    tags: ['形状', 'GD&T', '旋转件'],
+  },
+  {
     id: 'profile',
     term: '轮廓度 (Profile)',
     symbol: '⌓',

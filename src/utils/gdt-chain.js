@@ -59,6 +59,18 @@ export const GDT_CALC_MODES = {
     stack: 'radial',
     desc: '圆跳动/全跳动径向分量叠加',
   },
+  straightness: {
+    id: 'straightness',
+    label: '直线度链',
+    stack: 'form-direct',
+    desc: '直线要素偏差沿长度方向叠加',
+  },
+  roundness: {
+    id: 'roundness',
+    label: '圆度链',
+    stack: 'radial',
+    desc: '圆截面径向误差 RSS 合成圆度',
+  },
   'assembly-3d': { id: 'assembly-3d', label: '3D 装配链', stack: '1d-weighted', desc: '空间尺寸链，传递系数表示方向灵敏度' },
   'housing-assembly': { id: 'housing-assembly', label: '箱体装配链', stack: '1d-weighted', desc: '1D 叠加 + 传递系数' },
   'frame-assembly': { id: 'frame-assembly', label: '机架装配链', stack: '1d-weighted', desc: '1D 叠加 + 传递系数' },
