@@ -2,7 +2,7 @@
   <div>
     <h1 class="page-title">教程</h1>
     <p class="mb-6 text-gray-600 dark:text-gray-400">
-      5 个尺寸链教程，支持演示模式自动播放与图文详解
+      5 个尺寸链教程，含 Bilibili 视频、演示模式与图文详解
     </p>
 
     <div class="space-y-4">
@@ -17,7 +17,10 @@
             </div>
             <div>
               <h3 class="font-medium">{{ t.title }}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ t.duration }} · {{ t.desc }}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ t.duration }} · {{ t.desc }}
+              </p>
+              <el-tag v-if="t.videoBvid" size="small" type="danger" class="mt-1">Bilibili</el-tag>
             </div>
           </div>
           <el-icon class="mt-1 text-gray-400">
@@ -26,16 +29,36 @@
         </div>
 
         <div v-show="expanded[t.id]" class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
-          <TutorialDemo :tutorial="t" class="mb-4" />
-
-          <div v-if="t.videoEmbed" class="mb-4 aspect-video overflow-hidden rounded-lg">
-            <iframe
-              :src="t.videoEmbed"
-              class="h-full w-full border-0"
-              allowfullscreen
-              title="教程视频"
-            />
+          <!-- 视频 -->
+          <div v-if="t.videoEmbed" class="mb-4">
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                📺 {{ t.videoTitle }}
+              </p>
+              <a
+                v-if="t.videoUrl"
+                :href="t.videoUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-sm text-primary hover:underline"
+                @click.stop
+              >
+                在 Bilibili 打开 ↗
+              </a>
+            </div>
+            <div class="aspect-video overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+              <iframe
+                :src="t.videoEmbed"
+                class="h-full w-full border-0"
+                allowfullscreen
+                scrolling="no"
+                referrerpolicy="no-referrer"
+                :title="t.videoTitle"
+              />
+            </div>
           </div>
+
+          <TutorialDemo :tutorial="t" class="mb-4" />
 
           <div v-for="(sec, i) in t.sections" :key="i" class="mb-4 last:mb-0">
             <h4 class="mb-1 font-medium text-primary">{{ sec.heading }}</h4>

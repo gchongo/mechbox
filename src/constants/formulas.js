@@ -6,6 +6,7 @@ export const FORMULAS = [
     latex: 'T = T_1 + T_2 + T_3 + \cdots',
     desc: '各组成环公差代数相加，结果最保守，适用于 100% 安全要求。',
     tags: ['极值', '公差', '尺寸链'],
+    category: '尺寸链',
   },
   {
     id: 'rss',
@@ -14,6 +15,7 @@ export const FORMULAS = [
     latex: 'T = \sqrt{T_1^2 + T_2^2 + T_3^2 + \cdots}',
     desc: '独立变量假设下的统计叠加，一般对应约 95% 合格率。',
     tags: ['RSS', '概率', '公差'],
+    category: '尺寸链',
   },
   {
     id: 'modified-rss',
@@ -22,6 +24,7 @@ export const FORMULAS = [
     latex: 'T_{mod} = k \\cdot \\sqrt{T_1^2 + T_2^2 + \\cdots}',
     desc: '在 RSS 基础上乘以分布修正系数 k，适用于均匀/偏态等非正态场景。',
     tags: ['RSS', '修正', '偏态'],
+    category: '尺寸链',
   },
   {
     id: 'weighted-rss',
@@ -30,6 +33,7 @@ export const FORMULAS = [
     latex: 'T = \\sqrt{\\sum (T_i \\cdot f_i)^2}',
     desc: '传递系数加权的 RSS 叠加。',
     tags: ['RSS', '加权'],
+    category: '尺寸链',
   },
   {
     id: 't-to-sigma',
@@ -38,6 +42,7 @@ export const FORMULAS = [
     latex: '\\sigma = \\frac{T}{K}',
     desc: 'K 为分布系数：正态 6.0，均匀 3.46，三角 4.24，偏态 5.0。',
     tags: ['转换', '正态', '标准差'],
+    category: '统计',
   },
   {
     id: 'sigma-to-t',
@@ -46,6 +51,7 @@ export const FORMULAS = [
     latex: 'T = \\sigma \cdot K',
     desc: '由过程标准差估算等效公差带宽。',
     tags: ['转换', '公差'],
+    category: '统计',
   },
   {
     id: 'nominal-chain',
@@ -54,6 +60,7 @@ export const FORMULAS = [
     latex: 'L_0 = \sum L_{\text{增}} - \sum L_{\text{减}}',
     desc: '增环与封闭环同向，减环反向，按传递系数加权。',
     tags: ['名义值', '增环', '减环'],
+    category: '尺寸链',
   },
   {
     id: 'sigma-level',
@@ -62,6 +69,7 @@ export const FORMULAS = [
     latex: '\\sigma_{\text{水平}} = \\frac{T_{\text{目标}}}{6\\sigma}',
     desc: '衡量过程满足目标公差的能力，越大越好。',
     tags: ['西格玛', '质量'],
+    category: '统计',
   },
   {
     id: 'cpk',
@@ -70,6 +78,7 @@ export const FORMULAS = [
     latex: 'C_{pk} = \min\\left(\frac{USL - \mu}{3\\sigma}, \frac{\mu - LSL}{3\\sigma}\right)',
     desc: '同时考虑上下规格限与过程中心偏移。',
     tags: ['Cpk', 'SPC'],
+    category: '统计',
   },
   {
     id: 'pass-rate',
@@ -78,6 +87,7 @@ export const FORMULAS = [
     latex: 'P = 2\Phi(\\sigma_{\text{水平}}) - 1',
     desc: '基于正态分布 CDF 估算规格内比例。',
     tags: ['合格率', '正态'],
+    category: '统计',
   },
   {
     id: 'dppm',
@@ -86,6 +96,7 @@ export const FORMULAS = [
     latex: 'DPPM = (1 - P) \times 10^{6}',
     desc: '每百万件缺陷数，P 为合格率。',
     tags: ['DPPM', '质量'],
+    category: '统计',
   },
   {
     id: 'mean',
@@ -94,6 +105,7 @@ export const FORMULAS = [
     latex: '\\mu = \\frac{\sum x}{n}',
     desc: '测量数据的算术平均值。',
     tags: ['统计', '均值'],
+    category: '统计',
   },
   {
     id: 'std',
@@ -102,6 +114,7 @@ export const FORMULAS = [
     latex: '\\sigma = \sqrt{\\frac{\sum (x - \\mu)^2}{n}}',
     desc: '总体标准差估计（与需求书一致）。',
     tags: ['统计', '标准差'],
+    category: '统计',
   },
   {
     id: 'range',
@@ -110,5 +123,78 @@ export const FORMULAS = [
     latex: 'R = x_{\max} - x_{\min}',
     desc: '样本最大值与最小值之差。',
     tags: ['统计', '极差'],
+    category: '统计',
+  },
+  {
+    id: 'gear-pitch-diameter',
+    name: '齿轮分度圆直径',
+    formula: 'd = m × z',
+    latex: 'd = m \\cdot z',
+    desc: '直齿轮分度圆直径，m 为模数 (mm)，z 为齿数。',
+    tags: ['齿轮', '几何', 'V2.0'],
+    category: '齿轮',
+  },
+  {
+    id: 'gear-tangential-force',
+    name: '齿轮圆周力',
+    formula: 'Ft = 2000T / d',
+    latex: 'F_t = \\frac{2000\\,T}{d}',
+    desc: '由扭矩 T (N·m) 与分度圆直径 d (mm) 求圆周力 Ft (N)。MechBox 齿轮计算器使用此式。',
+    tags: ['齿轮', '力学', 'V2.0'],
+    category: '齿轮',
+  },
+  {
+    id: 'gear-bending-stress',
+    name: '齿轮弯曲应力（Lewis）',
+    formula: 'σF = Ft / (b·m·Y)',
+    latex: '\\sigma_F = \\frac{F_t}{b \\cdot m \\cdot Y}',
+    desc: 'Lewis 公式近似齿根弯曲应力 σF (MPa)。b 为齿宽，Y 为齿形系数（常用 2.5~2.8）。',
+    tags: ['齿轮', '强度', 'V2.0'],
+    category: '齿轮',
+  },
+  {
+    id: 'gear-contact-stress',
+    name: '齿轮接触应力（简化）',
+    formula: 'σH ≈ 118√[Ft(u+1)/(b·d·u)]',
+    latex: '\\sigma_H \\approx 118\\sqrt{\\frac{F_t(u+1)}{b \\cdot d \\cdot u}}',
+    desc: '钢制直齿轮赫兹接触应力简化估算 (MPa)，u 为齿数比（≥1）。',
+    tags: ['齿轮', '强度', '接触', 'V2.0'],
+    category: '齿轮',
+  },
+  {
+    id: 'gear-pitch-velocity',
+    name: '齿轮线速度',
+    formula: 'v = πdn / 60000',
+    latex: 'v = \\frac{\\pi d n}{60000}',
+    desc: '分度圆线速度 v (m/s)，d 为分度圆直径 (mm)，n 为转速 (rpm)。',
+    tags: ['齿轮', '运动学', 'V2.0'],
+    category: '齿轮',
+  },
+  {
+    id: 'bearing-equivalent-load',
+    name: '轴承当量动载荷',
+    formula: 'P = X·Fr + Y·Fa',
+    latex: 'P = X \\cdot F_r + Y \\cdot F_a',
+    desc: '滚动轴承径向/轴向合成当量动载荷 P (N)，X/Y 取自轴承手册或工况系数。',
+    tags: ['轴承', '载荷', 'V2.0'],
+    category: '轴承',
+  },
+  {
+    id: 'bearing-l10',
+    name: '轴承额定寿命 L10',
+    formula: 'L10 = (C/P)^ε（百万转）',
+    latex: 'L_{10} = \\left(\\frac{C}{P}\\right)^{\\varepsilon}',
+    desc: 'ISO 281 基本额定寿命，C 为额定动载荷 (N)。球轴承 ε=3，滚子轴承 ε=10/3。',
+    tags: ['轴承', '寿命', 'V2.0'],
+    category: '轴承',
+  },
+  {
+    id: 'bearing-life-hours',
+    name: '轴承寿命（小时）',
+    formula: 'Lh = L10×10⁶ / (60n)',
+    latex: 'L_h = \\frac{L_{10} \\times 10^{6}}{60 \\cdot n}',
+    desc: '由 L10（百万转）与转速 n (rpm) 换算为小时寿命。',
+    tags: ['轴承', '寿命', 'V2.0'],
+    category: '轴承',
   },
 ]

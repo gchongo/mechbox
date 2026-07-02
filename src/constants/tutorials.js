@@ -1,9 +1,23 @@
+/** Bilibili 嵌入式播放器 URL */
+export function bilibiliPlayerUrl(bvid) {
+  return `https://player.bilibili.com/player.html?bvid=${bvid}&page=1&high_quality=1&danmaku=0&autoplay=0`
+}
+
+/** Bilibili 视频页链接 */
+export function bilibiliPageUrl(bvid) {
+  return `https://www.bilibili.com/video/${bvid}/`
+}
+
 export const TUTORIALS = [
   {
     id: 1,
     title: '尺寸链基础',
-    duration: '5 分钟',
+    duration: '约 15 分钟',
     desc: '封闭环、组成环、增环减环的基本概念',
+    videoBvid: 'BV1b5411c7dg',
+    videoTitle: '尺寸链计算分析基础（术语规则解释及过程演示）',
+    videoEmbed: bilibiliPlayerUrl('BV1b5411c7dg'),
+    videoUrl: bilibiliPageUrl('BV1b5411c7dg'),
     sections: [
       {
         heading: '什么是尺寸链',
@@ -22,8 +36,12 @@ export const TUTORIALS = [
   {
     id: 2,
     title: '齿轮装配案例',
-    duration: '10 分钟',
+    duration: '约 12 分钟',
     desc: '挡环 + 齿轮 + 轴径的典型间隙分析',
+    videoBvid: 'BV1WT41157CL',
+    videoTitle: '装配尺寸链计算案例',
+    videoEmbed: bilibiliPlayerUrl('BV1WT41157CL'),
+    videoUrl: bilibiliPageUrl('BV1WT41157CL'),
     sections: [
       {
         heading: '案例背景',
@@ -43,8 +61,12 @@ export const TUTORIALS = [
   {
     id: 3,
     title: 'RSS 法详解',
-    duration: '8 分钟',
+    duration: '约 18 分钟',
     desc: '概率统计叠加原理与适用场景',
+    videoBvid: 'BV11r4y1u7as',
+    videoTitle: '尺寸链专栏：尺寸链累加如何计算，尺寸公差有什么缺点？',
+    videoEmbed: bilibiliPlayerUrl('BV11r4y1u7as'),
+    videoUrl: bilibiliPageUrl('BV11r4y1u7as'),
     sections: [
       {
         heading: '公式',
@@ -63,8 +85,12 @@ export const TUTORIALS = [
   {
     id: 4,
     title: '极值法 vs RSS',
-    duration: '6 分钟',
+    duration: '约 20 分钟',
     desc: '两种方法的差异与选用建议',
+    videoBvid: 'BV1QR4y1R7Le',
+    videoTitle: '装配尺寸链计算（结合公差软件详细操作案例）',
+    videoEmbed: bilibiliPlayerUrl('BV1QR4y1R7Le'),
+    videoUrl: bilibiliPageUrl('BV1QR4y1R7Le'),
     sections: [
       {
         heading: '极值法',
@@ -83,8 +109,12 @@ export const TUTORIALS = [
   {
     id: 5,
     title: '西格玛水平与 Cpk',
-    duration: '7 分钟',
+    duration: '约 25 分钟',
     desc: '质量水平评估指标',
+    videoBvid: 'BV1fS4y1m7PB',
+    videoTitle: '人人会六西格玛23 — 过程能力指数 Cp、Cpk（一）',
+    videoEmbed: bilibiliPlayerUrl('BV1fS4y1m7PB'),
+    videoUrl: bilibiliPageUrl('BV1fS4y1m7PB'),
     sections: [
       {
         heading: '西格玛水平',

@@ -144,7 +144,7 @@ const mechTools = [
 ]
 
 const quickLinks = [
-  { path: '/tutorial', label: '教程', desc: '5 篇教程 + 演示模式', icon: 'VideoCamera' },
+  { path: '/tutorial', label: '教程', desc: '5 篇教程 + Bilibili 视频', icon: 'VideoCamera' },
   { path: '/cases', label: '案例', desc: '6 个预设案例', icon: 'Collection' },
   { path: '/quiz', label: '练习', desc: '10 道练习题', icon: 'EditPen' },
   { path: '/manual', label: '公式手册', desc: 'LaTeX 公式', icon: 'Notebook' },
