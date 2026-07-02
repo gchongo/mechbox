@@ -10,7 +10,7 @@
 
     <StepProgress :current-step="currentStep" />
 
-    <!-- 步骤 1：选择类型 -->
+    <!-- 步骤 1 -->
     <section v-show="currentStep === 1" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 1：选择类型</h2>
       <el-tabs v-model="activeGroup">
@@ -49,24 +49,42 @@
       </div>
     </section>
 
-    <!-- 步骤 2：定义封闭环 -->
+    <!-- 步骤 2 -->
     <section v-show="currentStep === 2" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 2：定义封闭环</h2>
-      <el-form label-width="120px" class="max-w-xl">
-        <el-form-item label="名称" required>
-          <el-input v-model="closedRing.name" placeholder="如：间隙 L0" maxlength="50" />
+      <el-form label-width="130px" class="max-w-xl">
+        <el-form-item label="名称" required :error="fieldError('name')">
+          <el-input
+            v-model="closedRing.name"
+            placeholder="如：间隙 L0"
+            maxlength="50"
+            :class="{ 'ring-error': fieldError('name') }"
+            @blur="touchField('name')"
+          />
         </el-form-item>
-        <el-form-item label="最小值 (mm)" required>
-          <el-input-number v-model="closedRing.min" :precision="2" :step="0.01" />
+        <el-form-item label="最小值" required :error="fieldError('min')">
+          <el-input-number
+            v-model="closedRing.min"
+            :precision="2"
+            :step="0.01"
+            @blur="touchField('min')"
+          />
+          <span class="ml-2 text-sm text-gray-500">{{ unit }}</span>
         </el-form-item>
-        <el-form-item label="最大值 (mm)" required>
-          <el-input-number v-model="closedRing.max" :precision="2" :step="0.01" />
+        <el-form-item label="最大值" required :error="fieldError('max')">
+          <el-input-number
+            v-model="closedRing.max"
+            :precision="2"
+            :step="0.01"
+            @blur="touchField('max')"
+          />
+          <span class="ml-2 text-sm text-gray-500">{{ unit }}</span>
         </el-form-item>
         <el-form-item label="公差">
-          <span>{{ closedRingTolerance.toFixed(2) }} mm（自动计算）</span>
+          <span>{{ closedRingTolerance.toFixed(2) }} {{ unit }}（自动计算）</span>
         </el-form-item>
         <el-form-item label="方向">
-          <el-radio-group v-model="closedRing.direction">
+          <el-radio-group v-model="closedRing.direction" @change="syncAllRingTypes">
             <el-radio-button label="left">←</el-radio-button>
             <el-radio-button label="up">↑</el-radio-button>
             <el-radio-button label="right">→</el-radio-button>
@@ -74,24 +92,25 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="单位">
-          <el-radio-group v-model="closedRing.unit">
+          <el-radio-group v-model="closedRing.unit" @change="onUnitChange">
             <el-radio label="mm">mm</el-radio>
             <el-radio label="inch">inch</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
+      <p class="text-sm text-gray-500">
+        💡 封闭环是装配过程最终形成的尺寸（如间隙、过盈量）
+      </p>
       <div class="mt-6 flex justify-between">
         <el-button @click="clearClosedRing">清除</el-button>
         <div class="flex gap-2">
           <el-button @click="prevStep">← 返回</el-button>
-          <el-button type="primary" :disabled="!isClosedRingValid" @click="nextStep">
-            下一步 →
-          </el-button>
+          <el-button type="primary" @click="validateAndNext(2)">下一步 →</el-button>
         </div>
       </div>
     </section>
 
-    <!-- 步骤 3：组成环 -->
+    <!-- 步骤 3 -->
     <section v-show="currentStep === 3" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 3：添加组成环</h2>
       <el-button type="primary" plain :disabled="componentRings.length >= 50" @click="addRing">
@@ -105,34 +124,42 @@
         <el-table-column label="#" width="50">
           <template #default="{ $index }">{{ $index + 1 }}</template>
         </el-table-column>
-        <el-table-column label="名称" min-width="120">
+        <el-table-column label="名称" min-width="110">
           <template #default="{ row }">
             <el-input v-model="row.name" placeholder="如：挡环厚度" size="small" />
           </template>
         </el-table-column>
-        <el-table-column label="尺寸 (mm)" width="120">
+        <el-table-column :label="`尺寸 (${unit})`" width="110">
           <template #default="{ row }">
             <el-input-number v-model="row.size" :precision="2" size="small" />
           </template>
         </el-table-column>
-        <el-table-column label="公差 (mm)" width="120">
+        <el-table-column :label="`公差 (${unit})`" width="110">
           <template #default="{ row }">
             <el-input-number v-model="row.tolerance" :precision="2" :min="0" size="small" />
           </template>
         </el-table-column>
-        <el-table-column label="传递系数" width="100">
+        <el-table-column label="传递系数" width="90">
           <template #default="{ row }">
             <el-input-number v-model="row.factor" :min="0" :max="10" :step="0.1" size="small" />
           </template>
         </el-table-column>
-        <el-table-column label="类型" width="100">
+        <el-table-column label="方向" width="130">
+          <template #default="{ row }">
+            <el-radio-group v-model="row.direction" size="small" @change="updateRingType(row)">
+              <el-radio-button label="left">←</el-radio-button>
+              <el-radio-button label="right">→</el-radio-button>
+            </el-radio-group>
+          </template>
+        </el-table-column>
+        <el-table-column label="类型" width="80">
           <template #default="{ row }">
             <el-tag :type="row.type === 'increasing' ? '' : 'success'" size="small">
               {{ row.type === 'increasing' ? '增环' : '减环' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="" width="60">
+        <el-table-column label="" width="50">
           <template #default="{ $index }">
             <el-button type="danger" text @click="removeRing($index)">
               <el-icon><Delete /></el-icon>
@@ -140,7 +167,9 @@
           </template>
         </el-table-column>
       </el-table>
-
+      <p class="mt-3 text-sm text-gray-500">
+        💡 与封闭环同向 = 增环（蓝色），反向 = 减环（绿色），自动判断
+      </p>
       <div class="mt-6 flex justify-between">
         <el-button @click="clearRings">清空列表</el-button>
         <div class="flex gap-2">
@@ -152,7 +181,7 @@
       </div>
     </section>
 
-    <!-- 步骤 4：选择方法 -->
+    <!-- 步骤 4 -->
     <section v-show="currentStep === 4" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 4：选择计算方法</h2>
       <el-radio-group v-model="method" class="flex flex-col gap-4">
@@ -175,37 +204,51 @@
       </div>
     </section>
 
-    <!-- 步骤 5：结果 -->
+    <!-- 步骤 5 -->
     <section v-show="currentStep === 5" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 5：查看结果</h2>
 
-      <SizeChainCanvas
-        :closed-ring="closedRing"
-        :component-rings="componentRings"
-        class="mb-6"
-      />
+      <div ref="resultPanelRef">
+        <h3 class="mb-2 text-sm font-medium text-gray-600">1. 矢量图</h3>
+        <SizeChainCanvas
+          ref="canvasRef"
+          :closed-ring="closedRing"
+          :component-rings="componentRings"
+          :rss-tolerance="rssResult.totalTolerance"
+          class="mb-6"
+        />
 
-      <div class="mb-6 rounded-lg bg-gray-50 p-4 font-mono text-sm">
-        <p v-for="(line, i) in formulaLines" :key="i">{{ line }}</p>
+        <h3 class="mb-2 text-sm font-medium text-gray-600">2. 计算公式</h3>
+        <div class="mb-6 rounded-lg bg-gray-50 p-4 font-mono text-sm leading-relaxed">
+          <p v-for="(line, i) in formulaLines" :key="i">{{ line }}</p>
+        </div>
+
+        <h3 class="mb-2 text-sm font-medium text-gray-600">3. 结果对比</h3>
+        <el-table :data="resultTable" border class="mb-6">
+          <el-table-column prop="method" label="方法" />
+          <el-table-column prop="tolerance" :label="`总公差 (${unit})`" />
+          <el-table-column prop="upper" label="上限" />
+          <el-table-column prop="lower" label="下限" />
+          <el-table-column prop="pass" label="合格">
+            <template #default="{ row }">
+              <span :class="row.pass ? 'text-success' : 'text-error'">
+                {{ row.pass ? '✓ 合格' : '✗ 不合格' }}
+              </span>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <h3 class="mb-2 text-sm font-medium text-gray-600">4. 西格玛分析</h3>
+        <SigmaSummary :summary="sigmaSummary" />
       </div>
-
-      <el-table :data="resultTable" border class="mb-6">
-        <el-table-column prop="method" label="方法" />
-        <el-table-column prop="tolerance" label="总公差" />
-        <el-table-column prop="upper" label="上限" />
-        <el-table-column prop="lower" label="下限" />
-        <el-table-column prop="pass" label="合格">
-          <template #default="{ row }">
-            <span :class="row.pass ? 'text-success' : 'text-error'">
-              {{ row.pass ? '✓ 合格' : '✗ 不合格' }}
-            </span>
-          </template>
-        </el-table-column>
-      </el-table>
 
       <div class="flex flex-wrap gap-2">
         <el-button @click="resetAll">← 重置</el-button>
         <el-button type="primary" @click="saveResult">💾 保存</el-button>
+        <el-button @click="handleExportPdf">📄 导出 PDF</el-button>
+        <el-button @click="handleExportExcel">📊 导出 Excel</el-button>
+        <el-button @click="handleExportPng">🖼️ 导出图片</el-button>
+        <el-button @click="handleCopy">📋 复制结果</el-button>
       </div>
     </section>
   </div>
@@ -217,8 +260,24 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import StepProgress from '@/components/editor/StepProgress.vue'
 import SizeChainCanvas from '@/components/editor/SizeChainCanvas.vue'
+import SigmaSummary from '@/components/editor/SigmaSummary.vue'
 import { ANALYSIS_GROUPS, findAnalysisType } from '@/constants/analysis-types'
-import { calculateSizeChain, worstCaseMethod, rssMethod } from '@/utils/size-chain'
+import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+import {
+  calculateSizeChain,
+  buildFormulaLines,
+  buildSigmaSummary,
+} from '@/utils/size-chain'
+import { inferRingType } from '@/utils/ring-direction'
+import { convertLength, convertRingList, unitLabel } from '@/utils/unit'
+import {
+  exportResultPdf,
+  exportResultPng,
+  exportCanvasPng,
+  exportExcel,
+  copyResultText,
+  buildResultText,
+} from '@/utils/export'
 import { getAnalysisById, saveAnalysis } from '@/utils/storage'
 
 const route = useRoute()
@@ -228,6 +287,11 @@ const currentStep = ref(1)
 const activeGroup = ref('1d')
 const selectedType = ref(null)
 const method = ref('rss')
+const touched = ref({})
+const showValidation = ref(false)
+const resultPanelRef = ref(null)
+const canvasRef = ref(null)
+const prevUnit = ref('mm')
 
 const closedRing = ref({
   name: '',
@@ -238,6 +302,8 @@ const closedRing = ref({
 })
 
 const componentRings = ref([])
+
+const unit = computed(() => unitLabel(closedRing.value.unit))
 
 const closedRingTolerance = computed(() => {
   if (closedRing.value.min == null || closedRing.value.max == null) return 0
@@ -285,52 +351,105 @@ const resultTable = computed(() => [
   },
 ])
 
-const formulaLines = computed(() => {
-  const rings = componentRings.value
-  if (!rings.length) return ['请添加组成环']
-  const inc = rings.filter((r) => r.type === 'increasing')
-  const dec = rings.filter((r) => r.type !== 'increasing')
-  const incSum = inc.reduce((s, r) => s + r.size, 0)
-  const decSum = dec.reduce((s, r) => s + r.size, 0)
-  const nominal = incSum - decSum
-  const tol = method.value === 'worst' ? worstCaseMethod(rings) : rssMethod(rings)
-  return [
-    `${closedRing.value.name || 'L0'} = ${inc.map((r) => r.name).join(' + ') || '0'} - (${dec.map((r) => r.name).join(' + ') || '0'})`,
-    `  = ${incSum} - ${decSum}`,
-    `  = ${nominal.toFixed(2)} mm`,
-    `总公差 (${method.value === 'worst' ? '极值法' : 'RSS'}) = ${tol.toFixed(3)} mm`,
-  ]
-})
+const formulaLines = computed(() =>
+  buildFormulaLines(closedRing.value, componentRings.value, method.value, unit.value),
+)
+
+const sigmaSummary = computed(() =>
+  buildSigmaSummary(
+    { min: closedRing.value.min, max: closedRing.value.max },
+    rssResult.value,
+  ),
+)
 
 onMounted(() => {
+  initFromRoute()
+})
+
+watch(
+  () => [route.query.type, route.query.case, route.params.id],
+  () => initFromRoute(),
+)
+
+function initFromRoute() {
+  const caseId = route.query.case
+  if (caseId) {
+    loadCasePreset(String(caseId))
+    return
+  }
+
+  const stored = sessionStorage.getItem(CASE_STORAGE_KEY)
+  if (stored) {
+    try {
+      applyEditorState(JSON.parse(stored))
+      sessionStorage.removeItem(CASE_STORAGE_KEY)
+      return
+    } catch {
+      /* ignore */
+    }
+  }
+
   const typeId = route.query.type
   if (typeId) {
-    const type = findAnalysisType(typeId)
+    const type = findAnalysisType(String(typeId))
     if (type) {
       selectedType.value = type
       activeGroup.value = type.groupId
     }
   }
-  const id = route.params.id
-  if (id) loadFromHistory(id)
-})
 
-watch(
-  () => route.params.id,
-  (id) => {
-    if (id) loadFromHistory(id)
-  },
-)
+  const id = route.params.id
+  if (id) loadFromHistory(String(id))
+}
+
+function loadCasePreset(caseId) {
+  const preset = findCasePreset(caseId)
+  if (!preset) return
+  applyEditorState(prepareCaseForEditor(preset))
+  ElMessage.success(`已加载案例：${preset.title}`)
+}
+
+function applyEditorState(state) {
+  if (state.selectedType) selectedType.value = state.selectedType
+  if (state.activeGroup) activeGroup.value = state.activeGroup
+  if (state.closedRing) {
+    closedRing.value = { ...closedRing.value, ...state.closedRing }
+    prevUnit.value = closedRing.value.unit
+  }
+  if (state.componentRings) componentRings.value = state.componentRings
+  if (state.method) method.value = state.method
+  if (state.currentStep) currentStep.value = state.currentStep
+}
 
 function loadFromHistory(id) {
   const record = getAnalysisById(id)
   if (!record?.data) return
-  const d = record.data
-  if (d.selectedType) selectedType.value = d.selectedType
-  if (d.closedRing) closedRing.value = { ...closedRing.value, ...d.closedRing }
-  if (d.componentRings) componentRings.value = d.componentRings
-  if (d.method) method.value = d.method
-  if (d.currentStep) currentStep.value = d.currentStep
+  applyEditorState(record.data)
+}
+
+function touchField(field) {
+  touched.value[field] = true
+}
+
+function fieldError(field) {
+  if (!showValidation.value && !touched.value[field]) return ''
+  if (field === 'name' && !closedRing.value.name.trim()) return '必填'
+  if (field === 'min' && closedRing.value.min == null) return '必填'
+  if (field === 'max') {
+    if (closedRing.value.max == null) return '必填'
+    if (closedRing.value.min != null && closedRing.value.max <= closedRing.value.min) {
+      return '最大值须大于最小值'
+    }
+  }
+  return ''
+}
+
+function validateAndNext(step) {
+  if (step === 2) {
+    showValidation.value = true
+    if (!isClosedRingValid.value) return
+  }
+  nextStep()
 }
 
 function selectType(type, group) {
@@ -347,17 +466,39 @@ function prevStep() {
 
 function clearClosedRing() {
   closedRing.value = { name: '', min: null, max: null, direction: 'right', unit: 'mm' }
+  showValidation.value = false
+  touched.value = {}
+}
+
+function onUnitChange(newUnit) {
+  const oldUnit = prevUnit.value
+  if (oldUnit === newUnit) return
+  closedRing.value.min = convertLength(closedRing.value.min, oldUnit, newUnit)
+  closedRing.value.max = convertLength(closedRing.value.max, oldUnit, newUnit)
+  componentRings.value = convertRingList(componentRings.value, oldUnit, newUnit)
+  prevUnit.value = newUnit
+}
+
+function updateRingType(ring) {
+  ring.type = inferRingType(ring.direction, closedRing.value.direction)
+}
+
+function syncAllRingTypes() {
+  componentRings.value.forEach(updateRingType)
 }
 
 function addRing() {
   const index = componentRings.value.length
-  componentRings.value.push({
+  const defaultDir = index % 2 === 0 ? 'left' : closedRing.value.direction
+  const ring = {
     name: `环 ${index + 1}`,
     size: 0,
     tolerance: 0.05,
     factor: 1,
-    type: index % 2 === 0 ? 'decreasing' : 'increasing',
-  })
+    direction: defaultDir,
+    type: inferRingType(defaultDir, closedRing.value.direction),
+  }
+  componentRings.value.push(ring)
 }
 
 function removeRing(index) {
@@ -372,8 +513,22 @@ function resetAll() {
   currentStep.value = 1
   selectedType.value = null
   method.value = 'rss'
+  showValidation.value = false
+  touched.value = {}
   clearClosedRing()
   clearRings()
+}
+
+function buildExportPayload() {
+  return {
+    typeName: selectedType.value?.name,
+    closedRing: closedRing.value,
+    unit: unit.value,
+    componentRings: componentRings.value,
+    methodLabel: method.value === 'worst' ? '极值法' : 'RSS 法',
+    formulaLines: formulaLines.value,
+    results: resultTable.value,
+  }
 }
 
 function saveResult() {
@@ -393,4 +548,36 @@ function saveResult() {
   ElMessage.success('已保存到本地')
   router.replace({ name: 'editor-detail', params: { id: entry.id } })
 }
+
+async function handleExportPdf() {
+  if (!resultPanelRef.value) return
+  await exportResultPdf(resultPanelRef.value)
+  ElMessage.success('PDF 已下载')
+}
+
+function handleExportExcel() {
+  exportExcel(buildExportPayload())
+  ElMessage.success('Excel 已下载')
+}
+
+function handleExportPng() {
+  const canvas = canvasRef.value?.getCanvas?.()
+  if (canvas) {
+    exportCanvasPng(canvas)
+  } else if (resultPanelRef.value) {
+    exportResultPng(resultPanelRef.value)
+  }
+  ElMessage.success('图片已下载')
+}
+
+async function handleCopy() {
+  await copyResultText(buildResultText(buildExportPayload()))
+  ElMessage.success('已复制到剪贴板')
+}
 </script>
+
+<style scoped>
+:deep(.ring-error .el-input__wrapper) {
+  box-shadow: 0 0 0 1px #e74c3c inset;
+}
+</style>

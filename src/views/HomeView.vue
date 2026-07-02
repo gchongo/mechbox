@@ -46,7 +46,17 @@
           class="card-panel flex items-center justify-between"
         >
           <div>
-            <p class="font-medium">{{ item.title }}</p>
+            <p class="font-medium">
+              {{ item.title }}
+              <span
+                v-if="item.status === 'pass'"
+                class="ml-1 text-sm text-success"
+              >✓</span>
+              <span
+                v-else-if="item.status === 'fail'"
+                class="ml-1 text-sm text-error"
+              >✗</span>
+            </p>
             <p class="text-sm text-gray-500">{{ formatDate(item.date) }}</p>
           </div>
           <div class="flex gap-2">

@@ -6,15 +6,35 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { unitLabel } from '@/utils/unit'
 
 const props = defineProps({
   closedRing: { type: Object, required: true },
   componentRings: { type: Array, default: () => [] },
+  rssTolerance: { type: Number, default: 0 },
 })
 
 const canvasRef = ref(null)
 const width = 800
-const height = 200
+const height = 220
+
+function drawArrow(ctx, x1, y1, x2, y2, color) {
+  ctx.strokeStyle = color
+  ctx.fillStyle = color
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(x1, y1)
+  ctx.lineTo(x2, y2)
+  ctx.stroke()
+  const angle = Math.atan2(y2 - y1, x2 - x1)
+  const head = 8
+  ctx.beginPath()
+  ctx.moveTo(x2, y2)
+  ctx.lineTo(x2 - head * Math.cos(angle - 0.4), y2 - head * Math.sin(angle - 0.4))
+  ctx.lineTo(x2 - head * Math.cos(angle + 0.4), y2 - head * Math.sin(angle + 0.4))
+  ctx.closePath()
+  ctx.fill()
+}
 
 function draw() {
   const canvas = canvasRef.value
@@ -23,6 +43,8 @@ function draw() {
   ctx.clearRect(0, 0, width, height)
 
   const rings = props.componentRings
+  const unit = unitLabel(props.closedRing.unit)
+
   if (!rings.length) {
     ctx.fillStyle = '#999'
     ctx.font = '14px sans-serif'
@@ -31,50 +53,62 @@ function draw() {
     return
   }
 
-  const blockWidth = Math.min(120, (width - 40) / rings.length - 10)
-  let x = 20
+  const blockWidth = Math.min(130, (width - 60) / rings.length - 12)
+  let x = 30
 
   rings.forEach((ring) => {
     const color = ring.type === 'increasing' ? '#3498db' : '#2ecc71'
-    ctx.fillStyle = color + '20'
+    const isInc = ring.type === 'increasing'
+
+    ctx.fillStyle = color + '18'
     ctx.strokeStyle = color
     ctx.lineWidth = 2
-    ctx.fillRect(x, 60, blockWidth, 60)
-    ctx.strokeRect(x, 60, blockWidth, 60)
+    ctx.fillRect(x, 70, blockWidth, 56)
+    ctx.strokeRect(x, 70, blockWidth, 56)
 
     ctx.fillStyle = '#333'
     ctx.font = '12px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(ring.name, x + blockWidth / 2, 90)
-    ctx.fillText(`${ring.size}±${ring.tolerance}`, x + blockWidth / 2, 105)
+    ctx.fillText(ring.name, x + blockWidth / 2, 92)
+    ctx.fillText(`${ring.size}±${ring.tolerance} ${unit}`, x + blockWidth / 2, 108)
+    ctx.fillStyle = color
+    ctx.font = '11px sans-serif'
+    ctx.fillText(isInc ? '增环' : '减环', x + blockWidth / 2, 120)
 
-    ctx.beginPath()
-    ctx.moveTo(x + blockWidth / 2, 50)
-    ctx.lineTo(x + blockWidth / 2, 40)
-    ctx.strokeStyle = color
-    ctx.stroke()
+    const ax = x + blockWidth / 2
+    if (isInc) {
+      drawArrow(ctx, ax - 30, 55, ax + 30, 55, color)
+    } else {
+      drawArrow(ctx, ax + 30, 55, ax - 30, 55, color)
+    }
 
-    x += blockWidth + 10
+    x += blockWidth + 12
   })
 
-  ctx.strokeStyle = '#e74c3c'
-  ctx.lineWidth = 3
-  ctx.beginPath()
-  ctx.moveTo(20, 160)
-  ctx.lineTo(width - 20, 160)
-  ctx.stroke()
+  drawArrow(ctx, 30, 175, width - 30, 175, '#e74c3c')
 
   ctx.fillStyle = '#e74c3c'
   ctx.font = 'bold 13px sans-serif'
   ctx.textAlign = 'center'
   const label = props.closedRing.name || '封闭环 L0'
+  const tol = props.rssTolerance ? ` ± ${props.rssTolerance.toFixed(3)}` : ''
   ctx.fillText(
-    `${label} = ${props.closedRing.min ?? '?'} ~ ${props.closedRing.max ?? '?'}`,
+    `${label}  目标 ${props.closedRing.min ?? '?'} ~ ${props.closedRing.max ?? '?'} ${unit}${tol}`,
     width / 2,
-    180,
+    200,
   )
 }
 
-watch(() => [props.closedRing, props.componentRings], draw, { deep: true })
+watch(
+  () => [props.closedRing, props.componentRings, props.rssTolerance],
+  draw,
+  { deep: true },
+)
 onMounted(draw)
+
+function getCanvas() {
+  return canvasRef.value
+}
+
+defineExpose({ getCanvas })
 </script>

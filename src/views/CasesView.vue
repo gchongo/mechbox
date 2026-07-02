@@ -1,10 +1,10 @@
 <template>
   <div>
     <h1 class="page-title">案例库</h1>
-    <p class="mb-6 text-gray-600">预设尺寸链分析案例，点击加载到编辑器</p>
+    <p class="mb-6 text-gray-600">预设尺寸链分析案例，点击加载完整数据到编辑器</p>
     <div class="grid gap-4 md:grid-cols-2">
       <div
-        v-for="item in cases"
+        v-for="item in CASE_PRESETS"
         :key="item.id"
         class="card-panel cursor-pointer transition-shadow hover:shadow-md"
         @click="loadCase(item)"
@@ -19,41 +19,12 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { CASE_PRESETS, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
 
 const router = useRouter()
 
-const cases = [
-  {
-    id: 1,
-    title: '齿轮装配间隙',
-    desc: '挡环 + 齿轮 + 轴径组成的典型 1D 尺寸链',
-    type: '1D 线性',
-    typeId: 'gear-gap',
-  },
-  {
-    id: 2,
-    title: '轴承配合公差',
-    desc: '轴承内圈与轴的过盈配合分析',
-    type: '1D 线性',
-    typeId: 'bearing-fit',
-  },
-  {
-    id: 3,
-    title: '垫片厚度叠加',
-    desc: '多垫片厚度叠加对间隙的影响',
-    type: '1D 线性',
-    typeId: 'shim-thickness',
-  },
-  {
-    id: 4,
-    title: '轴径公差链',
-    desc: '阶梯轴各段尺寸公差叠加',
-    type: '1D 线性',
-    typeId: 'shaft-tolerance',
-  },
-]
-
 function loadCase(item) {
-  router.push({ name: 'editor', query: { type: item.typeId } })
+  sessionStorage.setItem(CASE_STORAGE_KEY, JSON.stringify(prepareCaseForEditor(item)))
+  router.push({ name: 'editor', query: { case: item.id } })
 }
 </script>
