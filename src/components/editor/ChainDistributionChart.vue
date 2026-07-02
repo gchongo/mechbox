@@ -1,31 +1,31 @@
 <template>
-  <div>
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h3 class="font-semibold text-gray-800 dark:text-gray-100">尺寸分布与设计范围</h3>
-      <el-radio-group v-model="sigmaTab" size="small">
+  <div class="chain-dist">
+    <div class="chain-dist__head">
+      <h3 class="chain-dist__title">尺寸分布与设计范围</h3>
+      <el-radio-group v-model="sigmaTab" size="small" class="chain-dist__sigma">
         <el-radio-button :value="3">3σ</el-radio-button>
         <el-radio-button :value="4">4σ</el-radio-button>
         <el-radio-button :value="5">5σ</el-radio-button>
         <el-radio-button :value="6">6σ</el-radio-button>
       </el-radio-group>
     </div>
-    <div ref="chartRef" class="chain-dist-chart" />
-    <div class="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-      <div class="rounded bg-gray-50 p-2 dark:bg-gray-900">
-        <dt class="text-xs text-gray-500">设计中心偏移</dt>
-        <dd class="font-mono" :class="shiftClass">{{ shiftLabel }}</dd>
+    <div ref="chartRef" class="chain-dist__chart" />
+    <dl class="chain-dist__stats">
+      <div class="chain-dist__stat">
+        <dt class="chain-dist__stat-label">设计中心偏移</dt>
+        <dd class="chain-dist__stat-value" :class="shiftClass">{{ shiftLabel }}</dd>
       </div>
-      <div class="rounded bg-gray-50 p-2 dark:bg-gray-900">
-        <dt class="text-xs text-gray-500">预估不良 PPM</dt>
-        <dd class="font-mono">{{ stats.ppm.toLocaleString() }}</dd>
+      <div class="chain-dist__stat">
+        <dt class="chain-dist__stat-label">预估不良 PPM</dt>
+        <dd class="chain-dist__stat-value">{{ stats.ppm.toLocaleString() }}</dd>
       </div>
-      <div class="rounded bg-gray-50 p-2 dark:bg-gray-900">
-        <dt class="text-xs text-gray-500">合格率</dt>
-        <dd class="font-mono" :class="stats.passRate >= 99 ? 'text-success' : 'text-error'">
+      <div class="chain-dist__stat">
+        <dt class="chain-dist__stat-label">合格率</dt>
+        <dd class="chain-dist__stat-value" :class="stats.passRate >= 99 ? 'text-success' : 'text-error'">
           {{ stats.passRate.toFixed(2) }}%
         </dd>
       </div>
-    </div>
+    </dl>
   </div>
 </template>
 
@@ -78,6 +78,10 @@ const shiftSigma = computed(() => {
 const shiftLabel = computed(() => {
   const s = shiftSigma.value
   const abs = Math.abs(s)
+  if (abs > 99) {
+    const sign = s > 0 ? '>' : '<'
+    return `${sign}99σ · ✗ 明显偏离`
+  }
   if (abs < 0.5) return `${s.toFixed(2)}σ · ✓ 居中`
   if (abs < 2) return `${s.toFixed(2)}σ · 轻微偏离`
   return `${s.toFixed(2)}σ · ✗ 明显偏离`
@@ -96,9 +100,17 @@ async function render() {
 
   const sigma = props.processSigma || 0.001
   const half = sigma * sigmaTab.value
-  const span = Math.max(half * 2.2, (props.specMax - props.specMin) * 1.5, 0.01)
-  const xMin = props.mean - span / 2
-  const xMax = props.mean + span / 2
+  const pad = Math.max(half * 0.15, (props.specMax - props.specMin) * 0.08, 0.005)
+  const xMin = Math.min(
+    props.mean - half,
+    props.specMin - pad,
+    designCenter.value - pad,
+  )
+  const xMax = Math.max(
+    props.mean + half,
+    props.specMax + pad,
+    designCenter.value + pad,
+  )
   const points = 160
   const x = []
   const y = []
@@ -162,13 +174,29 @@ async function render() {
       },
     ],
     {
-      margin: { t: 24, r: 16, b: 48, l: 48 },
-      xaxis: { title: '封闭环尺寸', zeroline: false },
-      yaxis: { title: '概率密度', rangemode: 'tozero' },
+      margin: { t: 28, r: 12, b: 48, l: 48 },
+      xaxis: { title: '封闭环尺寸', zeroline: false, automargin: true },
+      yaxis: { title: '概率密度', rangemode: 'tozero', automargin: true },
       shapes,
       annotations: [
-        { x: props.mean, y: 1.02, yref: 'paper', text: '分布中心 μ', showarrow: false, font: { size: 10, color: '#27ae60' } },
-        { x: designCenter.value, y: 0.96, yref: 'paper', text: '设计中心', showarrow: false, font: { size: 10, color: '#e67e22' } },
+        {
+          x: props.mean,
+          y: 1.02,
+          xref: 'x',
+          yref: 'paper',
+          text: '分布中心 μ',
+          showarrow: false,
+          font: { size: 10, color: '#27ae60' },
+        },
+        {
+          x: designCenter.value,
+          y: 0.96,
+          xref: 'x',
+          yref: 'paper',
+          text: '设计中心',
+          showarrow: false,
+          font: { size: 10, color: '#e67e22' },
+        },
       ],
       showlegend: false,
       paper_bgcolor: 'transparent',
@@ -189,8 +217,41 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.chain-dist-chart {
-  min-height: 280px;
+.chain-dist {
+  @apply min-w-0;
+}
+
+.chain-dist__head {
+  @apply mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between;
+}
+
+.chain-dist__title {
+  @apply font-semibold text-gray-800 dark:text-gray-100;
+}
+
+.chain-dist__sigma {
+  @apply flex flex-wrap;
+}
+
+.chain-dist__chart {
+  min-height: 260px;
   width: 100%;
+  overflow: hidden;
+}
+
+.chain-dist__stats {
+  @apply mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3;
+}
+
+.chain-dist__stat {
+  @apply min-w-0 rounded-lg bg-gray-50 p-3 text-center dark:bg-gray-900;
+}
+
+.chain-dist__stat-label {
+  @apply text-xs text-gray-500;
+}
+
+.chain-dist__stat-value {
+  @apply mt-1 break-words font-mono text-sm leading-snug;
 }
 </style>

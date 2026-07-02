@@ -16,7 +16,7 @@
             rel="noopener noreferrer"
             class="mt-2 inline-block text-sm text-primary hover:underline"
           >
-            访问 cax.do 论坛 →
+            CAX FORUM →
           </a>
         </div>
         <div>

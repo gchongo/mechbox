@@ -23,8 +23,9 @@
         row-key="uid"
         class="ring-param-table"
         empty-text="点击「添加组成环」开始"
+        table-layout="auto"
       >
-        <el-table-column width="44" align="center" fixed>
+        <el-table-column width="40" align="center">
           <template #default="{ $index }">
             <span
               class="cursor-grab select-none text-lg text-gray-400 active:cursor-grabbing"
@@ -37,7 +38,7 @@
             >⠿</span>
           </template>
         </el-table-column>
-        <el-table-column label="环名" min-width="72" fixed>
+        <el-table-column label="环名" min-width="80">
           <template #default="{ row, $index }">
             <el-input
               v-model="row.name"
@@ -47,7 +48,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column :label="`公称 (${unit})`" min-width="96">
+        <el-table-column :label="`公称 (${unit})`" min-width="108">
           <template #default="{ row }">
             <el-input-number
               v-model="row.size"
@@ -60,7 +61,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="ES" min-width="96">
+        <el-table-column label="ES" min-width="108">
           <template #default="{ row }">
             <el-input-number
               v-model="row.es"
@@ -74,7 +75,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="EI" min-width="96">
+        <el-table-column label="EI" min-width="108">
           <template #default="{ row }">
             <el-input-number
               v-model="row.ei"
@@ -88,12 +89,12 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="类型" width="96">
+        <el-table-column label="类型" min-width="108">
           <template #default="{ row }">
             <el-select
               v-model="row.type"
               size="default"
-              class="w-full"
+              class="ring-type-select"
               @change="onTypeChange(row)"
             >
               <el-option value="increasing" label="+ 增环" />
@@ -101,7 +102,7 @@
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column v-if="advanced" label="系数 k" min-width="88">
+        <el-table-column v-if="advanced" label="系数 k" min-width="100">
           <template #default="{ row }">
             <el-input-number
               v-model="row.factor"
@@ -116,22 +117,22 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="贡献%" min-width="128">
+        <el-table-column label="贡献%" min-width="120">
           <template #default="{ row }">
-            <div class="flex items-center gap-2">
+            <div class="flex min-w-[100px] items-center gap-2">
               <el-progress
                 :percentage="contributionMap[row.uid] ?? 0"
                 :stroke-width="10"
                 :show-text="false"
-                class="min-w-[56px] flex-1"
+                class="min-w-[48px] flex-1"
               />
-              <span class="w-9 shrink-0 text-right font-mono text-xs">
+              <span class="shrink-0 font-mono text-xs">
                 {{ (contributionMap[row.uid] ?? 0).toFixed(0) }}%
               </span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column width="48" fixed="right" align="center">
+        <el-table-column width="44" align="center">
           <template #default="{ $index }">
             <el-button type="danger" text size="default" @click="$emit('remove', $index)">
               <el-icon><Delete /></el-icon>
@@ -213,20 +214,43 @@ function onDragEnd() {
 
 <style scoped>
 .ring-param-table {
-  min-width: 640px;
+  width: 100%;
+}
+
+.ring-param-table :deep(.el-table__cell) {
+  padding: 8px 6px;
 }
 
 .ring-param-table :deep(.ring-num-input) {
   width: 100%;
+  min-width: 96px;
 }
 
-.ring-param-table :deep(.ring-num-input .el-input__inner) {
-  text-align: left;
+.ring-param-table :deep(.ring-num-input .el-input) {
+  width: 100%;
+}
+
+.ring-param-table :deep(.ring-num-input .el-input__wrapper) {
   padding-left: 8px;
   padding-right: 36px;
 }
 
+.ring-param-table :deep(.ring-num-input .el-input__inner) {
+  text-align: left;
+}
+
+.ring-param-table :deep(.ring-type-select) {
+  width: 100%;
+  min-width: 96px;
+}
+
 :deep(.ring-error .el-input__wrapper) {
   box-shadow: 0 0 0 1px #e74c3c inset;
+}
+
+@media (max-width: 768px) {
+  .ring-param-table :deep(.ring-num-input) {
+    min-width: 88px;
+  }
 }
 </style>

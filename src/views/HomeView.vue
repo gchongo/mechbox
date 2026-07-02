@@ -1,32 +1,25 @@
 <template>
   <div class="home-page">
-    <section class="home-hero">
-      <div class="home-hero__text">
-        <p class="home-hero__desc">尺寸链叠加分析 · 概率统计 · 机械强度计算</p>
+    <section class="home-quick">
+      <div class="home-quick__main">
+        <div class="home-quick__features">
+          <span v-for="item in highlights" :key="item.label" class="home-quick__tag">
+            <el-icon class="home-quick__tag-icon"><component :is="item.icon" /></el-icon>
+            {{ item.label }}
+          </span>
+        </div>
+        <p class="home-quick__hint">本地计算 · 无需登录 · 支持 RSS / 极值 / GD&amp;T</p>
       </div>
-      <div class="home-hero__actions">
-        <el-button type="primary" size="large" @click="startNewAnalysis">
+      <div class="home-quick__actions">
+        <el-button type="primary" size="large" class="home-quick__btn" @click="startNewAnalysis">
           <el-icon class="mr-1"><Promotion /></el-icon>
-          新建分析
+          快速分析
         </el-button>
         <router-link to="/history">
-          <el-button size="large" plain>历史记录</el-button>
+          <el-button size="large" plain class="home-quick__btn">历史记录</el-button>
         </router-link>
       </div>
     </section>
-
-    <a
-      href="https://cax.do"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="home-forum-banner"
-    >
-      <span class="home-forum-banner__badge">论坛</span>
-      <span class="home-forum-banner__text">
-        加入 <strong>cax.do</strong> 机械设计论坛，交流尺寸链、公差与强度设计经验
-      </span>
-      <span class="home-forum-banner__arrow">→</span>
-    </a>
 
     <section class="home-section">
       <header class="home-section__head">
@@ -47,8 +40,8 @@
             <li v-for="type in group.types" :key="type.id">
               <button type="button" class="home-analysis-item" @click="startWithType(type.id)">
                 <el-icon class="shrink-0 text-primary/60"><component :is="type.icon || 'Document'" /></el-icon>
-                <span class="truncate">{{ type.name }}</span>
-                <el-icon class="shrink-0 text-gray-300"><ArrowRight /></el-icon>
+                <span>{{ type.name }}</span>
+                <el-icon class="ml-auto shrink-0 text-gray-300"><ArrowRight /></el-icon>
               </button>
             </li>
           </ul>
@@ -102,6 +95,12 @@ import { ANALYSIS_GROUPS } from '@/constants/analysis-types'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
 
 const router = useRouter()
+
+const highlights = [
+  { label: '尺寸链叠加', icon: 'Connection' },
+  { label: '概率统计', icon: 'TrendCharts' },
+  { label: '机械强度', icon: 'SetUp' },
+]
 
 const statTools = [
   { query: 'convert', label: '公差转换', latexDesc: 'T \\leftrightarrow \\sigma', icon: 'Switch' },
@@ -167,36 +166,35 @@ function goStatTool(tool) {
   @apply space-y-3;
 }
 
-.home-hero {
-  @apply flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm
-    sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 dark:bg-gray-800;
+.home-quick {
+  @apply flex flex-col gap-4 rounded-xl border border-gray-200 bg-gradient-to-br from-white to-primary/5
+    px-4 py-4 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-primary/10 sm:flex-row sm:items-center
+    sm:justify-between sm:px-5;
 }
 
-.home-hero__desc {
-  @apply text-base font-medium text-gray-700 dark:text-gray-200 sm:text-lg;
-}
-
-.home-hero__actions {
+.home-quick__features {
   @apply flex flex-wrap gap-2;
 }
 
-.home-forum-banner {
-  @apply flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3
-    text-sm text-gray-700 transition-colors hover:border-primary/40 hover:bg-primary/10
-    dark:border-primary/30 dark:bg-primary/10 dark:text-gray-200 dark:hover:bg-primary/15;
-  text-decoration: none;
+.home-quick__tag {
+  @apply inline-flex items-center gap-1 rounded-full border border-primary/15 bg-white/80 px-3 py-1
+    text-sm font-medium text-gray-700 dark:border-primary/25 dark:bg-gray-800/80 dark:text-gray-200;
 }
 
-.home-forum-banner__badge {
-  @apply shrink-0 rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white;
+.home-quick__tag-icon {
+  @apply text-primary;
 }
 
-.home-forum-banner__text {
-  @apply flex-1 leading-snug;
+.home-quick__hint {
+  @apply mt-2 text-xs text-gray-500 dark:text-gray-400;
 }
 
-.home-forum-banner__arrow {
-  @apply shrink-0 text-primary;
+.home-quick__actions {
+  @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row;
+}
+
+.home-quick__btn {
+  @apply w-full sm:w-auto;
 }
 
 .home-section {
@@ -225,7 +223,7 @@ function goStatTool(tool) {
 
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 128px), 1fr));
   gap: 0.5rem;
 }
 
@@ -269,7 +267,7 @@ a.home-card {
 
 .home-analysis-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
   gap: 0.5rem;
 }
 

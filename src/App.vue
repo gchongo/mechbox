@@ -2,7 +2,7 @@
   <el-config-provider :locale="elementLocale">
     <div class="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
       <AppHeader />
-      <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-4">
+      <main class="mx-auto w-full max-w-7xl flex-1 px-3 py-3 sm:px-4 sm:py-4">
         <router-view />
       </main>
       <AppFooter />

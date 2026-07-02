@@ -1,6 +1,6 @@
 <template>
   <header class="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
       <router-link
         to="/"
         class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100"
@@ -10,7 +10,15 @@
         <span class="sm:hidden">机械工具箱</span>
       </router-link>
 
-      <nav class="flex items-center gap-1">
+      <nav class="flex items-center gap-0.5 sm:gap-1">
+        <router-link
+          to="/editor"
+          class="rounded-md px-2 py-2 text-sm font-medium transition-colors md:hidden"
+          :class="route.path.startsWith('/editor') ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300'"
+        >
+          分析
+        </router-link>
+
         <router-link
           v-for="item in navItems"
           :key="item.path"
@@ -56,7 +64,7 @@
         <el-dropdown trigger="click" @command="goTool">
           <button
             type="button"
-            class="hidden rounded-md px-3 py-2 text-sm font-medium transition-colors sm:inline-block"
+            class="rounded-md px-2 py-2 text-sm font-medium transition-colors sm:px-3"
             :class="moreActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
           >
             {{ t('nav.more', locale) }}

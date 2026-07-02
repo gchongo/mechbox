@@ -37,11 +37,19 @@
     }
 
     .el-table {
-      font-size: 12px;
+      font-size: 13px;
     }
 
     .el-form-item {
       margin-bottom: 14px;
+    }
+
+    .el-input-number {
+      max-width: 100%;
+    }
+
+    .el-button + .el-button {
+      margin-left: 0;
     }
   }
 }

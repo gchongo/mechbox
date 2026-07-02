@@ -96,8 +96,8 @@
     </div>
 
     <!-- 下排：CPK 表 + 分布图 -->
-    <div class="grid gap-4 lg:grid-cols-2">
-      <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+    <div class="grid min-w-0 gap-4 lg:grid-cols-2">
+      <div class="min-w-0 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <h3 class="mb-3 font-semibold">CPK 等级对照表</h3>
         <el-table :data="cpkTable" size="small" border max-height="280">
           <el-table-column prop="cpk" label="CPK" width="64" />
@@ -114,7 +114,7 @@
         </p>
       </div>
 
-      <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+      <div class="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <ChainDistributionChart
           :mean="rss.nominal"
           :process-sigma="rss.processSigma"
