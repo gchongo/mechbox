@@ -1,0 +1,59 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+          tar czf dist.tar.gz -C dist .
+
+      - name: Upload to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          source: dist.tar.gz
+          target: /tmp
+
+      - name: Extract and reload Nginx
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          envs: VPS_DEPLOY_PATH
+          script: |
+            DEPLOY_PATH="${VPS_DEPLOY_PATH:-/www/wwwroot/mechbox.cax.do}"
+            mkdir -p "${DEPLOY_PATH}"
+            tar xzf /tmp/dist.tar.gz -C "${DEPLOY_PATH}"
+            chown -R www:www "${DEPLOY_PATH}" 2>/dev/null || chown -R www-data:www-data "${DEPLOY_PATH}"
+            rm -f /tmp/dist.tar.gz
+            if [ -x /www/server/nginx/sbin/nginx ]; then
+              /www/server/nginx/sbin/nginx -t
+              /etc/init.d/nginx reload
+            else
+              nginx -t
+              systemctl reload nginx
+            fi
