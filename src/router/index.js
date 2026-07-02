@@ -56,6 +56,18 @@ const routes = [
     meta: { title: 'Monte Carlo' },
   },
   {
+    path: '/history',
+    name: 'history',
+    component: () => import('@/views/HistoryView.vue'),
+    meta: { title: '历史记录' },
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/SettingsView.vue'),
+    meta: { title: '设置' },
+  },
+  {
     path: '/glossary',
     name: 'glossary',
     component: () => import('@/views/GlossaryView.vue'),

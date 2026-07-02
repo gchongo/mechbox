@@ -168,6 +168,7 @@ export function prepareCaseForEditor(preset) {
   const closedDirection = preset.data.closedRing.direction
   const componentRings = preset.data.componentRings.map((ring) => ({
     ...ring,
+    uid: ring.uid ?? crypto.randomUUID(),
     type: ring.direction === closedDirection ? 'increasing' : 'decreasing',
   }))
   return {

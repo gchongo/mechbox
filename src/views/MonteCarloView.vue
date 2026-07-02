@@ -92,6 +92,7 @@
         <el-radio-group v-model="chartType" size="small">
           <el-radio-button value="histogram">直方图</el-radio-button>
           <el-radio-button value="cdf">CDF</el-radio-button>
+          <el-radio-button value="scatter">散点图</el-radio-button>
           <el-radio-button value="box">箱线图</el-radio-button>
         </el-radio-group>
       </div>
@@ -116,6 +117,7 @@ import {
   MC_STORAGE_KEY,
   deserializeMonteCarloPayload,
 } from '@/constants/editor-bridge'
+import { getSettings } from '@/utils/settings'
 
 const route = useRoute()
 
@@ -196,6 +198,7 @@ function loadFromEditor() {
 }
 
 onMounted(() => {
+  iterations.value = getSettings().mcIterations
   if (route.query.from === 'editor') {
     loadFromEditor()
   }

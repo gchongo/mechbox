@@ -137,7 +137,20 @@
         已达最大数量（50）
       </p>
 
-      <el-table :data="componentRings" class="mt-4" empty-text="请添加组成环">
+      <el-table :data="componentRings" class="mt-4" empty-text="请添加组成环" row-key="uid">
+        <el-table-column width="44" align="center">
+          <template #default="{ $index }">
+            <span
+              class="cursor-grab select-none text-lg text-gray-400 active:cursor-grabbing"
+              draggable="true"
+              title="拖拽排序"
+              @dragstart="onRingDragStart($index, $event)"
+              @dragend="onRingDragEnd"
+              @dragover.prevent
+              @drop.prevent="onRingDrop($index)"
+            >⠿</span>
+          </template>
+        </el-table-column>
         <el-table-column label="#" width="50">
           <template #default="{ $index }">{{ $index + 1 }}</template>
         </el-table-column>
@@ -202,6 +215,16 @@
           </template>
         </el-table-column>
       </el-table>
+      <p class="mt-2 text-xs text-gray-400">⠿ 拖拽左侧手柄可调整组成环顺序</p>
+      <el-alert
+        v-if="isExtendedAnalysis"
+        class="mt-3"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="2D/GD&T 提示"
+        description="可使用传递系数（0–10）近似几何灵敏度，例如平行度链中厚度环系数常取 0.5。"
+      />
       <p class="mt-3 text-sm text-gray-500">
         💡 与封闭环同向 = 增环（蓝色），反向 = 减环（绿色），自动判断
       </p>
@@ -355,6 +378,7 @@ import {
   buildResultText,
 } from '@/utils/export'
 import { getAnalysisById, saveAnalysis } from '@/utils/storage'
+import { getSettings } from '@/utils/settings'
 
 const route = useRoute()
 const router = useRouter()
@@ -372,6 +396,7 @@ const ringValidation = ref(false)
 const resultPanelRef = ref(null)
 const canvasRef = ref(null)
 const prevUnit = ref('mm')
+const dragFromIndex = ref(null)
 
 const closedRing = ref({
   name: '',
@@ -533,10 +558,24 @@ function initFromRoute() {
       selectedType.value = type
       activeGroup.value = type.groupId
     }
+    applyDefaultSettings()
+    return
   }
 
   const id = route.params.id
-  if (id) loadFromHistory(String(id))
+  if (id) {
+    loadFromHistory(String(id))
+    return
+  }
+
+  applyDefaultSettings()
+}
+
+function applyDefaultSettings() {
+  const settings = getSettings()
+  closedRing.value.unit = settings.defaultUnit
+  prevUnit.value = settings.defaultUnit
+  method.value = settings.defaultMethod
 }
 
 function loadCasePreset(caseId) {
@@ -553,7 +592,12 @@ function applyEditorState(state) {
     closedRing.value = { ...closedRing.value, ...state.closedRing }
     prevUnit.value = closedRing.value.unit
   }
-  if (state.componentRings) componentRings.value = state.componentRings
+  if (state.componentRings) {
+    componentRings.value = state.componentRings.map((ring) => ({
+      ...ring,
+      uid: ring.uid ?? crypto.randomUUID(),
+    }))
+  }
   if (state.method) method.value = state.method
   if (state.rssDistribution) rssDistribution.value = state.rssDistribution
   if (state.currentStep) currentStep.value = state.currentStep
@@ -654,6 +698,7 @@ function addRing() {
   const index = componentRings.value.length
   const defaultDir = index % 2 === 0 ? 'left' : closedRing.value.direction
   const ring = {
+    uid: crypto.randomUUID(),
     name: `环 ${index + 1}`,
     size: 0,
     tolerance: 0.05,
@@ -662,6 +707,25 @@ function addRing() {
     type: inferRingType(defaultDir, closedRing.value.direction),
   }
   componentRings.value.push(ring)
+}
+
+function onRingDragStart(index, event) {
+  dragFromIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+}
+
+function onRingDrop(toIndex) {
+  const from = dragFromIndex.value
+  if (from == null || from === toIndex) return
+  const list = [...componentRings.value]
+  const [item] = list.splice(from, 1)
+  list.splice(toIndex, 0, item)
+  componentRings.value = list
+  dragFromIndex.value = null
+}
+
+function onRingDragEnd() {
+  dragFromIndex.value = null
 }
 
 function removeRing(index) {
@@ -673,14 +737,23 @@ function clearRings() {
 }
 
 function resetAll() {
+  const settings = getSettings()
   currentStep.value = 1
   selectedType.value = null
-  method.value = 'rss'
+  method.value = settings.defaultMethod
+  rssDistribution.value = 'skewed'
   showValidation.value = false
   ringValidation.value = false
   touched.value = {}
   clearClosedRing()
   clearRings()
+  applyDefaultSettings()
+}
+
+const methodLabels = {
+  worst: '极值法',
+  rss: 'RSS 法',
+  'modified-rss': '修正 RSS 法',
 }
 
 function buildExportPayload() {
@@ -689,7 +762,7 @@ function buildExportPayload() {
     closedRing: closedRing.value,
     unit: unit.value,
     componentRings: componentRings.value,
-    methodLabel: method.value === 'worst' ? '极值法' : 'RSS 法',
+    methodLabel: methodLabels[method.value] ?? method.value,
     formulaLines: formulaLines.value,
     results: resultTable.value,
   }

@@ -20,27 +20,29 @@ async function render() {
   if (!plotly) plotly = await import('plotly.js-dist-min')
 
   const shapes = []
-  if (props.min != null) {
-    shapes.push({
-      type: 'line',
-      x0: props.min,
-      x1: props.min,
-      y0: 0,
-      y1: 1,
-      yref: 'paper',
-      line: { color: '#e74c3c', dash: 'dash' },
-    })
-  }
-  if (props.max != null) {
-    shapes.push({
-      type: 'line',
-      x0: props.max,
-      x1: props.max,
-      y0: 0,
-      y1: 1,
-      yref: 'paper',
-      line: { color: '#e74c3c', dash: 'dash' },
-    })
+  if (props.chartType === 'histogram' || props.chartType === 'cdf') {
+    if (props.min != null) {
+      shapes.push({
+        type: 'line',
+        x0: props.min,
+        x1: props.min,
+        y0: 0,
+        y1: 1,
+        yref: 'paper',
+        line: { color: '#e74c3c', dash: 'dash' },
+      })
+    }
+    if (props.max != null) {
+      shapes.push({
+        type: 'line',
+        x0: props.max,
+        x1: props.max,
+        y0: 0,
+        y1: 1,
+        yref: 'paper',
+        line: { color: '#e74c3c', dash: 'dash' },
+      })
+    }
   }
 
   let traces = []
@@ -48,6 +50,24 @@ async function render() {
     const sorted = [...props.results].sort((a, b) => a - b)
     const y = sorted.map((_, i) => (i + 1) / sorted.length)
     traces = [{ x: sorted, y, type: 'scatter', mode: 'lines', name: 'CDF', line: { color: '#3498db' } }]
+  } else if (props.chartType === 'scatter') {
+    const step = Math.max(1, Math.floor(props.results.length / 2000))
+    const x = []
+    const y = []
+    for (let i = 0; i < props.results.length; i += step) {
+      x.push(i + 1)
+      y.push(props.results[i])
+    }
+    traces = [
+      {
+        x,
+        y,
+        type: 'scatter',
+        mode: 'markers',
+        name: '抽样点',
+        marker: { size: 4, color: '#3498db', opacity: 0.45 },
+      },
+    ]
   } else if (props.chartType === 'box') {
     traces = [{ y: props.results, type: 'box', name: '分布', marker: { color: '#3498db' } }]
   } else {
@@ -58,11 +78,25 @@ async function render() {
     chartRef.value,
     traces,
     {
-      title: props.chartType === 'cdf' ? '累积分布 CDF' : props.chartType === 'box' ? '箱线图' : '直方图',
+      title:
+        props.chartType === 'cdf'
+          ? '累积分布 CDF'
+          : props.chartType === 'box'
+            ? '箱线图'
+            : props.chartType === 'scatter'
+              ? '散点图（迭代抽样）'
+              : '直方图',
       margin: { t: 48, r: 24, b: 48, l: 56 },
       shapes,
-      xaxis: { title: props.chartType === 'box' ? '' : '封闭环值' },
-      yaxis: { title: props.chartType === 'box' ? '封闭环值' : '频数 / 概率' },
+      xaxis: {
+        title:
+          props.chartType === 'box'
+            ? ''
+            : props.chartType === 'scatter'
+              ? '迭代序号'
+              : '封闭环值',
+      },
+      yaxis: { title: props.chartType === 'box' ? '封闭环值' : props.chartType === 'scatter' ? '封闭环值' : '频数 / 概率' },
     },
     { responsive: true, displaylogo: false },
   )

@@ -56,7 +56,10 @@
 
     <!-- 历史记录 -->
     <section class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold">历史记录（最近 5 条）</h2>
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">历史记录（最近 5 条）</h2>
+        <router-link to="/history" class="text-sm text-primary hover:underline">查看全部 →</router-link>
+      </div>
       <div v-if="history.length" class="space-y-3">
         <div
           v-for="item in history"
@@ -117,10 +120,11 @@ const statTools = [
 ]
 
 const quickLinks = [
-  { path: '/tutorial', label: '教程', desc: '5 篇图文教程', icon: 'VideoCamera' },
-  { path: '/cases', label: '案例', desc: '4 个预设案例', icon: 'Collection' },
+  { path: '/tutorial', label: '教程', desc: '5 篇教程 + 演示模式', icon: 'VideoCamera' },
+  { path: '/cases', label: '案例', desc: '6 个预设案例', icon: 'Collection' },
   { path: '/quiz', label: '练习', desc: '10 道练习题', icon: 'EditPen' },
   { path: '/manual', label: '公式手册', desc: 'LaTeX 公式', icon: 'Notebook' },
+  { path: '/glossary', label: '术语词典', desc: 'GD&T 术语', icon: 'Reading' },
   { path: '/faq', label: 'FAQ', desc: '常见问题', icon: 'QuestionFilled' },
 ]
 

@@ -1,5 +1,5 @@
 <template>
-  <header class="border-b border-gray-200 bg-white shadow-sm">
+  <header class="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
       <router-link to="/" class="flex items-center gap-2 text-xl font-bold text-gray-900">
         <el-icon :size="24" class="text-primary"><Tools /></el-icon>
@@ -15,10 +15,17 @@
           :class="
             isActive(item.path)
               ? 'bg-primary/10 text-primary'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
           "
         >
           {{ item.label }}
+        </router-link>
+        <router-link
+          to="/settings"
+          class="ml-1 rounded-md p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+          title="设置"
+        >
+          <el-icon :size="18"><Setting /></el-icon>
         </router-link>
       </nav>
     </div>
