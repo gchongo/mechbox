@@ -107,7 +107,25 @@ const routes = [
     path: '/shaft',
     name: 'shaft',
     component: () => import('@/views/ShaftCalcView.vue'),
-    meta: { title: '轴扭转' },
+    meta: { title: '轴强度' },
+  },
+  {
+    path: '/key',
+    name: 'key',
+    component: () => import('@/views/KeyCalcView.vue'),
+    meta: { title: '平键连接' },
+  },
+  {
+    path: '/weld',
+    name: 'weld',
+    component: () => import('@/views/WeldCalcView.vue'),
+    meta: { title: '焊缝强度' },
+  },
+  {
+    path: '/bolt-group',
+    name: 'bolt-group',
+    component: () => import('@/views/BoltGroupCalcView.vue'),
+    meta: { title: '螺栓组' },
   },
   {
     path: '/spring',

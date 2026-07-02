@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS = {
   defaultUnit: 'mm',
   defaultMethod: 'rss',
   theme: 'light',
+  locale: 'zh',
   mcIterations: 10000,
   numberPrecision: 2,
 }
@@ -21,7 +22,13 @@ export function saveSettings(partial) {
   const next = { ...getSettings(), ...partial }
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
   applyTheme(next.theme)
+  applyDocumentLocale(next.locale)
+  window.dispatchEvent(new CustomEvent('mechbox-settings', { detail: next }))
   return next
+}
+
+export function applyDocumentLocale(locale = 'zh') {
+  document.documentElement.lang = locale === 'en' ? 'en' : 'zh-CN'
 }
 
 export function applyTheme(theme) {
@@ -34,5 +41,7 @@ export function applyTheme(theme) {
 }
 
 export function initSettings() {
-  applyTheme(getSettings().theme)
+  const s = getSettings()
+  applyTheme(s.theme)
+  applyDocumentLocale(s.locale)
 }

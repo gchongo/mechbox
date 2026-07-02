@@ -315,6 +315,24 @@
     <section v-show="currentStep === 5" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 5：查看结果</h2>
 
+      <el-collapse v-if="gdtModeInfo" class="mb-4">
+        <el-collapse-item title="GD&T 材料条件 (MMC / LMC / RFS)" name="mmc">
+          <el-form label-width="120px" class="max-w-lg">
+            <el-form-item label="材料条件">
+              <el-radio-group v-model="gdtModifier">
+                <el-radio value="RFS">RFS（无关）</el-radio>
+                <el-radio value="MMC">MMC（最大实体）</el-radio>
+                <el-radio value="LMC">LMC（最小实体）</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="gdtModifier !== 'RFS'" label="奖励公差">
+              <el-input-number v-model="bonusTolerance" :min="0" :precision="4" :step="0.01" />
+              <span class="ml-2 text-xs text-gray-500">mm · MMC 全额叠加，LMC 按 50%</span>
+            </el-form-item>
+          </el-form>
+        </el-collapse-item>
+      </el-collapse>
+
       <div ref="resultPanelRef">
         <el-alert
           v-if="gdtModeInfo"
@@ -323,7 +341,7 @@
           :closable="false"
           show-icon
           :title="`计算模式：${gdtModeInfo.label}`"
-          :description="gdtModeInfo.desc"
+          :description="gdtModeDesc"
         />
 
         <h3 class="mb-2 text-sm font-medium text-gray-600">1. 矢量图</h3>
@@ -454,6 +472,9 @@ const closedRing = ref({
 
 const componentRings = ref([])
 
+const gdtModifier = ref('RFS')
+const bonusTolerance = ref(0)
+
 const unit = computed(() => unitLabel(closedRing.value.unit))
 
 const isFavorited = computed(() => (savedId.value ? isFavorite(savedId.value) : false))
@@ -477,6 +498,8 @@ const gdtModeInfo = computed(() => getGdtCalcMode(selectedType.value?.id))
 const chainOpts = computed(() => ({
   typeId: selectedType.value?.id,
   distribution: rssDistribution.value,
+  toleranceModifier: gdtModifier.value,
+  bonusTolerance: bonusTolerance.value,
 }))
 
 const closedRingSpec = computed(() => ({
@@ -505,6 +528,15 @@ const activeResult = computed(() => {
   if (method.value === 'modified-rss') return modifiedResult.value
   if (method.value === 'sigma6-rss') return sigma6Result.value
   return rssResult.value
+})
+
+const gdtModeDesc = computed(() => {
+  const base = gdtModeInfo.value?.desc ?? '已启用专用公差叠加模型'
+  const bonus = activeResult.value?.bonusApplied
+  if (bonus && bonus > 0) {
+    return `${base} · 材料条件奖励 +${fmtNum(bonus)} mm`
+  }
+  return base
 })
 
 const resultTable = computed(() => {
@@ -563,6 +595,7 @@ function goToMonteCarlo() {
         componentRings: componentRings.value,
         method: method.value,
         rssDistribution: rssDistribution.value,
+        selectedType: selectedType.value,
       }),
     ),
   )
@@ -887,7 +920,9 @@ function saveResult() {
 
 async function handleExportPdf() {
   if (!resultPanelRef.value) return
-  await exportResultPdf(resultPanelRef.value)
+  await exportResultPdf(resultPanelRef.value, undefined, {
+    title: `${selectedType.value?.name ?? '分析'} ${closedRing.value.name || 'L0'}`,
+  })
   ElMessage.success('PDF 已下载')
 }
 

@@ -11,6 +11,12 @@
             <el-radio value="dark">深色</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="界面语言">
+          <el-radio-group v-model="form.locale">
+            <el-radio value="zh">中文</el-radio>
+            <el-radio value="en">English</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="默认单位">
           <el-radio-group v-model="form.defaultUnit">
             <el-radio value="mm">mm</el-radio>

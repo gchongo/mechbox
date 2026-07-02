@@ -137,6 +137,29 @@ function buildLimitsFromTolerance(nominal, totalTolerance, closedRing) {
   return { nominal, upper, lower, totalTolerance, pass, calcMode: 'gdt' }
 }
 
+/** GD&T 材料条件 modifier：MMC 奖励公差 / LMC 部分奖励 */
+export function applyToleranceModifier(totalTolerance, options = {}) {
+  const bonus = options.bonusTolerance ?? 0
+  const mod = options.toleranceModifier ?? 'RFS'
+  if (!bonus || mod === 'RFS') return totalTolerance
+  if (mod === 'MMC') return totalTolerance + bonus
+  if (mod === 'LMC') return totalTolerance + bonus * 0.5
+  return totalTolerance
+}
+
+function withModifier(result, closedRing, options) {
+  const adjusted = applyToleranceModifier(result.totalTolerance, options)
+  if (adjusted === result.totalTolerance) return result
+  const next = buildLimitsFromTolerance(result.nominal ?? 0, adjusted, closedRing)
+  return {
+    ...result,
+    ...next,
+    effectiveTolerance: adjusted,
+    bonusApplied: adjusted - result.totalTolerance,
+    toleranceModifier: options.toleranceModifier ?? 'MMC',
+  }
+}
+
 /** 仅公差叠加（form 类环，名义值为形位误差基准） */
 function calcFormStackLimits(rings, closedRing, method, options) {
   const nominal = rings.reduce((s, r) => {
@@ -238,7 +261,8 @@ export function calculateChainResult(closedRing, componentRings, method, options
   const typeId = options.typeId
   const mode = getGdtCalcMode(typeId)
   if (mode && isExtendedAnalysisType(typeId)) {
-    return calculateGdtChain(closedRing, componentRings, method, { ...options, mode, typeId })
+    const result = calculateGdtChain(closedRing, componentRings, method, { ...options, mode, typeId })
+    return withModifier(result, closedRing, options)
   }
   if (method === 'worst') {
     const limits = calculateWorstCaseLimits(componentRings)

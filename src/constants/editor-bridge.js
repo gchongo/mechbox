@@ -7,14 +7,17 @@ export function serializeEditorForMonteCarlo({
   componentRings,
   method,
   rssDistribution,
+  selectedType,
 }) {
   return {
     closedMin: closedRing.min,
     closedMax: closedRing.max,
     componentRings,
-    distribution: method === 'modified-rss' ? rssDistribution : 'normal',
+    distribution: method === 'modified-rss' || method === 'sigma6-rss' ? rssDistribution : 'normal',
     rssDistribution,
     method,
+    typeId: selectedType?.id,
+    typeName: selectedType?.name,
   }
 }
 
@@ -32,5 +35,7 @@ export function deserializeMonteCarloPayload(payload) {
     distribution: payload.distribution ?? 'normal',
     customK: payload.customK ?? 0,
     iterations: payload.iterations ?? 10000,
+    typeId: payload.typeId,
+    typeName: payload.typeName,
   }
 }

@@ -29,6 +29,17 @@
           <el-form-item label="额定动载荷 C (N)">
             <el-input-number v-model="form.dynamicLoad" :min="100" :step="1000" />
           </el-form-item>
+          <el-form-item label="额定静载荷 C₀ (N)">
+            <el-input-number v-model="form.staticLoad" :min="0" :step="1000" />
+          </el-form-item>
+          <el-form-item label="工况系数 aISO">
+            <el-select v-model="form.lifeCondition" class="w-full">
+              <el-option label="清洁润滑 (1.5)" value="clean" />
+              <el-option label="标准 (1.0)" value="standard" />
+              <el-option label="污染 (0.5)" value="contaminated" />
+              <el-option label="恶劣 (0.3)" value="heavy" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="径向载荷 Fr (N)">
             <el-input-number v-model="form.radialLoad" :min="0" :step="100" />
           </el-form-item>
@@ -82,7 +93,13 @@
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <dt class="text-gray-500">修正寿命 Lnm</dt>
-            <dd class="font-mono">{{ formatNum(result.modifiedLifeMillionRev) }} (a₁={{ result.reliabilityFactor }})</dd>
+            <dd class="font-mono">{{ formatNum(result.modifiedLifeMillionRev) }} (a₁×aISO={{ (result.reliabilityFactor * result.lifeConditionFactor).toFixed(2) }})</dd>
+          </div>
+          <div v-if="result.staticSafetyFactor != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <dt class="text-gray-500">静载安全系数 S₀</dt>
+            <dd class="font-mono" :class="result.staticPass ? 'text-success' : 'text-error'">
+              {{ result.staticSafetyFactor.toFixed(2) }} {{ result.staticPass ? '✓' : '✗' }}
+            </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <dt class="text-gray-500">额定寿命</dt>
@@ -113,6 +130,8 @@ const form = reactive({
   bearingModel: '6205',
   bearingType: 'ball',
   dynamicLoad: 35000,
+  staticLoad: 18000,
+  lifeCondition: 'standard',
   radialLoad: 5000,
   axialLoad: 1000,
   x: 1,

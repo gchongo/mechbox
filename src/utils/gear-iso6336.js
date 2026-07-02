@@ -120,8 +120,10 @@ export function analyzeGearISO6336(input) {
   const m = input.module
   const alpha = input.pressureAngle ?? 20
   const beta = input.helixAngle ?? 0
-  const d1 = m * z1
-  const d2 = m * z2
+  const x1 = input.profileShiftPinion ?? 0
+  const x2 = input.profileShiftGear ?? 0
+  const d1 = m * (z1 + 2 * x1)
+  const d2 = m * (z2 + 2 * x2)
 
   const Ft = calcTangentialForce(input.torque, d1)
   const velocity = calcPitchLineVelocity(d1, input.rpm ?? 0)
@@ -130,7 +132,7 @@ export function analyzeGearISO6336(input) {
     z1,
     z2,
     pressureAngle: alpha,
-    addendum: input.addendum ?? 1,
+    addendum: (input.addendum ?? 1) + Math.max(x1, x2) * 0.1,
   })
 
   const KA = input.applicationFactor ?? 1.25
@@ -198,6 +200,8 @@ export function analyzeGearISO6336(input) {
     factors: {
       YF: lookupYF(z1),
       YS: calcYS(z1),
+      profileShiftPinion: x1,
+      profileShiftGear: x2,
       ZH,
       ZE: ZE_STEEL,
       Zepsilon,

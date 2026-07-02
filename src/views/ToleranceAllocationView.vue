@@ -58,6 +58,9 @@
               <el-form-item v-if="methodId === 'min-cost'" label="成本系数">
                 <el-input-number v-model="ring.cost" :min="0.1" :precision="2" :step="0.5" />
               </el-form-item>
+              <el-form-item v-if="needsSensitivity" label="灵敏度 s">
+                <el-input-number v-model="ring.sensitivity" :min="0.001" :precision="3" :step="0.1" />
+              </el-form-item>
             </el-form>
           </div>
         </div>
@@ -133,14 +136,17 @@ const router = useRouter()
 const targetTolerance = ref(0.1)
 const methodId = ref('equal-effect')
 const rings = ref([
-  { name: '挡环厚度', factor: 1, nominal: 40, cost: 1 },
-  { name: '齿轮宽度', factor: 1, nominal: 15, cost: 1.2 },
-  { name: '轴径', factor: 1, nominal: 55, cost: 2 },
+  { name: '挡环厚度', factor: 1, nominal: 40, cost: 1, sensitivity: 1 },
+  { name: '齿轮宽度', factor: 1, nominal: 15, cost: 1.2, sensitivity: 1 },
+  { name: '轴径', factor: 1, nominal: 55, cost: 2, sensitivity: 1 },
 ])
 const result = ref(null)
 
 const methodOptions = Object.values(ALLOCATION_METHODS)
 const currentMethodDesc = computed(() => ALLOCATION_METHODS[methodId.value]?.desc ?? '')
+const needsSensitivity = computed(
+  () => methodId.value === 'sensitivity' || methodId.value === 'sensitivity-iter',
+)
 
 function addRing() {
   rings.value.push({
@@ -148,6 +154,7 @@ function addRing() {
     factor: 1,
     nominal: 10,
     cost: 1,
+    sensitivity: 1,
   })
 }
 
@@ -159,9 +166,9 @@ function loadSample() {
   targetTolerance.value = 0.1
   methodId.value = 'equal-effect'
   rings.value = [
-    { name: '挡环厚度', factor: 1, nominal: 40, cost: 1 },
-    { name: '齿轮宽度', factor: 1, nominal: 15, cost: 1.5 },
-    { name: '轴径', factor: 1, nominal: 55.25, cost: 2.5 },
+    { name: '挡环厚度', factor: 1, nominal: 40, cost: 1, sensitivity: 1 },
+    { name: '齿轮宽度', factor: 1, nominal: 15, cost: 1.5, sensitivity: 1.2 },
+    { name: '轴径', factor: 1, nominal: 55.25, cost: 2.5, sensitivity: 0.8 },
   ]
   run()
 }

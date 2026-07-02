@@ -6,7 +6,7 @@
         class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100"
       >
         <el-icon :size="24" class="text-primary"><Tools /></el-icon>
-        <span class="hidden sm:inline">MechBox 机械工具箱</span>
+        <span class="hidden sm:inline">{{ t('appName', locale) }}</span>
         <span class="sm:hidden">MechBox</span>
       </router-link>
 
@@ -27,27 +27,45 @@
             class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
             :class="toolsActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
           >
-            工具
+            {{ t('nav.tools', locale) }}
             <el-icon class="ml-0.5 align-middle"><ArrowDown /></el-icon>
           </button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item disabled class="!text-xs !text-gray-400">V2.0 尺寸链 / 机械</el-dropdown-item>
               <el-dropdown-item
-                v-for="t in toolGroups.v2"
-                :key="t.path"
-                :command="t.path"
-                :class="{ 'is-active': route.path === t.path }"
+                v-for="tool in toolGroups.v2"
+                :key="tool.path"
+                :command="tool.path"
+                :class="{ 'is-active': route.path === tool.path }"
               >
-                {{ t.label }}
+                {{ tool.label }}
               </el-dropdown-item>
               <el-dropdown-item divided disabled class="!text-xs !text-gray-400">V3.0 传动结构</el-dropdown-item>
-              <el-dropdown-item v-for="t in toolGroups.v3" :key="t.path" :command="t.path">
-                {{ t.label }}
+              <el-dropdown-item v-for="tool in toolGroups.v3" :key="tool.path" :command="tool.path">
+                {{ tool.label }}
               </el-dropdown-item>
               <el-dropdown-item divided disabled class="!text-xs !text-gray-400">V4.0 流体材料</el-dropdown-item>
-              <el-dropdown-item v-for="t in toolGroups.v4" :key="t.path" :command="t.path">
-                {{ t.label }}
+              <el-dropdown-item v-for="tool in toolGroups.v4" :key="tool.path" :command="tool.path">
+                {{ tool.label }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+
+        <el-dropdown trigger="click" @command="goTool">
+          <button
+            type="button"
+            class="hidden rounded-md px-3 py-2 text-sm font-medium transition-colors sm:inline-block"
+            :class="moreActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
+          >
+            {{ t('nav.more', locale) }}
+            <el-icon class="ml-0.5 align-middle"><ArrowDown /></el-icon>
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="item in moreItems" :key="item.path" :command="item.path">
+                {{ item.label }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -74,57 +92,86 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from '@/utils/auth'
+import { getSettings } from '@/utils/settings'
+import { t } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
 const user = ref(null)
+const locale = ref(getSettings().locale ?? 'zh')
 
-const navItems = [
-  { path: '/', label: '首页' },
-  { path: '/editor', label: '分析' },
-  { path: '/statistics', label: '统计' },
-  { path: '/monte-carlo', label: '模拟' },
-  { path: '/cases', label: '案例' },
-  { path: '/manual', label: '手册' },
-]
+const navItems = computed(() => [
+  { path: '/', label: t('nav.home', locale.value) },
+  { path: '/editor', label: t('nav.editor', locale.value) },
+  { path: '/statistics', label: t('nav.stats', locale.value) },
+  { path: '/monte-carlo', label: t('nav.mc', locale.value) },
+  { path: '/cases', label: t('nav.cases', locale.value) },
+  { path: '/manual', label: t('nav.manual', locale.value) },
+])
 
-const toolGroups = {
+const toolGroups = computed(() => ({
   v2: [
-    { path: '/batch', label: '批量验证' },
-    { path: '/allocation', label: '公差分配' },
-    { path: '/gear', label: '齿轮 ISO 6336' },
-    { path: '/thread', label: '螺纹强度' },
-    { path: '/bearing', label: '轴承寿命' },
+    { path: '/batch', label: locale.value === 'en' ? 'Batch verify' : '批量验证' },
+    { path: '/allocation', label: locale.value === 'en' ? 'Tolerance allocation' : '公差分配' },
+    { path: '/gear', label: locale.value === 'en' ? 'Gear ISO 6336' : '齿轮 ISO 6336' },
+    { path: '/thread', label: locale.value === 'en' ? 'Thread strength' : '螺纹强度' },
+    { path: '/bearing', label: locale.value === 'en' ? 'Bearing life' : '轴承寿命' },
   ],
   v3: [
-    { path: '/shaft', label: '轴扭转' },
-    { path: '/spring', label: '弹簧设计' },
-    { path: '/clutch', label: '离合器' },
-    { path: '/belt', label: '皮带传动' },
-    { path: '/chain', label: '链传动' },
+    { path: '/shaft', label: locale.value === 'en' ? 'Shaft strength' : '轴强度' },
+    { path: '/key', label: locale.value === 'en' ? 'Key connection' : '平键连接' },
+    { path: '/weld', label: locale.value === 'en' ? 'Weld strength' : '焊缝强度' },
+    { path: '/bolt-group', label: locale.value === 'en' ? 'Bolt group' : '螺栓组' },
+    { path: '/spring', label: locale.value === 'en' ? 'Spring design' : '弹簧设计' },
+    { path: '/clutch', label: locale.value === 'en' ? 'Clutch' : '离合器' },
+    { path: '/belt', label: locale.value === 'en' ? 'Belt drive' : '皮带传动' },
+    { path: '/chain', label: locale.value === 'en' ? 'Chain drive' : '链传动' },
   ],
   v4: [
-    { path: '/cylinder', label: '液压/气缸' },
-    { path: '/materials', label: '材料库' },
+    { path: '/cylinder', label: locale.value === 'en' ? 'Hydraulic / cylinder' : '液压/气缸' },
+    { path: '/materials', label: locale.value === 'en' ? 'Materials' : '材料库' },
   ],
-}
+}))
 
-const allToolPaths = [
-  ...toolGroups.v2,
-  ...toolGroups.v3,
-  ...toolGroups.v4,
-].map((t) => t.path)
+const moreItems = computed(() => [
+  { path: '/tutorial', label: t('nav.tutorial', locale.value) },
+  { path: '/glossary', label: t('nav.glossary', locale.value) },
+  { path: '/faq', label: t('nav.faq', locale.value) },
+  { path: '/quiz', label: t('nav.quiz', locale.value) },
+  { path: '/history', label: locale.value === 'en' ? 'History' : '历史记录' },
+])
 
-const toolsActive = computed(() => allToolPaths.some((p) => route.path.startsWith(p)))
+const allToolPaths = computed(() => [
+  ...toolGroups.value.v2,
+  ...toolGroups.value.v3,
+  ...toolGroups.value.v4,
+].map((item) => item.path))
+
+const morePaths = ['/tutorial', '/glossary', '/faq', '/quiz', '/history']
+
+const toolsActive = computed(() => allToolPaths.value.some((p) => route.path.startsWith(p)))
+const moreActive = computed(() => morePaths.some((p) => route.path.startsWith(p)))
 
 function refreshUser() {
   user.value = getCurrentUser()
 }
 
-onMounted(refreshUser)
+function onSettingsChange(e) {
+  locale.value = e.detail?.locale ?? getSettings().locale ?? 'zh'
+}
+
+onMounted(() => {
+  refreshUser()
+  window.addEventListener('mechbox-settings', onSettingsChange)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('mechbox-settings', onSettingsChange)
+})
+
 watch(() => route.path, refreshUser)
 
 function navLinkClass(path) {

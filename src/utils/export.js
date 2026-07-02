@@ -4,7 +4,7 @@ function dateStamp() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export async function exportResultPdf(element, filename) {
+export async function exportResultPdf(element, filename, meta = {}) {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import('html2canvas'),
     import('jspdf'),
@@ -14,27 +14,56 @@ export async function exportResultPdf(element, filename) {
   const pdf = new jsPDF('p', 'mm', 'a4')
   const pageW = pdf.internal.pageSize.getWidth()
   const pageH = pdf.internal.pageSize.getHeight()
-  const imgH = (canvas.height * pageW) / canvas.width
-  let y = 0
+
+  pdf.setFontSize(10)
+  pdf.text('MechBox 尺寸链分析报告', 14, 12)
+  pdf.setFontSize(8)
+  pdf.text(`日期: ${dateStamp()}`, 14, 18)
+  if (meta.title) pdf.text(`项目: ${meta.title}`, 14, 23)
+
+  const topMargin = 28
+  const imgH = ((canvas.height * (pageW - 28)) / canvas.width)
+  let y = topMargin
   let remaining = imgH
+  const contentW = pageW - 28
 
   while (remaining > 0) {
-    pdf.addImage(img, 'PNG', 0, y, pageW, imgH)
-    remaining -= pageH
+    pdf.addImage(img, 'PNG', 14, y, contentW, imgH)
+    remaining -= pageH - topMargin
     if (remaining > 0) {
       pdf.addPage()
-      y -= pageH
+      y = topMargin - (imgH - remaining)
     }
   }
+
+  const pages = pdf.getNumberOfPages()
+  for (let i = 1; i <= pages; i++) {
+    pdf.setPage(i)
+    pdf.setFontSize(8)
+    pdf.text(`MechBox · ${dateStamp()} · 第 ${i}/${pages} 页`, pageW / 2, pageH - 8, {
+      align: 'center',
+    })
+  }
+
   pdf.save(filename ?? `尺寸链分析_${dateStamp()}.pdf`)
 }
 
-export async function exportResultPng(element, filename) {
+export async function exportResultPng(element, filename, width = 1920, height = 1080) {
   const { default: html2canvas } = await import('html2canvas')
-  const canvas = await html2canvas(element, { scale: 2, useCORS: true })
+  const src = await html2canvas(element, { scale: 2, useCORS: true })
+  const exportCanvas = document.createElement('canvas')
+  exportCanvas.width = width
+  exportCanvas.height = height
+  const ctx = exportCanvas.getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, width, height)
+  const scale = Math.min(width / src.width, height / src.height)
+  const dw = src.width * scale
+  const dh = src.height * scale
+  ctx.drawImage(src, (width - dw) / 2, (height - dh) / 2, dw, dh)
   const link = document.createElement('a')
-  link.download = filename ?? `尺寸链矢量图_${dateStamp()}.png`
-  link.href = canvas.toDataURL('image/png')
+  link.download = filename ?? `尺寸链分析_${dateStamp()}.png`
+  link.href = exportCanvas.toDataURL('image/png')
   link.click()
 }
 

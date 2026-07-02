@@ -6,6 +6,7 @@ function normalizeFactors(rings) {
     factor: Math.max(r.factor ?? 1, 0),
     cost: Math.max(r.cost ?? 1, 0.001),
     nominal: Math.max(r.nominal ?? 1, 0.001),
+    sensitivity: Math.max(r.sensitivity ?? 1, 0.001),
   }))
 }
 
@@ -85,6 +86,39 @@ export function minimumCostAllocation(targetTolerance, rings) {
   }))
 }
 
+/** 灵敏度加权 RSS：Tᵢ ∝ sᵢ · fᵢ */
+export function sensitivityAllocation(targetTolerance, rings) {
+  const items = normalizeFactors(rings)
+  const weights = items.map((r) => Math.abs(r.factor) * Math.max(r.sensitivity ?? 1, 0.001))
+  const denom = Math.sqrt(weights.reduce((s, w) => s + w ** 2, 0))
+  if (!denom) return equalEffectAllocation(targetTolerance, rings)
+  const k = targetTolerance / denom
+  return items.map((r, i) => ({
+    name: r.name,
+    factor: r.factor,
+    cost: r.cost,
+    sensitivity: r.sensitivity ?? 1,
+    tolerance: k * weights[i],
+  }))
+}
+
+/** 迭代灵敏度分配（3 轮收敛） */
+export function iterativeSensitivityAllocation(targetTolerance, rings, rounds = 3) {
+  let items = normalizeFactors(rings).map((r) => ({
+    ...r,
+    sensitivity: r.sensitivity ?? 1,
+  }))
+  let allocated = equalEffectAllocation(targetTolerance, items)
+  for (let n = 0; n < rounds; n++) {
+    items = items.map((r, i) => ({
+      ...r,
+      sensitivity: Math.max(0.001, (allocated[i]?.tolerance ?? r.sensitivity) / targetTolerance),
+    }))
+    allocated = sensitivityAllocation(targetTolerance, items)
+  }
+  return allocated
+}
+
 export const ALLOCATION_METHODS = {
   'equal-effect': {
     id: 'equal-effect',
@@ -109,6 +143,18 @@ export const ALLOCATION_METHODS = {
     label: '最小成本 RSS',
     desc: '成本系数越大分配越小，Tᵢ ∝ √(cᵢ)·fᵢ',
     allocate: minimumCostAllocation,
+  },
+  sensitivity: {
+    id: 'sensitivity',
+    label: '灵敏度 RSS',
+    desc: '按灵敏度系数 sᵢ 加权，Tᵢ ∝ sᵢ·fᵢ',
+    allocate: sensitivityAllocation,
+  },
+  'sensitivity-iter': {
+    id: 'sensitivity-iter',
+    label: '迭代灵敏度',
+    desc: '多轮调整灵敏度系数直至 RSS 收敛',
+    allocate: iterativeSensitivityAllocation,
   },
 }
 

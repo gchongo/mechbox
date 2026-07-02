@@ -3,6 +3,16 @@
     <h1 class="page-title">Monte Carlo 模拟</h1>
     <p class="mb-6 text-gray-600">随机模拟尺寸链封闭环分布，评估合格率与统计特征</p>
 
+    <el-alert
+      v-if="sourceTypeName"
+      class="mb-4"
+      type="success"
+      :closable="false"
+      show-icon
+      :title="`来自编辑器：${sourceTypeName}`"
+      description="已载入组成环公差与分布参数，含传递系数加权采样"
+    />
+
     <div class="grid gap-6 lg:grid-cols-2">
       <!-- 输入 -->
       <section class="card-panel">
@@ -135,6 +145,7 @@ const running = ref(false)
 const simResult = ref(null)
 const chartType = ref('histogram')
 const chartComponentRef = ref(null)
+const sourceTypeName = ref('')
 
 async function exportChartPng() {
   if (!simResult.value) {
@@ -202,6 +213,7 @@ function loadFromEditor() {
     distribution.value = fields.distribution
     customK.value = fields.customK
     iterations.value = fields.iterations
+    sourceTypeName.value = fields.typeName ?? ''
     sessionStorage.removeItem(MC_STORAGE_KEY)
     ElMessage.success('已从尺寸链编辑器加载数据')
     return true

@@ -42,6 +42,12 @@
             <el-form-item label="螺旋角 β (°)">
               <el-input-number v-model="form.helixAngle" :min="0" :max="30" :precision="1" />
             </el-form-item>
+            <el-form-item label="小齿轮变位 x₁">
+              <el-input-number v-model="form.profileShiftPinion" :min="-1" :max="1" :step="0.05" :precision="2" />
+            </el-form-item>
+            <el-form-item label="大齿轮变位 x₂">
+              <el-input-number v-model="form.profileShiftGear" :min="-1" :max="1" :step="0.05" :precision="2" />
+            </el-form-item>
             <el-form-item label="小齿轮材料">
               <el-select v-model="form.pinionMaterial" class="w-full">
                 <el-option v-for="m in materials" :key="m.id" :label="m.label" :value="m.id" />
@@ -170,6 +176,8 @@ const form = reactive({
   rpm: 1500,
   pressureAngle: 20,
   helixAngle: 0,
+  profileShiftPinion: 0,
+  profileShiftGear: 0,
   pinionMaterial: 'st-soft',
   gearMaterial: 'st-soft',
   applicationFactor: 1.25,

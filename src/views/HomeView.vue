@@ -182,7 +182,10 @@ const mechTools = [
 ]
 
 const v3Tools = [
-  { path: '/shaft', label: '轴扭转', desc: '切应力 / 扭转角 / 最小轴径', icon: 'Sort' },
+  { path: '/shaft', label: '轴强度', desc: '扭转 / 弯扭合成校核', icon: 'Sort' },
+  { path: '/key', label: '平键连接', desc: '挤压 / 剪切强度校核', icon: 'Key' },
+  { path: '/weld', label: '焊缝强度', desc: '角焊缝 / 对接焊校核', icon: 'Medal' },
+  { path: '/bolt-group', label: '螺栓组', desc: '偏心载荷 / 螺栓分配', icon: 'Grid' },
   { path: '/spring', label: '弹簧设计', desc: '刚度 / 变形 / 切应力', icon: 'Refresh' },
   { path: '/clutch', label: '离合器', desc: '摩擦扭矩 / 压紧力', icon: 'Connection' },
   { path: '/belt', label: '皮带传动', desc: '链长 / 传动比 / 张力', icon: 'Minus' },

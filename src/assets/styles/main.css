@@ -26,4 +26,22 @@
     overflow-x: auto;
     overflow-y: hidden;
   }
+
+  @media (max-width: 768px) {
+    .page-title {
+      @apply text-xl;
+    }
+
+    .card-panel {
+      @apply p-4;
+    }
+
+    .el-table {
+      font-size: 12px;
+    }
+
+    .el-form-item {
+      margin-bottom: 14px;
+    }
+  }
 }

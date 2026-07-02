@@ -41,6 +41,24 @@ export function getReliabilityFactor(percent = 90) {
   return RELIABILITY_FACTORS[percent] ?? 1.0
 }
 
+/** ISO 281 寿命修正 aISO（污染/润滑工况） */
+export const LIFE_CONDITION_FACTORS = {
+  clean: 1.5,
+  standard: 1.0,
+  contaminated: 0.5,
+  heavy: 0.3,
+}
+
+export function getLifeConditionFactor(key = 'standard') {
+  return LIFE_CONDITION_FACTORS[key] ?? 1.0
+}
+
+/** 静载荷安全系数 S₀ = C₀ / P₀ */
+export function calcStaticSafetyFactor(staticLoad, equivalentLoad) {
+  if (!equivalentLoad || equivalentLoad <= 0) return Infinity
+  return staticLoad / equivalentLoad
+}
+
 /** 自动查表 X/Y 并计算寿命 */
 export function analyzeBearingLife(input) {
   let x = input.x
@@ -71,9 +89,14 @@ export function analyzeBearingLife(input) {
   const a1 = input.reliability
     ? getReliabilityFactor(input.reliability)
     : (input.reliabilityFactor ?? 1)
-  const lnm = calcModifiedLife(l10, a1)
+  const aIso = input.lifeConditionFactor ?? getLifeConditionFactor(input.lifeCondition ?? 'standard')
+  const lnm = calcModifiedLife(l10, a1 * aIso)
   const hours = calcLifeHours(lnm, input.rpm)
   const targetHours = input.targetHours ?? 10000
+  const staticSafety = input.staticLoad
+    ? calcStaticSafetyFactor(input.staticLoad, p)
+    : null
+  const minStaticSafety = input.minStaticSafety ?? 1.5
 
   return {
     equivalentLoad: p,
@@ -83,9 +106,12 @@ export function analyzeBearingLife(input) {
     l10MillionRev: l10,
     modifiedLifeMillionRev: lnm,
     reliabilityFactor: a1,
+    lifeConditionFactor: aIso,
+    staticSafetyFactor: staticSafety,
+    staticPass: staticSafety == null ? true : staticSafety >= minStaticSafety,
     lifeHours: hours,
     targetHours,
-    pass: hours >= targetHours,
+    pass: hours >= targetHours && (staticSafety == null || staticSafety >= minStaticSafety),
     bearingType,
     seriesId: input.seriesId ?? xyInfo?.series,
   }

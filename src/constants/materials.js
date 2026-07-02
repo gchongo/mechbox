@@ -177,3 +177,15 @@ export function searchMaterials(query) {
 export function getCategories() {
   return [...new Set(MATERIALS.map((m) => m.category))]
 }
+
+/** 温度折减许用应力 (简化线性, 参考温度 20°C) */
+export function getAllowableAtTemp(material, tempC = 20, refTemp = 20) {
+  if (!material) return null
+  const factor = tempC <= refTemp ? 1 : Math.max(0.4, 1 - (tempC - refTemp) * 0.003)
+  return {
+    sigmaAllow: Math.round(material.sigmaAllow * factor),
+    tauAllow: Math.round(material.tauAllow * factor),
+    factor,
+    tempC,
+  }
+}
