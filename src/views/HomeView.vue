@@ -1,214 +1,205 @@
 <template>
-  <div>
-    <h1 class="page-title">MechBox 机械工具箱</h1>
-    <p class="mb-8 text-gray-600">尺寸链叠加分析 + 概率统计计算</p>
-
-    <!-- 快速开始 -->
-    <section class="card-panel mb-8">
-      <el-button type="primary" size="large" @click="startNewAnalysis">
-        <el-icon class="mr-1"><Promotion /></el-icon>
-        新建分析
-      </el-button>
+  <div class="home-page">
+    <!-- 顶栏：标题 + 快捷操作 -->
+    <section class="home-hero">
+      <div class="home-hero__text">
+        <h1 class="home-hero__title">MechBox 机械工具箱</h1>
+        <p class="home-hero__desc">尺寸链叠加分析 · 概率统计 · 机械强度计算</p>
+      </div>
+      <div class="home-hero__actions">
+        <el-button type="primary" size="large" @click="startNewAnalysis">
+          <el-icon class="mr-1"><Promotion /></el-icon>
+          新建分析
+        </el-button>
+        <router-link to="/cases">
+          <el-button size="large">案例库</el-button>
+        </router-link>
+        <router-link to="/history">
+          <el-button size="large" plain>历史记录</el-button>
+        </router-link>
+      </div>
     </section>
 
-    <!-- 统计工具快捷入口 -->
-    <section class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold">统计工具（快速入口）</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- 统计工具 -->
+    <section class="home-section">
+      <header class="home-section__head">
+        <h2 class="home-section__title">统计工具</h2>
+        <router-link to="/statistics" class="home-section__link">全部统计 →</router-link>
+      </header>
+      <div class="home-grid">
         <button
           v-for="tool in statTools"
           :key="tool.query || tool.path"
-          class="card-panel text-left transition-shadow hover:shadow-md"
+          type="button"
+          class="home-card"
           @click="goStatTool(tool)"
         >
-          <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
-          <p class="font-medium">{{ tool.label }}</p>
-          <p class="text-sm text-gray-500">{{ tool.desc }}</p>
-          <el-tag v-if="tool.badge" size="small" type="info" class="mt-2">{{ tool.badge }}</el-tag>
+          <HomeToolCard :tool="tool" badge-type="info" />
         </button>
       </div>
     </section>
 
-    <!-- 机械计算工具 V2.0 -->
-    <section class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold">机械计算工具 (V2.0)</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <router-link
-          v-for="tool in mechTools"
-          :key="tool.path"
-          :to="tool.path"
-          class="card-panel block transition-shadow hover:shadow-md"
-        >
-          <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
-          <p class="font-medium">{{ tool.label }}</p>
-          <p class="text-sm text-gray-500">{{ tool.desc }}</p>
-          <el-tag size="small" type="success" class="mt-2">{{ tool.badge ?? 'V2.0' }}</el-tag>
-        </router-link>
-      </div>
-    </section>
+    <!-- 机械计算 V2 / V3 / V4 合并为紧凑分区 -->
+    <section class="home-section home-section--tools">
+      <header class="home-section__head">
+        <h2 class="home-section__title">机械计算工具</h2>
+      </header>
 
-    <!-- V3 传动工具 -->
-    <section class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold">传动与结构 (V3.0)</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <router-link
-          v-for="tool in v3Tools"
-          :key="tool.path"
-          :to="tool.path"
-          class="card-panel block transition-shadow hover:shadow-md"
-        >
-          <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
-          <p class="font-medium">{{ tool.label }}</p>
-          <p class="text-sm text-gray-500">{{ tool.desc }}</p>
-          <el-tag size="small" type="warning" class="mt-2">V3.0</el-tag>
-        </router-link>
+      <div class="home-tool-block">
+        <h3 class="home-tool-block__label">
+          <el-tag size="small" type="success" effect="plain">V2.0</el-tag>
+          尺寸链 / 强度
+        </h3>
+        <div class="home-grid">
+          <router-link
+            v-for="tool in mechTools"
+            :key="tool.path"
+            :to="tool.path"
+            class="home-card"
+          >
+            <HomeToolCard :tool="tool" badge="V2.0" badge-type="success" />
+          </router-link>
+        </div>
       </div>
-    </section>
 
-    <!-- V4 流体与材料 -->
-    <section class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold">流体与材料 (V4.0)</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <router-link
-          v-for="tool in v4Tools"
-          :key="tool.path"
-          :to="tool.path"
-          class="card-panel block transition-shadow hover:shadow-md"
-        >
-          <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
-          <p class="font-medium">{{ tool.label }}</p>
-          <p class="text-sm text-gray-500">{{ tool.desc }}</p>
-          <el-tag size="small" type="danger" class="mt-2">V4.0</el-tag>
-        </router-link>
+      <div class="home-tool-block">
+        <h3 class="home-tool-block__label">
+          <el-tag size="small" type="warning" effect="plain">V3.0</el-tag>
+          传动与结构
+        </h3>
+        <div class="home-grid">
+          <router-link
+            v-for="tool in v3Tools"
+            :key="tool.path"
+            :to="tool.path"
+            class="home-card"
+          >
+            <HomeToolCard :tool="tool" badge="V3.0" badge-type="warning" />
+          </router-link>
+        </div>
       </div>
-    </section>
 
-    <!-- 分析类型 -->
-    <section class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold">选择分析类型</h2>
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div v-for="group in ANALYSIS_GROUPS" :key="group.id" class="card-panel">
-          <h3 class="mb-3 flex items-center gap-2 font-medium text-primary">
-            <el-icon><component :is="group.icon" /></el-icon>
-            {{ group.label }}
-          </h3>
-          <div class="space-y-2">
-            <button
-              v-for="type in group.types"
-              :key="type.id"
-              class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-primary/5"
-              @click="startWithType(type.id)"
-            >
-              <el-icon class="text-primary/70"><component :is="type.icon || 'Document'" /></el-icon>
-              <span class="flex-1">{{ type.name }}</span>
-              <el-icon class="text-gray-400"><ArrowRight /></el-icon>
-            </button>
-          </div>
+      <div class="home-tool-block home-tool-block--last">
+        <h3 class="home-tool-block__label">
+          <el-tag size="small" type="danger" effect="plain">V4.0</el-tag>
+          流体与材料
+        </h3>
+        <div class="home-grid">
+          <router-link
+            v-for="tool in v4Tools"
+            :key="tool.path"
+            :to="tool.path"
+            class="home-card"
+          >
+            <HomeToolCard :tool="tool" badge="V4.0" badge-type="danger" />
+          </router-link>
         </div>
       </div>
     </section>
 
-    <!-- 历史记录 -->
-    <section class="mb-8">
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-lg font-semibold">历史记录（最近 5 条）</h2>
-        <router-link to="/history" class="text-sm text-primary hover:underline">查看全部 →</router-link>
-      </div>
-      <div v-if="history.length" class="space-y-3">
-        <div
-          v-for="item in history"
-          :key="item.id"
-          class="card-panel flex items-center justify-between"
-        >
-          <div>
-            <p class="font-medium">
-              {{ item.title }}
-              <span v-if="item.status === 'pass'" class="ml-1 text-sm text-success">✓</span>
-              <span v-else-if="item.status === 'fail'" class="ml-1 text-sm text-error">✗</span>
-            </p>
-            <p class="text-sm text-gray-500">{{ formatDate(item.date) }}</p>
-          </div>
-          <div class="flex gap-2">
-            <el-button size="small" @click="openHistory(item.id)">打开</el-button>
-            <el-button size="small" type="danger" plain @click="removeHistory(item.id)">删除</el-button>
+    <!-- 底栏：分析类型 + 学习资源 两列 -->
+    <div class="home-bottom">
+      <section class="home-section home-section--analysis">
+        <header class="home-section__head">
+          <h2 class="home-section__title">分析类型</h2>
+          <router-link to="/editor" class="home-section__link">进入编辑器 →</router-link>
+        </header>
+        <div class="home-analysis-grid">
+          <div
+            v-for="group in ANALYSIS_GROUPS"
+            :key="group.id"
+            class="home-analysis-group"
+          >
+            <h3 class="home-analysis-group__title">
+              <el-icon class="text-primary"><component :is="group.icon" /></el-icon>
+              {{ group.label }}
+            </h3>
+            <ul class="home-analysis-list">
+              <li v-for="type in group.types" :key="type.id">
+                <button type="button" class="home-analysis-item" @click="startWithType(type.id)">
+                  <el-icon class="shrink-0 text-primary/60"><component :is="type.icon || 'Document'" /></el-icon>
+                  <span class="truncate">{{ type.name }}</span>
+                  <el-icon class="shrink-0 text-gray-300"><ArrowRight /></el-icon>
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
-      </div>
-      <el-empty v-else description="暂无历史记录" />
-    </section>
+      </section>
 
-    <!-- 快速入口 -->
-    <section>
-      <h2 class="mb-4 text-lg font-semibold">学习资源</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <router-link
-          v-for="link in quickLinks"
-          :key="link.path"
-          :to="link.path"
-          class="card-panel block transition-shadow hover:shadow-md"
-        >
-          <el-icon :size="28" class="mb-2 text-primary"><component :is="link.icon" /></el-icon>
-          <p class="font-medium">{{ link.label }}</p>
-          <p class="text-sm text-gray-500">{{ link.desc }}</p>
-        </router-link>
-      </div>
-    </section>
+      <section class="home-section">
+        <header class="home-section__head">
+          <h2 class="home-section__title">学习资源</h2>
+        </header>
+        <div class="home-learn-list">
+          <router-link
+            v-for="link in quickLinks"
+            :key="link.path"
+            :to="link.path"
+            class="home-learn-item"
+          >
+            <span class="home-learn-item__icon">
+              <el-icon :size="18"><component :is="link.icon" /></el-icon>
+            </span>
+            <span class="home-learn-item__body">
+              <span class="home-learn-item__label">{{ link.label }}</span>
+              <span class="home-learn-item__desc">{{ link.desc }}</span>
+            </span>
+            <el-icon class="text-gray-300"><ArrowRight /></el-icon>
+          </router-link>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ANALYSIS_GROUPS } from '@/constants/analysis-types'
-import { getRecentHistory, deleteAnalysis } from '@/utils/storage'
+import HomeToolCard from '@/components/home/HomeToolCard.vue'
 
 const router = useRouter()
-const history = ref([])
 
 const statTools = [
   { query: 'convert', label: '公差转换', desc: 'T ↔ σ', icon: 'Switch' },
   { query: 'rss', label: 'RSS 计算', desc: '基础 + 加权 + 修正', icon: 'DataAnalysis' },
   { query: 'sigma', label: '西格玛分析', desc: 'C / Cpk / 合格率', icon: 'TrendCharts' },
   { query: 'chart', label: '分布曲线', desc: 'Plotly PDF 图', icon: 'PieChart' },
-  { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟分析', icon: 'Histogram', badge: 'V2.0' },
+  { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟', icon: 'Histogram', badge: 'MC' },
 ]
 
 const mechTools = [
-  { path: '/batch', label: '批量公差验证', desc: '多方案 RSS/极值批量检验', icon: 'List', badge: 'V2.0' },
-  { path: '/allocation', label: '公差分配', desc: 'RSS 等贡献 / 最小成本分配', icon: 'ScaleToOriginal', badge: 'V2.0' },
-  { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 完整校核', icon: 'SetUp', badge: 'V2.0' },
-  { path: '/thread', label: '螺纹强度', desc: '拉/剪应力 + 拧紧扭矩', icon: 'Link', badge: 'V2.0' },
-  { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 + ISO 281', icon: 'Help', badge: 'V2.0' },
+  { path: '/batch', label: '批量验证', desc: 'RSS/极值批量检验', icon: 'List' },
+  { path: '/allocation', label: '公差分配', desc: '等贡献 / 最小成本', icon: 'ScaleToOriginal' },
+  { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 校核', icon: 'SetUp' },
+  { path: '/thread', label: '螺纹强度', desc: '拉剪应力 / 扭矩', icon: 'Link' },
+  { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 ISO 281', icon: 'Help' },
 ]
 
 const v3Tools = [
-  { path: '/shaft', label: '轴强度', desc: '扭转 / 弯扭合成校核', icon: 'Sort' },
-  { path: '/key', label: '平键连接', desc: '挤压 / 剪切强度校核', icon: 'Key' },
-  { path: '/weld', label: '焊缝强度', desc: '角焊缝 / 对接焊校核', icon: 'Medal' },
-  { path: '/bolt-group', label: '螺栓组', desc: '偏心载荷 / 螺栓分配', icon: 'Grid' },
-  { path: '/spring', label: '弹簧设计', desc: '刚度 / 变形 / 切应力', icon: 'Refresh' },
-  { path: '/clutch', label: '离合器', desc: '摩擦扭矩 / 压紧力', icon: 'Connection' },
-  { path: '/belt', label: '皮带传动', desc: '链长 / 传动比 / 张力', icon: 'Minus' },
-  { path: '/chain', label: '链传动', desc: '节距 / 链长 / 链张力', icon: 'Link' },
+  { path: '/shaft', label: '轴强度', desc: '扭转 / 弯扭合成', icon: 'Sort' },
+  { path: '/key', label: '平键连接', desc: '挤压 / 剪切', icon: 'Key' },
+  { path: '/weld', label: '焊缝强度', desc: '角焊 / 对接焊', icon: 'Medal' },
+  { path: '/bolt-group', label: '螺栓组', desc: '偏心载荷分配', icon: 'Grid' },
+  { path: '/spring', label: '弹簧设计', desc: '刚度 / 切应力', icon: 'Refresh' },
+  { path: '/clutch', label: '离合器', desc: '摩擦扭矩', icon: 'Connection' },
+  { path: '/belt', label: '皮带传动', desc: '链长 / 张力', icon: 'Minus' },
+  { path: '/chain', label: '链传动', desc: '节距 / 链张力', icon: 'Link' },
 ]
 
 const v4Tools = [
-  { path: '/cylinder', label: '液压/气缸', desc: '推力 / 速度 / 流量', icon: 'Odometer' },
-  { path: '/materials', label: '材料库', desc: '12 种常用材料强度查询', icon: 'Reading' },
+  { path: '/cylinder', label: '液压/气缸', desc: '推力 / 流量', icon: 'Odometer' },
+  { path: '/materials', label: '材料库', desc: '12 种材料强度', icon: 'Reading' },
 ]
 
 const quickLinks = [
-  { path: '/tutorial', label: '教程', desc: '5 篇教程 + Bilibili 视频', icon: 'VideoCamera' },
-  { path: '/cases', label: '案例', desc: '12 个预设案例', icon: 'Collection' },
-  { path: '/quiz', label: '练习', desc: '10 道练习题', icon: 'EditPen' },
+  { path: '/tutorial', label: '教程', desc: '5 篇 + 视频', icon: 'VideoCamera' },
+  { path: '/cases', label: '案例', desc: '12 个预设', icon: 'Collection' },
+  { path: '/quiz', label: '练习', desc: '10 道习题', icon: 'EditPen' },
   { path: '/manual', label: '公式手册', desc: 'LaTeX 公式', icon: 'Notebook' },
   { path: '/glossary', label: '术语词典', desc: 'GD&T 术语', icon: 'Reading' },
   { path: '/faq', label: 'FAQ', desc: '常见问题', icon: 'QuestionFilled' },
 ]
-
-onMounted(() => {
-  history.value = getRecentHistory(5)
-})
 
 function startNewAnalysis() {
   router.push({ name: 'editor' })
@@ -225,17 +216,181 @@ function goStatTool(tool) {
     router.push({ path: '/statistics', query: { tool: tool.query } })
   }
 }
-
-function openHistory(id) {
-  router.push({ name: 'editor-detail', params: { id } })
-}
-
-function removeHistory(id) {
-  deleteAnalysis(id)
-  history.value = getRecentHistory(5)
-}
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleString('zh-CN')
-}
 </script>
+
+<style scoped>
+.home-page {
+  @apply -mt-1 space-y-4;
+}
+
+/* ── Hero ── */
+.home-hero {
+  @apply flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm
+    sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 dark:bg-gray-800;
+}
+
+.home-hero__title {
+  @apply text-xl font-bold text-gray-900 dark:text-gray-100 sm:text-2xl;
+}
+
+.home-hero__desc {
+  @apply mt-0.5 text-sm text-gray-500 dark:text-gray-400;
+}
+
+.home-hero__actions {
+  @apply flex flex-wrap gap-2;
+}
+
+/* ── Section ── */
+.home-section {
+  @apply rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-4;
+}
+
+.home-section--tools {
+  @apply space-y-3;
+}
+
+.home-section__head {
+  @apply mb-2 flex items-center justify-between gap-2;
+}
+
+.home-section__title {
+  @apply text-base font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.home-section__link {
+  @apply shrink-0 text-xs text-primary hover:underline;
+}
+
+/* ── Tool blocks (V2/V3/V4) ── */
+.home-tool-block {
+  @apply border-b border-gray-100 pb-3 dark:border-gray-700/60;
+}
+
+.home-tool-block--last {
+  @apply border-0 pb-0;
+}
+
+.home-tool-block__label {
+  @apply mb-2 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400;
+}
+
+/* ── Uniform tool card grid ── */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 1280px) {
+  .home-grid {
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  }
+}
+
+.home-card {
+  @apply flex h-full min-h-[88px] rounded-lg border border-gray-100 bg-gray-50/80 p-2.5 text-left
+    transition-all hover:border-primary/30 hover:bg-white hover:shadow-sm
+    dark:border-gray-700/50 dark:bg-gray-900/40 dark:hover:border-primary/40 dark:hover:bg-gray-800;
+}
+
+button.home-card {
+  @apply w-full cursor-pointer;
+}
+
+a.home-card {
+  @apply block no-underline text-inherit;
+}
+
+:deep(.home-card__inner) {
+  @apply flex h-full flex-col;
+}
+
+.home-card :deep(.home-card__icon) {
+  @apply mb-1.5 flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary;
+}
+
+.home-card :deep(.home-card__body) {
+  @apply flex flex-1 flex-col gap-0.5;
+}
+
+.home-card :deep(.home-card__label) {
+  @apply line-clamp-1 text-sm font-medium leading-tight text-gray-900 dark:text-gray-100;
+}
+
+.home-card :deep(.home-card__desc) {
+  @apply line-clamp-2 text-[11px] leading-snug text-gray-500 dark:text-gray-400;
+}
+
+.home-card :deep(.home-card__tag) {
+  @apply mt-1.5 w-fit;
+}
+
+/* ── Bottom two-column ── */
+.home-bottom {
+  @apply grid gap-4 lg:grid-cols-5;
+}
+
+.home-section--analysis {
+  @apply lg:col-span-3;
+}
+
+.home-bottom > .home-section:last-child {
+  @apply lg:col-span-2;
+}
+
+.home-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.home-analysis-group {
+  @apply rounded-lg border border-gray-100 bg-gray-50/50 p-2 dark:border-gray-700/50 dark:bg-gray-900/30;
+}
+
+.home-analysis-group__title {
+  @apply mb-1.5 flex items-center gap-1.5 border-b border-gray-100 pb-1.5 text-xs font-semibold
+    text-primary dark:border-gray-700;
+}
+
+.home-analysis-list {
+  @apply m-0 list-none space-y-0.5 p-0;
+}
+
+.home-analysis-item {
+  @apply flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs
+    text-gray-700 transition-colors hover:bg-primary/5 dark:text-gray-300;
+}
+
+/* ── Learning list ── */
+.home-learn-list {
+  @apply space-y-1;
+}
+
+.home-learn-item {
+  @apply flex items-center gap-2.5 rounded-lg border border-transparent px-2 py-2
+    transition-colors hover:border-gray-100 hover:bg-gray-50
+    dark:hover:border-gray-700 dark:hover:bg-gray-900/50;
+}
+
+a.home-learn-item {
+  @apply no-underline text-inherit;
+}
+
+.home-learn-item__icon {
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary;
+}
+
+.home-learn-item__body {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+
+.home-learn-item__label {
+  @apply text-sm font-medium text-gray-900 dark:text-gray-100;
+}
+
+.home-learn-item__desc {
+  @apply truncate text-[11px] text-gray-500 dark:text-gray-400;
+}
+</style>
