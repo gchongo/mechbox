@@ -23,8 +23,19 @@ npm ci
 npm run build
 
 mkdir -p "${DEPLOY_DIR}"
-rsync -a --delete dist/ "${DEPLOY_DIR}/"
-chown -R www:www "${DEPLOY_DIR}" 2>/dev/null || chown -R www-data:www-data "${DEPLOY_DIR}"
+
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --delete dist/ "${DEPLOY_DIR}/"
+else
+  # aaPanel 部分环境未预装 rsync
+  find "${DEPLOY_DIR}" -mindepth 1 -maxdepth 1 ! -name '.user.ini' -exec rm -rf {} +
+  cp -a dist/. "${DEPLOY_DIR}/"
+fi
+
+# .user.ini 由 aaPanel 锁定，跳过即可
+find "${DEPLOY_DIR}" -mindepth 1 ! -name '.user.ini' -exec chown -R www:www {} + 2>/dev/null \
+  || find "${DEPLOY_DIR}" -mindepth 1 ! -name '.user.ini' -exec chown -R www-data:www-data {} + 2>/dev/null \
+  || true
 
 # aaPanel Nginx 重载
 if [ -x /etc/init.d/nginx ]; then
