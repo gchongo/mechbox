@@ -2,6 +2,7 @@
 export const DISTRIBUTIONS = {
   normal: { k: 6.0, cv: 1.0, coverage: 0.9973, name: '正态分布' },
   uniform: { k: 3.46, cv: 0.577, coverage: 1.0, name: '均匀分布' },
+  rectangular: { k: 3.46, cv: 0.577, coverage: 1.0, name: '矩形分布' },
   triangular: { k: 4.24, cv: 0.707, coverage: 0.95, name: '三角分布' },
   skewed: { k: 5.0, cv: 0.8, coverage: 0.98, name: '偏态分布' },
 }

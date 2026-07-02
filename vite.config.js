@@ -9,6 +9,16 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          plotly: ['plotly.js-dist-min'],
+          katex: ['katex'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     open: true,

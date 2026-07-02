@@ -5,7 +5,7 @@
     <!-- 分布类型卡片 -->
     <section class="card-panel mb-6">
       <h2 class="mb-4 font-semibold">分布类型</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <button
           v-for="(dist, key) in DISTRIBUTIONS"
           :key="key"
@@ -22,17 +22,34 @@
             <span class="font-medium">{{ dist.name }}</span>
           </div>
           <dl class="space-y-1 text-xs text-gray-600">
-            <div class="flex justify-between"><dt>K 值</dt><dd class="font-mono">{{ dist.k }}</dd></div>
+            <div class="flex justify-between"><dt>K</dt><dd class="font-mono">{{ dist.k }}</dd></div>
             <div class="flex justify-between"><dt>cv</dt><dd class="font-mono">{{ dist.cv }}</dd></div>
-            <div class="flex justify-between"><dt>覆盖率</dt><dd class="font-mono">{{ (dist.coverage * 100).toFixed(2) }}%</dd></div>
+            <div class="flex justify-between"><dt>覆盖率</dt><dd class="font-mono">{{ (dist.coverage * 100).toFixed(1) }}%</dd></div>
           </dl>
         </button>
       </div>
     </section>
 
+    <!-- Plotly 分布曲线 -->
+    <section id="chart" class="card-panel mb-6">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 class="font-semibold">分布概率密度曲线（PDF）</h2>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-500">公差带宽 T (mm)</span>
+          <el-input-number v-model="chartTolerance" :min="0.01" :precision="3" :step="0.01" size="small" />
+          <el-button size="small" @click="exportChart">导出 PNG</el-button>
+        </div>
+      </div>
+      <DistributionChart
+        ref="chartRef"
+        :distribution="distribution"
+        :tolerance="chartTolerance"
+      />
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-2">
       <!-- 公差转换 -->
-      <section class="card-panel">
+      <section id="convert" class="card-panel">
         <h2 class="mb-4 font-semibold">公差 ↔ 标准差转换</h2>
         <el-form label-width="100px">
           <el-form-item label="转换方向">
@@ -71,7 +88,7 @@
             placeholder="如：10,12,15,18,20（逗号分隔）"
           />
         </el-form-item>
-        <dl class="grid grid-cols-2 gap-4 text-sm">
+        <dl class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3">
             <dt class="text-gray-500">均值 (μ)</dt>
             <dd class="mt-1 font-mono text-lg">{{ stats.mean }}</dd>
@@ -88,24 +105,38 @@
             <dt class="text-gray-500">极差 (R)</dt>
             <dd class="mt-1 font-mono text-lg">{{ stats.range }}</dd>
           </div>
+          <div class="rounded bg-gray-50 p-3">
+            <dt class="text-gray-500">偏度</dt>
+            <dd class="mt-1 font-mono text-lg">{{ stats.skewness }}</dd>
+          </div>
+          <div class="rounded bg-gray-50 p-3">
+            <dt class="text-gray-500">峰度</dt>
+            <dd class="mt-1 font-mono text-lg">{{ stats.kurtosis }}</dd>
+          </div>
         </dl>
       </section>
 
       <!-- RSS -->
-      <section class="card-panel">
-        <h2 class="mb-4 font-semibold">基础 RSS 计算</h2>
+      <section id="rss" class="card-panel">
+        <h2 class="mb-4 font-semibold">RSS 计算</h2>
         <el-form label-width="120px">
           <el-form-item label="公差列表">
             <el-input v-model="toleranceList" placeholder="如：0.06,0.05,0.04" />
           </el-form-item>
-          <el-form-item label="RSS 总公差">
+          <el-form-item label="基础 RSS">
             <MathTex :expr="`T_{\\text{RSS}} = ${rssTotal === '-' ? '\\text{—}' : rssTotal}\\,\\text{mm}`" />
+          </el-form-item>
+          <el-form-item label="传递系数">
+            <el-input v-model="factorList" placeholder="如：1,1,1（与公差一一对应）" />
+          </el-form-item>
+          <el-form-item label="加权 RSS">
+            <MathTex :expr="`T_{\\text{wRSS}} = ${weightedRssTotal === '-' ? '\\text{—}' : weightedRssTotal}\\,\\text{mm}`" />
           </el-form-item>
         </el-form>
       </section>
 
       <!-- 西格玛 -->
-      <section class="card-panel">
+      <section id="sigma" class="card-panel">
         <h2 class="mb-4 font-semibold">西格玛分析</h2>
         <el-form label-width="120px">
           <el-form-item label="目标公差 (mm)">
@@ -120,6 +151,12 @@
           <el-form-item label="合格率">
             <span class="font-mono text-lg text-success">{{ passRate }}</span>
           </el-form-item>
+          <el-form-item label="C 值">
+            <MathTex :expr="cValueLatex" />
+          </el-form-item>
+          <el-form-item label="Cpk">
+            <span class="font-mono text-lg">{{ cpkValue }}</span>
+          </el-form-item>
         </el-form>
       </section>
     </div>
@@ -127,7 +164,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import DistributionChart from '@/components/charts/DistributionChart.vue'
+import { calcSkewness, calcKurtosis, weightedRss } from '@/utils/distribution-pdf'
 import {
   DISTRIBUTIONS,
   toleranceToSigma,
@@ -135,15 +176,37 @@ import {
   rssMethod,
   calculateSigmaLevel,
   calculatePassRate,
+  calculateCpk,
 } from '@/utils/size-chain'
+
+const route = useRoute()
+const chartRef = ref(null)
 
 const distribution = ref('normal')
 const convertDirection = ref('t2s')
 const convertInput = ref(0.25)
 const dataInput = ref('10,12,15,18,20')
 const toleranceList = ref('0.06,0.05,0.04')
+const factorList = ref('1,1,1')
 const targetTolerance = ref(0.25)
 const actualSigma = ref(0.042)
+const chartTolerance = ref(0.25)
+
+onMounted(() => {
+  const tool = route.query.tool
+  if (tool) {
+    setTimeout(() => {
+      document.getElementById(String(tool))?.scrollIntoView({ behavior: 'smooth' })
+    }, 300)
+  }
+})
+
+function parseNumbers(str) {
+  return str
+    .split(/[,，\s]+/)
+    .map(Number)
+    .filter((n) => !Number.isNaN(n))
+}
 
 const convertLatex = computed(() => {
   const val = convertInput.value ?? 0
@@ -162,36 +225,57 @@ const sigmaLevelLatex = computed(() => {
   return `\\sigma_{\\text{水平}} = ${level}\\sigma`
 })
 
+const cValueLatex = computed(() => {
+  if (!actualSigma.value) return 'C = \\text{—}'
+  const c = (targetTolerance.value / (6 * actualSigma.value)).toFixed(2)
+  return `C = ${c}`
+})
+
+const cpkValue = computed(() => {
+  if (!actualSigma.value) return '—'
+  const mean = targetTolerance.value / 2
+  return calculateCpk(targetTolerance.value, 0, mean, actualSigma.value).toFixed(2)
+})
+
 const stats = computed(() => {
-  const nums = dataInput.value
-    .split(/[,，\s]+/)
-    .map(Number)
-    .filter((n) => !Number.isNaN(n))
-  if (!nums.length) return { mean: '-', std: '-', variance: '-', range: '-' }
+  const nums = parseNumbers(dataInput.value)
+  if (!nums.length) {
+    return {
+      mean: '-',
+      std: '-',
+      variance: '-',
+      range: '-',
+      skewness: '-',
+      kurtosis: '-',
+    }
+  }
   const mean = nums.reduce((a, b) => a + b, 0) / nums.length
   const variance = nums.reduce((s, x) => s + (x - mean) ** 2, 0) / nums.length
   const std = Math.sqrt(variance)
+  const skew = calcSkewness(nums)
+  const kurt = calcKurtosis(nums)
   return {
     mean: mean.toFixed(2),
     std: std.toFixed(3),
     variance: variance.toFixed(3),
     range: (Math.max(...nums) - Math.min(...nums)).toFixed(2),
+    skewness: skew == null ? '-' : skew.toFixed(3),
+    kurtosis: kurt == null ? '-' : kurt.toFixed(3),
   }
 })
 
 const rssTotal = computed(() => {
-  const tolerances = toleranceList.value
-    .split(/[,，\s]+/)
-    .map(Number)
-    .filter((n) => !Number.isNaN(n))
-    .map((t) => ({ tolerance: t }))
+  const tolerances = parseNumbers(toleranceList.value).map((t) => ({ tolerance: t }))
   if (!tolerances.length) return '-'
   return rssMethod(tolerances).toFixed(4)
 })
 
-const sigmaLevel = computed(() => {
-  if (!actualSigma.value) return '-'
-  return calculateSigmaLevel(targetTolerance.value, actualSigma.value).toFixed(2)
+const weightedRssTotal = computed(() => {
+  const tolerances = parseNumbers(toleranceList.value)
+  const factors = parseNumbers(factorList.value)
+  if (!tolerances.length) return '-'
+  const f = tolerances.map((_, i) => factors[i] ?? 1)
+  return weightedRss(tolerances, f).toFixed(4)
 })
 
 const passRate = computed(() => {
@@ -199,4 +283,9 @@ const passRate = computed(() => {
   const level = calculateSigmaLevel(targetTolerance.value, actualSigma.value)
   return `${(calculatePassRate(level) * 100).toFixed(2)}%`
 })
+
+function exportChart() {
+  chartRef.value?.exportPng(`分布曲线_${distribution.value}.png`)
+  ElMessage.success('图表已导出')
+}
 </script>

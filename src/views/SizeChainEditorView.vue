@@ -36,6 +36,7 @@
                 "
                 @click="selectType(type, group)"
               >
+                <el-icon class="mb-2 text-primary"><component :is="type.icon || 'Document'" /></el-icon>
                 <p class="font-medium">{{ type.name }}</p>
                 <p class="mt-1 text-xs text-gray-500">{{ type.desc }}</p>
               </button>
@@ -130,17 +131,33 @@
         </el-table-column>
         <el-table-column label="名称" min-width="110">
           <template #default="{ row }">
-            <el-input v-model="row.name" placeholder="如：挡环厚度" size="small" />
+            <el-input
+              v-model="row.name"
+              placeholder="如：挡环厚度"
+              size="small"
+              :class="{ 'ring-error': ringFieldInvalid(row, 'name') }"
+            />
           </template>
         </el-table-column>
         <el-table-column :label="`尺寸 (${unit})`" width="110">
           <template #default="{ row }">
-            <el-input-number v-model="row.size" :precision="2" size="small" />
+            <el-input-number
+              v-model="row.size"
+              :precision="2"
+              size="small"
+              :class="{ 'ring-error': ringFieldInvalid(row, 'size') }"
+            />
           </template>
         </el-table-column>
         <el-table-column :label="`公差 (${unit})`" width="110">
           <template #default="{ row }">
-            <el-input-number v-model="row.tolerance" :precision="2" :min="0" size="small" />
+            <el-input-number
+              v-model="row.tolerance"
+              :precision="2"
+              :min="0"
+              size="small"
+              :class="{ 'ring-error': ringFieldInvalid(row, 'tolerance') }"
+            />
           </template>
         </el-table-column>
         <el-table-column label="传递系数" width="90">
@@ -148,11 +165,13 @@
             <el-input-number v-model="row.factor" :min="0" :max="10" :step="0.1" size="small" />
           </template>
         </el-table-column>
-        <el-table-column label="方向" width="130">
+        <el-table-column label="方向" width="180">
           <template #default="{ row }">
             <el-radio-group v-model="row.direction" size="small" @change="updateRingType(row)">
               <el-radio-button label="left">←</el-radio-button>
+              <el-radio-button label="up">↑</el-radio-button>
               <el-radio-button label="right">→</el-radio-button>
+              <el-radio-button label="down">↓</el-radio-button>
             </el-radio-group>
           </template>
         </el-table-column>
@@ -178,7 +197,7 @@
         <el-button @click="clearRings">清空列表</el-button>
         <div class="flex gap-2">
           <el-button @click="prevStep">← 返回</el-button>
-          <el-button type="primary" :disabled="!componentRings.length" @click="nextStep">
+          <el-button type="primary" :disabled="!componentRings.length" @click="validateRingsAndNext">
             下一步 →
           </el-button>
         </div>
@@ -307,6 +326,7 @@ const selectedType = ref(null)
 const method = ref('rss')
 const touched = ref({})
 const showValidation = ref(false)
+const ringValidation = ref(false)
 const resultPanelRef = ref(null)
 const canvasRef = ref(null)
 const prevUnit = ref('mm')
@@ -466,6 +486,31 @@ function fieldError(field) {
   return ''
 }
 
+function validateRingsAndNext() {
+  ringValidation.value = true
+  if (!componentRings.value.length) return
+  const invalid = componentRings.value.some(
+    (r) =>
+      !r.name?.trim() ||
+      r.size == null ||
+      r.tolerance == null ||
+      r.tolerance < 0,
+  )
+  if (invalid) {
+    ElMessage.warning('请完善所有组成环的名称、尺寸和公差')
+    return
+  }
+  nextStep()
+}
+
+function ringFieldInvalid(row, field) {
+  if (!ringValidation.value) return false
+  if (field === 'name') return !row.name?.trim()
+  if (field === 'size') return row.size == null
+  if (field === 'tolerance') return row.tolerance == null || row.tolerance < 0
+  return false
+}
+
 function validateAndNext(step) {
   if (step === 2) {
     showValidation.value = true
@@ -536,6 +581,7 @@ function resetAll() {
   selectedType.value = null
   method.value = 'rss'
   showValidation.value = false
+  ringValidation.value = false
   touched.value = {}
   clearClosedRing()
   clearRings()
