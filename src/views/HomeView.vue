@@ -2,13 +2,8 @@
   <div class="home-page">
     <section class="home-quick">
       <div class="home-quick__main">
-        <div class="home-quick__features">
-          <span v-for="item in highlights" :key="item.label" class="home-quick__tag">
-            <el-icon class="home-quick__tag-icon"><component :is="item.icon" /></el-icon>
-            {{ item.label }}
-          </span>
-        </div>
-        <p class="home-quick__hint">本地计算 · 无需登录 · 支持 RSS / 极值 / GD&amp;T</p>
+        <p class="home-quick__desc">尺寸链叠加 · 概率统计 · 机械强度计算</p>
+        <p class="home-quick__hint">本地计算，支持 RSS / 极值 / GD&amp;T</p>
       </div>
       <div class="home-quick__actions">
         <el-button type="primary" size="large" class="home-quick__btn" @click="startNewAnalysis">
@@ -96,12 +91,6 @@ import HomeToolCard from '@/components/home/HomeToolCard.vue'
 
 const router = useRouter()
 
-const highlights = [
-  { label: '尺寸链叠加', icon: 'Connection' },
-  { label: '概率统计', icon: 'TrendCharts' },
-  { label: '机械强度', icon: 'SetUp' },
-]
-
 const statTools = [
   { query: 'convert', label: '公差转换', latexDesc: 'T \\leftrightarrow \\sigma', icon: 'Switch' },
   { query: 'rss', label: 'RSS 计算', desc: '基础 + 加权 + 修正', icon: 'DataAnalysis' },
@@ -167,26 +156,16 @@ function goStatTool(tool) {
 }
 
 .home-quick {
-  @apply flex flex-col gap-4 rounded-xl border border-gray-200 bg-gradient-to-br from-white to-primary/5
-    px-4 py-4 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-primary/10 sm:flex-row sm:items-center
-    sm:justify-between sm:px-5;
+  @apply flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4 shadow-sm
+    dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between sm:px-5;
 }
 
-.home-quick__features {
-  @apply flex flex-wrap gap-2;
-}
-
-.home-quick__tag {
-  @apply inline-flex items-center gap-1 rounded-full border border-primary/15 bg-white/80 px-3 py-1
-    text-sm font-medium text-gray-700 dark:border-primary/25 dark:bg-gray-800/80 dark:text-gray-200;
-}
-
-.home-quick__tag-icon {
-  @apply text-primary;
+.home-quick__desc {
+  @apply text-sm font-medium leading-relaxed text-gray-800 dark:text-gray-100 sm:text-base;
 }
 
 .home-quick__hint {
-  @apply mt-2 text-xs text-gray-500 dark:text-gray-400;
+  @apply mt-1 text-xs text-gray-500 dark:text-gray-400;
 }
 
 .home-quick__actions {

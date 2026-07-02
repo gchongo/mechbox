@@ -27,6 +27,25 @@
     overflow-y: hidden;
   }
 
+  .dark .el-table {
+    --el-table-bg-color: rgb(31 41 55);
+    --el-table-tr-bg-color: rgb(31 41 55);
+    --el-table-header-bg-color: rgb(17 24 39);
+    --el-table-row-hover-bg-color: rgb(55 65 81);
+    --el-table-border-color: rgb(75 85 99);
+    --el-table-text-color: rgb(229 231 235);
+    --el-table-header-text-color: rgb(156 163 175);
+  }
+
+  .dark .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+    background-color: rgb(17 24 39);
+  }
+
+  .dark .el-input-number .el-input__wrapper,
+  .dark .el-input__wrapper {
+    background-color: rgb(31 41 55);
+  }
+
   @media (max-width: 768px) {
     .page-title {
       @apply text-xl;
@@ -38,10 +57,19 @@
 
     .el-table {
       font-size: 13px;
+      width: 100% !important;
+    }
+
+    .el-table .el-table__cell {
+      padding: 6px 8px;
     }
 
     .el-form-item {
       margin-bottom: 14px;
+    }
+
+    .el-form-item__label {
+      font-size: 13px;
     }
 
     .el-input-number {

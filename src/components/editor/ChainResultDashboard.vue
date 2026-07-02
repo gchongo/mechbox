@@ -99,13 +99,13 @@
     <div class="grid min-w-0 gap-4 lg:grid-cols-2">
       <div class="min-w-0 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <h3 class="mb-3 font-semibold">CPK 等级对照表</h3>
-        <el-table :data="cpkTable" size="small" border max-height="280">
-          <el-table-column prop="cpk" label="CPK" width="64" />
-          <el-table-column prop="sigma" label="σ 水平" width="72">
+        <el-table :data="cpkTable" size="small" border max-height="280" class="cpk-ref-table">
+          <el-table-column prop="cpk" label="CPK" min-width="56" align="center" />
+          <el-table-column prop="sigma" label="σ 水平" min-width="64" align="center">
             <template #default="{ row }">{{ row.sigma }}σ</template>
           </el-table-column>
-          <el-table-column prop="yield" label="良品率%" width="88" />
-          <el-table-column prop="ppm" label="PPM 不良" />
+          <el-table-column prop="yield" label="良品率%" min-width="88" align="right" />
+          <el-table-column prop="ppm" label="PPM 不良" min-width="80" align="right" />
         </el-table>
         <p class="mt-2 text-xs text-gray-500">
           当前 Cpk = <strong>{{ sigmaSummary.cpk }}</strong>，
@@ -177,3 +177,13 @@ function fmtSigned(v) {
   return n >= 0 ? `+${fmt(n)}` : fmt(n)
 }
 </script>
+
+<style scoped>
+.cpk-ref-table {
+  width: 100%;
+}
+
+.cpk-ref-table :deep(.el-table__cell) {
+  padding: 6px 8px;
+}
+</style>

@@ -1,19 +1,19 @@
 <template>
   <header class="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-    <div class="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
       <router-link
         to="/"
-        class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100"
+        class="flex min-w-0 shrink items-center gap-2 font-bold text-gray-900 dark:text-gray-100"
       >
-        <AppLogo :size="28" />
-        <span class="hidden sm:inline">{{ t('appName', locale) }}</span>
-        <span class="sm:hidden">机械工具箱</span>
+        <AppLogo :size="26" class="shrink-0 sm:hidden" />
+        <AppLogo :size="28" class="hidden shrink-0 sm:block" />
+        <span class="truncate whitespace-nowrap text-base sm:text-xl">{{ t('appName', locale) }}</span>
       </router-link>
 
-      <nav class="flex items-center gap-0.5 sm:gap-1">
+      <nav class="flex shrink-0 items-center gap-0.5 sm:gap-1">
         <router-link
           to="/editor"
-          class="rounded-md px-2 py-2 text-sm font-medium transition-colors md:hidden"
+          class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors md:hidden"
           :class="route.path.startsWith('/editor') ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300'"
         >
           分析
@@ -32,29 +32,20 @@
         <el-dropdown trigger="click" @command="goTool">
           <button
             type="button"
-            class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
+            class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:py-2"
             :class="toolsActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
           >
             {{ t('nav.tools', locale) }}
             <el-icon class="ml-0.5 align-middle"><ArrowDown /></el-icon>
           </button>
           <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item disabled class="!text-xs !text-gray-400">V2.0 尺寸链 / 机械</el-dropdown-item>
+            <el-dropdown-menu class="app-header-menu">
               <el-dropdown-item
-                v-for="tool in toolGroups.v2"
+                v-for="tool in allTools"
                 :key="tool.path"
                 :command="tool.path"
                 :class="{ 'is-active': route.path === tool.path }"
               >
-                {{ tool.label }}
-              </el-dropdown-item>
-              <el-dropdown-item divided disabled class="!text-xs !text-gray-400">V3.0 传动结构</el-dropdown-item>
-              <el-dropdown-item v-for="tool in toolGroups.v3" :key="tool.path" :command="tool.path">
-                {{ tool.label }}
-              </el-dropdown-item>
-              <el-dropdown-item divided disabled class="!text-xs !text-gray-400">V4.0 流体材料</el-dropdown-item>
-              <el-dropdown-item v-for="tool in toolGroups.v4" :key="tool.path" :command="tool.path">
                 {{ tool.label }}
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -64,7 +55,7 @@
         <el-dropdown trigger="click" @command="goTool">
           <button
             type="button"
-            class="rounded-md px-2 py-2 text-sm font-medium transition-colors sm:px-3"
+            class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:py-2"
             :class="moreActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
           >
             {{ t('nav.more', locale) }}
@@ -81,15 +72,15 @@
 
         <router-link
           to="/account"
-          class="ml-1 flex items-center gap-1 rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+          class="flex items-center rounded-md p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 sm:px-2 sm:py-2"
           :title="user ? user.username : '登录'"
         >
           <el-icon :size="18"><User /></el-icon>
-          <span v-if="user" class="hidden max-w-[80px] truncate lg:inline">{{ user.username }}</span>
+          <span v-if="user" class="ml-1 hidden max-w-[80px] truncate lg:inline">{{ user.username }}</span>
         </router-link>
         <router-link
           to="/settings"
-          class="rounded-md p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+          class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 sm:p-2"
           title="设置"
         >
           <el-icon :size="18"><Setting /></el-icon>
@@ -122,7 +113,7 @@ const navItems = computed(() => [
 ])
 
 const toolGroups = computed(() => ({
-  v2: [
+  chain: [
     { path: '/batch', label: locale.value === 'en' ? 'Batch verify' : '批量验证' },
     { path: '/allocation', label: locale.value === 'en' ? 'Tolerance allocation' : '公差分配' },
     { path: '/gear', label: locale.value === 'en' ? 'Gear ISO 6336' : '齿轮 ISO 6336' },
@@ -130,7 +121,7 @@ const toolGroups = computed(() => ({
     { path: '/bolt-preload', label: locale.value === 'en' ? 'Bolt preload' : '螺栓预紧力' },
     { path: '/bearing', label: locale.value === 'en' ? 'Bearing life' : '轴承寿命' },
   ],
-  v3: [
+  drive: [
     { path: '/shaft', label: locale.value === 'en' ? 'Shaft strength' : '轴强度' },
     { path: '/key', label: locale.value === 'en' ? 'Key connection' : '平键连接' },
     { path: '/weld', label: locale.value === 'en' ? 'Weld strength' : '焊缝强度' },
@@ -140,11 +131,17 @@ const toolGroups = computed(() => ({
     { path: '/belt', label: locale.value === 'en' ? 'Belt drive' : '皮带传动' },
     { path: '/chain', label: locale.value === 'en' ? 'Chain drive' : '链传动' },
   ],
-  v4: [
+  material: [
     { path: '/cylinder', label: locale.value === 'en' ? 'Hydraulic / cylinder' : '液压/气缸' },
     { path: '/materials', label: locale.value === 'en' ? 'Materials' : '材料库' },
   ],
 }))
+
+const allTools = computed(() => [
+  ...toolGroups.value.chain,
+  ...toolGroups.value.drive,
+  ...toolGroups.value.material,
+])
 
 const moreItems = computed(() => [
   { path: '/tutorial', label: t('nav.tutorial', locale.value) },
@@ -155,9 +152,9 @@ const moreItems = computed(() => [
 ])
 
 const allToolPaths = computed(() => [
-  ...toolGroups.value.v2,
-  ...toolGroups.value.v3,
-  ...toolGroups.value.v4,
+  ...toolGroups.value.chain,
+  ...toolGroups.value.drive,
+  ...toolGroups.value.material,
 ].map((item) => item.path))
 
 const morePaths = ['/tutorial', '/glossary', '/faq', '/quiz', '/history']
@@ -205,5 +202,10 @@ function goTool(path) {
 :deep(.el-dropdown-menu__item.is-active) {
   color: var(--el-color-primary);
   font-weight: 600;
+}
+
+:deep(.app-header-menu) {
+  max-height: 70vh;
+  overflow-y: auto;
 }
 </style>

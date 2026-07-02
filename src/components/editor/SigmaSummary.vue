@@ -1,25 +1,29 @@
 <template>
-  <div class="mb-6">
-    <h3 class="mb-3 font-semibold">西格玛分析（质量水平）</h3>
-    <el-table :data="rows" border size="small">
-      <el-table-column label="指标" min-width="160">
-        <template #default="{ row }">
+  <div class="sigma-summary">
+    <h3 class="sigma-summary__title">西格玛分析（质量水平）</h3>
+    <div class="sigma-table">
+      <div class="sigma-table__head">
+        <span>指标</span>
+        <span>数值</span>
+        <span>评价</span>
+      </div>
+      <div v-for="(row, i) in rows" :key="i" class="sigma-table__row">
+        <span class="sigma-table__metric">
           <MathTex v-if="row.latex" :expr="row.latex" />
           <span v-else>{{ row.label }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="value" label="数值" width="120" />
-      <el-table-column prop="status" label="评价" width="140">
-        <template #default="{ row }">
-          <span :class="row.ok ? 'text-success' : 'text-warning'">{{ row.status }}</span>
-        </template>
-      </el-table-column>
-    </el-table>
+        </span>
+        <span class="sigma-table__value">{{ row.value }}</span>
+        <span class="sigma-table__status" :class="row.ok ? 'text-success' : 'text-warning'">
+          {{ row.status }}
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 
 const props = defineProps({
   summary: { type: Object, required: true },
@@ -63,3 +67,55 @@ const rows = computed(() => {
   ]
 })
 </script>
+
+<style scoped>
+.sigma-summary__title {
+  @apply mb-3 font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.sigma-table {
+  @apply overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600;
+}
+
+.sigma-table__head,
+.sigma-table__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(72px, 0.9fr) minmax(96px, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.sigma-table__head {
+  @apply bg-gray-50 text-xs font-medium text-gray-500 dark:bg-gray-900 dark:text-gray-400;
+}
+
+.sigma-table__row {
+  @apply border-t border-gray-100 text-sm dark:border-gray-700;
+}
+
+.sigma-table__row:nth-child(even) {
+  @apply bg-gray-50/50 dark:bg-gray-800/50;
+}
+
+.sigma-table__metric {
+  @apply min-w-0 text-gray-800 dark:text-gray-200;
+}
+
+.sigma-table__value {
+  @apply text-right font-mono text-gray-900 dark:text-gray-100;
+}
+
+.sigma-table__status {
+  @apply text-right text-xs leading-snug;
+}
+
+@media (max-width: 480px) {
+  .sigma-table__head,
+  .sigma-table__row {
+    grid-template-columns: minmax(0, 1.2fr) minmax(64px, 0.8fr) minmax(80px, 1fr);
+    padding: 0.45rem 0.5rem;
+    font-size: 12px;
+  }
+}
+</style>

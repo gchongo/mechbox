@@ -217,6 +217,20 @@ function onDragEnd() {
   width: 100%;
 }
 
+.dark .ring-param-table :deep(.el-table) {
+  --el-table-bg-color: rgb(31 41 55);
+  --el-table-tr-bg-color: rgb(31 41 55);
+  --el-table-header-bg-color: rgb(17 24 39);
+  --el-table-row-hover-bg-color: rgb(55 65 81);
+  --el-table-border-color: rgb(75 85 99);
+  --el-table-text-color: rgb(229 231 235);
+  --el-table-header-text-color: rgb(156 163 175);
+}
+
+.dark .ring-param-table :deep(.el-input__wrapper) {
+  background-color: rgb(31 41 55);
+}
+
 .ring-param-table :deep(.el-table__cell) {
   padding: 8px 6px;
 }
