@@ -144,7 +144,7 @@
         左侧为尺寸链矢量示意，右侧填写各环参数；修改任意数值，图形会实时更新。
       </p>
 
-      <div class="mb-3 flex flex-wrap gap-2">
+      <div class="mb-3 flex flex-wrap items-center gap-2">
         <el-button
           v-if="selectedType && getGdtCalcMode(selectedType.id)"
           plain
@@ -152,8 +152,20 @@
         >
           加载 {{ selectedType.name }} 推荐结构
         </el-button>
+        <el-button plain @click="loadDefaultDemo">加载示例数据</el-button>
         <p v-if="componentRings.length >= 50" class="text-sm text-warning">已达最大数量（50）</p>
       </div>
+
+      <el-alert
+        v-if="isDemoLoaded"
+        class="mb-3"
+        type="info"
+        :closable="true"
+        show-icon
+        title="当前为示例数据"
+        description="可直接修改各环参数体验计算，或点击「清空列表」从头填写。"
+        @close="isDemoLoaded = false"
+      />
 
       <div class="grid min-h-[420px] gap-4 lg:grid-cols-2">
         <div class="flex flex-col rounded-xl border border-gray-200 p-3 dark:border-gray-700">
@@ -168,12 +180,14 @@
         </div>
         <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
           <RingParameterTable
+            v-model:advanced="advancedMode"
             :rings="componentRings"
             :unit="unit"
             :show-validation="ringValidation"
             :closed-direction="closedRing.direction"
             @add="addRing"
             @remove="removeRing"
+            @reorder="reorderRing"
           />
         </div>
       </div>
@@ -379,7 +393,7 @@ import SizeChainCanvas from '@/components/editor/SizeChainCanvas.vue'
 import RingParameterTable from '@/components/editor/RingParameterTable.vue'
 import ChainResultDashboard from '@/components/editor/ChainResultDashboard.vue'
 import { ANALYSIS_GROUPS, findAnalysisType } from '@/constants/analysis-types'
-import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+import { findCasePreset, prepareCaseForEditor, prepareEditorDemoState, CASE_STORAGE_KEY } from '@/constants/cases'
 import { MC_STORAGE_KEY, serializeEditorForMonteCarlo } from '@/constants/editor-bridge'
 import {
   calculateChainResult,
@@ -403,7 +417,10 @@ import {
   buildResultText,
 } from '@/utils/export'
 import { getAnalysisById, saveAnalysis } from '@/utils/storage'
-import { getSettings } from '@/utils/settings'
+import {
+  getSettings,
+  saveSettings,
+} from '@/utils/settings'
 import { isFavorite, toggleFavorite } from '@/utils/favorites'
 import { closedRingAsDesign, ensureRingEsEi } from '@/utils/ring-tolerance'
 
@@ -423,8 +440,9 @@ const ringValidation = ref(false)
 const resultPanelRef = ref(null)
 const canvasRef = ref(null)
 const prevUnit = ref('mm')
-const dragFromIndex = ref(null)
 const savedId = ref(route.params.id ? String(route.params.id) : null)
+const advancedMode = ref(getSettings().editorAdvancedMode ?? false)
+const isDemoLoaded = ref(false)
 
 const closedRing = ref({
   name: '',
@@ -648,6 +666,23 @@ function initFromRoute() {
   }
 
   applyDefaultSettings()
+  loadDefaultDemoIfEmpty()
+}
+
+function loadDefaultDemoIfEmpty() {
+  if (selectedType.value || componentRings.value.length > 0) return
+  const state = prepareEditorDemoState()
+  if (!state) return
+  applyEditorState(state)
+  isDemoLoaded.value = true
+}
+
+function loadDefaultDemo() {
+  const state = prepareEditorDemoState()
+  if (!state) return
+  applyEditorState(state)
+  isDemoLoaded.value = true
+  ElMessage.success('已加载齿轮间隙示例数据')
 }
 
 function applyDefaultSettings() {
@@ -805,23 +840,12 @@ function addRing() {
   componentRings.value.push(ring)
 }
 
-function onRingDragStart(index, event) {
-  dragFromIndex.value = index
-  event.dataTransfer.effectAllowed = 'move'
-}
-
-function onRingDrop(toIndex) {
-  const from = dragFromIndex.value
-  if (from == null || from === toIndex) return
+function reorderRing({ from, to }) {
+  if (from == null || from === to) return
   const list = [...componentRings.value]
   const [item] = list.splice(from, 1)
-  list.splice(toIndex, 0, item)
+  list.splice(to, 0, item)
   componentRings.value = list
-  dragFromIndex.value = null
-}
-
-function onRingDragEnd() {
-  dragFromIndex.value = null
 }
 
 function removeRing(index) {
@@ -830,6 +854,7 @@ function removeRing(index) {
 
 function clearRings() {
   componentRings.value = []
+  isDemoLoaded.value = false
 }
 
 function resetAll() {
@@ -843,8 +868,13 @@ function resetAll() {
   touched.value = {}
   clearClosedRing()
   clearRings()
+  isDemoLoaded.value = false
   applyDefaultSettings()
 }
+
+watch(advancedMode, (val) => {
+  saveSettings({ editorAdvancedMode: val })
+})
 
 const methodLabels = {
   worst: '极值法',

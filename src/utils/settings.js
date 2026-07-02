@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS = {
   locale: 'zh',
   mcIterations: 10000,
   numberPrecision: 2,
+  editorAdvancedMode: false,
 }
 
 export function getSettings() {

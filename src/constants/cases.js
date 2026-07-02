@@ -345,3 +345,18 @@ export function prepareCaseForEditor(preset) {
 }
 
 export const CASE_STORAGE_KEY = 'mechbox_load_case'
+
+/** 编辑器空白打开时加载的默认示范案例 ID */
+export const EDITOR_DEMO_CASE_ID = 'gear-gap'
+
+export function prepareEditorDemoState() {
+  const preset = findCasePreset(EDITOR_DEMO_CASE_ID)
+  if (!preset) return null
+  const state = prepareCaseForEditor(preset)
+  state.currentStep = 3
+  state.componentRings = state.componentRings.map((ring, i) => ({
+    ...ring,
+    name: ['A1', 'A2', 'A3'][i] ?? ring.name,
+  }))
+  return state
+}
