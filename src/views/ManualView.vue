@@ -60,7 +60,7 @@ import { FORMULAS } from '@/constants/formulas'
 const keyword = ref('')
 const activeCategory = ref('全部')
 
-const categories = ['全部', '尺寸链', '统计', '齿轮', '轴承']
+const categories = ['全部', '尺寸链', '统计', '齿轮', '轴承', '结构', '传动', '流体']
 
 const filtered = computed(() => {
   let list = FORMULAS

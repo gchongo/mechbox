@@ -31,7 +31,7 @@
 
     <!-- 机械计算工具 V2.0 -->
     <section class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold">机械计算工具</h2>
+      <h2 class="mb-4 text-lg font-semibold">机械计算工具 (V2.0)</h2>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <router-link
           v-for="tool in mechTools"
@@ -42,7 +42,43 @@
           <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
           <p class="font-medium">{{ tool.label }}</p>
           <p class="text-sm text-gray-500">{{ tool.desc }}</p>
-          <el-tag size="small" type="success" class="mt-2">V2.0</el-tag>
+          <el-tag size="small" type="success" class="mt-2">{{ tool.badge ?? 'V2.0' }}</el-tag>
+        </router-link>
+      </div>
+    </section>
+
+    <!-- V3 传动工具 -->
+    <section class="mb-8">
+      <h2 class="mb-4 text-lg font-semibold">传动与结构 (V3.0)</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <router-link
+          v-for="tool in v3Tools"
+          :key="tool.path"
+          :to="tool.path"
+          class="card-panel block transition-shadow hover:shadow-md"
+        >
+          <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
+          <p class="font-medium">{{ tool.label }}</p>
+          <p class="text-sm text-gray-500">{{ tool.desc }}</p>
+          <el-tag size="small" type="warning" class="mt-2">V3.0</el-tag>
+        </router-link>
+      </div>
+    </section>
+
+    <!-- V4 流体与材料 -->
+    <section class="mb-8">
+      <h2 class="mb-4 text-lg font-semibold">流体与材料 (V4.0)</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <router-link
+          v-for="tool in v4Tools"
+          :key="tool.path"
+          :to="tool.path"
+          class="card-panel block transition-shadow hover:shadow-md"
+        >
+          <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
+          <p class="font-medium">{{ tool.label }}</p>
+          <p class="text-sm text-gray-500">{{ tool.desc }}</p>
+          <el-tag size="small" type="danger" class="mt-2">V4.0</el-tag>
         </router-link>
       </div>
     </section>
@@ -138,10 +174,23 @@ const statTools = [
 ]
 
 const mechTools = [
-  { path: '/batch', label: '批量公差验证', desc: '多方案 RSS/极值批量检验', icon: 'List' },
-  { path: '/allocation', label: '公差分配', desc: 'RSS 等贡献 / 最小成本分配', icon: 'ScaleToOriginal' },
-  { path: '/gear', label: '齿轮强度', desc: '弯曲 + 接触应力估算', icon: 'SetUp' },
-  { path: '/bearing', label: '轴承寿命', desc: 'L10 额定寿命计算', icon: 'Help' },
+  { path: '/batch', label: '批量公差验证', desc: '多方案 RSS/极值批量检验', icon: 'List', badge: 'V2.0' },
+  { path: '/allocation', label: '公差分配', desc: 'RSS 等贡献 / 最小成本分配', icon: 'ScaleToOriginal', badge: 'V2.0' },
+  { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 完整校核', icon: 'SetUp', badge: 'V2.0' },
+  { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 + ISO 281', icon: 'Help', badge: 'V2.0' },
+]
+
+const v3Tools = [
+  { path: '/shaft', label: '轴扭转', desc: '切应力 / 扭转角 / 最小轴径', icon: 'Sort' },
+  { path: '/spring', label: '弹簧设计', desc: '刚度 / 变形 / 切应力', icon: 'Refresh' },
+  { path: '/clutch', label: '离合器', desc: '摩擦扭矩 / 压紧力', icon: 'Connection' },
+  { path: '/belt', label: '皮带传动', desc: '链长 / 传动比 / 张力', icon: 'Minus' },
+  { path: '/chain', label: '链传动', desc: '节距 / 链长 / 链张力', icon: 'Link' },
+]
+
+const v4Tools = [
+  { path: '/cylinder', label: '液压/气缸', desc: '推力 / 速度 / 流量', icon: 'Odometer' },
+  { path: '/materials', label: '材料库', desc: '12 种常用材料强度查询', icon: 'Reading' },
 ]
 
 const quickLinks = [

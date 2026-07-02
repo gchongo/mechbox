@@ -98,6 +98,48 @@ const routes = [
     meta: { title: '轴承计算' },
   },
   {
+    path: '/shaft',
+    name: 'shaft',
+    component: () => import('@/views/ShaftCalcView.vue'),
+    meta: { title: '轴扭转' },
+  },
+  {
+    path: '/spring',
+    name: 'spring',
+    component: () => import('@/views/SpringCalcView.vue'),
+    meta: { title: '弹簧设计' },
+  },
+  {
+    path: '/clutch',
+    name: 'clutch',
+    component: () => import('@/views/ClutchCalcView.vue'),
+    meta: { title: '离合器' },
+  },
+  {
+    path: '/belt',
+    name: 'belt',
+    component: () => import('@/views/BeltCalcView.vue'),
+    meta: { title: '皮带传动' },
+  },
+  {
+    path: '/chain',
+    name: 'chain',
+    component: () => import('@/views/ChainCalcView.vue'),
+    meta: { title: '链传动' },
+  },
+  {
+    path: '/cylinder',
+    name: 'cylinder',
+    component: () => import('@/views/CylinderCalcView.vue'),
+    meta: { title: '液压/气缸' },
+  },
+  {
+    path: '/materials',
+    name: 'materials',
+    component: () => import('@/views/MaterialsView.vue'),
+    meta: { title: '材料库' },
+  },
+  {
     path: '/allocation',
     name: 'allocation',
     component: () => import('@/views/ToleranceAllocationView.vue'),
