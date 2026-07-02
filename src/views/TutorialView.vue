@@ -1,25 +1,59 @@
 <template>
   <div>
     <h1 class="page-title">教程</h1>
-    <p class="mb-6 text-gray-600">尺寸链分析视频教程（占位，V1.0 将接入实际视频）</p>
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <div v-for="video in videos" :key="video.id" class="card-panel">
-        <div class="mb-3 flex h-32 items-center justify-center rounded-lg bg-gray-100">
-          <el-icon :size="48" class="text-primary"><VideoPlay /></el-icon>
+    <p class="mb-6 text-gray-600">5 个尺寸链分析教程，含图文说明与案例跳转</p>
+
+    <div class="space-y-4">
+      <div v-for="t in TUTORIALS" :key="t.id" class="card-panel">
+        <div
+          class="flex cursor-pointer items-start justify-between gap-4"
+          @click="toggle(t.id)"
+        >
+          <div class="flex gap-3">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <el-icon :size="24" class="text-primary"><VideoPlay /></el-icon>
+            </div>
+            <div>
+              <h3 class="font-medium">{{ t.title }}</h3>
+              <p class="text-sm text-gray-500">{{ t.duration }} · {{ t.desc }}</p>
+            </div>
+          </div>
+          <el-icon class="mt-1 text-gray-400">
+            <component :is="expanded[t.id] ? 'ArrowUp' : 'ArrowDown'" />
+          </el-icon>
         </div>
-        <h3 class="font-medium">{{ video.title }}</h3>
-        <p class="text-sm text-gray-500">{{ video.duration }} · {{ video.desc }}</p>
+
+        <div v-show="expanded[t.id]" class="mt-4 border-t border-gray-100 pt-4">
+          <div v-for="(sec, i) in t.sections" :key="i" class="mb-4 last:mb-0">
+            <h4 class="mb-1 font-medium text-primary">{{ sec.heading }}</h4>
+            <p class="text-sm leading-relaxed text-gray-600">{{ sec.body }}</p>
+          </div>
+          <el-button v-if="t.caseId" type="primary" plain size="small" @click="openCase(t.caseId)">
+            打开关联案例 →
+          </el-button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-const videos = [
-  { id: 1, title: '尺寸链基础', duration: '5 分钟', desc: '封闭环与组成环概念' },
-  { id: 2, title: '齿轮装配案例', duration: '10 分钟', desc: '实际装配间隙分析' },
-  { id: 3, title: 'RSS 法详解', duration: '8 分钟', desc: '概率统计方法' },
-  { id: 4, title: '极值法 vs RSS', duration: '6 分钟', desc: '两种方法对比' },
-  { id: 5, title: '西格玛水平', duration: '7 分钟', desc: '质量水平评估' },
-]
+import { reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { TUTORIALS } from '@/constants/tutorials'
+import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+
+const router = useRouter()
+const expanded = reactive({ 1: true })
+
+function toggle(id) {
+  expanded[id] = !expanded[id]
+}
+
+function openCase(caseId) {
+  const preset = findCasePreset(caseId)
+  if (!preset) return
+  sessionStorage.setItem(CASE_STORAGE_KEY, JSON.stringify(prepareCaseForEditor(preset)))
+  router.push({ name: 'editor', query: { case: caseId } })
+}
 </script>

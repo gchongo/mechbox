@@ -21,21 +21,25 @@
           :name="group.id"
         >
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <button
+            <el-tooltip
               v-for="type in group.types"
               :key="type.id"
-              class="rounded-lg border-2 p-4 text-left transition-all"
-              :class="
-                selectedType?.id === type.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-gray-200 hover:border-primary/50'
-              "
-              :title="type.desc"
-              @click="selectType(type, group)"
+              :content="type.desc"
+              placement="top"
             >
-              <p class="font-medium">{{ type.name }}</p>
-              <p class="mt-1 text-xs text-gray-500">{{ type.desc }}</p>
-            </button>
+              <button
+                class="w-full rounded-lg border-2 p-4 text-left transition-all"
+                :class="
+                  selectedType?.id === type.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-gray-200 hover:border-primary/50'
+                "
+                @click="selectType(type, group)"
+              >
+                <p class="font-medium">{{ type.name }}</p>
+                <p class="mt-1 text-xs text-gray-500">{{ type.desc }}</p>
+              </button>
+            </el-tooltip>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -185,18 +189,22 @@
     <section v-show="currentStep === 4" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 4：选择计算方法</h2>
       <el-radio-group v-model="method" class="flex flex-col gap-4">
-        <el-radio value="worst" border class="!mr-0 !h-auto !p-4">
-          <div>
-            <p class="font-medium">极值法（最坏情况）</p>
-            <p class="text-sm text-gray-500">公式：T = ΣT · 保守，100% 安全</p>
-          </div>
-        </el-radio>
-        <el-radio value="rss" border class="!mr-0 !h-auto !p-4">
-          <div>
-            <p class="font-medium">RSS 法（概率法）</p>
-            <p class="text-sm text-gray-500">公式：T = √(ΣT²) · 合理，95% 合格</p>
-          </div>
-        </el-radio>
+        <el-tooltip content="极值法：T = T1 + T2 + T3 … 所有公差代数相加" placement="right">
+          <el-radio value="worst" border class="!mr-0 !h-auto !p-4">
+            <div>
+              <p class="font-medium">极值法（最坏情况）</p>
+              <p class="text-sm text-gray-500">公式：T = ΣT · 保守，100% 安全</p>
+            </div>
+          </el-radio>
+        </el-tooltip>
+        <el-tooltip content="RSS 法：T = √(T1² + T2² + T3² …) 概率统计叠加" placement="right">
+          <el-radio value="rss" border class="!mr-0 !h-auto !p-4">
+            <div>
+              <p class="font-medium">RSS 法（概率法）</p>
+              <p class="text-sm text-gray-500">公式：T = √(ΣT²) · 合理，95% 合格</p>
+            </div>
+          </el-radio>
+        </el-tooltip>
       </el-radio-group>
       <div class="mt-6 flex justify-end gap-2">
         <el-button @click="prevStep">← 返回</el-button>

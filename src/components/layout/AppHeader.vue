@@ -36,6 +36,7 @@ const navItems = [
   { path: '/statistics', label: '统计' },
   { path: '/tutorial', label: '教程' },
   { path: '/cases', label: '案例' },
+  { path: '/manual', label: '手册' },
 ]
 
 function isActive(path) {

@@ -43,6 +43,18 @@ const routes = [
     component: () => import('@/views/QuizView.vue'),
     meta: { title: '练习题库' },
   },
+  {
+    path: '/manual',
+    name: 'manual',
+    component: () => import('@/views/ManualView.vue'),
+    meta: { title: '公式手册' },
+  },
+  {
+    path: '/faq',
+    name: 'faq',
+    component: () => import('@/views/FaqView.vue'),
+    meta: { title: '常见问题' },
+  },
 ]
 
 const router = createRouter({

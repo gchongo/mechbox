@@ -73,7 +73,7 @@
     <!-- 快速入口 -->
     <section>
       <h2 class="mb-4 text-lg font-semibold">快速入口</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <router-link
           v-for="link in quickLinks"
           :key="link.path"
@@ -99,10 +99,12 @@ const router = useRouter()
 const history = ref([])
 
 const quickLinks = [
-  { path: '/tutorial', label: '教程', desc: '视频教程', icon: 'VideoCamera' },
-  { path: '/cases', label: '案例', desc: '案例库', icon: 'Collection' },
+  { path: '/tutorial', label: '教程', desc: '5 篇图文教程', icon: 'VideoCamera' },
+  { path: '/cases', label: '案例', desc: '4 个预设案例', icon: 'Collection' },
   { path: '/statistics', label: '统计工具', desc: 'RSS / 西格玛', icon: 'DataAnalysis' },
-  { path: '/quiz', label: '练习', desc: '练习题库', icon: 'EditPen' },
+  { path: '/quiz', label: '练习', desc: '10 道练习题', icon: 'EditPen' },
+  { path: '/manual', label: '公式手册', desc: '可搜索公式', icon: 'Notebook' },
+  { path: '/faq', label: 'FAQ', desc: '常见问题', icon: 'QuestionFilled' },
 ]
 
 onMounted(() => {
