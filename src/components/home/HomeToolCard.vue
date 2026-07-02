@@ -5,12 +5,17 @@
     </span>
     <div class="home-card__body">
       <span class="home-card__label">{{ tool.label }}</span>
-      <span class="home-card__desc">{{ tool.desc }}</span>
+      <span v-if="tool.latexDesc" class="home-card__latex">
+        <MathTex :expr="tool.latexDesc" />
+      </span>
+      <span v-else-if="tool.desc" class="home-card__desc">{{ tool.desc }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
+import MathTex from '@/components/common/MathTex.vue'
+
 defineProps({
   tool: { type: Object, required: true },
 })

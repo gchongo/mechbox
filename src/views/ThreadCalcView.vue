@@ -40,21 +40,21 @@
         <h2 class="mb-4 font-semibold">计算结果</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">有效面积 As</dt>
+            <dt class="text-gray-500">有效面积 <MathTex expr="A_s" /></dt>
             <dd class="font-mono">{{ result.stressArea.toFixed(2) }} mm²</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">中径 d₂</dt>
+            <dt class="text-gray-500">中径 <MathTex expr="d_2" /></dt>
             <dd class="font-mono">{{ result.pitchDiameter.toFixed(3) }} mm</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">拉应力 σ</dt>
+            <dt class="text-gray-500">拉应力 <MathTex expr="\sigma" /></dt>
             <dd class="font-mono" :class="result.tensilePass ? 'text-success' : 'text-error'">
               {{ result.tensileStress.toFixed(1) }} MPa {{ result.tensilePass ? '✓' : '✗' }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">剪应力 τ</dt>
+            <dt class="text-gray-500">剪应力 <MathTex expr="\tau" /></dt>
             <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
               {{ result.shearStress.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
             </dd>
@@ -68,7 +68,7 @@
             <dd class="font-mono">{{ result.maxAllowableForce.toFixed(0) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">拧紧扭矩 T</dt>
+            <dt class="text-gray-500">拧紧扭矩 <MathTex expr="T" /></dt>
             <dd class="font-mono">{{ result.tighteningTorque.toFixed(2) }} N·m</dd>
           </div>
         </dl>
@@ -83,6 +83,7 @@
 
 <script setup>
 import { reactive, computed } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 import {
   analyzeThreadStrength,
   THREAD_GRADES,

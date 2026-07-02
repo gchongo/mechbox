@@ -3,10 +3,21 @@
     <div class="mx-auto max-w-7xl px-4 py-6">
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">机械工具箱</h3>
+          <div class="mb-2 flex items-center gap-2">
+            <AppLogo :size="22" />
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">机械工具箱</h3>
+          </div>
           <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
             尺寸链叠加分析、概率统计与常用机械强度计算，数据保存在本地浏览器。
           </p>
+          <a
+            href="https://cax.do"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-2 inline-block text-sm text-primary hover:underline"
+          >
+            访问 cax.do 论坛 →
+          </a>
         </div>
         <div>
           <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">学习资源</h4>
@@ -54,13 +65,15 @@
         </div>
       </div>
       <p class="mt-6 border-t border-gray-100 pt-4 text-center text-xs text-gray-400 dark:border-gray-700">
-        © {{ year }} 机械工具箱 · 本地计算，无需登录
+        © {{ year }} 机械工具箱
       </p>
     </div>
   </footer>
 </template>
 
 <script setup>
+import AppLogo from '@/components/common/AppLogo.vue'
+
 const year = new Date().getFullYear()
 
 const learnLinks = [

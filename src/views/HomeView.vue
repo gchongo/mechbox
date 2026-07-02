@@ -2,7 +2,6 @@
   <div class="home-page">
     <section class="home-hero">
       <div class="home-hero__text">
-        <h1 class="home-hero__title">机械工具箱</h1>
         <p class="home-hero__desc">尺寸链叠加分析 · 概率统计 · 机械强度计算</p>
       </div>
       <div class="home-hero__actions">
@@ -10,12 +9,50 @@
           <el-icon class="mr-1"><Promotion /></el-icon>
           新建分析
         </el-button>
-        <router-link to="/cases">
-          <el-button size="large">案例库</el-button>
-        </router-link>
         <router-link to="/history">
           <el-button size="large" plain>历史记录</el-button>
         </router-link>
+      </div>
+    </section>
+
+    <a
+      href="https://cax.do"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="home-forum-banner"
+    >
+      <span class="home-forum-banner__badge">论坛</span>
+      <span class="home-forum-banner__text">
+        加入 <strong>cax.do</strong> 机械设计论坛，交流尺寸链、公差与强度设计经验
+      </span>
+      <span class="home-forum-banner__arrow">→</span>
+    </a>
+
+    <section class="home-section">
+      <header class="home-section__head">
+        <h2 class="home-section__title">分析类型</h2>
+        <router-link to="/editor" class="home-section__link">进入编辑器 →</router-link>
+      </header>
+      <div class="home-analysis-grid">
+        <div
+          v-for="group in ANALYSIS_GROUPS"
+          :key="group.id"
+          class="home-analysis-group"
+        >
+          <h3 class="home-analysis-group__title">
+            <el-icon class="text-primary"><component :is="group.icon" /></el-icon>
+            {{ group.label }}
+          </h3>
+          <ul class="home-analysis-list">
+            <li v-for="type in group.types" :key="type.id">
+              <button type="button" class="home-analysis-item" @click="startWithType(type.id)">
+                <el-icon class="shrink-0 text-primary/60"><component :is="type.icon || 'Document'" /></el-icon>
+                <span class="truncate">{{ type.name }}</span>
+                <el-icon class="shrink-0 text-gray-300"><ArrowRight /></el-icon>
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
     </section>
 
@@ -56,34 +93,6 @@
         </div>
       </div>
     </section>
-
-    <section class="home-section">
-      <header class="home-section__head">
-        <h2 class="home-section__title">分析类型</h2>
-        <router-link to="/editor" class="home-section__link">进入编辑器 →</router-link>
-      </header>
-      <div class="home-analysis-grid">
-        <div
-          v-for="group in ANALYSIS_GROUPS"
-          :key="group.id"
-          class="home-analysis-group"
-        >
-          <h3 class="home-analysis-group__title">
-            <el-icon class="text-primary"><component :is="group.icon" /></el-icon>
-            {{ group.label }}
-          </h3>
-          <ul class="home-analysis-list">
-            <li v-for="type in group.types" :key="type.id">
-              <button type="button" class="home-analysis-item" @click="startWithType(type.id)">
-                <el-icon class="shrink-0 text-primary/60"><component :is="type.icon || 'Document'" /></el-icon>
-                <span class="truncate">{{ type.name }}</span>
-                <el-icon class="shrink-0 text-gray-300"><ArrowRight /></el-icon>
-              </button>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
@@ -95,7 +104,7 @@ import HomeToolCard from '@/components/home/HomeToolCard.vue'
 const router = useRouter()
 
 const statTools = [
-  { query: 'convert', label: '公差转换', desc: 'T ↔ σ', icon: 'Switch' },
+  { query: 'convert', label: '公差转换', latexDesc: 'T \\leftrightarrow \\sigma', icon: 'Switch' },
   { query: 'rss', label: 'RSS 计算', desc: '基础 + 加权 + 修正', icon: 'DataAnalysis' },
   { query: 'sigma', label: '西格玛分析', desc: 'C / Cpk / 合格率', icon: 'TrendCharts' },
   { query: 'chart', label: '分布曲线', desc: 'Plotly PDF 图', icon: 'PieChart' },
@@ -110,6 +119,7 @@ const toolGroups = [
       { path: '/allocation', label: '公差分配', desc: '等贡献 / 最小成本', icon: 'ScaleToOriginal' },
       { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 校核', icon: 'SetUp' },
       { path: '/thread', label: '螺纹强度', desc: '拉剪应力 / 扭矩', icon: 'Link' },
+      { path: '/bolt-preload', label: '螺栓预紧力', desc: '扭矩 ↔ 预紧力', icon: 'TurnOff' },
       { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 ISO 281', icon: 'Help' },
     ],
   },
@@ -162,16 +172,31 @@ function goStatTool(tool) {
     sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 dark:bg-gray-800;
 }
 
-.home-hero__title {
-  @apply text-xl font-bold text-gray-900 dark:text-gray-100 sm:text-2xl;
-}
-
 .home-hero__desc {
-  @apply mt-0.5 text-sm text-gray-500 dark:text-gray-400;
+  @apply text-base font-medium text-gray-700 dark:text-gray-200 sm:text-lg;
 }
 
 .home-hero__actions {
   @apply flex flex-wrap gap-2;
+}
+
+.home-forum-banner {
+  @apply flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3
+    text-sm text-gray-700 transition-colors hover:border-primary/40 hover:bg-primary/10
+    dark:border-primary/30 dark:bg-primary/10 dark:text-gray-200 dark:hover:bg-primary/15;
+  text-decoration: none;
+}
+
+.home-forum-banner__badge {
+  @apply shrink-0 rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white;
+}
+
+.home-forum-banner__text {
+  @apply flex-1 leading-snug;
+}
+
+.home-forum-banner__arrow {
+  @apply shrink-0 text-primary;
 }
 
 .home-section {
@@ -238,6 +263,10 @@ a.home-card {
   @apply line-clamp-2 text-[11px] leading-snug text-gray-500 dark:text-gray-400;
 }
 
+.home-card :deep(.home-card__latex) {
+  @apply line-clamp-1 text-[11px] leading-snug text-gray-500 dark:text-gray-400;
+}
+
 .home-analysis-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -245,11 +274,11 @@ a.home-card {
 }
 
 .home-analysis-group {
-  @apply rounded-lg border border-gray-100 bg-gray-50/50 p-2 dark:border-gray-700/50 dark:bg-gray-900/30;
+  @apply rounded-lg border border-gray-100 bg-gray-50/50 p-2.5 dark:border-gray-700/50 dark:bg-gray-900/30;
 }
 
 .home-analysis-group__title {
-  @apply mb-1.5 flex items-center gap-1.5 border-b border-gray-100 pb-1.5 text-xs font-semibold
+  @apply mb-2 flex items-center gap-1.5 border-b border-gray-100 pb-2 text-sm font-semibold
     text-primary dark:border-gray-700;
 }
 
@@ -258,7 +287,7 @@ a.home-card {
 }
 
 .home-analysis-item {
-  @apply flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs
+  @apply flex w-full items-center gap-2 rounded px-1.5 py-1.5 text-left text-sm
     text-gray-700 transition-colors hover:bg-primary/5 dark:text-gray-300;
 }
 </style>

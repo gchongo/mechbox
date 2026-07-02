@@ -21,26 +21,21 @@
           :name="group.id"
         >
           <div v-show="typeGridVisible" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <el-tooltip
+            <button
               v-for="type in group.types"
               :key="type.id"
-              :content="type.desc"
-              placement="top"
+              class="w-full rounded-lg border-2 p-4 text-left transition-all"
+              :class="
+                selectedType?.id === type.id
+                  ? 'border-primary bg-primary/5'
+                  : 'border-gray-200 hover:border-primary/50'
+              "
+              @click="selectType(type, group)"
             >
-              <button
-                class="w-full rounded-lg border-2 p-4 text-left transition-all"
-                :class="
-                  selectedType?.id === type.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-gray-200 hover:border-primary/50'
-                "
-                @click="selectType(type, group)"
-              >
-                <el-icon class="mb-2 text-primary"><component :is="type.icon || 'Document'" /></el-icon>
-                <p class="font-medium">{{ type.name }}</p>
-                <p class="mt-1 text-xs text-gray-500">{{ type.desc }}</p>
-              </button>
-            </el-tooltip>
+              <el-icon class="mb-2 text-primary"><component :is="type.icon || 'Document'" /></el-icon>
+              <p class="font-medium">{{ type.name }}</p>
+              <p class="mt-1 text-xs text-gray-500">{{ type.desc }}</p>
+            </button>
           </div>
           <p v-if="!typeGridVisible" class="py-6 text-center text-sm text-gray-500">
             再次点击「{{ activeGroupLabel }}」Tab 可展开类型列表
@@ -156,26 +151,18 @@
         <p v-if="componentRings.length >= 50" class="text-sm text-warning">已达最大数量（50）</p>
       </div>
 
-      <el-alert
-        v-if="isDemoLoaded"
-        class="mb-3"
-        type="info"
-        :closable="true"
-        show-icon
-        title="当前为示例数据"
-        description="可直接修改各环参数体验计算，或点击「清空列表」从头填写。"
-        @close="isDemoLoaded = false"
-      />
+      <p v-if="isDemoLoaded" class="mb-2 text-xs text-gray-500">
+        示例数据 · 可直接修改，或
+        <button type="button" class="text-primary hover:underline" @click="isDemoLoaded = false">隐藏提示</button>
+      </p>
 
-      <div class="grid min-h-[400px] gap-4 xl:grid-cols-[minmax(300px,1fr)_minmax(520px,1.35fr)]">
-        <div class="flex flex-col rounded-xl border border-gray-200 p-3 dark:border-gray-700">
-          <h3 class="mb-2 font-semibold">尺寸链链路模型</h3>
+      <div class="space-y-4">
+        <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
           <SizeChainCanvas
             :closed-ring="closedRing"
             :component-rings="componentRings"
             :rss-tolerance="previewRssTolerance"
             :analysis-type-id="selectedType?.id"
-            class="flex-1"
           />
         </div>
         <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-700">

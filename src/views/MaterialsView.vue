@@ -30,12 +30,34 @@
         <h3 class="font-medium">{{ m.name }}</h3>
         <el-tag size="small" class="mt-2">{{ m.category }}</el-tag>
         <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <div><dt class="text-gray-500">σb</dt><dd class="font-mono">{{ m.sigmaB }} MPa</dd></div>
-          <div><dt class="text-gray-500">σs</dt><dd class="font-mono">{{ m.sigmaS || '—' }} MPa</dd></div>
-          <div><dt class="text-gray-500">[σ] @ {{ tempC }}°C</dt><dd class="font-mono">{{ tempAllow(m).sigmaAllow }} MPa</dd></div>
-          <div><dt class="text-gray-500">[τ] @ {{ tempC }}°C</dt><dd class="font-mono">{{ tempAllow(m).tauAllow }} MPa</dd></div>
-          <div><dt class="text-gray-500">E</dt><dd class="font-mono">{{ m.E }} MPa</dd></div>
-          <div><dt class="text-gray-500">ρ</dt><dd class="font-mono">{{ m.density }} g/cm³</dd></div>
+          <div>
+            <dt class="text-gray-500"><MathTex expr="\sigma_b" /></dt>
+            <dd class="font-mono">{{ m.sigmaB }} MPa</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500"><MathTex expr="\sigma_s" /></dt>
+            <dd class="font-mono">{{ m.sigmaS || '—' }} MPa</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">
+              <MathTex :expr="`[\\sigma] @ ${tempC}^\\circ\\mathrm{C}`" />
+            </dt>
+            <dd class="font-mono">{{ tempAllow(m).sigmaAllow }} MPa</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">
+              <MathTex :expr="`[\\tau] @ ${tempC}^\\circ\\mathrm{C}`" />
+            </dt>
+            <dd class="font-mono">{{ tempAllow(m).tauAllow }} MPa</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500"><MathTex expr="E" /></dt>
+            <dd class="font-mono">{{ m.E }} MPa</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500"><MathTex expr="\rho" /></dt>
+            <dd class="font-mono">{{ m.density }} g/cm³</dd>
+          </div>
         </dl>
         <p class="mt-2 text-xs text-gray-500">{{ m.note }}</p>
       </div>
@@ -46,7 +68,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { MATERIALS, searchMaterials, getCategories, getAllowableAtTemp } from '@/constants/materials'
+import MathTex from '@/components/common/MathTex.vue'
+import { searchMaterials, getCategories, getAllowableAtTemp } from '@/constants/materials'
 
 const query = ref('')
 const category = ref('')

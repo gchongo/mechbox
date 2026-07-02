@@ -16,7 +16,7 @@
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3"><dt>刚度 k</dt><dd class="font-mono">{{ result.springRate.toFixed(2) }} N/mm</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3"><dt>变形量 δ</dt><dd class="font-mono">{{ result.deflection.toFixed(2) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>切应力 τ</dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>切应力 <MathTex expr="\tau" /></dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3"><dt>Wahl 系数 K</dt><dd class="font-mono">{{ result.wahlFactor.toFixed(3) }}</dd></div>
         </dl>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4">
@@ -29,6 +29,7 @@
 </template>
 <script setup>
 import { reactive, computed } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 import { analyzeSpring } from '@/utils/spring-calc'
 const form = reactive({ wireDiameter: 2, meanDiameter: 16, activeCoils: 8, load: 150, allowableShear: 600 })
 const result = computed(() => analyzeSpring(form))

@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <h1 class="page-title">设置</h1>
-    <p class="mb-6 text-gray-600 dark:text-gray-400">偏好设置保存在本地浏览器，无需登录</p>
+  <div class="mx-auto flex max-w-2xl flex-col items-center">
+    <h1 class="page-title w-full text-center">设置</h1>
+    <p class="mb-6 w-full text-center text-gray-600 dark:text-gray-400">偏好设置保存在本地浏览器</p>
 
-    <section class="card-panel max-w-xl">
+    <section class="card-panel w-full max-w-xl">
       <el-form label-width="140px">
         <el-form-item label="界面主题">
           <el-radio-group v-model="form.theme">
@@ -44,26 +44,28 @@
       </el-form>
     </section>
 
-    <section class="card-panel mt-6 max-w-xl">
-      <h2 class="mb-3 font-semibold">数据同步</h2>
-      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+    <section class="card-panel mt-6 w-full max-w-xl">
+      <h2 class="mb-3 text-center font-semibold sm:text-left">数据同步</h2>
+      <p class="mb-4 text-center text-sm text-gray-600 dark:text-gray-400 sm:text-left">
         导出完整备份（历史 + 收藏 + 设置），可导入到其他浏览器或设备。
       </p>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap justify-center gap-2 sm:justify-start">
         <el-button @click="handleExportBackup">导出完整备份</el-button>
         <el-button @click="triggerImport">导入备份</el-button>
         <input ref="fileInput" type="file" accept=".json" class="hidden" @change="handleImport" />
       </div>
     </section>
 
-    <section class="card-panel mt-6 max-w-xl">
-      <h2 class="mb-3 font-semibold">数据管理</h2>
-      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+    <section class="card-panel mt-6 w-full max-w-xl">
+      <h2 class="mb-3 text-center font-semibold sm:text-left">数据管理</h2>
+      <p class="mb-4 text-center text-sm text-gray-600 dark:text-gray-400 sm:text-left">
         分析历史保存在 localStorage，可在「历史记录」页导出或删除。
       </p>
-      <router-link to="/history">
-        <el-button>打开历史记录 →</el-button>
-      </router-link>
+      <div class="text-center sm:text-left">
+        <router-link to="/history">
+          <el-button>打开历史记录 →</el-button>
+        </router-link>
+      </div>
     </section>
   </div>
 </template>

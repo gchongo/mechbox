@@ -12,7 +12,7 @@
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>有效厚度 a</dt><dd class="font-mono">{{ result.throat.toFixed(2) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>剪应力 τ</dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>剪应力 <MathTex expr="\tau" /></dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
         </dl>
         <MathTex class="mt-4" expr="\tau = \frac{F}{0.7h \cdot L}" block />
       </section>
@@ -21,6 +21,7 @@
 </template>
 <script setup>
 import { reactive, computed } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 import { analyzeFilletWeld } from '@/utils/weld-calc'
 const form = reactive({ legSize: 6, weldLength: 80, force: 12000 })
 const result = computed(() => analyzeFilletWeld(form))

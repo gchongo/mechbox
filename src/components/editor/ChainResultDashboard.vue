@@ -35,18 +35,18 @@
           </div>
 
           <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
-            <p class="mb-2 text-xs font-medium text-gray-500">概率法（RSS ±3σ，99.73%）</p>
+            <p class="mb-2 text-xs font-medium text-gray-500">概率法（RSS ±<MathTex expr="3\sigma" />，99.73%）</p>
             <dl class="space-y-1.5 text-sm">
               <div class="flex justify-between">
-                <dt class="text-gray-500">分布均值 μ</dt>
+                <dt class="text-gray-500">分布均值 <MathTex expr="\mu" /></dt>
                 <dd class="font-mono">{{ fmt(rss.nominal) }}</dd>
               </div>
               <div class="flex justify-between">
-                <dt class="text-gray-500">标准差 σ</dt>
+                <dt class="text-gray-500">标准差 <MathTex expr="\sigma" /></dt>
                 <dd class="font-mono">{{ fmt(rss.processSigma) }}</dd>
               </div>
               <div class="flex justify-between">
-                <dt class="text-gray-500">±3σ 公差</dt>
+                <dt class="text-gray-500">±<MathTex expr="3\sigma" /> 公差</dt>
                 <dd class="font-mono">{{ fmt(rss.tolerance) }}</dd>
               </div>
               <div class="flex justify-between border-t border-gray-200 pt-1.5 dark:border-gray-700">
@@ -133,6 +133,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 import SigmaSummary from '@/components/editor/SigmaSummary.vue'
 import ChainDistributionChart from '@/components/editor/ChainDistributionChart.vue'
 import { closedRingAsDesign, limitsToDeviations, CPK_REFERENCE } from '@/utils/ring-tolerance'

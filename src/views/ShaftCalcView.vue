@@ -19,13 +19,13 @@
       </section>
       <section class="card-panel">
         <dl v-if="mode === 'torsion'" class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>切应力 τ</dt><dd class="font-mono" :class="torsionResult.pass?'text-success':'text-error'">{{ torsionResult.shearStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>扭转角 θ</dt><dd class="font-mono">{{ torsionResult.twistAngle.toFixed(4) }}°</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>切应力 <MathTex expr="\tau" /></dt><dd class="font-mono" :class="torsionResult.pass?'text-success':'text-error'">{{ torsionResult.shearStress.toFixed(2) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>扭转角 <MathTex expr="\theta" /></dt><dd class="font-mono">{{ torsionResult.twistAngle.toFixed(4) }}°</dd></div>
         </dl>
         <dl v-else class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>弯曲 σ</dt><dd class="font-mono">{{ combinedResult.bendingStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>扭转 τ</dt><dd class="font-mono">{{ combinedResult.torsionStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>合成 σeq</dt><dd class="font-mono" :class="combinedResult.pass?'text-success':'text-error'">{{ combinedResult.equivalentStress.toFixed(2) }} MPa {{ combinedResult.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>弯曲 <MathTex expr="\sigma" /></dt><dd class="font-mono">{{ combinedResult.bendingStress.toFixed(2) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>扭转 <MathTex expr="\tau" /></dt><dd class="font-mono">{{ combinedResult.torsionStress.toFixed(2) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>合成 <MathTex expr="\sigma_{eq}" /></dt><dd class="font-mono" :class="combinedResult.pass?'text-success':'text-error'">{{ combinedResult.equivalentStress.toFixed(2) }} MPa {{ combinedResult.pass?'✓':'✗' }}</dd></div>
         </dl>
         <div class="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
           <MathTex v-if="mode === 'combined'" expr="\sigma_{eq} = \sqrt{\sigma^2 + 3\tau^2}" block />
@@ -37,6 +37,7 @@
 </template>
 <script setup>
 import { reactive, computed, ref } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 import { analyzeShaftTorsion } from '@/utils/shaft-calc'
 import { analyzeShaftCombined } from '@/utils/shaft-combined'
 const mode = ref('torsion')

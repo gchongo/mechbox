@@ -98,11 +98,11 @@
               <dd class="font-mono">{{ isoResult.geometry.contactRatio.toFixed(3) }}</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">接触应力 σH</dt>
+              <dt class="text-gray-500">接触应力 <MathTex expr="\sigma_H" /></dt>
               <dd class="font-mono">{{ isoResult.contactStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">弯曲应力 σF</dt>
+              <dt class="text-gray-500">弯曲应力 <MathTex expr="\sigma_F" /></dt>
               <dd class="font-mono">{{ isoResult.bendingStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -141,13 +141,13 @@
               <dd class="font-mono">{{ simpleResult.geometry.pitchDiameter.toFixed(2) }} mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">弯曲应力 σF</dt>
+              <dt class="text-gray-500">弯曲应力 <MathTex expr="\sigma_F" /></dt>
               <dd class="font-mono" :class="simpleResult.bendingPass ? 'text-success' : 'text-error'">
                 {{ simpleResult.bendingStress.toFixed(1) }} MPa {{ simpleResult.bendingPass ? '✓' : '✗' }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">接触应力 σH</dt>
+              <dt class="text-gray-500">接触应力 <MathTex expr="\sigma_H" /></dt>
               <dd class="font-mono" :class="simpleResult.contactPass ? 'text-success' : 'text-error'">
                 {{ simpleResult.contactStress.toFixed(1) }} MPa {{ simpleResult.contactPass ? '✓' : '✗' }}
               </dd>
@@ -161,6 +161,7 @@
 
 <script setup>
 import { reactive, computed, ref } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 import { analyzeGearStrength } from '@/utils/gear-calc'
 import { analyzeGearISO6336, GEAR_MATERIALS } from '@/utils/gear-iso6336'
 

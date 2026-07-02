@@ -98,6 +98,12 @@ const routes = [
     meta: { title: '螺纹强度' },
   },
   {
+    path: '/bolt-preload',
+    name: 'bolt-preload',
+    component: () => import('@/views/BoltPreloadView.vue'),
+    meta: { title: '螺栓预紧力' },
+  },
+  {
     path: '/bearing',
     name: 'bearing',
     component: () => import('@/views/BearingCalcView.vue'),
@@ -188,7 +194,19 @@ const router = createRouter({
 router.afterEach((to) => {
   document.title = to.meta.title
     ? `${to.meta.title} - 机械工具箱`
-    : '机械工具箱'
+    : '机械工具箱 — 尺寸链与机械强度计算'
+
+  let desc = document.querySelector('meta[name="description"]')
+  if (!desc) {
+    desc = document.createElement('meta')
+    desc.setAttribute('name', 'description')
+    document.head.appendChild(desc)
+  }
+  desc.setAttribute(
+    'content',
+    to.meta.description
+      ?? `${to.meta.title ?? '机械工具箱'} — 在线尺寸链叠加分析、概率统计与机械强度计算工具。`,
+  )
 })
 
 export default router

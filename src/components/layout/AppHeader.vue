@@ -5,7 +5,7 @@
         to="/"
         class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100"
       >
-        <el-icon :size="24" class="text-primary"><Tools /></el-icon>
+        <AppLogo :size="28" />
         <span class="hidden sm:inline">{{ t('appName', locale) }}</span>
         <span class="sm:hidden">机械工具箱</span>
       </router-link>
@@ -97,6 +97,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from '@/utils/auth'
 import { getSettings } from '@/utils/settings'
 import { t } from '@/i18n'
+import AppLogo from '@/components/common/AppLogo.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -118,6 +119,7 @@ const toolGroups = computed(() => ({
     { path: '/allocation', label: locale.value === 'en' ? 'Tolerance allocation' : '公差分配' },
     { path: '/gear', label: locale.value === 'en' ? 'Gear ISO 6336' : '齿轮 ISO 6336' },
     { path: '/thread', label: locale.value === 'en' ? 'Thread strength' : '螺纹强度' },
+    { path: '/bolt-preload', label: locale.value === 'en' ? 'Bolt preload' : '螺栓预紧力' },
     { path: '/bearing', label: locale.value === 'en' ? 'Bearing life' : '轴承寿命' },
   ],
   v3: [

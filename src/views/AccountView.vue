@@ -1,20 +1,20 @@
 <template>
-  <div>
-    <h1 class="page-title">账号</h1>
-    <p class="mb-6 text-gray-600 dark:text-gray-400">
+  <div class="mx-auto flex max-w-2xl flex-col items-center">
+    <h1 class="page-title w-full text-center">账号</h1>
+    <p class="mb-6 w-full text-center text-gray-600 dark:text-gray-400">
       本地账号（数据保存在浏览器，可备份同步到其他设备）
     </p>
 
     <!-- 已登录 -->
-    <section v-if="user" class="card-panel max-w-md">
-      <div class="mb-4 flex items-center gap-3">
+    <section v-if="user" class="card-panel w-full max-w-md">
+      <div class="mb-4 flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
         <el-avatar :size="48" class="bg-primary">{{ user.username[0]?.toUpperCase() }}</el-avatar>
         <div>
           <p class="font-semibold">{{ user.username }}</p>
           <p class="text-xs text-gray-500">注册于 {{ formatDate(user.createdAt) }}</p>
         </div>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap justify-center gap-2 sm:justify-start">
         <el-button @click="handleBackup">导出数据备份</el-button>
         <el-button @click="router.push('/history')">我的历史</el-button>
         <el-button type="warning" plain @click="logout">退出登录</el-button>
@@ -23,8 +23,8 @@
     </section>
 
     <!-- 未登录 -->
-    <section v-else class="card-panel max-w-md">
-      <el-tabs v-model="tab">
+    <section v-else class="card-panel w-full max-w-md">
+      <el-tabs v-model="tab" class="account-tabs">
         <el-tab-pane label="登录" name="login">
           <el-form label-width="80px" class="mt-2">
             <el-form-item label="用户名">
@@ -33,7 +33,9 @@
             <el-form-item label="密码">
               <el-input v-model="loginForm.password" type="password" show-password />
             </el-form-item>
-            <el-button type="primary" :loading="loading" @click="doLogin">登录</el-button>
+            <div class="text-center sm:text-left">
+              <el-button type="primary" :loading="loading" @click="doLogin">登录</el-button>
+            </div>
           </el-form>
         </el-tab-pane>
         <el-tab-pane label="注册" name="register">
@@ -47,15 +49,17 @@
             <el-form-item label="确认密码">
               <el-input v-model="registerForm.confirm" type="password" show-password />
             </el-form-item>
-            <el-button type="primary" :loading="loading" @click="doRegister">注册</el-button>
+            <div class="text-center sm:text-left">
+              <el-button type="primary" :loading="loading" @click="doRegister">注册</el-button>
+            </div>
           </el-form>
         </el-tab-pane>
       </el-tabs>
     </section>
 
     <!-- 收藏 -->
-    <section v-if="user && favoriteRecords.length" class="card-panel mt-6">
-      <h2 class="mb-4 font-semibold">收藏的分析</h2>
+    <section v-if="user && favoriteRecords.length" class="card-panel mt-6 w-full">
+      <h2 class="mb-4 text-center font-semibold sm:text-left">收藏的分析</h2>
       <div class="space-y-2">
         <div
           v-for="item in favoriteRecords"

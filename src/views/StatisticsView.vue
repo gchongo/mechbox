@@ -54,8 +54,8 @@
         <el-form label-width="100px">
           <el-form-item label="转换方向">
             <el-radio-group v-model="convertDirection">
-              <el-radio value="t2s">T → σ</el-radio>
-              <el-radio value="s2t">σ → T</el-radio>
+              <el-radio value="t2s"><MathTex expr="T \to \sigma" /></el-radio>
+              <el-radio value="s2t"><MathTex expr="\sigma \to T" /></el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="分布类型">
@@ -90,15 +90,15 @@
         </el-form-item>
         <dl class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">均值 (μ)</dt>
+            <dt class="text-gray-500">均值 (<MathTex expr="\mu" />)</dt>
             <dd class="mt-1 font-mono text-lg">{{ stats.mean }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">标准差 (σ)</dt>
+            <dt class="text-gray-500">标准差 (<MathTex expr="\sigma" />)</dt>
             <dd class="mt-1 font-mono text-lg">{{ stats.std }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">方差 (σ²)</dt>
+            <dt class="text-gray-500">方差 (<MathTex expr="\sigma^2" />)</dt>
             <dd class="mt-1 font-mono text-lg">{{ stats.variance }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
@@ -336,6 +336,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import DistributionChart from '@/components/charts/DistributionChart.vue'
 import ControlChart from '@/components/charts/ControlChart.vue'
+import MathTex from '@/components/common/MathTex.vue'
 import { calcSkewness, calcKurtosis, weightedRss } from '@/utils/distribution-pdf'
 import {
   parseNumberList,

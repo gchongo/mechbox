@@ -13,8 +13,8 @@
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>圆周力 F</dt><dd class="font-mono">{{ result.tangentialForce.toFixed(0) }} N</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>剪切 τ</dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>挤压 σc</dt><dd class="font-mono">{{ result.crushStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>剪切 <MathTex expr="\tau" /></dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>挤压 <MathTex expr="\sigma_c" /></dt><dd class="font-mono">{{ result.crushStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
         </dl>
       </section>
     </div>
@@ -22,6 +22,7 @@
 </template>
 <script setup>
 import { reactive, computed } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
 import { analyzeKeyConnection } from '@/utils/key-calc'
 const form = reactive({ torque: 200, shaftDiameter: 30, keyWidth: 8, keyLength: 28 })
 const result = computed(() => analyzeKeyConnection(form))
