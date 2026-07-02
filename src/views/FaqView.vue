@@ -10,7 +10,7 @@
         :title="item.q"
         :name="item.id"
       >
-        <p class="leading-relaxed text-gray-600">{{ item.a }}</p>
+        <p class="leading-relaxed text-gray-600"><MathContent :text="item.a" /></p>
       </el-collapse-item>
     </el-collapse>
   </div>

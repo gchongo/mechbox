@@ -2,7 +2,12 @@
   <div class="mb-6">
     <h3 class="mb-3 font-semibold">西格玛分析（质量水平）</h3>
     <el-table :data="rows" border size="small">
-      <el-table-column prop="label" label="指标" />
+      <el-table-column label="指标" min-width="160">
+        <template #default="{ row }">
+          <MathTex v-if="row.latex" :expr="row.latex" />
+          <span v-else>{{ row.label }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="value" label="数值" width="120" />
       <el-table-column prop="status" label="评价" width="140">
         <template #default="{ row }">
@@ -26,7 +31,7 @@ const rows = computed(() => {
   const sigma = parseFloat(s.sigmaLevel)
   return [
     {
-      label: 'C 值 (C = T/6σ)',
+      latex: 'C = \\frac{T}{6\\sigma}',
       value: s.c,
       status: cpk > 1.33 ? '✓ 优秀 (>1.33)' : '一般',
       ok: cpk > 1.33,
@@ -38,7 +43,7 @@ const rows = computed(() => {
       ok: cpk > 1.33,
     },
     {
-      label: '西格玛水平',
+      latex: '\\sigma_{\\text{水平}}',
       value: `${s.sigmaLevel}σ`,
       status: sigma >= 4 ? '✓ 4 西格玛' : '待提升',
       ok: sigma >= 4,

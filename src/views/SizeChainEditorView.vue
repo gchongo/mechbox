@@ -189,19 +189,23 @@
     <section v-show="currentStep === 4" class="card-panel">
       <h2 class="mb-4 text-lg font-semibold">步骤 4：选择计算方法</h2>
       <el-radio-group v-model="method" class="flex flex-col gap-4">
-        <el-tooltip content="极值法：T = T1 + T2 + T3 … 所有公差代数相加" placement="right">
+        <el-tooltip content="极值法：所有公差代数相加" placement="right">
           <el-radio value="worst" border class="!mr-0 !h-auto !p-4">
             <div>
               <p class="font-medium">极值法（最坏情况）</p>
-              <p class="text-sm text-gray-500">公式：T = ΣT · 保守，100% 安全</p>
+              <div class="text-sm text-gray-500">
+                <MathTex expr="T = \sum T_i" /> · 保守，100% 安全
+              </div>
             </div>
           </el-radio>
         </el-tooltip>
-        <el-tooltip content="RSS 法：T = √(T1² + T2² + T3² …) 概率统计叠加" placement="right">
+        <el-tooltip content="RSS：独立误差平方和开方" placement="right">
           <el-radio value="rss" border class="!mr-0 !h-auto !p-4">
             <div>
               <p class="font-medium">RSS 法（概率法）</p>
-              <p class="text-sm text-gray-500">公式：T = √(ΣT²) · 合理，95% 合格</p>
+              <div class="text-sm text-gray-500">
+                <MathTex expr="T = \sqrt{\sum T_i^2}" /> · 合理，95% 合格
+              </div>
             </div>
           </el-radio>
         </el-tooltip>
@@ -227,8 +231,13 @@
         />
 
         <h3 class="mb-2 text-sm font-medium text-gray-600">2. 计算公式</h3>
-        <div class="mb-6 rounded-lg bg-gray-50 p-4 font-mono text-sm leading-relaxed">
-          <p v-for="(line, i) in formulaLines" :key="i">{{ line }}</p>
+        <div class="mb-6 space-y-2 rounded-lg bg-gray-50 p-4">
+          <MathTex
+            v-for="(item, i) in formulaLatex"
+            :key="i"
+            :expr="item.latex"
+            block
+          />
         </div>
 
         <h3 class="mb-2 text-sm font-medium text-gray-600">3. 结果对比</h3>
@@ -274,6 +283,7 @@ import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/consta
 import {
   calculateSizeChain,
   buildFormulaLines,
+  buildFormulaLatex,
   buildSigmaSummary,
 } from '@/utils/size-chain'
 import { inferRingType } from '@/utils/ring-direction'
@@ -361,6 +371,10 @@ const resultTable = computed(() => [
 
 const formulaLines = computed(() =>
   buildFormulaLines(closedRing.value, componentRings.value, method.value, unit.value),
+)
+
+const formulaLatex = computed(() =>
+  buildFormulaLatex(closedRing.value, componentRings.value, method.value, unit.value),
 )
 
 const sigmaSummary = computed(() =>

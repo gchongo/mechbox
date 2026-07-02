@@ -55,7 +55,7 @@
             <el-input-number v-model="convertInput" :precision="4" :step="0.01" class="w-full" />
           </el-form-item>
           <el-form-item label="输出值">
-            <span class="font-mono text-primary">{{ convertOutput }}</span>
+            <MathTex :expr="convertLatex" />
           </el-form-item>
         </el-form>
       </section>
@@ -99,7 +99,7 @@
             <el-input v-model="toleranceList" placeholder="如：0.06,0.05,0.04" />
           </el-form-item>
           <el-form-item label="RSS 总公差">
-            <span class="font-mono text-lg text-primary">{{ rssTotal }} mm</span>
+            <MathTex :expr="`T_{\\text{RSS}} = ${rssTotal === '-' ? '\\text{—}' : rssTotal}\\,\\text{mm}`" />
           </el-form-item>
         </el-form>
       </section>
@@ -115,7 +115,7 @@
             <el-input-number v-model="actualSigma" :precision="4" :step="0.001" />
           </el-form-item>
           <el-form-item label="西格玛水平">
-            <span class="font-mono text-lg">{{ sigmaLevel }}σ</span>
+            <MathTex :expr="sigmaLevelLatex" />
           </el-form-item>
           <el-form-item label="合格率">
             <span class="font-mono text-lg text-success">{{ passRate }}</span>
@@ -145,15 +145,21 @@ const toleranceList = ref('0.06,0.05,0.04')
 const targetTolerance = ref(0.25)
 const actualSigma = ref(0.042)
 
-const convertOutput = computed(() => {
+const convertLatex = computed(() => {
   const val = convertInput.value ?? 0
-  const distName = DISTRIBUTIONS[distribution.value].name
+  const dist = DISTRIBUTIONS[distribution.value].name
   if (convertDirection.value === 't2s') {
     const s = toleranceToSigma(val, distribution.value)
-    return `σ = ${s.toFixed(4)}（${distName}）`
+    return `\\sigma = ${s.toFixed(4)} \\quad (\\text{${dist}})`
   }
   const t = sigmaToTolerance(val, distribution.value)
-  return `T = ${t.toFixed(4)}（${distName}）`
+  return `T = ${t.toFixed(4)} \\quad (\\text{${dist}})`
+})
+
+const sigmaLevelLatex = computed(() => {
+  if (!actualSigma.value) return '\\sigma_{\\text{水平}} = \\text{—}'
+  const level = calculateSigmaLevel(targetTolerance.value, actualSigma.value).toFixed(2)
+  return `\\sigma_{\\text{水平}} = ${level}\\sigma`
 })
 
 const stats = computed(() => {

@@ -17,22 +17,22 @@
 
     <div class="space-y-6">
       <div v-for="(q, i) in questions" :key="q.id" class="card-panel">
-        <p class="mb-3 font-medium">{{ i + 1 }}. {{ q.question }}</p>
+        <p class="mb-3 font-medium">{{ i + 1 }}. <MathContent :text="q.question" /></p>
         <el-radio-group v-model="answers[q.id]" :disabled="submitted">
           <el-radio
             v-for="opt in q.options"
-            :key="opt"
-            :value="opt"
+            :key="opt.value"
+            :value="opt.value"
             class="!mb-2 !flex !whitespace-normal"
           >
-            {{ opt }}
+            <MathContent :text="opt.label" />
           </el-radio>
         </el-radio-group>
         <div v-if="submitted" class="mt-3 rounded bg-gray-50 p-3 text-sm">
           <p :class="isCorrect(q) ? 'text-success' : 'text-error'">
-            {{ isCorrect(q) ? '✓ 正确' : `✗ 正确答案：${q.answer}` }}
+            {{ isCorrect(q) ? '✓ 正确' : '✗ 正确答案：' }}<MathContent v-if="!isCorrect(q)" :text="q.answerLabel" />
           </p>
-          <p class="mt-1 text-gray-600">{{ q.explain }}</p>
+          <MathContent :text="q.explain" class="mt-1 text-gray-600" />
         </div>
       </div>
     </div>

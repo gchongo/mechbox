@@ -52,5 +52,6 @@ export {
   calculateRssLimits,
   calculateSizeChain,
   buildFormulaLines,
+  buildFormulaLatex,
   buildSigmaSummary,
 } from './size-chain-math'

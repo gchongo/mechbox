@@ -99,6 +99,52 @@ export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm
   ]
 }
 
+function texLabel(name) {
+  return `\\text{${String(name).replace(/_/g, '\\_')}}`
+}
+
+/** 生成 LaTeX 公式行（用于 KaTeX 渲染） */
+export function buildFormulaLatex(closedRing, componentRings, method, unit = 'mm') {
+  const rings = componentRings
+  if (!rings.length) return [{ latex: '\\text{请添加组成环}', block: true }]
+
+  const inc = rings.filter((r) => r.type === 'increasing')
+  const dec = rings.filter((r) => r.type !== 'increasing')
+  const incTex = inc.map((r) => texLabel(r.name)).join(' + ') || '0'
+  const decTex = dec.map((r) => texLabel(r.name)).join(' + ') || '0'
+  const incSum = inc.reduce((s, r) => s + r.size * (r.factor ?? 1), 0)
+  const decSum = dec.reduce((s, r) => s + r.size * (r.factor ?? 1), 0)
+  const nominal = incSum - decSum
+  const l0 = texLabel(closedRing.name || 'L_0')
+
+  const worst = calculateWorstCaseLimits(rings)
+  const rss = calculateRssLimits(rings)
+  const active = method === 'worst' ? worst : rss
+  const passMark =
+    active.lower >= closedRing.min && active.upper <= closedRing.max ? '\\checkmark' : '\\times'
+
+  const u = unit === 'inch' ? '\\text{inch}' : '\\text{mm}'
+
+  return [
+    {
+      latex: `${l0} = ${incTex} - (${decTex})`,
+      block: true,
+    },
+    {
+      latex: `= ${incSum.toFixed(2)} - ${decSum.toFixed(2)} = ${nominal.toFixed(2)}\\,${u}`,
+      block: true,
+    },
+    {
+      latex: `T_{\\text{极值}} = ${worst.totalTolerance.toFixed(3)}\\,${u},\\quad [${worst.lower.toFixed(3)},\\, ${worst.upper.toFixed(3)}]`,
+      block: true,
+    },
+    {
+      latex: `T_{\\text{RSS}} = ${rss.totalTolerance.toFixed(3)}\\,${u},\\quad [${rss.lower.toFixed(3)},\\, ${rss.upper.toFixed(3)}]\\; ${passMark}`,
+      block: true,
+    },
+  ]
+}
+
 function cdfNormal(x) {
   const t = 1 / (1 + 0.2316419 * Math.abs(x))
   const d = 0.3989423 * Math.exp((-x * x) / 2)

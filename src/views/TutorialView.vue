@@ -26,7 +26,7 @@
         <div v-show="expanded[t.id]" class="mt-4 border-t border-gray-100 pt-4">
           <div v-for="(sec, i) in t.sections" :key="i" class="mb-4 last:mb-0">
             <h4 class="mb-1 font-medium text-primary">{{ sec.heading }}</h4>
-            <p class="text-sm leading-relaxed text-gray-600">{{ sec.body }}</p>
+            <MathContent :text="sec.body" class="text-sm leading-relaxed text-gray-600" />
           </div>
           <el-button v-if="t.caseId" type="primary" plain size="small" @click="openCase(t.caseId)">
             打开关联案例 →
