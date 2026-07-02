@@ -32,7 +32,7 @@
     <!-- 机械计算工具 V2.0 -->
     <section class="mb-8">
       <h2 class="mb-4 text-lg font-semibold">机械计算工具</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <router-link
           v-for="tool in mechTools"
           :key="tool.path"
@@ -139,13 +139,14 @@ const statTools = [
 
 const mechTools = [
   { path: '/batch', label: '批量公差验证', desc: '多方案 RSS/极值批量检验', icon: 'List' },
+  { path: '/allocation', label: '公差分配', desc: 'RSS 等贡献 / 最小成本分配', icon: 'ScaleToOriginal' },
   { path: '/gear', label: '齿轮强度', desc: '弯曲 + 接触应力估算', icon: 'SetUp' },
   { path: '/bearing', label: '轴承寿命', desc: 'L10 额定寿命计算', icon: 'Help' },
 ]
 
 const quickLinks = [
   { path: '/tutorial', label: '教程', desc: '5 篇教程 + Bilibili 视频', icon: 'VideoCamera' },
-  { path: '/cases', label: '案例', desc: '6 个预设案例', icon: 'Collection' },
+  { path: '/cases', label: '案例', desc: '10 个预设案例', icon: 'Collection' },
   { path: '/quiz', label: '练习', desc: '10 道练习题', icon: 'EditPen' },
   { path: '/manual', label: '公式手册', desc: 'LaTeX 公式', icon: 'Notebook' },
   { path: '/glossary', label: '术语词典', desc: 'GD&T 术语', icon: 'Reading' },

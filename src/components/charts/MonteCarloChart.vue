@@ -107,6 +107,19 @@ onMounted(render)
 onBeforeUnmount(() => {
   if (chartRef.value && plotly) plotly.purge(chartRef.value)
 })
+
+async function exportPng(filename = 'monte-carlo-chart.png') {
+  if (!chartRef.value || !plotly) return false
+  await plotly.downloadImage(chartRef.value, {
+    format: 'png',
+    width: 960,
+    height: 480,
+    filename: filename.replace(/\.png$/i, ''),
+  })
+  return true
+}
+
+defineExpose({ exportPng })
 </script>
 
 <style scoped>

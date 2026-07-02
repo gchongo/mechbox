@@ -133,6 +133,13 @@
       <el-button type="primary" plain :disabled="componentRings.length >= 50" @click="addRing">
         + 添加组成环
       </el-button>
+      <el-button
+        v-if="selectedType && getGdtCalcMode(selectedType.id)"
+        plain
+        @click="loadRingTemplate"
+      >
+        加载 {{ selectedType.name }} 推荐结构
+      </el-button>
       <p v-if="componentRings.length >= 50" class="mt-2 text-sm text-warning">
         已达最大数量（50）
       </p>
@@ -219,11 +226,11 @@
       <el-alert
         v-if="isExtendedAnalysis"
         class="mt-3"
-        type="warning"
+        type="info"
         :closable="false"
         show-icon
-        title="2D/GD&T 提示"
-        description="可使用传递系数（0–10）近似几何灵敏度，例如平行度链中厚度环系数常取 0.5。"
+        :title="gdtModeInfo?.label ?? '2D/GD&T 分析'"
+        :description="gdtModeInfo?.desc ?? '已启用专用公差叠加模型'"
       />
       <p class="mt-3 text-sm text-gray-500">
         💡 与封闭环同向 = 增环（蓝色），反向 = 减环（绿色），自动判断
@@ -273,8 +280,18 @@
             </div>
           </el-radio>
         </el-tooltip>
+        <el-tooltip content="6σ RSS：考虑各环分布 K 值的统计叠加" placement="right">
+          <el-radio value="sigma6-rss" border class="!mr-0 !h-auto !p-4">
+            <div>
+              <p class="font-medium">6σ RSS 法</p>
+              <div class="text-sm text-gray-500">
+                <MathTex expr="T = 6\sqrt{\sum (T_i/K_i)^2}" /> · 统计公差法
+              </div>
+            </div>
+          </el-radio>
+        </el-tooltip>
       </el-radio-group>
-      <div v-if="method === 'modified-rss'" class="mt-4 max-w-md">
+      <div v-if="method === 'modified-rss' || method === 'sigma6-rss'" class="mt-4 max-w-md">
         <el-form label-width="100px">
           <el-form-item label="分布类型">
             <el-select v-model="rssDistribution" class="w-full">
@@ -299,17 +316,33 @@
       <h2 class="mb-4 text-lg font-semibold">步骤 5：查看结果</h2>
 
       <div ref="resultPanelRef">
+        <el-alert
+          v-if="gdtModeInfo"
+          class="mb-4"
+          type="success"
+          :closable="false"
+          show-icon
+          :title="`计算模式：${gdtModeInfo.label}`"
+          :description="gdtModeInfo.desc"
+        />
+
         <h3 class="mb-2 text-sm font-medium text-gray-600">1. 矢量图</h3>
         <SizeChainCanvas
           ref="canvasRef"
           :closed-ring="closedRing"
           :component-rings="componentRings"
           :rss-tolerance="rssResult.totalTolerance"
+          :analysis-type-id="selectedType?.id"
           class="mb-6"
         />
 
         <h3 class="mb-2 text-sm font-medium text-gray-600">2. 计算公式</h3>
         <div class="mb-6 space-y-2 rounded-lg bg-gray-50 p-4">
+          <MathTex
+            v-if="activeResult.formulaNote"
+            :expr="activeResult.formulaNote"
+            block
+          />
           <MathTex
             v-for="(item, i) in formulaLatex"
             :key="i"
@@ -368,12 +401,16 @@ import { ANALYSIS_GROUPS, findAnalysisType } from '@/constants/analysis-types'
 import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
 import { MC_STORAGE_KEY, serializeEditorForMonteCarlo } from '@/constants/editor-bridge'
 import {
-  calculateSizeChain,
+  calculateChainResult,
   buildFormulaLines,
   buildFormulaLatex,
   buildSigmaSummary,
+  getGdtCalcMode,
+  isExtendedAnalysisType,
   DISTRIBUTIONS,
 } from '@/utils/size-chain'
+import { applyRingTemplate } from '@/constants/gdt-templates'
+import { fmtNum } from '@/utils/format'
 import { inferRingType } from '@/utils/ring-direction'
 import { convertLength, convertRingList, unitLabel } from '@/utils/unit'
 import {
@@ -432,8 +469,80 @@ const activeGroupLabel = computed(
 )
 
 const isExtendedAnalysis = computed(() =>
-  ['2d', '3d', 'gdt'].includes(selectedType.value?.groupId ?? ''),
+  isExtendedAnalysisType(selectedType.value?.id ?? ''),
 )
+
+const gdtModeInfo = computed(() => getGdtCalcMode(selectedType.value?.id))
+
+const chainOpts = computed(() => ({
+  typeId: selectedType.value?.id,
+  distribution: rssDistribution.value,
+}))
+
+const closedRingSpec = computed(() => ({
+  min: closedRing.value.min,
+  max: closedRing.value.max,
+}))
+
+const worstResult = computed(() =>
+  calculateChainResult(closedRingSpec.value, componentRings.value, 'worst', chainOpts.value),
+)
+
+const rssResult = computed(() =>
+  calculateChainResult(closedRingSpec.value, componentRings.value, 'rss', chainOpts.value),
+)
+
+const modifiedResult = computed(() =>
+  calculateChainResult(closedRingSpec.value, componentRings.value, 'modified-rss', chainOpts.value),
+)
+
+const sigma6Result = computed(() =>
+  calculateChainResult(closedRingSpec.value, componentRings.value, 'sigma6-rss', chainOpts.value),
+)
+
+const activeResult = computed(() => {
+  if (method.value === 'worst') return worstResult.value
+  if (method.value === 'modified-rss') return modifiedResult.value
+  if (method.value === 'sigma6-rss') return sigma6Result.value
+  return rssResult.value
+})
+
+const resultTable = computed(() => {
+  const rows = [
+    {
+      method: '极值法',
+      tolerance: fmtNum(worstResult.value.totalTolerance),
+      upper: fmtNum(worstResult.value.upper),
+      lower: fmtNum(worstResult.value.lower),
+      pass: worstResult.value.pass,
+    },
+    {
+      method: 'RSS 法',
+      tolerance: fmtNum(rssResult.value.totalTolerance),
+      upper: fmtNum(rssResult.value.upper),
+      lower: fmtNum(rssResult.value.lower),
+      pass: rssResult.value.pass,
+    },
+    {
+      method: '修正 RSS',
+      tolerance: fmtNum(modifiedResult.value.totalTolerance),
+      upper: fmtNum(modifiedResult.value.upper),
+      lower: fmtNum(modifiedResult.value.lower),
+      pass: modifiedResult.value.pass,
+    },
+    {
+      method: '6σ RSS',
+      tolerance: fmtNum(sigma6Result.value.totalTolerance),
+      upper: fmtNum(sigma6Result.value.upper),
+      lower: fmtNum(sigma6Result.value.lower),
+      pass: sigma6Result.value.pass,
+    },
+  ]
+  if (gdtModeInfo.value) {
+    return rows.map((r) => ({ ...r, method: `${r.method} (${gdtModeInfo.value.label})` }))
+  }
+  return rows
+})
 
 function onTabClick(tab) {
   const name = tab.paneName
@@ -472,55 +581,6 @@ const isClosedRingValid = computed(
     closedRing.value.max != null &&
     closedRing.value.max > closedRing.value.min,
 )
-
-const worstResult = computed(() =>
-  calculateSizeChain(
-    { min: closedRing.value.min, max: closedRing.value.max },
-    componentRings.value,
-    'worst',
-  ),
-)
-
-const rssResult = computed(() =>
-  calculateSizeChain(
-    { min: closedRing.value.min, max: closedRing.value.max },
-    componentRings.value,
-    'rss',
-  ),
-)
-
-const modifiedResult = computed(() =>
-  calculateSizeChain(
-    { min: closedRing.value.min, max: closedRing.value.max },
-    componentRings.value,
-    'modified-rss',
-    { distribution: rssDistribution.value },
-  ),
-)
-
-const resultTable = computed(() => [
-  {
-    method: '极值法',
-    tolerance: worstResult.value.totalTolerance.toFixed(3),
-    upper: worstResult.value.upper.toFixed(3),
-    lower: worstResult.value.lower.toFixed(3),
-    pass: worstResult.value.pass,
-  },
-  {
-    method: 'RSS 法',
-    tolerance: rssResult.value.totalTolerance.toFixed(3),
-    upper: rssResult.value.upper.toFixed(3),
-    lower: rssResult.value.lower.toFixed(3),
-    pass: rssResult.value.pass,
-  },
-  {
-    method: '修正 RSS',
-    tolerance: modifiedResult.value.totalTolerance.toFixed(3),
-    upper: modifiedResult.value.upper.toFixed(3),
-    lower: modifiedResult.value.lower.toFixed(3),
-    pass: modifiedResult.value.pass,
-  },
-])
 
 const formulaLines = computed(() =>
   buildFormulaLines(closedRing.value, componentRings.value, method.value, unit.value, {
@@ -677,6 +737,19 @@ function validateAndNext(step) {
   nextStep()
 }
 
+function loadRingTemplate() {
+  const typeId = selectedType.value?.id
+  if (!typeId) return
+  const tpl = applyRingTemplate(typeId, closedRing.value.direction)
+  if (!tpl) {
+    ElMessage.warning('该分析类型暂无推荐结构')
+    return
+  }
+  closedRing.value = { ...closedRing.value, ...tpl.closedRing, unit: closedRing.value.unit }
+  componentRings.value = tpl.componentRings
+  ElMessage.success(`已加载 ${selectedType.value.name} 推荐组成环`)
+}
+
 function selectType(type, group) {
   selectedType.value = { ...type, groupId: group.id, groupLabel: group.label }
 }
@@ -772,6 +845,7 @@ const methodLabels = {
   worst: '极值法',
   rss: 'RSS 法',
   'modified-rss': '修正 RSS 法',
+  'sigma6-rss': '6σ RSS 法',
 }
 
 function buildExportPayload() {
@@ -790,9 +864,7 @@ function saveResult() {
   const title = `${selectedType.value?.name ?? '分析'} ${closedRing.value.name || 'L0'}`
   const entry = saveAnalysis({
     title,
-    status: (method.value === 'modified-rss' ? modifiedResult.value : rssResult.value).pass
-      ? 'pass'
-      : 'fail',
+    status: activeResult.value.pass ? 'pass' : 'fail',
     data: {
       selectedType: selectedType.value,
       closedRing: closedRing.value,
@@ -804,6 +876,7 @@ function saveResult() {
         worst: worstResult.value,
         rss: rssResult.value,
         modifiedRss: modifiedResult.value,
+        sigma6Rss: sigma6Result.value,
       },
     },
   })

@@ -22,6 +22,7 @@
             <el-option label="RSS 法" value="rss" />
             <el-option label="极值法" value="worst" />
             <el-option label="修正 RSS 法" value="modified-rss" />
+            <el-option label="6σ RSS 法" value="sigma6-rss" />
           </el-select>
         </el-form-item>
         <el-form-item label="Monte Carlo 次数">

@@ -95,8 +95,10 @@
           <el-radio-button value="scatter">散点图</el-radio-button>
           <el-radio-button value="box">箱线图</el-radio-button>
         </el-radio-group>
+        <el-button size="small" @click="exportChartPng">导出 PNG</el-button>
       </div>
       <MonteCarloChart
+        ref="chartComponentRef"
         :results="simResult.results"
         :min="closedMin"
         :max="closedMax"
@@ -132,6 +134,17 @@ const iterations = ref(10000)
 const running = ref(false)
 const simResult = ref(null)
 const chartType = ref('histogram')
+const chartComponentRef = ref(null)
+
+async function exportChartPng() {
+  if (!simResult.value) {
+    ElMessage.warning('请先运行模拟')
+    return
+  }
+  const ok = await chartComponentRef.value?.exportPng?.('monte-carlo-chart.png')
+  if (ok) ElMessage.success('PNG 已下载')
+  else ElMessage.error('导出失败，请稍后重试')
+}
 
 function parseList(str) {
   return str.split(/[,，\s]+/).filter(Boolean)

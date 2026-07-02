@@ -1,3 +1,21 @@
+/** 6σ RSS：T = 6√Σ(Tᵢ/Kᵢ)² */
+const SIGMA6_K = {
+  normal: 6.0,
+  uniform: 3.46,
+  rectangular: 3.46,
+  triangular: 4.24,
+  skewed: 5.0,
+}
+
+export function sigma6RssMethod(rings, distribution = 'normal') {
+  const k = SIGMA6_K[distribution] ?? 6
+  const sumSq = rings.reduce((s, ring) => {
+    const t = (ring.tolerance ?? 0) * (ring.factor ?? 1)
+    return s + (t / k) ** 2
+  }, 0)
+  return 6 * Math.sqrt(sumSq)
+}
+
 /** 极值法（最坏情况）— 各环公差代数叠加 */
 export function worstCaseMethod(rings) {
   return rings.reduce((sum, ring) => sum + (ring.tolerance ?? 0) * (ring.factor ?? 1), 0)
@@ -136,9 +154,16 @@ export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm
   const worst = calculateWorstCaseLimits(rings)
   const rss = calculateRssLimits(rings)
   const modified = calculateModifiedRssLimits(rings, options?.distribution ?? 'normal')
+  const sigma6Tol = sigma6RssMethod(rings, options?.distribution ?? 'normal')
+  const sigma6 = {
+    totalTolerance: sigma6Tol,
+    upper: nominal + sigma6Tol / 2,
+    lower: nominal - sigma6Tol / 2,
+  }
   let active
   if (method === 'worst') active = worst
   else if (method === 'modified-rss') active = modified
+  else if (method === 'sigma6-rss') active = sigma6
   else active = rss
   const passMark =
     active.lower >= closedRing.min && active.upper <= closedRing.max ? ' ✓' : ' ✗'
@@ -153,6 +178,10 @@ export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm
   if (method === 'modified-rss') {
     lines.push(
       `总公差 (修正 RSS) = ${modified.totalTolerance.toFixed(3)} ${unit}  →  [${modified.lower.toFixed(3)}, ${modified.upper.toFixed(3)}]${passMark}`,
+    )
+  } else if (method === 'sigma6-rss') {
+    lines.push(
+      `总公差 (6σ RSS) = ${sigma6.totalTolerance.toFixed(3)} ${unit}  →  [${sigma6.lower.toFixed(3)}, ${sigma6.upper.toFixed(3)}]${passMark}`,
     )
   } else {
     lines[lines.length - 1] += passMark
@@ -191,9 +220,16 @@ export function buildFormulaLatex(
     options.distribution ?? 'normal',
     options.skewness ?? 0,
   )
+  const sigma6Tol = sigma6RssMethod(rings, options.distribution ?? 'normal')
+  const sigma6 = {
+    totalTolerance: sigma6Tol,
+    upper: nominal + sigma6Tol / 2,
+    lower: nominal - sigma6Tol / 2,
+  }
   let active
   if (method === 'worst') active = worst
   else if (method === 'modified-rss') active = modified
+  else if (method === 'sigma6-rss') active = sigma6
   else active = rss
   const passMark =
     active.lower >= closedRing.min && active.upper <= closedRing.max ? '\\checkmark' : '\\times'
@@ -221,6 +257,11 @@ export function buildFormulaLatex(
   if (method === 'modified-rss') {
     lines.push({
       latex: `T_{\\text{mod}} = ${modified.totalTolerance.toFixed(3)}\\,${u},\\quad [${modified.lower.toFixed(3)},\\, ${modified.upper.toFixed(3)}]\\; ${passMark}`,
+      block: true,
+    })
+  } else if (method === 'sigma6-rss') {
+    lines.push({
+      latex: `T_{6\\sigma} = ${sigma6.totalTolerance.toFixed(3)}\\,${u},\\quad [${sigma6.lower.toFixed(3)},\\, ${sigma6.upper.toFixed(3)}]\\; ${passMark}`,
       block: true,
     })
   } else {

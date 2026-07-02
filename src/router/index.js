@@ -98,6 +98,12 @@ const routes = [
     meta: { title: '轴承计算' },
   },
   {
+    path: '/allocation',
+    name: 'allocation',
+    component: () => import('@/views/ToleranceAllocationView.vue'),
+    meta: { title: '公差分配' },
+  },
+  {
     path: '/faq',
     name: 'faq',
     component: () => import('@/views/FaqView.vue'),

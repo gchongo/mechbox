@@ -58,4 +58,13 @@ export {
   buildFormulaLines,
   buildFormulaLatex,
   buildSigmaSummary,
+  sigma6RssMethod,
 } from './size-chain-math'
+
+export {
+  calculateGdtChain,
+  calculateChainResult,
+  getGdtCalcMode,
+  isExtendedAnalysisType,
+  GDT_CALC_MODES,
+} from './gdt-chain'
