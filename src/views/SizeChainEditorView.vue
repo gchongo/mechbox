@@ -340,6 +340,13 @@
       <div class="flex flex-wrap gap-2">
         <el-button @click="resetAll">← 重置</el-button>
         <el-button type="primary" @click="saveResult">💾 保存</el-button>
+        <el-button
+          v-if="savedId"
+          :type="isFavorited ? 'warning' : 'default'"
+          @click="toggleSavedFavorite"
+        >
+          {{ isFavorited ? '★ 已收藏' : '☆ 收藏' }}
+        </el-button>
         <el-button @click="handleExportPdf">📄 导出 PDF</el-button>
         <el-button @click="handleExportExcel">📊 导出 Excel</el-button>
         <el-button @click="handleExportPng">🖼️ 导出图片</el-button>
@@ -379,6 +386,7 @@ import {
 } from '@/utils/export'
 import { getAnalysisById, saveAnalysis } from '@/utils/storage'
 import { getSettings } from '@/utils/settings'
+import { isFavorite, toggleFavorite } from '@/utils/favorites'
 
 const route = useRoute()
 const router = useRouter()
@@ -397,6 +405,7 @@ const resultPanelRef = ref(null)
 const canvasRef = ref(null)
 const prevUnit = ref('mm')
 const dragFromIndex = ref(null)
+const savedId = ref(route.params.id ? String(route.params.id) : null)
 
 const closedRing = ref({
   name: '',
@@ -409,6 +418,14 @@ const closedRing = ref({
 const componentRings = ref([])
 
 const unit = computed(() => unitLabel(closedRing.value.unit))
+
+const isFavorited = computed(() => (savedId.value ? isFavorite(savedId.value) : false))
+
+function toggleSavedFavorite() {
+  if (!savedId.value) return
+  const added = toggleFavorite(savedId.value)
+  ElMessage.success(added ? '已加入收藏' : '已取消收藏')
+}
 
 const activeGroupLabel = computed(
   () => ANALYSIS_GROUPS.find((g) => g.id === activeGroup.value)?.label ?? '',
@@ -564,6 +581,7 @@ function initFromRoute() {
 
   const id = route.params.id
   if (id) {
+    savedId.value = String(id)
     loadFromHistory(String(id))
     return
   }
@@ -791,6 +809,7 @@ function saveResult() {
   })
   ElMessage.success('已保存到本地')
   router.replace({ name: 'editor-detail', params: { id: entry.id } })
+  savedId.value = entry.id
 }
 
 async function handleExportPdf() {

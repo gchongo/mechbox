@@ -5,7 +5,7 @@
       本地保存的分析记录，最多 50 条
     </p>
 
-    <div class="mb-4 flex flex-wrap gap-2">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
       <el-button type="primary" :disabled="!records.length" @click="exportJson">
         导出 JSON
       </el-button>
@@ -13,9 +13,17 @@
       <el-button type="danger" plain :disabled="!records.length" @click="confirmClear">
         清空全部
       </el-button>
+      <el-checkbox v-model="favoritesOnly" class="ml-auto">仅显示收藏</el-checkbox>
     </div>
 
-    <el-table v-if="records.length" :data="records" border stripe>
+    <el-table v-if="displayRecords.length" :data="displayRecords" border stripe>
+      <el-table-column width="50" align="center">
+        <template #default="{ row }">
+          <button class="text-lg" @click="toggleFav(row.id)">
+            {{ isFavorite(row.id) ? '★' : '☆' }}
+          </button>
+        </template>
+      </el-table-column>
       <el-table-column prop="title" label="标题" min-width="200" />
       <el-table-column label="状态" width="90">
         <template #default="{ row }">
@@ -34,19 +42,25 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-empty v-else description="暂无历史记录" />
+    <el-empty v-else :description="favoritesOnly ? '暂无收藏' : '暂无历史记录'" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as XLSX from 'xlsx'
 import { getHistory, deleteAnalysis } from '@/utils/storage'
+import { isFavorite, toggleFavorite, removeFavorite } from '@/utils/favorites'
 
 const router = useRouter()
 const records = ref([])
+const favoritesOnly = ref(false)
+
+const displayRecords = computed(() =>
+  favoritesOnly.value ? records.value.filter((r) => isFavorite(r.id)) : records.value,
+)
 
 onMounted(refresh)
 
@@ -62,8 +76,14 @@ function openRecord(id) {
   router.push({ name: 'editor-detail', params: { id } })
 }
 
+function toggleFav(id) {
+  const added = toggleFavorite(id)
+  ElMessage.success(added ? '已收藏' : '已取消收藏')
+}
+
 function removeRecord(id) {
   deleteAnalysis(id)
+  removeFavorite(id)
   refresh()
   ElMessage.success('已删除')
 }
@@ -74,6 +94,7 @@ async function confirmClear() {
   })
   for (const item of [...records.value]) {
     deleteAnalysis(item.id)
+    removeFavorite(item.id)
   }
   refresh()
   ElMessage.success('已清空')

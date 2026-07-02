@@ -38,6 +38,18 @@
     </section>
 
     <section class="card-panel mt-6 max-w-xl">
+      <h2 class="mb-3 font-semibold">数据同步</h2>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        导出完整备份（历史 + 收藏 + 设置），可导入到其他浏览器或设备。
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <el-button @click="handleExportBackup">导出完整备份</el-button>
+        <el-button @click="triggerImport">导入备份</el-button>
+        <input ref="fileInput" type="file" accept=".json" class="hidden" @change="handleImport" />
+      </div>
+    </section>
+
+    <section class="card-panel mt-6 max-w-xl">
       <h2 class="mb-3 font-semibold">数据管理</h2>
       <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
         分析历史保存在 localStorage，可在「历史记录」页导出或删除。
@@ -50,15 +62,17 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getSettings,
   saveSettings,
   DEFAULT_SETTINGS,
 } from '@/utils/settings'
+import { downloadBackup, importFullBackup } from '@/utils/backup'
 
 const form = reactive({ ...DEFAULT_SETTINGS })
+const fileInput = ref(null)
 
 onMounted(() => {
   Object.assign(form, getSettings())
@@ -73,5 +87,31 @@ function reset() {
   Object.assign(form, DEFAULT_SETTINGS)
   saveSettings(DEFAULT_SETTINGS)
   ElMessage.info('已恢复默认设置')
+}
+
+function handleExportBackup() {
+  downloadBackup()
+  ElMessage.success('备份已下载')
+}
+
+function triggerImport() {
+  fileInput.value?.click()
+}
+
+function handleImport(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const result = importFullBackup(reader.result, { merge: true })
+      Object.assign(form, getSettings())
+      ElMessage.success(`已导入 ${result.historyCount} 条历史、${result.favoritesCount} 条收藏`)
+    } catch (e) {
+      ElMessage.error(e.message || '导入失败')
+    }
+  }
+  reader.readAsText(file)
+  event.target.value = ''
 }
 </script>

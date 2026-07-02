@@ -29,6 +29,24 @@
       </div>
     </section>
 
+    <!-- 机械计算工具 V2.0 -->
+    <section class="mb-8">
+      <h2 class="mb-4 text-lg font-semibold">机械计算工具</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <router-link
+          v-for="tool in mechTools"
+          :key="tool.path"
+          :to="tool.path"
+          class="card-panel block transition-shadow hover:shadow-md"
+        >
+          <el-icon :size="28" class="mb-2 text-primary"><component :is="tool.icon" /></el-icon>
+          <p class="font-medium">{{ tool.label }}</p>
+          <p class="text-sm text-gray-500">{{ tool.desc }}</p>
+          <el-tag size="small" type="success" class="mt-2">V2.0</el-tag>
+        </router-link>
+      </div>
+    </section>
+
     <!-- 分析类型 -->
     <section class="mb-8">
       <h2 class="mb-4 text-lg font-semibold">选择分析类型</h2>
@@ -117,6 +135,12 @@ const statTools = [
   { query: 'sigma', label: '西格玛分析', desc: 'C / Cpk / 合格率', icon: 'TrendCharts' },
   { query: 'chart', label: '分布曲线', desc: 'Plotly PDF 图', icon: 'PieChart' },
   { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟分析', icon: 'Histogram', badge: 'V2.0' },
+]
+
+const mechTools = [
+  { path: '/batch', label: '批量公差验证', desc: '多方案 RSS/极值批量检验', icon: 'List' },
+  { path: '/gear', label: '齿轮强度', desc: '弯曲 + 接触应力估算', icon: 'SetUp' },
+  { path: '/bearing', label: '轴承寿命', desc: 'L10 额定寿命计算', icon: 'Help' },
 ]
 
 const quickLinks = [

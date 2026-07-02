@@ -74,6 +74,30 @@ const routes = [
     meta: { title: '术语词典' },
   },
   {
+    path: '/account',
+    name: 'account',
+    component: () => import('@/views/AccountView.vue'),
+    meta: { title: '账号' },
+  },
+  {
+    path: '/batch',
+    name: 'batch',
+    component: () => import('@/views/BatchAnalysisView.vue'),
+    meta: { title: '批量验证' },
+  },
+  {
+    path: '/gear',
+    name: 'gear',
+    component: () => import('@/views/GearCalcView.vue'),
+    meta: { title: '齿轮计算' },
+  },
+  {
+    path: '/bearing',
+    name: 'bearing',
+    component: () => import('@/views/BearingCalcView.vue'),
+    meta: { title: '轴承计算' },
+  },
+  {
     path: '/faq',
     name: 'faq',
     component: () => import('@/views/FaqView.vue'),
