@@ -180,7 +180,7 @@
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>{{ pr('decision') }}</dt>
-                <dd :class="aqlPlan.pass ? 'text-success' : 'text-error'">{{ aqlPlan.decision }}</dd>
+                <dd :class="aqlPlan.pass ? 'text-success' : 'text-error'">{{ rm('aql', aqlPlan.decisionKey) }}</dd>
               </div>
             </dl>
           </section>

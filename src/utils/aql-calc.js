@@ -65,8 +65,9 @@ export function designAQLPlan({ lotSize, aql = 2.5, defectCount = 0 }) {
   const key = `${code}-${aql}`
   const [Ac, Re] = ACCEPT_REJECT[key] ?? [0, 1]
 
-  const decision =
-    defectCount <= Ac ? '接收' : defectCount >= Re ? '拒收' : '待定（需加严/放宽）'
+  let decisionKey = 'pending'
+  if (defectCount <= Ac) decisionKey = 'accept'
+  else if (defectCount >= Re) decisionKey = 'reject'
 
   return {
     lotSize,
@@ -76,7 +77,7 @@ export function designAQLPlan({ lotSize, aql = 2.5, defectCount = 0 }) {
     acceptNumber: Ac,
     rejectNumber: Re,
     defectCount,
-    decision,
+    decisionKey,
     pass: defectCount <= Ac,
     inspectionLevel: 'II（正常）',
   }

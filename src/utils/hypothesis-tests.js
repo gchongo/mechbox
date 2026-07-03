@@ -53,7 +53,7 @@ export function oneSampleTTest(values, mu0 = 0) {
     tStatistic: t,
     pValue: p,
     significant: p < 0.05,
-    conclusion: p < 0.05 ? '拒绝 H0（均值与假设值有显著差异）' : '不能拒绝 H0',
+    conclusionKey: p < 0.05 ? 'reject_one' : 'fail_reject_one',
   }
 }
 
@@ -81,7 +81,7 @@ export function twoSampleTTest(sample1, sample2) {
     tStatistic: t,
     pValue: p,
     significant: p < 0.05,
-    conclusion: p < 0.05 ? '拒绝 H0（两组均值有显著差异）' : '不能拒绝 H0',
+    conclusionKey: p < 0.05 ? 'reject_two' : 'fail_reject_two',
   }
 }
 
@@ -103,7 +103,7 @@ export function chiSquareTest(observed, expected) {
     df,
     pValue: Math.min(1, p),
     significant: p < 0.05,
-    conclusion: p < 0.05 ? '拒绝 H0（分布与期望不符）' : '不能拒绝 H0',
+    conclusionKey: p < 0.05 ? 'reject_chi2' : 'fail_reject_chi2',
   }
 }
 
@@ -127,18 +127,17 @@ export function pearsonCorrelation(x, y) {
   const r = dx && dy ? num / Math.sqrt(dx * dy) : 0
   const t = r * Math.sqrt((x.length - 2) / (1 - r * r || 1))
   const p = twoTailPFromZ(t)
+  const absR = Math.abs(r)
+  let conclusionKey = 'corr_none'
+  if (absR > 0.7) conclusionKey = 'corr_strong'
+  else if (absR > 0.4) conclusionKey = 'corr_moderate'
+  else if (absR > 0.2) conclusionKey = 'corr_weak'
+
   return {
     r,
     pValue: p,
     significant: p < 0.05,
-    conclusion:
-      Math.abs(r) > 0.7
-        ? '强相关'
-        : Math.abs(r) > 0.4
-          ? '中等相关'
-          : Math.abs(r) > 0.2
-            ? '弱相关'
-            : '几乎无相关',
+    conclusionKey,
   }
 }
 
@@ -177,6 +176,6 @@ export function oneWayAnova(groups) {
     dfWithin,
     pValue: Math.min(1, p),
     significant: p < 0.05,
-    conclusion: p < 0.05 ? '拒绝 H0（组间均值有显著差异）' : '不能拒绝 H0',
+    conclusionKey: p < 0.05 ? 'reject_anova' : 'fail_reject_anova',
   }
 }

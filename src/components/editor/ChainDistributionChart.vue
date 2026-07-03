@@ -1,7 +1,7 @@
 <template>
   <div class="chain-dist">
     <div class="chain-dist__head">
-      <h3 class="chain-dist__title">尺寸分布与设计范围</h3>
+      <h3 class="chain-dist__title">{{ pt('chart.title') }}</h3>
       <el-radio-group v-model="sigmaTab" size="small" class="chain-dist__sigma">
         <el-radio-button :value="3">3σ</el-radio-button>
         <el-radio-button :value="4">4σ</el-radio-button>
@@ -12,15 +12,15 @@
     <div ref="chartRef" class="chain-dist__chart" />
     <dl class="chain-dist__stats">
       <div class="chain-dist__stat">
-        <dt class="chain-dist__stat-label">设计中心偏移</dt>
+        <dt class="chain-dist__stat-label">{{ pt('chart.shiftLabel') }}</dt>
         <dd class="chain-dist__stat-value" :class="shiftClass">{{ shiftLabel }}</dd>
       </div>
       <div class="chain-dist__stat">
-        <dt class="chain-dist__stat-label">预估不良 PPM</dt>
+        <dt class="chain-dist__stat-label">{{ pt('chart.ppmLabel') }}</dt>
         <dd class="chain-dist__stat-value">{{ stats.ppm.toLocaleString() }}</dd>
       </div>
       <div class="chain-dist__stat">
-        <dt class="chain-dist__stat-label">合格率</dt>
+        <dt class="chain-dist__stat-label">{{ pt('chart.passRateLabel') }}</dt>
         <dd class="chain-dist__stat-value" :class="stats.passRate >= 99 ? 'text-success' : 'text-error'">
           {{ stats.passRate.toFixed(2) }}%
         </dd>
@@ -32,6 +32,8 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { normalPdf } from '@/utils/distribution-pdf'
+import { useCalcPage } from '@/composables/useCalcPage'
+import { useLocale } from '@/composables/useLocale'
 
 const props = defineProps({
   mean: { type: Number, required: true },
@@ -39,6 +41,9 @@ const props = defineProps({
   specMin: { type: Number, required: true },
   specMax: { type: Number, required: true },
 })
+
+const { pt } = useCalcPage('editor')
+const { locale } = useLocale()
 
 const chartRef = ref(null)
 const sigmaTab = ref(5)
@@ -80,11 +85,11 @@ const shiftLabel = computed(() => {
   const abs = Math.abs(s)
   if (abs > 99) {
     const sign = s > 0 ? '>' : '<'
-    return `${sign}99σ · ✗ 明显偏离`
+    return pt('chart.shiftExtreme', { sign })
   }
-  if (abs < 0.5) return `${s.toFixed(2)}σ · ✓ 居中`
-  if (abs < 2) return `${s.toFixed(2)}σ · 轻微偏离`
-  return `${s.toFixed(2)}σ · ✗ 明显偏离`
+  if (abs < 0.5) return pt('chart.shiftCentered', { s: s.toFixed(2) })
+  if (abs < 2) return pt('chart.shiftSlight', { s: s.toFixed(2) })
+  return pt('chart.shiftOff', { s: s.toFixed(2) })
 })
 
 const shiftClass = computed(() => {
@@ -168,15 +173,15 @@ async function render() {
         type: 'scatter',
         mode: 'lines',
         fill: 'tozeroy',
-        name: `±${sigmaTab.value}σ 分布`,
+        name: pt('chart.distLegend', { n: sigmaTab.value }),
         line: { color: '#3498db', width: 2 },
         fillcolor: 'rgba(52, 152, 219, 0.12)',
       },
     ],
     {
       margin: { t: 28, r: 12, b: 48, l: 48 },
-      xaxis: { title: '封闭环尺寸', zeroline: false, automargin: true },
-      yaxis: { title: '概率密度', rangemode: 'tozero', automargin: true },
+      xaxis: { title: pt('chart.xAxis'), zeroline: false, automargin: true },
+      yaxis: { title: pt('chart.yAxis'), rangemode: 'tozero', automargin: true },
       shapes,
       annotations: [
         {
@@ -184,7 +189,7 @@ async function render() {
           y: 1.02,
           xref: 'x',
           yref: 'paper',
-          text: '分布中心 μ',
+          text: pt('chart.muAnnot'),
           showarrow: false,
           font: { size: 10, color: '#27ae60' },
         },
@@ -193,7 +198,7 @@ async function render() {
           y: 0.96,
           xref: 'x',
           yref: 'paper',
-          text: '设计中心',
+          text: pt('chart.designCenter'),
           showarrow: false,
           font: { size: 10, color: '#e67e22' },
         },
@@ -207,7 +212,7 @@ async function render() {
 }
 
 watch(
-  () => [props.mean, props.processSigma, props.specMin, props.specMax, sigmaTab.value],
+  () => [props.mean, props.processSigma, props.specMin, props.specMax, sigmaTab.value, locale.value],
   render,
 )
 onMounted(render)

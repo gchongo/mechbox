@@ -1,5 +1,6 @@
 /** Shared calculator UI strings (zh) */
 import { fieldsZh, fieldsEn, mergeCalcPageFields } from './calc-fields-i18n'
+import { editorPagesZh, editorPagesEn } from './editor-i18n'
 import { modulePagesZh, modulePagesEn } from './module-pages-i18n'
 
 const pagesZh = {
@@ -177,6 +178,7 @@ const pagesZh = {
       hintProfessional: '温度、腐蚀与疲劳约束。',
     },
     ...modulePagesZh,
+    ...editorPagesZh,
 }
 
 export const calcZh = {
@@ -372,6 +374,7 @@ const pagesEn = {
       hintProfessional: 'Temperature, corrosion, and fatigue constraints.',
     },
     ...modulePagesEn,
+    ...editorPagesEn,
 }
 
 export const calcEn = {

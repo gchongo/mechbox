@@ -1,18 +1,18 @@
 <template>
   <div class="flex h-full flex-col">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h3 class="font-semibold text-gray-800 dark:text-gray-100">组成环参数 & 贡献度</h3>
+      <h3 class="font-semibold text-gray-800 dark:text-gray-100">{{ pt('ringTable.title') }}</h3>
       <el-switch
         :model-value="advanced"
         size="small"
         inline-prompt
-        active-text="高级"
-        inactive-text="简洁"
+        :active-text="pt('ringTable.advanced')"
+        :inactive-text="pt('ringTable.simple')"
         @change="$emit('update:advanced', $event)"
       />
     </div>
     <p class="mb-2 text-xs text-gray-500">
-      填写公称与上下偏差；拖拽 ⠿ 调整顺序。类型 + 为增环，− 为减环。
+      {{ pt('ringTable.hint') }}
     </p>
 
     <div class="min-h-0 flex-1 overflow-x-auto">
@@ -22,7 +22,7 @@
         border
         row-key="uid"
         class="ring-param-table"
-        empty-text="点击「添加组成环」开始"
+        :empty-text="pt('ringTable.empty')"
         table-layout="auto"
       >
         <el-table-column width="40" align="center">
@@ -30,7 +30,7 @@
             <span
               class="cursor-grab select-none text-lg text-gray-400 active:cursor-grabbing"
               draggable="true"
-              title="拖拽排序"
+              :title="pt('ringTable.dragSort')"
               @dragstart="onDragStart($index, $event)"
               @dragend="onDragEnd"
               @dragover.prevent
@@ -38,7 +38,7 @@
             >⠿</span>
           </template>
         </el-table-column>
-        <el-table-column label="环名" min-width="80">
+        <el-table-column :label="pt('ringTable.ringName')" min-width="80">
           <template #default="{ row, $index }">
             <el-input
               v-model="row.name"
@@ -48,7 +48,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column :label="`公称 (${unit})`" min-width="108">
+        <el-table-column :label="pt('ringTable.nominal', { unit })" min-width="108">
           <template #default="{ row }">
             <el-input-number
               v-model="row.size"
@@ -89,7 +89,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="类型" min-width="108">
+        <el-table-column :label="pt('ringTable.type')" min-width="108">
           <template #default="{ row }">
             <el-select
               v-model="row.type"
@@ -97,12 +97,12 @@
               class="ring-type-select"
               @change="onTypeChange(row)"
             >
-              <el-option value="increasing" label="+ 增环" />
-              <el-option value="decreasing" label="− 减环" />
+              <el-option value="increasing" :label="pt('ringTable.increasing')" />
+              <el-option value="decreasing" :label="pt('ringTable.decreasing')" />
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column v-if="advanced" label="系数 k" min-width="100">
+        <el-table-column v-if="advanced" :label="pt('ringTable.factorK')" min-width="100">
           <template #default="{ row }">
             <el-input-number
               v-model="row.factor"
@@ -117,7 +117,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="贡献%" min-width="120">
+        <el-table-column :label="pt('ringTable.contribution')" min-width="120">
           <template #default="{ row }">
             <div class="flex min-w-[100px] items-center gap-2">
               <el-progress
@@ -149,7 +149,7 @@
       :disabled="rings.length >= 50"
       @click="$emit('add')"
     >
-      + 添加组成环
+      {{ pt('ringTable.addRing') }}
     </el-button>
   </div>
 </template>
@@ -157,6 +157,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { calcRingContributions, syncToleranceFromEsEi } from '@/utils/ring-tolerance'
+import { useCalcPage } from '@/composables/useCalcPage'
 
 const props = defineProps({
   rings: { type: Array, required: true },
@@ -167,6 +168,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['add', 'remove', 'reorder', 'update:advanced'])
+
+const { pt } = useCalcPage('editor')
 
 const dragFromIndex = ref(null)
 

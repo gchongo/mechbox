@@ -5,6 +5,7 @@ import { fieldsZh, fieldsEn, mergeCalcPageFields } from './calc-fields-i18n'
 import { diagramZh, diagramEn } from './diagram-i18n'
 import { optionsZh, optionsEn } from './options-i18n'
 import { messagesZh, messagesEn } from './results-i18n'
+import { chartZh, chartEn } from './chart-i18n'
 
 const zh = {
   appName: '机械工具箱',
@@ -197,6 +198,7 @@ const zh = {
     diagrams: diagramZh,
     options: optionsZh,
     messages: messagesZh,
+    charts: chartZh,
   },
 }
 
@@ -391,6 +393,7 @@ const en = {
     diagrams: diagramEn,
     options: optionsEn,
     messages: messagesEn,
+    charts: chartEn,
   },
 }
 

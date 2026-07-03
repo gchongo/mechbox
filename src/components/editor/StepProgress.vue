@@ -1,7 +1,7 @@
 <template>
   <div class="mb-6">
     <div class="mb-2 flex items-center justify-between text-sm text-gray-500">
-      <span>步骤进度：{{ currentStep }} / {{ totalSteps }}</span>
+      <span>{{ pt('stepProgress', { current: currentStep, total: totalSteps }) }}</span>
       <span>{{ Math.round((currentStep / totalSteps) * 100) }}%</span>
     </div>
     <el-progress
@@ -14,8 +14,12 @@
 </template>
 
 <script setup>
+import { useCalcPage } from '@/composables/useCalcPage'
+
 defineProps({
   currentStep: { type: Number, required: true },
   totalSteps: { type: Number, default: 5 },
 })
+
+const { pt } = useCalcPage('editor')
 </script>

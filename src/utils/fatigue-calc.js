@@ -114,15 +114,15 @@ export function calcMinerDamage(material, loads) {
   }
 
   const remaining = Math.max(0, 1 - damage)
-  let status = '安全'
-  if (damage >= 1) status = '疲劳失效（D≥1）'
-  else if (damage >= 0.8) status = '接近极限（D≥0.8）'
+  let statusKey = 'safe'
+  if (damage >= 1) statusKey = 'fail'
+  else if (damage >= 0.8) statusKey = 'warn'
 
   return {
     totalDamage: damage,
     damagePercent: damage * 100,
     remainingLifeFraction: remaining,
-    status,
+    statusKey,
     pass: damage < 1,
     details,
   }

@@ -5,6 +5,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { calcControlLimits } from '@/utils/monte-carlo'
+import { useChartI18n } from '@/composables/useChartI18n'
 
 const props = defineProps({
   values: { type: Array, default: () => [] },
@@ -13,6 +14,7 @@ const props = defineProps({
 
 const chartRef = ref(null)
 let plotly = null
+const { ch, locale } = useChartI18n()
 
 async function render() {
   if (!chartRef.value || !props.values.length) return
@@ -28,7 +30,7 @@ async function render() {
       y: props.values,
       type: 'scatter',
       mode: 'lines+markers',
-      name: '测量值',
+      name: ch('measuredValue'),
       line: { color: '#3498db' },
       marker: { size: 6 },
     },
@@ -36,7 +38,7 @@ async function render() {
       x: [x[0], x[x.length - 1]],
       y: [limits.mean, limits.mean],
       mode: 'lines',
-      name: '中心线 CL',
+      name: ch('centerLine'),
       line: { color: '#2ecc71', dash: 'solid' },
     },
     {
@@ -60,7 +62,7 @@ async function render() {
       x: [x[0], x[x.length - 1]],
       y: [props.target, props.target],
       mode: 'lines',
-      name: '目标值',
+      name: ch('targetValue'),
       line: { color: '#f39c12', dash: 'dot' },
     })
   }
@@ -69,28 +71,28 @@ async function render() {
     chartRef.value,
     traces,
     {
-      title: '控制图 (X Chart)',
+      title: ch('controlTitle'),
       margin: { t: 48, r: 24, b: 48, l: 56 },
-      xaxis: { title: '样本序号' },
-      yaxis: { title: '测量值' },
+      xaxis: { title: ch('sampleIndex') },
+      yaxis: { title: ch('measuredValue') },
       legend: { orientation: 'h', y: -0.2 },
     },
     { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 
-watch(() => [props.values, props.target], render, { deep: true })
+watch(() => [props.values, props.target, locale.value], render, { deep: true })
 onMounted(render)
 onBeforeUnmount(() => {
   if (chartRef.value && plotly) plotly.purge(chartRef.value)
 })
 
 defineExpose({
-  async exportPng(filename = '控制图.png') {
+  async exportPng(filename) {
     if (!plotly || !chartRef.value) return
     const url = await plotly.toImage(chartRef.value, { format: 'png', width: 1200, height: 600 })
     const link = document.createElement('a')
-    link.download = filename
+    link.download = filename ?? ch('controlDefaultFilename')
     link.href = url
     link.click()
   },

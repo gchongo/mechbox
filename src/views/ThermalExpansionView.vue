@@ -91,19 +91,19 @@
               </dd>
             </div>
             <div v-if="linearResult.fit.becomesClearance" class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-900/20">
-              <dt>变为间隙</dt>
+              <dt>{{ pr('becomesClearance') }}</dt>
               <dd class="font-mono">{{ linearResult.fit.finalClearance?.toFixed(4) }} mm</dd>
             </div>
             <div v-if="linearResult.assemblyFit" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>装配后过盈</dt>
+              <dt>{{ pr('assemblyInterference') }}</dt>
               <dd class="font-mono">{{ linearResult.assemblyFit.finalInterference?.toFixed(4) }} mm</dd>
             </div>
           </dl>
           <router-link to="/interference-fit" class="mt-3 inline-block text-xs text-primary hover:underline">
-            → 过盈配合强度计算
+            {{ pr('linkInterferenceFit') }}
           </router-link>
           <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="linearResult.pass ? 'success' : 'danger'">
-            {{ linearResult.pass ? '服役过盈安全' : '可能松脱' }}
+            {{ linearResult.pass ? pr('serviceSafe') : pr('mayLoosen') }}
           </el-tag>
         </template>
       </section>

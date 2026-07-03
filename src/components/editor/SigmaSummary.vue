@@ -1,11 +1,11 @@
 <template>
   <div class="sigma-summary">
-    <h3 class="sigma-summary__title">西格玛分析（质量水平）</h3>
+    <h3 class="sigma-summary__title">{{ pt('sigma.title') }}</h3>
     <div class="sigma-table">
       <div class="sigma-table__head">
-        <span class="sigma-table__col sigma-table__col--metric">指标</span>
-        <span class="sigma-table__col sigma-table__col--value">数值</span>
-        <span class="sigma-table__col sigma-table__col--status">评价</span>
+        <span class="sigma-table__col sigma-table__col--metric">{{ pt('sigma.metric') }}</span>
+        <span class="sigma-table__col sigma-table__col--value">{{ pt('sigma.value') }}</span>
+        <span class="sigma-table__col sigma-table__col--status">{{ pt('sigma.status') }}</span>
       </div>
       <div v-for="(row, i) in rows" :key="i" class="sigma-table__row">
         <span class="sigma-table__col sigma-table__col--metric sigma-table__metric">
@@ -27,36 +27,41 @@
 <script setup>
 import { computed } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
 
 const props = defineProps({
   summary: { type: Object, required: true },
 })
 
+const { pt } = useCalcPage('editor')
+
 const rows = computed(() => {
   const s = props.summary
   const cpk = parseFloat(s.cpk)
   const sigma = parseFloat(s.sigmaLevel)
+  const excellent = pt('sigma.excellent')
+  const average = pt('sigma.average')
   return [
     {
       latex: 'C = \\frac{T}{6\\sigma}',
       value: s.c,
-      status: cpk > 1.33 ? '✓ 优秀 (>1.33)' : '一般',
+      status: cpk > 1.33 ? excellent : average,
       ok: cpk > 1.33,
     },
     {
-      label: 'Cpk 值',
+      label: pt('sigma.cpkLabel'),
       value: s.cpk,
-      status: cpk > 1.33 ? '✓ 优秀 (>1.33)' : '一般',
+      status: cpk > 1.33 ? excellent : average,
       ok: cpk > 1.33,
     },
     {
       latex: '\\sigma_{\\text{水平}}',
       value: `${s.sigmaLevel}σ`,
-      status: sigma >= 4 ? '✓ 4 西格玛' : '待提升',
+      status: sigma >= 4 ? pt('sigma.sigma4') : pt('sigma.needsImprove'),
       ok: sigma >= 4,
     },
     {
-      label: '合格率',
+      label: pt('sigma.passRate'),
       value: s.passRate,
       status: '—',
       ok: true,
@@ -64,7 +69,7 @@ const rows = computed(() => {
     {
       label: 'DPPM',
       value: s.dppm,
-      status: s.dppm < 100 ? '✓ 优秀 (<100)' : '一般',
+      status: s.dppm < 100 ? pt('sigma.dppmExcellent') : average,
       ok: s.dppm < 100,
     },
   ]

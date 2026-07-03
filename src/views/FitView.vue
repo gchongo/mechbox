@@ -178,11 +178,11 @@ async function exportPdf() {
   const r = result.value
   if (!r || r.errorKey) return
   await exportToolReportPdf({
-    title: 'ISO 286 配合分析报告',
+    title: `${pt('title')} — ${fc('exportPdfReport')}`,
     subtitle: `Ø${r.nominal} ${r.hole.designation}/${r.shaft.designation}`,
     sections: [
       {
-        heading: '配合结果',
+        heading: ct('results'),
         rows: [
           { label: pf('fitType'), value: fitTypeLabel.value },
           { label: pr('maxClearance'), value: (r.maxClearance * 1000).toFixed(1) },

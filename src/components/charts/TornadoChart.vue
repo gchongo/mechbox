@@ -4,6 +4,7 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useChartI18n } from '@/composables/useChartI18n'
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -13,6 +14,7 @@ const props = defineProps({
 
 const chartRef = ref(null)
 let plotly = null
+const { ch, locale } = useChartI18n()
 
 async function render() {
   if (!chartRef.value || !props.items.length) return
@@ -52,25 +54,25 @@ async function render() {
       orientation: 'h',
       y: names,
       x: low,
-      name: 'P5 偏差',
+      name: ch('tornadoP5'),
       marker: { color: '#3498db' },
-      hovertemplate: '%{y}<br>P5 偏差: %{x:.4f}<extra></extra>',
+      hovertemplate: `%{y}<br>${ch('tornadoP5')}: %{x:.4f}<extra></extra>`,
     },
     {
       type: 'bar',
       orientation: 'h',
       y: names,
       x: high,
-      name: 'P95 偏差',
+      name: ch('tornadoP95'),
       marker: { color: '#409EFF' },
-      hovertemplate: '%{y}<br>P95 偏差: %{x:.4f}<extra></extra>',
+      hovertemplate: `%{y}<br>${ch('tornadoP95')}: %{x:.4f}<extra></extra>`,
     },
   ]
 
   const layout = {
     barmode: 'overlay',
-    title: { text: '敏感度龙卷风图（相对名义值偏差）', font: { size: 14 } },
-    xaxis: { title: '封闭环偏差', zeroline: true, zerolinecolor: '#999' },
+    title: { text: ch('tornadoTitle'), font: { size: 14 } },
+    xaxis: { title: ch('tornadoX'), zeroline: true, zerolinecolor: '#999' },
     yaxis: { automargin: true },
     shapes,
     margin: { l: 100, r: 30, t: 40, b: 50 },
@@ -82,7 +84,7 @@ async function render() {
   await plotly.react(chartRef.value, traces, layout, { responsive: true, displayModeBar: false })
 }
 
-watch(() => [props.items, props.closedMin, props.closedMax], render, { deep: true })
+watch(() => [props.items, props.closedMin, props.closedMax, locale.value], render, { deep: true })
 
 onMounted(render)
 onBeforeUnmount(() => {

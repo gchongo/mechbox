@@ -211,7 +211,7 @@
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2 lg:col-span-1">
               <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
-              <dd class="mt-1">{{ tTestResult.conclusion }}</dd>
+              <dd class="mt-1">{{ rm('hypothesis', tTestResult.conclusionKey) }}</dd>
             </div>
           </div>
           <el-alert v-else-if="tTestResult?.errorKey" :title="resultError(tTestResult)" type="warning" show-icon />
@@ -241,7 +241,7 @@
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
               <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
-              <dd class="mt-1">{{ chiResult.conclusion }}</dd>
+              <dd class="mt-1">{{ rm('hypothesis', chiResult.conclusionKey) }}</dd>
             </div>
           </div>
           <el-alert v-else-if="chiResult?.errorKey" :title="resultError(chiResult)" type="warning" show-icon />
@@ -270,7 +270,7 @@
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2">
               <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
-              <dd class="mt-1">{{ anovaResult.conclusion }}</dd>
+              <dd class="mt-1">{{ rm('hypothesis', anovaResult.conclusionKey) }}</dd>
             </div>
           </div>
           <el-alert v-else-if="anovaResult?.errorKey" :title="resultError(anovaResult)" type="warning" show-icon />
@@ -296,7 +296,7 @@
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2">
               <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
-              <dd class="mt-1">{{ corrResult.conclusion }}</dd>
+              <dd class="mt-1">{{ rm('hypothesis', corrResult.conclusionKey) }}</dd>
             </div>
           </div>
           <el-alert v-else-if="corrResult?.errorKey" :title="resultError(corrResult)" type="warning" show-icon />
@@ -359,7 +359,7 @@ import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const route = useRoute()
 const { pt, pf, pr, locale } = useCalcPage('statistics')
-const { resultError } = useResultI18n()
+const { resultError, rm } = useResultI18n()
 const { optionMap, ol } = useOptionsI18n()
 
 const distributions = computed(() => optionMap(DISTRIBUTIONS, 'distributions'))

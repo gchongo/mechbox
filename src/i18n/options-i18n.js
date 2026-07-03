@@ -233,6 +233,12 @@ export const optionsZh = {
     energy: { label: '能量' },
     temperature: { label: '温度' },
   },
+  bearLifeConditions: {
+    clean: { label: '清洁润滑 (1.5)' },
+    standard: { label: '标准 (1.0)' },
+    contaminated: { label: '污染 (0.5)' },
+    heavy: { label: '恶劣 (0.3)' },
+  },
 }
 
 export const optionsEn = {
@@ -467,5 +473,11 @@ export const optionsEn = {
     velocity: { label: 'Velocity' },
     energy: { label: 'Energy' },
     temperature: { label: 'Temperature' },
+  },
+  bearLifeConditions: {
+    clean: { label: 'Clean lubrication (1.5)' },
+    standard: { label: 'Standard (1.0)' },
+    contaminated: { label: 'Contaminated (0.5)' },
+    heavy: { label: 'Heavy contamination (0.3)' },
   },
 }

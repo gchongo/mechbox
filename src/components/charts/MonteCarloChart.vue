@@ -4,6 +4,7 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useChartI18n } from '@/composables/useChartI18n'
 
 const props = defineProps({
   results: { type: Array, default: () => [] },
@@ -14,6 +15,20 @@ const props = defineProps({
 
 const chartRef = ref(null)
 let plotly = null
+const { ch, locale } = useChartI18n()
+
+function chartTitle() {
+  if (props.chartType === 'cdf') return ch('mcCdf')
+  if (props.chartType === 'box') return ch('mcBox')
+  if (props.chartType === 'scatter') return ch('mcScatter')
+  return ch('mcHistogram')
+}
+
+function xAxisTitle() {
+  if (props.chartType === 'box') return ''
+  if (props.chartType === 'scatter') return ch('mcIteration')
+  return ch('mcClosedValue')
+}
 
 async function render() {
   if (!chartRef.value || !props.results.length) return
@@ -64,45 +79,36 @@ async function render() {
         y,
         type: 'scatter',
         mode: 'markers',
-        name: '抽样点',
+        name: ch('mcSamples'),
         marker: { size: 4, color: '#3498db', opacity: 0.45 },
       },
     ]
   } else if (props.chartType === 'box') {
-    traces = [{ y: props.results, type: 'box', name: '分布', marker: { color: '#3498db' } }]
+    traces = [{ y: props.results, type: 'box', name: ch('mcDistribution'), marker: { color: '#3498db' } }]
   } else {
-    traces = [{ x: props.results, type: 'histogram', name: '频数', marker: { color: '#3498db' } }]
+    traces = [{ x: props.results, type: 'histogram', name: ch('mcFrequency'), marker: { color: '#3498db' } }]
   }
 
   await plotly.newPlot(
     chartRef.value,
     traces,
     {
-      title:
-        props.chartType === 'cdf'
-          ? '累积分布 CDF'
-          : props.chartType === 'box'
-            ? '箱线图'
-            : props.chartType === 'scatter'
-              ? '散点图（迭代抽样）'
-              : '直方图',
+      title: chartTitle(),
       margin: { t: 48, r: 24, b: 48, l: 56 },
       shapes,
-      xaxis: {
+      xaxis: { title: xAxisTitle() },
+      yaxis: {
         title:
-          props.chartType === 'box'
-            ? ''
-            : props.chartType === 'scatter'
-              ? '迭代序号'
-              : '封闭环值',
+          props.chartType === 'box' || props.chartType === 'scatter'
+            ? ch('mcClosedValue')
+            : ch('mcFreqProb'),
       },
-      yaxis: { title: props.chartType === 'box' ? '封闭环值' : props.chartType === 'scatter' ? '封闭环值' : '频数 / 概率' },
     },
     { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 
-watch(() => [props.results, props.min, props.max, props.chartType], render, { deep: true })
+watch(() => [props.results, props.min, props.max, props.chartType, locale.value], render, { deep: true })
 onMounted(render)
 onBeforeUnmount(() => {
   if (chartRef.value && plotly) plotly.purge(chartRef.value)

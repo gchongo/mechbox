@@ -36,10 +36,7 @@
           </el-form-item>
           <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('lifeCondition')">
             <el-select v-model="form.lifeCondition" class="w-full">
-              <el-option label="清洁润滑 (1.5)" value="clean" />
-              <el-option label="标准 (1.0)" value="standard" />
-              <el-option label="污染 (0.5)" value="contaminated" />
-              <el-option label="恶劣 (0.3)" value="heavy" />
+              <el-option v-for="(c, k) in lifeConditions" :key="k" :label="c.label" :value="k" />
             </el-select>
           </el-form-item>
           <el-form-item :label="pf('radialLoad')">
@@ -115,7 +112,7 @@
             </dd>
           </div>
           <div v-if="form.calcMode === 'professional' && result.temperatureFactor < 1" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">温度系数 a₂</dt>
+            <dt class="text-gray-500">{{ pr('tempFactorA2') }}</dt>
             <dd class="font-mono">{{ result.temperatureFactor?.toFixed(2) }}</dd>
           </div>
           <el-alert v-if="result.speedWarningKey" type="warning" :title="rm('bearing', result.speedWarningKey, result.speedWarningParams)" show-icon class="mb-2" />
@@ -149,9 +146,18 @@ import BearingLoadDiagram from '@/components/bearing/BearingLoadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('bearing')
 const { rm } = useResultI18n()
+const { optionMap } = useOptionsI18n()
+
+const lifeConditions = computed(() => optionMap({
+  clean: { id: 'clean' },
+  standard: { id: 'standard' },
+  contaminated: { id: 'contaminated' },
+  heavy: { id: 'heavy' },
+}, 'bearLifeConditions'))
 
 const seriesList = listBearingSeries()
 

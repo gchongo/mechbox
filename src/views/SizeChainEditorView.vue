@@ -3,21 +3,21 @@
     <div class="mb-4 flex items-center gap-4">
       <el-button text @click="router.push('/')">
         <el-icon><ArrowLeft /></el-icon>
-        首页
+        {{ t('nav.home') }}
       </el-button>
-      <h1 class="page-title !mb-0">尺寸链分析</h1>
+      <h1 class="page-title !mb-0">{{ pt('title') }}</h1>
     </div>
 
     <StepProgress :current-step="currentStep" />
 
     <!-- 步骤 1 -->
     <section v-show="currentStep === 1" class="card-panel">
-      <h2 class="mb-4 text-lg font-semibold">步骤 1：选择类型</h2>
+      <h2 class="mb-4 text-lg font-semibold">{{ pt('step1Title') }}</h2>
       <el-tabs v-model="activeGroup" @tab-click="onTabClick">
         <el-tab-pane
           v-for="group in ANALYSIS_GROUPS"
           :key="group.id"
-          :label="group.label"
+          :label="groupLabel(group.id)"
           :name="group.id"
         >
           <div v-show="typeGridVisible" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -33,12 +33,12 @@
               @click="selectType(type, group)"
             >
               <el-icon class="mb-2 text-primary"><component :is="type.icon || 'Document'" /></el-icon>
-              <p class="font-medium">{{ type.name }}</p>
-              <p class="mt-1 text-xs text-gray-500">{{ type.desc }}</p>
+              <p class="font-medium">{{ typeName(type.id) }}</p>
+              <p class="mt-1 text-xs text-gray-500">{{ typeDesc(type.id) }}</p>
             </button>
           </div>
           <p v-if="!typeGridVisible" class="py-6 text-center text-sm text-gray-500">
-            再次点击「{{ activeGroupLabel }}」Tab 可展开类型列表
+            {{ pt('tabCollapseHint', { label: activeGroupLabel }) }}
           </p>
         </el-tab-pane>
       </el-tabs>
@@ -48,36 +48,36 @@
         type="info"
         :closable="false"
         show-icon
-        title="2D/3D/GD&T 分析提示"
-        description="当前类型按 1D 线性尺寸链叠加计算；请用传递系数近似几何影响，或跳转 Monte Carlo 做随机验证。"
+        :title="pt('extendedAlertTitle')"
+        :description="pt('extendedAlertDesc')"
       />
       <p v-if="selectedType" class="mt-4 text-sm text-success">
-        ✓ 已选择：{{ selectedType.groupLabel }} → {{ selectedType.name }}
+        {{ pt('typeSelected', { group: groupLabel(selectedType.groupId), name: typeName(selectedType.id) }) }}
       </p>
       <div class="mt-6 flex justify-end">
         <el-button type="primary" :disabled="!selectedType" @click="nextStep">
-          下一步 →
+          {{ pt('next') }}
         </el-button>
       </div>
     </section>
 
     <!-- 步骤 2 -->
     <section v-show="currentStep === 2" class="card-panel">
-      <h2 class="mb-2 text-lg font-semibold">步骤 2：定义封闭环（设计要求）</h2>
+      <h2 class="mb-2 text-lg font-semibold">{{ pt('step2Title') }}</h2>
       <p class="mb-4 text-sm text-gray-500">
-        封闭环是装配后最终形成的尺寸（如间隙、过盈）。填写允许的最小值和最大值即可。
+        {{ pt('step2Desc') }}
       </p>
       <el-form label-width="130px" class="max-w-xl">
-        <el-form-item label="名称" required :error="fieldError('name')">
+        <el-form-item :label="pf('name')" required :error="fieldError('name')">
           <el-input
             v-model="closedRing.name"
-            placeholder="如：间隙 L0"
+            :placeholder="pf('namePlaceholder')"
             maxlength="50"
             :class="{ 'ring-error': fieldError('name') }"
             @blur="touchField('name')"
           />
         </el-form-item>
-        <el-form-item label="最小值" required :error="fieldError('min')">
+        <el-form-item :label="pf('min')" required :error="fieldError('min')">
           <el-input-number
             v-model="closedRing.min"
             :precision="2"
@@ -86,7 +86,7 @@
           />
           <span class="ml-2 text-sm text-gray-500">{{ unit }}</span>
         </el-form-item>
-        <el-form-item label="最大值" required :error="fieldError('max')">
+        <el-form-item :label="pf('max')" required :error="fieldError('max')">
           <el-input-number
             v-model="closedRing.max"
             :precision="2"
@@ -95,17 +95,20 @@
           />
           <span class="ml-2 text-sm text-gray-500">{{ unit }}</span>
         </el-form-item>
-        <el-form-item label="公差">
-          <span>{{ closedRingTolerance.toFixed(2) }} {{ unit }}（自动计算）</span>
+        <el-form-item :label="pf('tolerance')">
+          <span>{{ closedRingTolerance.toFixed(2) }} {{ unit }} {{ pt('toleranceAuto') }}</span>
         </el-form-item>
-        <el-form-item v-if="isClosedRingValid" label="等效表述">
+        <el-form-item v-if="isClosedRingValid" :label="pt('equivStatement')">
           <span class="text-sm">
-            目标 {{ closedRingDesign.target.toFixed(3) }} {{ unit }}，
-            ES +{{ closedRingDesign.es.toFixed(3) }}，
-            EI {{ closedRingDesign.ei.toFixed(3) }}
+            {{ pt('equivTarget', {
+              target: closedRingDesign.target.toFixed(3),
+              unit,
+              es: closedRingDesign.es.toFixed(3),
+              ei: closedRingDesign.ei.toFixed(3),
+            }) }}
           </span>
         </el-form-item>
-        <el-form-item label="方向">
+        <el-form-item :label="pf('direction')">
           <el-radio-group v-model="closedRing.direction" @change="syncAllRingTypes">
             <el-radio-button label="left">←</el-radio-button>
             <el-radio-button label="up">↑</el-radio-button>
@@ -113,7 +116,7 @@
             <el-radio-button label="down">↓</el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="单位">
+        <el-form-item :label="pf('unit')">
           <el-radio-group v-model="closedRing.unit" @change="onUnitChange">
             <el-radio label="mm">mm</el-radio>
             <el-radio label="inch">inch</el-radio>
@@ -121,22 +124,22 @@
         </el-form-item>
       </el-form>
       <p class="text-sm text-gray-500">
-        💡 封闭环是装配过程最终形成的尺寸（如间隙、过盈量）
+        {{ pt('closedRingHint') }}
       </p>
       <div class="mt-6 flex justify-between">
-        <el-button @click="clearClosedRing">清除</el-button>
+        <el-button @click="clearClosedRing">{{ pt('clear') }}</el-button>
         <div class="flex gap-2">
-          <el-button @click="prevStep">← 返回</el-button>
-          <el-button type="primary" @click="validateAndNext(2)">下一步 →</el-button>
+          <el-button @click="prevStep">{{ pt('prev') }}</el-button>
+          <el-button type="primary" @click="validateAndNext(2)">{{ pt('next') }}</el-button>
         </div>
       </div>
     </section>
 
     <!-- 步骤 3 -->
     <section v-show="currentStep === 3" class="card-panel">
-      <h2 class="mb-2 text-lg font-semibold">步骤 3：组成环 & 尺寸链模型</h2>
+      <h2 class="mb-2 text-lg font-semibold">{{ pt('step3Title') }}</h2>
       <p class="mb-4 text-sm text-gray-500">
-        左侧为尺寸链矢量示意，右侧填写各环参数；修改任意数值，图形会实时更新。
+        {{ pt('step3Desc') }}
       </p>
 
       <div class="mb-3 flex flex-wrap items-center gap-2">
@@ -145,15 +148,15 @@
           plain
           @click="loadRingTemplate"
         >
-          加载 {{ selectedType.name }} 推荐结构
+          {{ pt('loadTemplate', { name: typeName(selectedType.id) }) }}
         </el-button>
-        <el-button plain @click="loadDefaultDemo">加载示例数据</el-button>
-        <p v-if="componentRings.length >= 50" class="text-sm text-warning">已达最大数量（50）</p>
+        <el-button plain @click="loadDefaultDemo">{{ pt('loadDemo') }}</el-button>
+        <p v-if="componentRings.length >= 50" class="text-sm text-warning">{{ pt('maxRings') }}</p>
       </div>
 
       <p v-if="isDemoLoaded" class="mb-2 text-xs text-gray-500">
-        示例数据 · 可直接修改，或
-        <button type="button" class="text-primary hover:underline" @click="isDemoLoaded = false">隐藏提示</button>
+        {{ pt('demoLoaded') }}
+        <button type="button" class="text-primary hover:underline" @click="isDemoLoaded = false">{{ pt('hideDemoHint') }}</button>
       </p>
 
       <div class="space-y-4">
@@ -185,15 +188,15 @@
         type="info"
         :closable="false"
         show-icon
-        :title="gdtModeInfo?.label ?? '2D/GD&T 分析'"
-        :description="gdtModeInfo?.desc ?? '已启用专用公差叠加模型'"
+        :title="gdtModeLabel ?? pt('gdtFallbackTitle')"
+        :description="gdtModeDescBase"
       />
       <div class="mt-6 flex justify-between">
-        <el-button @click="clearRings">清空列表</el-button>
+        <el-button @click="clearRings">{{ pt('clearList') }}</el-button>
         <div class="flex gap-2">
-          <el-button @click="prevStep">← 返回</el-button>
+          <el-button @click="prevStep">{{ pt('prev') }}</el-button>
           <el-button type="primary" :disabled="!componentRings.length" @click="validateRingsAndNext">
-            下一步 →
+            {{ pt('next') }}
           </el-button>
         </div>
       </div>
@@ -201,36 +204,36 @@
 
     <!-- 步骤 4 -->
     <section v-show="currentStep === 4" class="card-panel">
-      <h2 class="mb-3 text-lg font-semibold">步骤 4：选择计算方法</h2>
+      <h2 class="mb-3 text-lg font-semibold">{{ pt('step4Title') }}</h2>
       <el-radio-group v-model="method" class="method-grid">
         <el-radio value="worst" border class="method-card">
-          <span class="method-card__title">极值法</span>
-          <span class="method-card__hint">100% 安全 · 最保守</span>
+          <span class="method-card__title">{{ pt('methodCards.worstTitle') }}</span>
+          <span class="method-card__hint">{{ pt('methodCards.worstHint') }}</span>
         </el-radio>
         <el-radio value="rss" border class="method-card">
-          <span class="method-card__title">RSS 概率法</span>
-          <span class="method-card__hint">约 95% 合格率</span>
+          <span class="method-card__title">{{ pt('methodCards.rssTitle') }}</span>
+          <span class="method-card__hint">{{ pt('methodCards.rssHint') }}</span>
         </el-radio>
         <el-radio value="modified-rss" border class="method-card">
-          <span class="method-card__title">修正 RSS</span>
-          <span class="method-card__hint">偏态 / 均匀分布</span>
+          <span class="method-card__title">{{ pt('methodCards.modifiedTitle') }}</span>
+          <span class="method-card__hint">{{ pt('methodCards.modifiedHint') }}</span>
         </el-radio>
         <el-radio value="sigma6-rss" border class="method-card">
-          <span class="method-card__title">6σ RSS</span>
-          <span class="method-card__hint">统计公差设计</span>
+          <span class="method-card__title">{{ pt('methodCards.sigma6Title') }}</span>
+          <span class="method-card__hint">{{ pt('methodCards.sigma6Hint') }}</span>
         </el-radio>
       </el-radio-group>
       <p class="mt-2 text-xs text-gray-500">
-        极值法：T=ΣTᵢ · RSS：T=√ΣTᵢ² · 修正 RSS：T=k·√ΣTᵢ² · 6σ：T=6√Σ(Tᵢ/Kᵢ)²
+        {{ pt('step4FormulaHint') }}
       </p>
       <div v-if="method === 'modified-rss' || method === 'sigma6-rss'" class="mt-4 max-w-md">
         <el-form label-width="100px">
-          <el-form-item label="分布类型">
+          <el-form-item :label="pf('distribution')">
             <el-select v-model="rssDistribution" class="w-full">
               <el-option
                 v-for="(d, k) in DISTRIBUTIONS"
                 :key="k"
-                :label="d.name"
+                :label="ol('distributions', k)"
                 :value="k"
               />
             </el-select>
@@ -238,28 +241,28 @@
         </el-form>
       </div>
       <div class="mt-6 flex justify-end gap-2">
-        <el-button @click="prevStep">← 返回</el-button>
-        <el-button type="primary" @click="nextStep">下一步 →</el-button>
+        <el-button @click="prevStep">{{ pt('prev') }}</el-button>
+        <el-button type="primary" @click="nextStep">{{ pt('next') }}</el-button>
       </div>
     </section>
 
     <!-- 步骤 5 -->
     <section v-show="currentStep === 5" class="card-panel">
-      <h2 class="mb-4 text-lg font-semibold">步骤 5：查看结果</h2>
+      <h2 class="mb-4 text-lg font-semibold">{{ pt('step5Title') }}</h2>
 
       <el-collapse v-if="gdtModeInfo" class="mb-4">
-        <el-collapse-item title="GD&T 材料条件 (MMC / LMC / RFS)" name="mmc">
+        <el-collapse-item :title="pt('gdtCollapseTitle')" name="mmc">
           <el-form label-width="120px" class="max-w-lg">
-            <el-form-item label="材料条件">
+            <el-form-item :label="pf('materialCondition')">
               <el-radio-group v-model="gdtModifier">
-                <el-radio value="RFS">RFS（无关）</el-radio>
-                <el-radio value="MMC">MMC（最大实体）</el-radio>
-                <el-radio value="LMC">LMC（最小实体）</el-radio>
+                <el-radio value="RFS">{{ pt('gdtModifiers.RFS') }}</el-radio>
+                <el-radio value="MMC">{{ pt('gdtModifiers.MMC') }}</el-radio>
+                <el-radio value="LMC">{{ pt('gdtModifiers.LMC') }}</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item v-if="gdtModifier !== 'RFS'" label="奖励公差">
+            <el-form-item v-if="gdtModifier !== 'RFS'" :label="pf('bonusTolerance')">
               <el-input-number v-model="bonusTolerance" :min="0" :precision="4" :step="0.01" />
-              <span class="ml-2 text-xs text-gray-500">mm · MMC 全额叠加，LMC 按 50%</span>
+              <span class="ml-2 text-xs text-gray-500">{{ pf('bonusHint') }}</span>
             </el-form-item>
           </el-form>
         </el-collapse-item>
@@ -276,18 +279,18 @@
         />
 
         <el-collapse class="mb-6">
-          <el-collapse-item title="查看计算过程（公式与四法对比）" name="detail">
+          <el-collapse-item :title="pt('calcDetailTitle')" name="detail">
             <el-alert
               v-if="gdtModeInfo"
               class="mb-4"
               type="success"
               :closable="false"
               show-icon
-              :title="`计算模式：${gdtModeInfo.label}`"
+              :title="pt('calcModeLabel', { mode: gdtModeLabel })"
               :description="gdtModeDesc"
             />
 
-            <h3 class="mb-2 text-sm font-medium text-gray-600">尺寸链矢量图</h3>
+            <h3 class="mb-2 text-sm font-medium text-gray-600">{{ pt('vectorDiagram') }}</h3>
             <SizeChainCanvas
               ref="canvasRef"
               :closed-ring="closedRing"
@@ -297,7 +300,7 @@
               class="mb-6"
             />
 
-            <h3 class="mb-2 text-sm font-medium text-gray-600">计算公式</h3>
+            <h3 class="mb-2 text-sm font-medium text-gray-600">{{ pt('formulaSection') }}</h3>
             <div class="mb-6 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
               <MathTex
                 v-if="activeResult.formulaNote"
@@ -312,16 +315,16 @@
               />
             </div>
 
-            <h3 class="mb-2 text-sm font-medium text-gray-600">四法结果对比</h3>
+            <h3 class="mb-2 text-sm font-medium text-gray-600">{{ pt('compareSection') }}</h3>
             <el-table :data="resultTable" border>
-              <el-table-column prop="method" label="方法" />
-              <el-table-column prop="tolerance" :label="`总公差 (${unit})`" />
-              <el-table-column prop="upper" label="上限" />
-              <el-table-column prop="lower" label="下限" />
-              <el-table-column prop="pass" label="合格">
+              <el-table-column prop="method" :label="pr('method')" />
+              <el-table-column prop="tolerance" :label="pr('totalTolerance', { unit })" />
+              <el-table-column prop="upper" :label="pr('upper')" />
+              <el-table-column prop="lower" :label="pr('lower')" />
+              <el-table-column prop="pass" :label="pr('passCol')">
                 <template #default="{ row }">
                   <span :class="row.pass ? 'text-success' : 'text-error'">
-                    {{ row.pass ? '✓ 合格' : '✗ 不合格' }}
+                    {{ row.pass ? pr('passMark') : pr('failMark') }}
                   </span>
                 </template>
               </el-table-column>
@@ -331,21 +334,21 @@
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <el-button @click="resetAll">← 重置</el-button>
-        <el-button type="primary" @click="saveResult">💾 保存</el-button>
+        <el-button @click="resetAll">{{ pt('reset') }}</el-button>
+        <el-button type="primary" @click="saveResult">{{ pt('save') }}</el-button>
         <el-button
           v-if="savedId"
           :type="isFavorited ? 'warning' : 'default'"
           @click="toggleSavedFavorite"
         >
-          {{ isFavorited ? '★ 已收藏' : '☆ 收藏' }}
+          {{ isFavorited ? pt('favorited') : pt('favorite') }}
         </el-button>
-        <el-button @click="handleExportPdf">📄 导出 PDF</el-button>
-        <el-button @click="handleExportExcel">📊 导出 Excel</el-button>
-        <el-button @click="handleExportPng">🖼️ 导出图片</el-button>
-        <el-button @click="handleCopy">📋 复制结果</el-button>
-        <el-button type="success" @click="goToMonteCarlo">🎲 Monte Carlo 验证</el-button>
-        <el-button v-if="gdtModeInfo" type="success" plain @click="goToGdtStack">📐 GD&T 公差栈</el-button>
+        <el-button @click="handleExportPdf">{{ pt('exportPdf') }}</el-button>
+        <el-button @click="handleExportExcel">{{ pt('exportExcel') }}</el-button>
+        <el-button @click="handleExportPng">{{ pt('exportPng') }}</el-button>
+        <el-button @click="handleCopy">{{ pt('copyResult') }}</el-button>
+        <el-button type="success" @click="goToMonteCarlo">{{ pt('monteCarlo') }}</el-button>
+        <el-button v-if="gdtModeInfo" type="success" plain @click="goToGdtStack">{{ pt('gdtStack') }}</el-button>
       </div>
     </section>
   </div>
@@ -390,9 +393,13 @@ import {
 } from '@/utils/settings'
 import { isFavorite, toggleFavorite } from '@/utils/favorites'
 import { closedRingAsDesign, ensureRingEsEi } from '@/utils/ring-tolerance'
+import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const route = useRoute()
 const router = useRouter()
+const { pt, pf, pr, t } = useCalcPage('editor')
+const { ol } = useOptionsI18n()
 
 const currentStep = ref(1)
 const activeGroup = ref('1d')
@@ -431,18 +438,40 @@ const isFavorited = computed(() => (savedId.value ? isFavorite(savedId.value) : 
 function toggleSavedFavorite() {
   if (!savedId.value) return
   const added = toggleFavorite(savedId.value)
-  ElMessage.success(added ? '已加入收藏' : '已取消收藏')
+  ElMessage.success(added ? pt('msgFavoriteAdded') : pt('msgFavoriteRemoved'))
 }
 
-const activeGroupLabel = computed(
-  () => ANALYSIS_GROUPS.find((g) => g.id === activeGroup.value)?.label ?? '',
-)
+function typeName(id) {
+  return pt(`analysisTypes.${id}.name`)
+}
+
+function typeDesc(id) {
+  return pt(`analysisTypes.${id}.desc`)
+}
+
+function groupLabel(id) {
+  return t(`analysisGroups.${id}`)
+}
+
+const activeGroupLabel = computed(() => groupLabel(activeGroup.value))
 
 const isExtendedAnalysis = computed(() =>
   isExtendedAnalysisType(selectedType.value?.id ?? ''),
 )
 
 const gdtModeInfo = computed(() => getGdtCalcMode(selectedType.value?.id))
+
+const gdtModeLabel = computed(() => {
+  const id = selectedType.value?.id
+  if (!id || !gdtModeInfo.value) return null
+  return ol('gdtCalcModes', id, 'label')
+})
+
+const gdtModeDescBase = computed(() => {
+  const id = selectedType.value?.id
+  if (!id || !gdtModeInfo.value) return pt('gdtFallbackDesc')
+  return ol('gdtCalcModes', id, 'desc') || pt('gdtFallbackDesc')
+})
 
 const chainOpts = computed(() => ({
   typeId: selectedType.value?.id,
@@ -480,10 +509,10 @@ const activeResult = computed(() => {
 })
 
 const gdtModeDesc = computed(() => {
-  const base = gdtModeInfo.value?.desc ?? '已启用专用公差叠加模型'
+  const base = gdtModeDescBase.value
   const bonus = activeResult.value?.bonusApplied
   if (bonus && bonus > 0) {
-    return `${base} · 材料条件奖励 +${fmtNum(bonus)} mm`
+    return `${base}${pt('gdtBonusSuffix', { bonus: fmtNum(bonus) })}`
   }
   return base
 })
@@ -491,36 +520,36 @@ const gdtModeDesc = computed(() => {
 const resultTable = computed(() => {
   const rows = [
     {
-      method: '极值法',
+      method: pt('methods.worst'),
       tolerance: fmtNum(worstResult.value.totalTolerance),
       upper: fmtNum(worstResult.value.upper),
       lower: fmtNum(worstResult.value.lower),
       pass: worstResult.value.pass,
     },
     {
-      method: 'RSS 法',
+      method: pt('methods.rss'),
       tolerance: fmtNum(rssResult.value.totalTolerance),
       upper: fmtNum(rssResult.value.upper),
       lower: fmtNum(rssResult.value.lower),
       pass: rssResult.value.pass,
     },
     {
-      method: '修正 RSS',
+      method: pt('methods.modified-rss'),
       tolerance: fmtNum(modifiedResult.value.totalTolerance),
       upper: fmtNum(modifiedResult.value.upper),
       lower: fmtNum(modifiedResult.value.lower),
       pass: modifiedResult.value.pass,
     },
     {
-      method: '6σ RSS',
+      method: pt('methods.sigma6-rss'),
       tolerance: fmtNum(sigma6Result.value.totalTolerance),
       upper: fmtNum(sigma6Result.value.upper),
       lower: fmtNum(sigma6Result.value.lower),
       pass: sigma6Result.value.pass,
     },
   ]
-  if (gdtModeInfo.value) {
-    return rows.map((r) => ({ ...r, method: `${r.method} (${gdtModeInfo.value.label})` }))
+  if (gdtModeLabel.value) {
+    return rows.map((r) => ({ ...r, method: `${r.method} (${gdtModeLabel.value})` }))
   }
   return rows
 })
@@ -666,7 +695,7 @@ function loadDefaultDemo() {
   if (!state) return
   applyEditorState(state)
   isDemoLoaded.value = true
-  ElMessage.success('已加载齿轮间隙示例数据')
+  ElMessage.success(pt('msgDemoLoaded'))
 }
 
 function applyDefaultSettings() {
@@ -680,7 +709,7 @@ function loadCasePreset(caseId) {
   const preset = findCasePreset(caseId)
   if (!preset) return
   applyEditorState(prepareCaseForEditor(preset))
-  ElMessage.success(`已加载案例：${preset.title}`)
+  ElMessage.success(pt('msgCaseLoaded', { title: preset.title }))
 }
 
 function applyEditorState(state) {
@@ -715,12 +744,12 @@ function touchField(field) {
 
 function fieldError(field) {
   if (!showValidation.value && !touched.value[field]) return ''
-  if (field === 'name' && !closedRing.value.name.trim()) return '必填'
-  if (field === 'min' && closedRing.value.min == null) return '必填'
+  if (field === 'name' && !closedRing.value.name.trim()) return pt('validation.required')
+  if (field === 'min' && closedRing.value.min == null) return pt('validation.required')
   if (field === 'max') {
-    if (closedRing.value.max == null) return '必填'
+    if (closedRing.value.max == null) return pt('validation.required')
     if (closedRing.value.min != null && closedRing.value.max <= closedRing.value.min) {
-      return '最大值须大于最小值'
+      return pt('validation.maxGtMin')
     }
   }
   return ''
@@ -737,7 +766,7 @@ function validateRingsAndNext() {
       r.tolerance < 0,
   )
   if (invalid) {
-    ElMessage.warning('请完善所有组成环的名称、尺寸和公差')
+    ElMessage.warning(pt('msgRingIncomplete'))
     return
   }
   nextStep()
@@ -764,16 +793,16 @@ function loadRingTemplate() {
   if (!typeId) return
   const tpl = applyRingTemplate(typeId, closedRing.value.direction)
   if (!tpl) {
-    ElMessage.warning('该分析类型暂无推荐结构')
+    ElMessage.warning(pt('msgNoTemplate'))
     return
   }
   closedRing.value = { ...closedRing.value, ...tpl.closedRing, unit: closedRing.value.unit }
   componentRings.value = tpl.componentRings.map((ring) => ensureRingEsEi({ ...ring }))
-  ElMessage.success(`已加载 ${selectedType.value.name} 推荐组成环`)
+  ElMessage.success(pt('msgTemplateLoaded', { name: typeName(selectedType.value.id) }))
 }
 
 function selectType(type, group) {
-  selectedType.value = { ...type, groupId: group.id, groupLabel: group.label }
+  selectedType.value = { ...type, groupId: group.id }
 }
 
 function nextStep() {
@@ -860,27 +889,27 @@ watch(advancedMode, (val) => {
   saveSettings({ editorAdvancedMode: val })
 })
 
-const methodLabels = {
-  worst: '极值法',
-  rss: 'RSS 法',
-  'modified-rss': '修正 RSS 法',
-  'sigma6-rss': '6σ RSS 法',
-}
+const methodLabels = computed(() => ({
+  worst: pt('methods.worstExport'),
+  rss: pt('methods.rssExport'),
+  'modified-rss': pt('methods.modifiedExport'),
+  'sigma6-rss': pt('methods.sigma6Export'),
+}))
 
 function buildExportPayload() {
   return {
-    typeName: selectedType.value?.name,
+    typeName: selectedType.value ? typeName(selectedType.value.id) : undefined,
     closedRing: closedRing.value,
     unit: unit.value,
     componentRings: componentRings.value,
-    methodLabel: methodLabels[method.value] ?? method.value,
+    methodLabel: methodLabels.value[method.value] ?? method.value,
     formulaLines: formulaLines.value,
     results: resultTable.value,
   }
 }
 
 function saveResult() {
-  const title = `${selectedType.value?.name ?? '分析'} ${closedRing.value.name || 'L0'}`
+  const title = `${selectedType.value ? typeName(selectedType.value.id) : pt('saveTitleFallback')} ${closedRing.value.name || 'L0'}`
   const entry = saveAnalysis({
     title,
     status: activeResult.value.pass ? 'pass' : 'fail',
@@ -899,7 +928,7 @@ function saveResult() {
       },
     },
   })
-  ElMessage.success('已保存')
+  ElMessage.success(pt('msgSaved'))
   router.replace({ name: 'editor-detail', params: { id: entry.id } })
   savedId.value = entry.id
 }
@@ -907,14 +936,14 @@ function saveResult() {
 async function handleExportPdf() {
   if (!resultPanelRef.value) return
   await exportResultPdf(resultPanelRef.value, undefined, {
-    title: `${selectedType.value?.name ?? '分析'} ${closedRing.value.name || 'L0'}`,
+    title: `${selectedType.value ? typeName(selectedType.value.id) : pt('saveTitleFallback')} ${closedRing.value.name || 'L0'}`,
   })
-  ElMessage.success('PDF 已下载')
+  ElMessage.success(pt('msgPdfOk'))
 }
 
 function handleExportExcel() {
   exportExcel(buildExportPayload())
-  ElMessage.success('Excel 已下载')
+  ElMessage.success(pt('msgExcelOk'))
 }
 
 function handleExportPng() {
@@ -924,12 +953,12 @@ function handleExportPng() {
   } else if (resultPanelRef.value) {
     exportResultPng(resultPanelRef.value)
   }
-  ElMessage.success('图片已下载')
+  ElMessage.success(pt('msgPngOk'))
 }
 
 async function handleCopy() {
   await copyResultText(buildResultText(buildExportPayload()))
-  ElMessage.success('已复制到剪贴板')
+  ElMessage.success(pt('msgCopied'))
 }
 </script>
 

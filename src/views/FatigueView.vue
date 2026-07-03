@@ -56,7 +56,7 @@
             <p class="mt-2">{{ pf('estimatedLife') }}: <span class="font-mono text-lg">{{ lifeDisplay }}</span></p>
           </div>
         </template>
-        <template v-else-if="result.miner && !result.miner.error">
+        <template v-else-if="result.miner && !result.miner.errorKey">
           <div class="mb-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
               <dt class="text-gray-500">{{ pr('totalDamage') }}</dt>
@@ -66,7 +66,7 @@
             </div>
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
               <dt class="text-gray-500">{{ pr('status') }}</dt>
-              <dd class="mt-1">{{ result.miner.status }}</dd>
+              <dd class="mt-1">{{ rm('fatigue', `status_${result.miner.statusKey}`) }}</dd>
             </div>
           </div>
           <el-table :data="result.miner.details" size="small" border>
@@ -80,12 +80,12 @@
             </el-table-column>
           </el-table>
         </template>
-        <el-empty v-else-if="calcMode !== 'simple'" description="输入载荷谱行" />
+        <el-empty v-else-if="calcMode !== 'simple'" :description="pr('minerEmpty')" />
       </section>
     </div>
 
     <section class="card-panel mt-6">
-      <h2 class="mb-4 font-semibold">S-N 曲线</h2>
+      <h2 class="mb-4 font-semibold">{{ pr('snChart') }}</h2>
       <div ref="chartRef" class="min-h-[360px]" />
     </section>
   </div>
@@ -102,9 +102,13 @@ import FatigueDiagram from '@/components/fatigue/FatigueDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
+import { useChartI18n } from '@/composables/useChartI18n'
 
-const { pt, ct, pf, pr } = useCalcPage('fatigue')
+const { pt, ct, pf, pr, locale } = useCalcPage('fatigue')
 const { optionMap } = useOptionsI18n()
+const { rm, resultError } = useResultI18n()
+const { ch } = useChartI18n()
 
 const snMaterials = computed(() => optionMap(SN_MATERIALS, 'snMaterials'))
 
@@ -133,8 +137,9 @@ const result = computed(() =>
 )
 
 const lifeDisplay = computed(() => {
+  locale.value
   const n = result.value.life
-  if (n === Infinity) return '无限寿命 (≤ 疲劳极限)'
+  if (n === Infinity) return rm('fatigue', 'infinite_life')
   if (n >= 1e6) return `${(n / 1e6).toFixed(2)} × 10⁶`
   return `${Math.round(n)}`
 })
@@ -158,7 +163,7 @@ async function renderChart() {
       y: [enduranceLimit, enduranceLimit],
       type: 'scatter',
       mode: 'lines',
-      name: '疲劳极限',
+      name: ch('enduranceLimit'),
       line: { color: '#e74c3c', dash: 'dash' },
     },
   ]
@@ -169,7 +174,7 @@ async function renderChart() {
       y: [stressAmplitude.value],
       type: 'scatter',
       mode: 'markers',
-      name: '当前工况',
+      name: ch('currentPoint'),
       marker: { color: '#f39c12', size: 12 },
     })
   }
@@ -178,9 +183,9 @@ async function renderChart() {
     chartRef.value,
     traces,
     {
-      title: 'S-N 曲线 (Basquin)',
-      xaxis: { title: '循环次数 N', type: 'log' },
-      yaxis: { title: '应力幅 Sa (MPa)', type: 'log' },
+      title: ch('snTitle'),
+      xaxis: { title: ch('snCycles'), type: 'log' },
+      yaxis: { title: ch('snStress'), type: 'log' },
       margin: { t: 40, l: 60, r: 24, b: 48 },
       height: 360,
     },
@@ -188,7 +193,7 @@ async function renderChart() {
   )
 }
 
-watch([result, material, stressAmplitude], renderChart)
+watch([result, material, stressAmplitude, locale], renderChart)
 
 function loadSample() {
   loadText.value = `350,10000

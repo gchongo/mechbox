@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h1 class="page-title">Monte Carlo 模拟</h1>
-    <p class="mb-6 text-gray-600">随机模拟尺寸链封闭环分布，评估合格率与统计特征</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-6 text-gray-600">{{ pt('subtitle') }}</p>
 
     <el-alert
       v-if="sourceTypeName"
@@ -9,103 +9,103 @@
       type="success"
       :closable="false"
       show-icon
-      :title="`来自编辑器：${sourceTypeName}`"
-      description="已载入组成环公差与分布参数，含传递系数加权采样"
+      :title="pt('importedTitle', { name: sourceTypeName })"
+      :description="pt('importedDesc')"
     />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <!-- 输入 -->
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">模拟参数</h2>
+        <h2 class="mb-4 font-semibold">{{ pt('sectionParams') }}</h2>
         <el-form label-width="120px">
-          <el-form-item label="封闭环 min">
+          <el-form-item :label="pf('closedMin')">
             <el-input-number v-model="closedMin" :precision="3" :step="0.01" />
           </el-form-item>
-          <el-form-item label="封闭环 max">
+          <el-form-item :label="pf('closedMax')">
             <el-input-number v-model="closedMax" :precision="3" :step="0.01" />
           </el-form-item>
-          <el-form-item label="公差列表">
+          <el-form-item :label="pf('toleranceList')">
             <el-input v-model="toleranceList" placeholder="0.06,0.05,0.04" />
           </el-form-item>
-          <el-form-item label="尺寸列表">
+          <el-form-item :label="pf('sizeList')">
             <el-input v-model="sizeList" placeholder="40,15,55.25（增+/减- 见类型）" />
           </el-form-item>
-          <el-form-item label="环类型">
+          <el-form-item :label="pf('typeList')">
             <el-input v-model="typeList" placeholder="dec,dec,inc（dec=减环,inc=增环）" />
           </el-form-item>
-          <el-form-item label="误差分布">
+          <el-form-item :label="pf('distribution')">
             <el-select v-model="distribution" class="w-full">
               <el-option
-                v-for="(d, k) in DISTRIBUTIONS"
+                v-for="(d, k) in distributions"
                 :key="k"
-                :label="d.name"
+                :label="d.label"
                 :value="k"
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="自定义 K">
+          <el-form-item :label="pf('customK')">
             <el-input-number v-model="customK" :min="0" :precision="2" :step="0.1" />
-            <span class="ml-2 text-xs text-gray-400">可选，覆盖分布 K</span>
+            <span class="ml-2 text-xs text-gray-400">{{ pf('customKHint') }}</span>
           </el-form-item>
-          <el-form-item label="模拟次数">
+          <el-form-item :label="pf('iterations')">
             <el-input-number v-model="iterations" :min="1000" :max="100000" :step="1000" />
           </el-form-item>
           <el-button type="primary" :loading="running" @click="runSimulation">
-            开始模拟
+            {{ pt('runSimulation') }}
           </el-button>
-          <el-button class="ml-2" @click="loadGearCase">加载齿轮案例</el-button>
+          <el-button class="ml-2" @click="loadGearCase">{{ pt('loadGearCase') }}</el-button>
         </el-form>
       </section>
 
       <!-- 结果统计 -->
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">模拟结果</h2>
+        <h2 class="mb-4 font-semibold">{{ pt('sectionResults') }}</h2>
         <div v-if="simResult" class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">均值</dt>
+            <dt class="text-gray-500">{{ pr('mean') }}</dt>
             <dd class="mt-1 font-mono text-lg">{{ simResult.mean.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">标准差</dt>
+            <dt class="text-gray-500">{{ pr('std') }}</dt>
             <dd class="mt-1 font-mono text-lg">{{ simResult.std.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">最小值</dt>
+            <dt class="text-gray-500">{{ pr('min') }}</dt>
             <dd class="mt-1 font-mono text-lg">{{ simResult.min.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">最大值</dt>
+            <dt class="text-gray-500">{{ pr('max') }}</dt>
             <dd class="mt-1 font-mono text-lg">{{ simResult.max.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">P5 / P50 / P95</dt>
+            <dt class="text-gray-500">{{ pr('percentiles') }}</dt>
             <dd class="mt-1 font-mono text-sm">
               {{ simResult.p05.toFixed(3) }} / {{ simResult.p50.toFixed(3) }} /
               {{ simResult.p95.toFixed(3) }}
             </dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">合格率</dt>
+            <dt class="text-gray-500">{{ pr('passRate') }}</dt>
             <dd class="mt-1 font-mono text-lg text-success">
               {{ (simResult.passRate * 100).toFixed(2) }}%
             </dd>
           </div>
         </div>
-        <el-empty v-else description="点击「开始模拟」运行" />
+        <el-empty v-else :description="pt('emptyRun')" />
       </section>
     </div>
 
     <!-- 图表 -->
     <section v-if="simResult" class="card-panel mt-6">
       <div class="mb-4 flex flex-wrap items-center gap-3">
-        <h2 class="font-semibold">模拟分布图</h2>
+        <h2 class="font-semibold">{{ pt('sectionChart') }}</h2>
         <el-radio-group v-model="chartType" size="small">
-          <el-radio-button value="histogram">直方图</el-radio-button>
-          <el-radio-button value="cdf">CDF</el-radio-button>
-          <el-radio-button value="scatter">散点图</el-radio-button>
-          <el-radio-button value="box">箱线图</el-radio-button>
+          <el-radio-button value="histogram">{{ pt('chartHistogram') }}</el-radio-button>
+          <el-radio-button value="cdf">{{ pt('chartCdf') }}</el-radio-button>
+          <el-radio-button value="scatter">{{ pt('chartScatter') }}</el-radio-button>
+          <el-radio-button value="box">{{ pt('chartBox') }}</el-radio-button>
         </el-radio-group>
-        <el-button size="small" @click="exportChartPng">导出 PNG</el-button>
+        <el-button size="small" @click="exportChartPng">{{ pt('exportPng') }}</el-button>
       </div>
       <MonteCarloChart
         ref="chartComponentRef"
@@ -118,13 +118,13 @@
     <!-- 敏感度龙卷风图 -->
     <section v-if="simResult" class="card-panel mt-6">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 class="font-semibold">敏感度分析（龙卷风图）</h2>
+        <h2 class="font-semibold">{{ pt('sectionSensitivity') }}</h2>
         <el-button size="small" :loading="sensitivityRunning" @click="runSensitivity">
-          {{ sensitivityResult ? '重新分析' : '分析敏感度' }}
+          {{ sensitivityResult ? pt('reanalyze') : pt('analyzeSensitivity') }}
         </el-button>
       </div>
       <p class="mb-3 text-xs text-gray-500">
-        逐环单独波动（其余环误差为 0），比较各组成环对封闭环分布的影响范围
+        {{ pt('sensitivityHint') }}
       </p>
       <template v-if="sensitivityResult">
         <TornadoChart
@@ -136,10 +136,10 @@
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700">
-                <th class="py-2 pr-4">组成环</th>
-                <th class="py-2 pr-4">公差</th>
-                <th class="py-2 pr-4">P95−P05</th>
-                <th class="py-2">方差贡献</th>
+                <th class="py-2 pr-4">{{ pt('table.ring') }}</th>
+                <th class="py-2 pr-4">{{ pt('table.tolerance') }}</th>
+                <th class="py-2 pr-4">{{ pt('table.spread') }}</th>
+                <th class="py-2">{{ pt('table.variance') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -158,7 +158,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import MonteCarloChart from '@/components/charts/MonteCarloChart.vue'
@@ -170,8 +170,14 @@ import {
   deserializeMonteCarloPayload,
 } from '@/constants/editor-bridge'
 import { getSettings } from '@/utils/settings'
+import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const route = useRoute()
+const { pt, pf, pr } = useCalcPage('monte-carlo')
+const { optionMap } = useOptionsI18n()
+
+const distributions = computed(() => optionMap(DISTRIBUTIONS, 'distributions'))
 
 const closedMin = ref(0.1)
 const closedMax = ref(0.35)
@@ -189,14 +195,16 @@ const sourceTypeName = ref('')
 const sensitivityRunning = ref(false)
 const sensitivityResult = ref(null)
 
+const RING_MISMATCH = 'RING_MISMATCH'
+
 async function exportChartPng() {
   if (!simResult.value) {
-    ElMessage.warning('请先运行模拟')
+    ElMessage.warning(pt('msgRunFirst'))
     return
   }
   const ok = await chartComponentRef.value?.exportPng?.('monte-carlo-chart.png')
-  if (ok) ElMessage.success('PNG 已下载')
-  else ElMessage.error('导出失败，请稍后重试')
+  if (ok) ElMessage.success(pt('msgPngOk'))
+  else ElMessage.error(pt('msgExportFail'))
 }
 
 function parseList(str) {
@@ -208,7 +216,7 @@ function buildRings() {
   const sizes = parseList(sizeList.value).map(Number)
   const types = parseList(typeList.value)
   if (tolerances.length !== sizes.length || sizes.length !== types.length) {
-    throw new Error('公差、尺寸、类型数量须一致')
+    throw new Error(RING_MISMATCH)
   }
   return sizes.map((size, i) => ({
     name: `环${i + 1}`,
@@ -218,6 +226,11 @@ function buildRings() {
     type: types[i].toLowerCase().startsWith('inc') ? 'increasing' : 'decreasing',
     direction: types[i].toLowerCase().startsWith('inc') ? 'right' : 'left',
   }))
+}
+
+function simErrorMessage(e, fallbackKey) {
+  if (e?.message === RING_MISMATCH) return pt('msgRingMismatch')
+  return e.message || pt(fallbackKey)
 }
 
 function runSimulation() {
@@ -233,9 +246,9 @@ function runSimulation() {
         customK: customK.value,
       })
       sensitivityResult.value = null
-      ElMessage.success(`模拟完成：${iterations.value} 次`)
+      ElMessage.success(pt('msgSimDone', { n: iterations.value }))
     } catch (e) {
-      ElMessage.error(e.message || '模拟失败')
+      ElMessage.error(simErrorMessage(e, 'msgSimFail'))
     } finally {
       running.value = false
     }
@@ -258,7 +271,7 @@ function loadFromEditor() {
     iterations.value = fields.iterations
     sourceTypeName.value = fields.typeName ?? ''
     sessionStorage.removeItem(MC_STORAGE_KEY)
-    ElMessage.success('已从尺寸链编辑器加载数据')
+    ElMessage.success(pt('msgLoadedEditor'))
     return true
   } catch {
     return false
@@ -279,7 +292,7 @@ function loadGearCase() {
   sizeList.value = '40,15,55.25'
   typeList.value = 'dec,dec,inc'
   distribution.value = 'normal'
-  ElMessage.info('已加载齿轮案例参数')
+  ElMessage.info(pt('msgGearLoaded'))
 }
 
 function runSensitivity() {
@@ -294,9 +307,9 @@ function runSensitivity() {
         distribution: distribution.value,
         customK: customK.value,
       })
-      ElMessage.success('敏感度分析完成')
+      ElMessage.success(pt('msgSensitivityDone'))
     } catch (e) {
-      ElMessage.error(e.message || '分析失败')
+      ElMessage.error(simErrorMessage(e, 'msgSensitivityFail'))
     } finally {
       sensitivityRunning.value = false
     }
