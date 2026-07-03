@@ -51,6 +51,16 @@ const parts = computed(() => {
 </script>
 
 <style scoped>
+.math-content:not(.math-content-block) {
+  display: inline;
+  white-space: normal;
+}
+
+.math-content:not(.math-content-block) :deep(.katex) {
+  display: inline;
+  white-space: nowrap;
+}
+
 .math-content-block {
   display: block;
   line-height: 1.8;

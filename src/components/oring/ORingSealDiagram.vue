@@ -168,9 +168,8 @@
     <ul class="oring-diagram__legend">
       <li v-for="item in legendItems" :key="item.key" class="oring-diagram__legend-item">
         <span class="oring-diagram__dot" :class="`oring-diagram__dot--${item.tone}`" />
-        <span>
-          <strong><MathContent :text="enrichedName(item.name)" /></strong>
-          <span class="text-gray-500"> — <MathContent :text="enrichedDesc(item.desc)" /></span>
+        <span class="oring-diagram__legend-text">
+          <MathContent :text="legendLine(item.name, item.desc)" />
         </span>
       </li>
     </ul>
@@ -180,7 +179,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
-import { enrichMathText } from '@/utils/math-label'
+import { legendLine } from '@/utils/math-label'
 
 const { dt, locale, dm, dl } = useDiagramI18n('oRing')
 
@@ -255,12 +254,6 @@ const layout = computed(() => {
 
 const grooveDepthLabel = computed(() => props.grooveDepth?.toFixed(2) ?? '—')
 
-function enrichedName(name) {
-  return enrichMathText(String(name))
-}
-function enrichedDesc(desc) {
-  return enrichMathText(String(desc))
-}
 const showExtrusion = computed(() => props.calcMode !== 'simple')
 const showPro = computed(() => props.calcMode === 'professional')
 
@@ -426,6 +419,18 @@ const legendItems = computed(() => {
 
 .oring-diagram__legend-item {
   @apply flex items-start gap-2 text-gray-700 dark:text-gray-300;
+}
+
+.oring-diagram__legend-text {
+  @apply min-w-0 flex-1 text-xs leading-relaxed text-gray-700 dark:text-gray-300;
+}
+
+.oring-diagram__legend-text :deep(.math-content) {
+  display: inline;
+}
+
+.oring-diagram__legend-text :deep(.katex) {
+  font-size: 1em;
 }
 
 .oring-diagram__dot {

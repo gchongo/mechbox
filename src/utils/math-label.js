@@ -115,6 +115,7 @@ const REPLACEMENTS = [
   ['6σ', '$6\\sigma$'],
   ['6σ RSS', '$6\\sigma$ RSS'],
   ['±3σ', '$\\pm 3\\sigma$'],
+  ['Φ', '$\\Phi$'],
   ['99.73%', '99.73\\%'],
   ['N·m', '$\\mathrm{N \\cdot m}$'],
   ['N·mm', '$\\mathrm{N \\cdot mm}$'],
@@ -227,12 +228,19 @@ function bindCjkToSymbol(text) {
 }
 
 function enrichPlainSegment(text) {
-  let out = autoEnrichSymbols(text)
+  let out = bindCjkToSymbol(text)
   for (const [from, to] of REPLACEMENTS) {
     if (to == null) continue
     out = out.split(from).join(to)
   }
-  return bindCjkToSymbol(out)
+  return bindCjkToSymbol(
+    splitMathSegments(out)
+      .map((seg) => {
+        if (seg.math) return seg.content
+        return autoEnrichSymbols(seg.content)
+      })
+      .join(''),
+  )
 }
 
 /**
@@ -251,4 +259,13 @@ export function enrichMathText(text) {
   return splitMathSegments(s)
     .map((seg) => (seg.math ? seg.content : enrichPlainSegment(seg.content)))
     .join('')
+}
+
+/** 示意图图例：符号与说明同一行内联 */
+export function legendLine(symbol, desc) {
+  const sym = symbol == null ? '' : String(symbol).trim()
+  const body = desc == null ? '' : String(desc).trim()
+  if (!sym) return enrichMathText(body)
+  if (!body) return enrichMathText(sym)
+  return `${enrichMathText(sym)} — ${enrichMathText(body)}`
 }

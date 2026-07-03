@@ -35,7 +35,14 @@
     font-size: 1.05em;
   }
 
-  .katex-display {
+  /* 行内公式勿用块级 katex-display 布局 */
+  .math-content:not(.math-content-block) .katex-display {
+    display: inline;
+    margin: 0;
+    overflow: visible;
+  }
+
+  .math-content-block .katex-display {
     margin: 0.5em 0;
     overflow-x: auto;
     overflow-y: hidden;

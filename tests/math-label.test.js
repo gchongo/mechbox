@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { enrichMathText, dimLabel, identToLatex } from '@/utils/math-label'
+import { enrichMathText, dimLabel, identToLatex, legendLine } from '@/utils/math-label'
 
 describe('math-label enrichMathText', () => {
   it('converts friction coefficients', () => {
@@ -68,7 +68,22 @@ describe('math-label enrichMathText', () => {
 
   it('binds CJK label to following symbol with nbsp', () => {
     expect(enrichMathText('有效面积 A_s')).toContain('\u00a0')
-    expect(enrichMathText('有效面积 A_s').match(/\\tau/g)).toBeNull()
-    expect(enrichMathText('螺栓刚度 k_S')).toContain('k_S')
+    expect(enrichMathText('有效面积 A_s')).toContain('$A_s$')
+    expect(enrichMathText('有效面积 A_s')).not.toMatch(/\$\$/)
+    expect(enrichMathText('螺栓刚度 k_S')).not.toMatch(/\$\$/)
+    expect(enrichMathText('载荷系数 Φ')).toContain('\\Phi')
+  })
+
+  it('legendLine keeps symbol and description inline', () => {
+    const line = legendLine('L_K', '两被夹紧件贴合面之间的夹紧长度')
+    expect(line).toMatch(/^\$L_K\$ — /)
+    expect(line).not.toMatch(/\$\$/)
+    expect(legendLine('d', '螺栓公称直径')).toContain('$d$')
+  })
+
+  it('does not double-wrap common engineering identifiers', () => {
+    for (const id of ['A_s', 'd_2', 'k_S', 'k_P', 'L_K', 'd_h', 'd_W', 'D_A', 'f_Z', 'μ_G']) {
+      expect(enrichMathText(`标签 ${id}`)).not.toMatch(/\$\$/)
+    }
   })
 })

@@ -151,9 +151,8 @@
     <ul class="bolt-diagram__legend">
       <li v-for="item in legendItems" :key="item.key" class="bolt-diagram__legend-item">
         <span class="bolt-diagram__dot" :class="`bolt-diagram__dot--${item.tone}`" />
-        <span>
-          <strong><MathContent :text="enrichedName(item.name)" /></strong>
-          <span class="text-gray-500"> — <MathContent :text="enrichedDesc(item.desc)" /></span>
+        <span class="bolt-diagram__legend-text">
+          <MathContent :text="legendLine(item.name, item.desc)" />
         </span>
       </li>
     </ul>
@@ -163,17 +162,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
-import { enrichMathText } from '@/utils/math-label'
+import { legendLine } from '@/utils/math-label'
 
 const { dt, locale, dm } = useDiagramI18n('boltPreload')
-
-function enrichedName(name) {
-  return enrichMathText(name)
-}
-
-function enrichedDesc(desc) {
-  return enrichMathText(desc)
-}
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },
@@ -403,6 +394,18 @@ const legendItems = computed(() => {
 
 .bolt-diagram__legend-item {
   @apply flex items-start gap-2 text-gray-700 dark:text-gray-300;
+}
+
+.bolt-diagram__legend-text {
+  @apply min-w-0 flex-1 text-xs leading-relaxed text-gray-700 dark:text-gray-300;
+}
+
+.bolt-diagram__legend-text :deep(.math-content) {
+  display: inline;
+}
+
+.bolt-diagram__legend-text :deep(.katex) {
+  font-size: 1em;
 }
 
 .bolt-diagram__dot {
