@@ -66,6 +66,7 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import { adaptKeyConnection } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
+import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('key')
@@ -80,6 +81,7 @@ const form = reactive({
   keyCount: 1,
   torqueAmplitude: 80,
 })
+useChainHandoff('key', form)
 
 const stdKey = computed(() => lookupKeySize(form.shaftDiameter))
 const result = computed(() => analyzeKeyConnection(form))

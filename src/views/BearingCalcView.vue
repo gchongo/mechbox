@@ -154,6 +154,7 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import { adaptBearing } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
+import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
@@ -196,6 +197,7 @@ const form = reactive({
   operatingTemp: 120,
   limitingSpeed: 8000,
 })
+useChainHandoff('bearing', form)
 
 const result = computed(() => analyzeBearingLife(form))
 const modifierProduct = computed(() => {

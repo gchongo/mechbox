@@ -53,6 +53,7 @@ export const decisionZh = {
   notEvaluated: '未评估',
   stepPass: '通过 ✓',
   stepFail: '不通过 ✗',
+  handoffApplied: '已从设计链载入参数',
 }
 
 export const decisionEn = {
@@ -110,4 +111,5 @@ export const decisionEn = {
   notEvaluated: 'Not evaluated',
   stepPass: 'Pass ✓',
   stepFail: 'Fail ✗',
+  handoffApplied: 'Loaded parameters from design chain',
 }

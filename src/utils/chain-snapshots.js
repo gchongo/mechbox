@@ -86,7 +86,8 @@ function buildBoltJointStepInputs(stepKey, s) {
         moment: s.moment,
         allowPerBolt: s.allowPerBolt ?? 8000,
         frictionCoeff: s.frictionCoeff ?? 0.2,
-        clampForcePerBolt: s.clampForcePerBolt ?? s.preload,
+        // 始终跟踪步骤 1 预紧力，保证链内夹紧力联动
+        clampForcePerBolt: s.preload,
         axialTension: s.axialTension ?? 0,
         pryingArm: s.pryingArm ?? 0,
         allowTensionPerBolt: s.allowTensionPerBolt ?? 12000,
@@ -143,11 +144,18 @@ const STEP_TOOL_MAP = {
   weld: 'weld',
 }
 
-/** 反算结果写回共享输入的字段映射 */
+/**
+ * 反算结果写回共享输入的字段映射
+ * - string: 直接写 solution
+ * - { field, from }: 从 result 路径取值（如 solutionRow.C）
+ */
 export const CHAIN_INVERSE_APPLY = {
   powertrain: {
     shaft: { 'min-diameter-standard': 'shaftDiameter', 'min-diameter-continuous': 'shaftDiameter' },
-    bearing: { 'min-dynamic-load': 'dynamicLoad' },
+    bearing: {
+      'min-dynamic-load': 'dynamicLoad',
+      'pick-standard-model': { field: 'dynamicLoad', from: 'solutionRow.C' },
+    },
     key: { 'min-key-length': 'keyLength' },
   },
   'bolt-joint': {
@@ -155,4 +163,23 @@ export const CHAIN_INVERSE_APPLY = {
     'bolt-group': { 'min-bolt-count': 'boltCount' },
     weld: { 'min-leg-size': 'legSize', 'min-weld-length': 'weldLength' },
   },
+}
+
+/** 解析 CHAIN_INVERSE_APPLY 条目，得到 { field, value } 或 null */
+export function resolveInverseApply(spec, result) {
+  if (!spec || result == null) return null
+  if (typeof spec === 'string') {
+    if (result.solution == null || !Number.isFinite(Number(result.solution))) return null
+    return { field: spec, value: Number(result.solution) }
+  }
+  if (spec.field && spec.from) {
+    const value = getPath(result, spec.from)
+    if (value == null || !Number.isFinite(Number(value))) return null
+    return { field: spec.field, value: Number(value) }
+  }
+  return null
+}
+
+function getPath(obj, path) {
+  return path.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj)
 }

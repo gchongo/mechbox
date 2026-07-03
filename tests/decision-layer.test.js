@@ -399,6 +399,41 @@ describe('extra inverse presets', () => {
     expect(r.converged).toBe(true)
     expect(r.solution).toBeGreaterThan(0.05)
   })
+
+  it('editor: sensitivity parameters track ring tolerances', () => {
+    const preset = DECISION_PRESETS.editor
+    const rings = [
+      { name: 'A1', size: 10, tolerance: 0.05, es: 0.025, ei: -0.025, factor: 1, type: 'increasing' },
+      { name: 'A2', size: 20, tolerance: 0.05, es: 0.025, ei: -0.025, factor: 1, type: 'decreasing' },
+    ]
+    const base = {
+      closedRing: { min: -10.2, max: -9.8, unit: 'mm' },
+      componentRings: rings,
+      method: 'rss',
+      tol_0: 0.05,
+      tol_1: 0.05,
+    }
+    const params = preset.sensitivity.buildParameters(base)
+    expect(params).toHaveLength(2)
+    expect(params[0].key).toBe('tol_0')
+
+    const analysis = runSensitivityAnalysis({
+      baseInputs: base,
+      parameters: params,
+      metrics: preset.sensitivity.metrics,
+      evaluate: (inputs) => {
+        const prepared = preset.sensitivity.remapInputs(inputs)
+        const snap = adaptSizeChain(prepared)
+        const metrics = {}
+        for (const m of snap.keyMetrics) {
+          if (typeof m.value === 'number') metrics[m.key] = m.value
+        }
+        return { metrics }
+      },
+    })
+    expect(analysis.rows.length).toBe(2)
+    expect(analysis.rows.every((r) => Number.isFinite(r.effects.worstMargin.swingPercent))).toBe(true)
+  })
 })
 
 describe('enhanced report', () => {

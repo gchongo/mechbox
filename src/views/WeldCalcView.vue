@@ -261,6 +261,7 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import { adaptFilletWeld } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
+import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -292,6 +293,7 @@ const form = reactive({
   plateThickness: 8,
   stressRange: 35,
 })
+useChainHandoff('weld', form)
 const butt = reactive({
   calcMode: 'complete',
   thickness: 8,

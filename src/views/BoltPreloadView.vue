@@ -339,6 +339,7 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import { adaptBoltPreload } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
+import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -383,6 +384,7 @@ const form = reactive({
   torque: 50,
   preload: 25000,
 })
+useChainHandoff('bolt-preload', form)
 
 const wizardForm = reactive({
   tighteningMethod: 'torque',

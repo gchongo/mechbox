@@ -38,7 +38,7 @@ export const CHAIN_TYPES = {
     description: '轴 → 轴承 → 键 联动分析',
     steps: [
       { key: 'shaft', toolId: 'shaft', label: '轴强度', quickInverse: 'min-diameter-standard' },
-      { key: 'bearing', toolId: 'bearing', label: '轴承寿命', quickInverse: 'min-dynamic-load' },
+      { key: 'bearing', toolId: 'bearing', label: '轴承寿命', quickInverse: 'pick-standard-model' },
       { key: 'key', toolId: 'key', label: '平键连接', quickInverse: 'min-key-length' },
     ],
     sharedInputSchema: {

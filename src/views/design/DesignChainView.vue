@@ -55,7 +55,7 @@
           :meta="stepMeta(step.key)"
           :chain-type="chainType"
           :shared-inputs="activeChain.sharedInputs"
-          @open-tool="openTool"
+          @open-tool="openTool(step.key, $event)"
           @update-notes="updateStepNotes(step.key, $event)"
           @apply-shared="onApplyShared"
         />
@@ -79,7 +79,8 @@ import {
   updateSharedInputs,
   chainSummary,
 } from '@/utils/design-context'
-import { buildChainSnapshots } from '@/utils/chain-snapshots'
+import { buildChainSnapshots, buildStepInputs } from '@/utils/chain-snapshots'
+import { writeChainHandoff } from '@/utils/chain-handoff'
 import { buildChainReport } from '@/utils/chain-report'
 import { exportToolReportPdf } from '@/utils/export'
 import ChainStepCard from '@/components/design/ChainStepCard.vue'
@@ -214,7 +215,7 @@ function updateStepNotes(stepKey, notes) {
   refreshCurrent()
 }
 
-function openTool(toolId) {
+function openTool(stepKey, toolId) {
   const routeMap = {
     shaft: '/shaft',
     bearing: '/bearing',
@@ -224,7 +225,16 @@ function openTool(toolId) {
     weld: '/weld',
   }
   const target = routeMap[toolId]
-  if (target) router.push(target)
+  if (!target || !activeChain.value) return
+  const inputs = buildStepInputs(props.chainType, stepKey, activeChain.value.sharedInputs)
+  writeChainHandoff({
+    chainId: activeChain.value.id,
+    chainType: props.chainType,
+    stepKey,
+    toolId,
+    inputs,
+  })
+  router.push(target)
 }
 
 async function exportChain() {

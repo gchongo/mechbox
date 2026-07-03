@@ -103,6 +103,7 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import { adaptShaftTorsion } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
+import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useLocale } from '@/composables/useLocale'
@@ -126,6 +127,7 @@ const form = reactive({
   torqueAmplitude: 80,
   bendingAmplitude: 60,
 })
+useChainHandoff('shaft', form)
 
 const materialOptions = computed(() =>
   MATERIALS.map((m) => ({

@@ -1,19 +1,26 @@
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest'
 
-// In-memory shim for localStorage (Node test env doesn't provide one)
+// In-memory shim for localStorage / sessionStorage (Node test env doesn't provide them)
+function makeMemoryStorage() {
+  const store = new Map()
+  return {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: (k) => store.delete(k),
+    clear: () => store.clear(),
+    key: (i) => Array.from(store.keys())[i] ?? null,
+    get length() {
+      return store.size
+    },
+  }
+}
+
 beforeAll(() => {
   if (typeof globalThis.localStorage === 'undefined') {
-    const store = new Map()
-    globalThis.localStorage = {
-      getItem: (k) => (store.has(k) ? store.get(k) : null),
-      setItem: (k, v) => store.set(k, String(v)),
-      removeItem: (k) => store.delete(k),
-      clear: () => store.clear(),
-      key: (i) => Array.from(store.keys())[i] ?? null,
-      get length() {
-        return store.size
-      },
-    }
+    globalThis.localStorage = makeMemoryStorage()
+  }
+  if (typeof globalThis.sessionStorage === 'undefined') {
+    globalThis.sessionStorage = makeMemoryStorage()
   }
 })
 
@@ -28,12 +35,24 @@ import {
   chainSummary,
   CHAIN_TYPES,
 } from '@/utils/design-context'
-import { buildChainSnapshots } from '@/utils/chain-snapshots'
+import {
+  buildChainSnapshots,
+  buildStepInputs,
+  resolveInverseApply,
+  CHAIN_INVERSE_APPLY,
+} from '@/utils/chain-snapshots'
+import {
+  writeChainHandoff,
+  consumeChainHandoff,
+  applyHandoffInputs,
+  clearChainHandoff,
+} from '@/utils/chain-handoff'
 import { buildChainReport } from '@/utils/chain-report'
 import { adaptShaftTorsion, adaptBearing, adaptKeyConnection } from '@/utils/calc-adapters'
 
 function resetStorage() {
   if (typeof localStorage !== 'undefined') localStorage.clear()
+  if (typeof sessionStorage !== 'undefined') sessionStorage.clear()
 }
 
 describe('design-context', () => {
@@ -138,6 +157,60 @@ describe('bolt-joint chain', () => {
     expect(snaps['bolt-group']).toBeDefined()
     expect(snaps.weld).toBeDefined()
     expect(snaps['bolt-preload'].toolId).toBe('bolt-preload')
+  })
+
+  it('bolt-group clampForcePerBolt tracks preload', () => {
+    const c = createChain({ type: 'bolt-joint' })
+    updateSharedInputs(c.id, { preload: 32000 })
+    const shared = getChain(c.id).sharedInputs
+    const inputs = buildStepInputs('bolt-joint', 'bolt-group', shared)
+    expect(inputs.clampForcePerBolt).toBe(32000)
+  })
+})
+
+describe('chain-handoff', () => {
+  beforeEach(resetStorage)
+
+  it('write/consume is one-shot and tool-scoped', () => {
+    writeChainHandoff({
+      chainId: 'dc_1',
+      chainType: 'powertrain',
+      stepKey: 'shaft',
+      toolId: 'shaft',
+      inputs: { diameter: 40, torque: 300 },
+    })
+    expect(consumeChainHandoff('bearing')).toBeNull()
+    const handoff = consumeChainHandoff('shaft')
+    expect(handoff.inputs.diameter).toBe(40)
+    expect(handoff.inputs.torque).toBe(300)
+    expect(consumeChainHandoff('shaft')).toBeNull()
+  })
+
+  it('applyHandoffInputs only writes existing form keys', () => {
+    const form = { diameter: 30, torque: 200, length: 500 }
+    const applied = applyHandoffInputs(form, {
+      diameter: 42,
+      torque: 280,
+      unknownField: 1,
+      nested: { a: 1 },
+    })
+    expect(form.diameter).toBe(42)
+    expect(form.torque).toBe(280)
+    expect(form.length).toBe(500)
+    expect(applied).toEqual(['diameter', 'torque'])
+    clearChainHandoff()
+  })
+})
+
+describe('resolveInverseApply', () => {
+  it('maps catalog solutionRow.C to dynamicLoad', () => {
+    const spec = CHAIN_INVERSE_APPLY.powertrain.bearing['pick-standard-model']
+    const applied = resolveInverseApply(spec, {
+      strategy: 'catalog',
+      solution: '6208',
+      solutionRow: { model: '6208', C: 41000 },
+    })
+    expect(applied).toEqual({ field: 'dynamicLoad', value: 41000 })
   })
 })
 

@@ -68,7 +68,7 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DECISION_PRESETS, runPresetInverse } from '@/utils/decision-presets'
-import { buildStepInputs, CHAIN_INVERSE_APPLY } from '@/utils/chain-snapshots'
+import { buildStepInputs, CHAIN_INVERSE_APPLY, resolveInverseApply } from '@/utils/chain-snapshots'
 import { useDecisionI18n } from '@/composables/useDecisionI18n'
 
 const props = defineProps({
@@ -113,14 +113,18 @@ async function runQuickInverse() {
       return
     }
 
-    const applyField = CHAIN_INVERSE_APPLY[props.chainType]?.[props.step.key]?.[invId]
+    const applySpec = CHAIN_INVERSE_APPLY[props.chainType]?.[props.step.key]?.[invId]
+    const applied = resolveInverseApply(applySpec, result)
     const shown = result.strategy === 'catalog'
       ? `${result.solution} (C=${result.solutionRow?.C})`
       : formatValue(result.solution)
 
-    if (applyField && result.solution != null && result.strategy !== 'catalog') {
-      emit('apply-shared', { field: applyField, value: Number(result.solution) })
-      inverseHint.value = `${dt('applied')}: ${applyField} = ${shown}`
+    if (applied) {
+      emit('apply-shared', applied)
+      inverseHint.value = `${dt('applied')}: ${applied.field} = ${formatValue(applied.value)}`
+      if (result.strategy === 'catalog') {
+        inverseHint.value += ` · ${shown}`
+      }
     } else {
       inverseHint.value = `${dt('solution')}: ${shown}`
       ElMessage.info(inverseHint.value)

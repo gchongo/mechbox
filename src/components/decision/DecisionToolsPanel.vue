@@ -19,8 +19,8 @@
       </el-tab-pane>
       <el-tab-pane :label="dt('tabSensitivity')" name="sensitivity">
         <SensitivityPanel
-          :base-inputs="baseInputs"
-          :parameters="preset.sensitivity.parameters"
+          :base-inputs="sensitivityBaseInputs"
+          :parameters="sensitivityParameters"
           :metrics="preset.sensitivity.metrics"
           :evaluate="sensitivityEvaluate"
         />
@@ -54,9 +54,33 @@ const activeTab = ref('compare')
 
 const adapter = computed(() => CALC_ADAPTERS[props.preset.toolId])
 
+const sensitivityParameters = computed(() => {
+  const sens = props.preset.sensitivity
+  if (typeof sens?.buildParameters === 'function') {
+    return sens.buildParameters(props.baseInputs)
+  }
+  return sens?.parameters ?? []
+})
+
+/** 为动态参数（如 tol_i）补齐基线值，供扰动分析读取 */
+const sensitivityBaseInputs = computed(() => {
+  const base = { ...props.baseInputs }
+  const sens = props.preset.sensitivity
+  if (typeof sens?.buildParameters === 'function') {
+    const rings = base.componentRings ?? []
+    rings.forEach((r, i) => {
+      if (base[`tol_${i}`] == null && r?.tolerance != null) {
+        base[`tol_${i}`] = r.tolerance
+      }
+    })
+  }
+  return base
+})
+
 function sensitivityEvaluate(inputs) {
   if (!adapter.value) return { metrics: {} }
-  const snap = adapter.value(inputs)
+  const prepared = props.preset.sensitivity?.remapInputs?.(inputs) ?? inputs
+  const snap = adapter.value(prepared)
   const dict = {}
   for (const m of snap.keyMetrics) {
     if (typeof m.value === 'number' && Number.isFinite(m.value)) dict[m.key] = m.value
@@ -73,8 +97,8 @@ async function exportReport() {
   let sensitivity = null
   try {
     sensitivity = runSensitivityAnalysis({
-      baseInputs: props.baseInputs,
-      parameters: props.preset.sensitivity.parameters,
+      baseInputs: sensitivityBaseInputs.value,
+      parameters: sensitivityParameters.value,
       metrics: props.preset.sensitivity.metrics,
       evaluate: sensitivityEvaluate,
       defaultDelta: 0.1,

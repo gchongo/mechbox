@@ -337,6 +337,27 @@ export const EDITOR_PRESET = {
   sensitivity: {
     parameters: [],
     metrics: ['worstMargin', 'totalTolerance'],
+    /** 按组成环公差生成敏感度参数，并在 baseInputs 上挂 tol_i */
+    buildParameters(baseInputs) {
+      const rings = baseInputs?.componentRings ?? []
+      return rings.map((r, i) => ({
+        key: `tol_${i}`,
+        label: `${r.name || `环${i + 1}`} 公差`,
+        delta: 0.1,
+        min: 0.001,
+      }))
+    },
+    /** 把 tol_i 扰动写回 componentRings */
+    remapInputs(inputs) {
+      const rings = inputs.componentRings
+      if (!Array.isArray(rings)) return inputs
+      const next = rings.map((r, i) => {
+        const tol = inputs[`tol_${i}`]
+        if (tol == null || !Number.isFinite(tol)) return r
+        return { ...r, tolerance: tol, es: tol / 2, ei: -tol / 2 }
+      })
+      return { ...inputs, componentRings: next }
+    },
   },
   inverse: [
     {
