@@ -116,12 +116,15 @@ const toolGroups = computed(() => ({
   chain: [
     { path: '/batch', label: locale.value === 'en' ? 'Batch verify' : '批量验证' },
     { path: '/allocation', label: locale.value === 'en' ? 'Tolerance allocation' : '公差分配' },
+    { path: '/interference-fit', label: locale.value === 'en' ? 'Interference fit' : '过盈配合' },
+    { path: '/thermal-expansion', label: locale.value === 'en' ? 'Thermal expansion' : '热膨胀' },
     { path: '/gear', label: locale.value === 'en' ? 'Gear ISO 6336' : '齿轮 ISO 6336' },
     { path: '/thread', label: locale.value === 'en' ? 'Thread strength' : '螺纹强度' },
     { path: '/bolt-preload', label: locale.value === 'en' ? 'Bolt preload' : '螺栓预紧力' },
     { path: '/bearing', label: locale.value === 'en' ? 'Bearing life' : '轴承寿命' },
   ],
   drive: [
+    { path: '/beam', label: locale.value === 'en' ? 'Beam deflection' : '梁挠度' },
     { path: '/shaft', label: locale.value === 'en' ? 'Shaft strength' : '轴强度' },
     { path: '/key', label: locale.value === 'en' ? 'Key connection' : '平键连接' },
     { path: '/weld', label: locale.value === 'en' ? 'Weld strength' : '焊缝强度' },
@@ -134,6 +137,7 @@ const toolGroups = computed(() => ({
   material: [
     { path: '/cylinder', label: locale.value === 'en' ? 'Hydraulic / cylinder' : '液压/气缸' },
     { path: '/materials', label: locale.value === 'en' ? 'Materials' : '材料库' },
+    { path: '/quality', label: locale.value === 'en' ? 'MSA / SPC' : 'MSA / SPC' },
   ],
 }))
 

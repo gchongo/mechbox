@@ -82,6 +82,61 @@ export function runMonteCarloSimulation({
   }
 }
 
+/**
+ * 敏感度 / 龙卷风分析：逐环单独波动，其余环误差为 0
+ */
+export function runSensitivityTornado({
+  closedRing,
+  componentRings,
+  iterations = 5000,
+  distribution = 'normal',
+  customK = 0,
+}) {
+  const items = componentRings.map((ring, index) => {
+    const isolated = componentRings.map((r, j) => ({
+      ...r,
+      tolerance: j === index ? r.tolerance : 0,
+      name: r.name ?? `环${j + 1}`,
+    }))
+    const sim = runMonteCarloSimulation({
+      closedRing,
+      componentRings: isolated,
+      iterations,
+      distribution,
+      customK,
+    })
+    const spread = sim.p95 - sim.p05
+    const varianceShare = sim.std ** 2
+    return {
+      index,
+      name: ring.name ?? `环${index + 1}`,
+      tolerance: ring.tolerance,
+      factor: ring.factor ?? 1,
+      type: ring.type,
+      mean: sim.mean,
+      std: sim.std,
+      spread,
+      p05: sim.p05,
+      p95: sim.p95,
+      varianceShare,
+    }
+  })
+
+  const totalVar = items.reduce((s, x) => s + x.varianceShare, 0) || 1
+  const withPct = items
+    .map((x) => ({
+      ...x,
+      variancePct: (100 * x.varianceShare) / totalVar,
+    }))
+    .sort((a, b) => b.spread - a.spread)
+
+  return {
+    items: withPct,
+    iterations,
+    topContributor: withPct[0]?.name ?? null,
+  }
+}
+
 /** 控制图统计量 */
 export function calcControlLimits(values) {
   if (!values.length) return null

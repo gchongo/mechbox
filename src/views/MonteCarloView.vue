@@ -115,6 +115,45 @@
         :chart-type="chartType"
       />
     </section>
+    <!-- 敏感度龙卷风图 -->
+    <section v-if="simResult" class="card-panel mt-6">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 class="font-semibold">敏感度分析（龙卷风图）</h2>
+        <el-button size="small" :loading="sensitivityRunning" @click="runSensitivity">
+          {{ sensitivityResult ? '重新分析' : '分析敏感度' }}
+        </el-button>
+      </div>
+      <p class="mb-3 text-xs text-gray-500">
+        逐环单独波动（其余环误差为 0），比较各组成环对封闭环分布的影响范围
+      </p>
+      <template v-if="sensitivityResult">
+        <TornadoChart
+          :items="sensitivityResult.items"
+          :closed-min="closedMin"
+          :closed-max="closedMax"
+        />
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700">
+                <th class="py-2 pr-4">组成环</th>
+                <th class="py-2 pr-4">公差</th>
+                <th class="py-2 pr-4">P95−P05</th>
+                <th class="py-2">方差贡献</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in sensitivityResult.items" :key="item.index" class="border-b border-gray-100 dark:border-gray-800">
+                <td class="py-2 pr-4">{{ item.name }}</td>
+                <td class="py-2 pr-4 font-mono">{{ item.tolerance }}</td>
+                <td class="py-2 pr-4 font-mono">{{ item.spread.toFixed(4) }}</td>
+                <td class="py-2 font-mono">{{ item.variancePct.toFixed(1) }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </section>
   </div>
 </template>
 
@@ -123,8 +162,9 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import MonteCarloChart from '@/components/charts/MonteCarloChart.vue'
+import TornadoChart from '@/components/charts/TornadoChart.vue'
 import { DISTRIBUTIONS } from '@/utils/size-chain'
-import { runMonteCarloSimulation } from '@/utils/monte-carlo'
+import { runMonteCarloSimulation, runSensitivityTornado } from '@/utils/monte-carlo'
 import {
   MC_STORAGE_KEY,
   deserializeMonteCarloPayload,
@@ -146,6 +186,8 @@ const simResult = ref(null)
 const chartType = ref('histogram')
 const chartComponentRef = ref(null)
 const sourceTypeName = ref('')
+const sensitivityRunning = ref(false)
+const sensitivityResult = ref(null)
 
 async function exportChartPng() {
   if (!simResult.value) {
@@ -190,6 +232,7 @@ function runSimulation() {
         distribution: distribution.value,
         customK: customK.value,
       })
+      sensitivityResult.value = null
       ElMessage.success(`模拟完成：${iterations.value} 次`)
     } catch (e) {
       ElMessage.error(e.message || '模拟失败')
@@ -237,5 +280,26 @@ function loadGearCase() {
   typeList.value = 'dec,dec,inc'
   distribution.value = 'normal'
   ElMessage.info('已加载齿轮案例参数')
+}
+
+function runSensitivity() {
+  sensitivityRunning.value = true
+  setTimeout(() => {
+    try {
+      const rings = buildRings()
+      sensitivityResult.value = runSensitivityTornado({
+        closedRing: { min: closedMin.value, max: closedMax.value },
+        componentRings: rings,
+        iterations: Math.min(iterations.value, 8000),
+        distribution: distribution.value,
+        customK: customK.value,
+      })
+      ElMessage.success('敏感度分析完成')
+    } catch (e) {
+      ElMessage.error(e.message || '分析失败')
+    } finally {
+      sensitivityRunning.value = false
+    }
+  }, 50)
 }
 </script>

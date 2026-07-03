@@ -176,6 +176,30 @@ const routes = [
     meta: { title: '公差分配' },
   },
   {
+    path: '/interference-fit',
+    name: 'interference-fit',
+    component: () => import('@/views/InterferenceFitView.vue'),
+    meta: { title: '过盈配合' },
+  },
+  {
+    path: '/beam',
+    name: 'beam',
+    component: () => import('@/views/BeamCalcView.vue'),
+    meta: { title: '梁挠度估算' },
+  },
+  {
+    path: '/thermal-expansion',
+    name: 'thermal-expansion',
+    component: () => import('@/views/ThermalExpansionView.vue'),
+    meta: { title: '热膨胀补偿' },
+  },
+  {
+    path: '/quality',
+    name: 'quality',
+    component: () => import('@/views/QualityView.vue'),
+    meta: { title: '质量分析' },
+  },
+  {
     path: '/faq',
     name: 'faq',
     component: () => import('@/views/FaqView.vue'),

@@ -97,6 +97,7 @@ const statTools = [
   { query: 'sigma', label: '西格玛分析', desc: 'C / Cpk / 合格率', icon: 'TrendCharts' },
   { query: 'chart', label: '分布曲线', desc: 'Plotly PDF 图', icon: 'PieChart' },
   { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟', icon: 'Histogram' },
+  { path: '/quality', label: 'MSA / SPC', desc: 'Gage R&R · 控制图', icon: 'DataLine' },
 ]
 
 const toolGroups = [
@@ -105,6 +106,8 @@ const toolGroups = [
     tools: [
       { path: '/batch', label: '批量验证', desc: 'RSS/极值批量检验', icon: 'List' },
       { path: '/allocation', label: '公差分配', desc: '等贡献 / 最小成本', icon: 'ScaleToOriginal' },
+      { path: '/interference-fit', label: '过盈配合', desc: 'DIN 7190 压装/扭矩', icon: 'Coin' },
+      { path: '/thermal-expansion', label: '热膨胀', desc: '间隙/过盈温变', icon: 'Sunrise' },
       { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 校核', icon: 'SetUp' },
       { path: '/thread', label: '螺纹强度', desc: '拉剪应力 / 扭矩', icon: 'Link' },
       { path: '/bolt-preload', label: '螺栓预紧力', desc: '扭矩 ↔ 预紧力', icon: 'TurnOff' },
@@ -114,6 +117,7 @@ const toolGroups = [
   {
     label: '传动与结构',
     tools: [
+      { path: '/beam', label: '梁挠度', desc: '简支/悬臂 FEA 前置', icon: 'Minus' },
       { path: '/shaft', label: '轴强度', desc: '扭转 / 弯扭合成', icon: 'Sort' },
       { path: '/key', label: '平键连接', desc: '挤压 / 剪切', icon: 'Key' },
       { path: '/weld', label: '焊缝强度', desc: '角焊 / 对接焊', icon: 'Medal' },
