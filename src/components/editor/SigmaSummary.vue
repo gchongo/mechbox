@@ -37,35 +37,38 @@ const { pt, locale } = useCalcPage('editor')
 
 const rows = computed(() => {
   const s = props.summary
+  const c = parseFloat(s.c)
   const cpk = parseFloat(s.cpk)
   const sigma = parseFloat(s.sigmaLevel)
+  const passRate = parseFloat(String(s.passRate))
   const excellent = pt('sigma.excellent')
   const average = pt('sigma.average')
+  const needsImprove = pt('sigma.needsImprove')
   const sigmaLatex = locale.value === 'en' ? '\\sigma_{\\text{level}}' : '\\sigma_{\\text{水平}}'
   return [
     {
       latex: 'C = \\frac{T}{6\\sigma}',
       value: s.c,
-      status: cpk > 1.33 ? excellent : average,
-      ok: cpk > 1.33,
+      status: c > 1.33 ? excellent : average,
+      ok: c > 1.33,
     },
     {
       label: pt('sigma.cpkLabel'),
       value: s.cpk,
-      status: cpk > 1.33 ? excellent : average,
+      status: cpk > 1.33 ? excellent : cpk > 0 ? average : needsImprove,
       ok: cpk > 1.33,
     },
     {
       latex: sigmaLatex,
       value: `${s.sigmaLevel}σ`,
-      status: sigma >= 4 ? pt('sigma.sigma4') : pt('sigma.needsImprove'),
+      status: sigma >= 4 ? pt('sigma.sigma4') : needsImprove,
       ok: sigma >= 4,
     },
     {
       label: pt('sigma.passRate'),
       value: s.passRate,
-      status: '—',
-      ok: true,
+      status: passRate >= 99.73 ? excellent : passRate >= 95 ? average : needsImprove,
+      ok: passRate >= 99.73,
     },
     {
       label: 'DPPM',

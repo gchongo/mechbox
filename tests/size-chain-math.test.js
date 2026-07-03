@@ -5,6 +5,7 @@ import {
   sigma6RssMethod,
   calculateRssLimits,
   calculateWorstCaseLimits,
+  buildSigmaSummary,
 } from '@/utils/size-chain-math'
 
 const rings = [
@@ -36,5 +37,27 @@ describe('size-chain-math', () => {
     const w = calculateWorstCaseLimits(rings)
     const r = calculateRssLimits(rings)
     expect(w.totalTolerance).toBeGreaterThan(r.totalTolerance)
+  })
+
+  it('buildSigmaSummary flags off-center stacks as low capability', () => {
+    const rss = calculateRssLimits([
+      { size: 10, tolerance: 0.05, factor: 1, type: 'increasing' },
+      { size: 10, tolerance: 0.05, factor: 1, type: 'increasing' },
+      { size: 10, tolerance: 0.05, factor: 1, type: 'decreasing' },
+    ])
+    const summary = buildSigmaSummary({ min: 5, max: 7 }, rss)
+    expect(parseFloat(summary.cpk)).toBeLessThan(0)
+    expect(parseFloat(summary.passRate)).toBeLessThan(1)
+    expect(summary.dppm).toBeGreaterThan(900_000)
+  })
+
+  it('buildSigmaSummary matches centered in-spec stacks', () => {
+    const rss = calculateRssLimits([
+      { size: 6, tolerance: 0.05, factor: 1, type: 'increasing' },
+      { size: 0, tolerance: 0.05, factor: 1, type: 'decreasing' },
+    ])
+    const summary = buildSigmaSummary({ min: 5.5, max: 6.5 }, rss)
+    expect(parseFloat(summary.cpk)).toBeGreaterThan(1)
+    expect(parseFloat(summary.passRate)).toBeGreaterThan(99)
   })
 })
