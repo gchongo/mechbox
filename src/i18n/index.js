@@ -7,6 +7,7 @@ import { optionsZh, optionsEn } from './options-i18n'
 import { messagesZh, messagesEn } from './results-i18n'
 import { chartZh, chartEn } from './chart-i18n'
 import { contentZh, contentEn } from './content-i18n'
+import { seoRoutesZh, seoRoutesEn } from './seo-routes-i18n'
 
 const zh = {
   appName: '机械工具箱',
@@ -192,16 +193,7 @@ const zh = {
     pageDescription: '{page} — 在线尺寸链叠加分析、概率统计与机械强度计算工具。',
     keywords:
       '机械工具箱,尺寸链,公差分析,尺寸链叠加,RSS法,极值法,GD&T,形位公差,Monte Carlo,概率统计,Cpk,齿轮强度,ISO 6336,轴承寿命,螺纹强度,螺栓预紧力,轴强度,平键连接,焊缝强度,弹簧设计,公差分配,机械设计,mechbox',
-    routes: {
-      home: '机械工具箱首页 — 尺寸链分析、概率统计与机械强度计算工具入口。',
-      editor: '在线尺寸链编辑器，支持 RSS、极值法、修正 RSS 与 GD&T 公差叠加分析。',
-      gear: '齿轮强度计算 — Lewis 简化、ISO 6336 与 AGMA 2101 接触/弯曲校核。',
-      'bolt-preload': '螺栓预紧力与拧紧扭矩计算，含 VDI 2230 简化分步校核。',
-      bearing: '滚动轴承额定寿命 L10 计算，ISO 281 当量动载荷与工况修正。',
-      'o-ring': 'O 型圈密封沟槽设计，压缩率、填充率与挤出间隙校核。',
-      fit: 'ISO 286 轴孔配合查询，公差带与间隙/过盈计算。',
-      'gdt-stack': 'GD&T 形位公差栈分析，多特征 RSS/极值叠加与贡献度。',
-    },
+    routes: seoRoutesZh,
   },
   calc: {
     common: calcZh.common,
@@ -397,16 +389,7 @@ const en = {
     pageDescription: '{page} — Online tolerance stack and mechanical engineering calculator.',
     keywords:
       'MechBox,tolerance stack,stack-up analysis,RSS,worst-case,GD&T,geometric dimensioning,Monte Carlo,Cpk,gear strength,ISO 6336,bearing life L10,thread strength,bolt preload,shaft strength,keyway,weld strength,spring design,mechanical engineering calculator',
-    routes: {
-      home: 'MechBox home — tolerance stack analysis, statistics, and mechanical strength tools.',
-      editor: 'Interactive tolerance stack editor with RSS, worst-case, modified RSS, and GD&T stack-up.',
-      gear: 'Gear strength calculator — Lewis, ISO 6336, and AGMA 2101 contact/bending checks.',
-      'bolt-preload': 'Bolt preload and tightening torque with VDI 2230 simplified workflow.',
-      bearing: 'Rolling bearing rating life L10 per ISO 281 with load and life adjustment factors.',
-      'o-ring': 'O-ring groove design — compression ratio, gland fill, and extrusion gap checks.',
-      fit: 'ISO 286 shaft/hole fit lookup with clearance and interference limits.',
-      'gdt-stack': 'GD&T tolerance stack-up with RSS/worst-case and contribution analysis.',
-    },
+    routes: seoRoutesEn,
   },
   calc: {
     common: calcEn.common,

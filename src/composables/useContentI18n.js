@@ -6,6 +6,7 @@ import { FORMULAS } from '@/constants/formulas'
 import { faqEn, manualCategoryZh } from '@/i18n/content-i18n'
 import { glossaryEn } from '@/i18n/glossary-i18n'
 import { manualEnById, manualCategoryEn } from '@/i18n/manual-i18n'
+import { manualFormulasEn } from '@/i18n/manual-formulas-en'
 import { tutorialsEn } from '@/i18n/tutorials-i18n'
 import { quizEn } from '@/i18n/quiz-i18n'
 import { casesEn } from '@/i18n/cases-i18n'
@@ -35,15 +36,16 @@ export function useContentI18n() {
     if (locale.value !== 'en') return FORMULAS
     return FORMULAS.map((f) => {
       const en = manualEnById[f.id]
-      if (!en) return { ...f, category: manualCategoryEn[f.category] ?? f.category }
+      const enFormula = manualFormulasEn[f.id]
+      if (!en && !enFormula) return { ...f, category: manualCategoryEn[f.category] ?? f.category }
       return {
         ...f,
-        name: en.name ?? f.name,
-        formula: en.formula ?? f.formula,
-        latex: en.latex ?? f.latex,
-        desc: en.desc ?? f.desc,
-        tags: en.tags ?? f.tags,
-        category: en.category ?? manualCategoryEn[f.category] ?? f.category,
+        name: en?.name ?? f.name,
+        formula: en?.formula ?? enFormula?.formula ?? f.formula,
+        latex: en?.latex ?? enFormula?.latex ?? f.latex,
+        desc: en?.desc ?? f.desc,
+        tags: en?.tags ?? f.tags,
+        category: en?.category ?? manualCategoryEn[f.category] ?? f.category,
       }
     })
   })
