@@ -9,31 +9,38 @@
         <marker id="ft-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
         </marker>
-        <marker id="ft-arrow-blue" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="#409EFF" />
-        </marker>
       </defs>
 
       <!-- 坐标轴 -->
-      <line x1="70" y1="210" x2="430" y2="210" class="axis" marker-end="url(#ft-arrow)" />
-      <line x1="70" y1="210" x2="70" y2="40" class="axis" marker-end="url(#ft-arrow)" />
-      <text x="420" y="228" class="txt-muted" font-size="12">N (log)</text>
-      <text x="28" y="48" class="txt-muted" font-size="12">S</text>
+      <line :x1="X0" :y1="Y1" :x2="X1" :y2="Y1" class="axis" marker-end="url(#ft-arrow)" />
+      <line :x1="X0" :y1="Y1" :x2="X0" :y2="Y0" class="axis" marker-end="url(#ft-arrow)" />
+      <text :x="X1 - 8" :y="Y1 + 16" class="txt-muted" font-size="12">N (log)</text>
+      <text :x="28" :y="Y0 + 8" class="txt-muted" font-size="12">S</text>
 
-      <!-- 疲劳极限 -->
-      <line x1="70" :y1="enduranceY" x2="430" :y2="enduranceY" stroke="#e6a23c" stroke-width="1.5" stroke-dasharray="6 4" />
-      <text x="432" :y="enduranceY + 4" fill="#e6a23c" font-size="11">σ₋₁</text>
+      <!-- S-N 曲线（Basquin + 水平疲劳极限段） -->
+      <polyline :points="snPoints" fill="none" stroke="#409eff" stroke-width="2" />
 
-      <!-- S-N 斜线 -->
-      <line x1="120" y1="60" x2="380" :y2="enduranceY" stroke="#409eff" stroke-width="2" />
+      <!-- 疲劳极限水平线（cycleLimit 以右） -->
+      <line
+        :x1="kneeX"
+        :y1="enduranceY"
+        :x2="X1"
+        :y2="enduranceY"
+        stroke="#e6a23c"
+        stroke-width="1.5"
+        stroke-dasharray="6 4"
+      />
+      <text :x="X1 + 2" :y="enduranceY + 4" fill="#e6a23c" font-size="11">σ₋₁</text>
 
-      <!-- 工作点 -->
-      <circle :cx="stressX" :cy="stressY" r="6" class="stress-point" />
-      <line :x1="70" :y1="stressY" :x2="stressX" :y2="stressY" class="dim" stroke-dasharray="3 3" />
-      <line :x1="stressX" :y1="stressY" :x2="stressX" y2="210" class="dim" stroke-dasharray="3 3" />
-
-      <text :x="78" :y="stressY + 4" class="txt-primary" font-size="12">S_a</text>
-      <text :x="78" :y="stressY + 16" class="txt-sub" font-size="10">{{ stressAmplitude }} MPa</text>
+      <!-- 工作点（应力幅 Sa 与寿命 N 的交点，落在 S-N 曲线上） -->
+      <template v-if="showOperatingPoint">
+        <circle :cx="opX" :cy="opY" r="6" class="stress-point" />
+        <line :x1="X0" :y1="opY" :x2="opX" :y2="opY" class="dim" stroke-dasharray="3 3" />
+        <line :x1="opX" :y1="opY" :x2="opX" :y2="Y1" class="dim" stroke-dasharray="3 3" />
+        <text :x="X0 + 8" :y="opY + 4" class="txt-primary" font-size="12">S_a</text>
+        <text :x="X0 + 8" :y="opY + 16" class="txt-sub" font-size="10">{{ stressAmplitude }} MPa</text>
+        <text :x="opX - 12" :y="Y1 + 14" class="txt-sub" font-size="10" text-anchor="middle">N</text>
+      </template>
     </svg>
   </div>
 </template>
@@ -44,19 +51,69 @@ import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
 const { dt } = useDiagramI18n('fatigue')
 
+const X0 = 70
+const X1 = 430
+const Y0 = 40
+const Y1 = 210
+const N_MIN = 1e2
+const N_MAX = 1e8
+
 const props = defineProps({
   stressAmplitude: { type: Number, default: 300 },
   enduranceLimit: { type: Number, default: 200 },
+  life: { type: Number, default: null },
+  sf: { type: Number, default: 900 },
+  b: { type: Number, default: -0.085 },
+  cycleLimit: { type: Number, default: 1e6 },
 })
 
-const maxS = computed(() => Math.max(props.enduranceLimit * 1.8, props.stressAmplitude * 1.2, 1))
-const enduranceY = computed(() => 210 - (props.enduranceLimit / maxS.value) * 150)
-const stressY = computed(() => 210 - (Math.min(props.stressAmplitude, maxS.value) / maxS.value) * 150)
-const stressX = computed(() => {
-  if (props.stressAmplitude <= props.enduranceLimit) return 360
-  const ratio = (props.stressAmplitude - props.enduranceLimit) / (maxS.value - props.enduranceLimit)
-  return 380 - ratio * 200
+function nToX(N) {
+  const lo = Math.log10(N_MIN)
+  const hi = Math.log10(N_MAX)
+  const logN = Math.log10(Math.min(Math.max(N, N_MIN), N_MAX))
+  return X0 + ((logN - lo) / (hi - lo)) * (X1 - X0)
+}
+
+function stressAtN(N) {
+  if (N >= props.cycleLimit) return props.enduranceLimit
+  return Math.max(props.sf * N ** props.b, props.enduranceLimit)
+}
+
+const sMax = computed(() => {
+  const peak = props.sf * N_MIN ** props.b
+  return Math.max(peak * 1.05, props.stressAmplitude * 1.08, props.enduranceLimit * 1.15, 1)
 })
+
+function sToY(S) {
+  return Y1 - (Math.min(S, sMax.value) / sMax.value) * (Y1 - Y0)
+}
+
+const enduranceY = computed(() => sToY(props.enduranceLimit))
+const kneeX = computed(() => nToX(props.cycleLimit))
+
+const snPoints = computed(() => {
+  const pts = []
+  const steps = 48
+  for (let i = 0; i <= steps; i++) {
+    const logN = Math.log10(N_MIN) + (i / steps) * (Math.log10(N_MAX) - Math.log10(N_MIN))
+    const N = 10 ** logN
+    pts.push(`${nToX(N)},${sToY(stressAtN(N))}`)
+  }
+  return pts.join(' ')
+})
+
+const showOperatingPoint = computed(() => props.stressAmplitude > 0)
+
+const opX = computed(() => {
+  if (props.stressAmplitude <= props.enduranceLimit) {
+    return nToX(props.cycleLimit)
+  }
+  const N = props.life != null && props.life !== Infinity ? props.life : null
+  if (N != null && N > 0) return nToX(N)
+  return nToX(props.cycleLimit)
+})
+
+const opY = computed(() => sToY(props.stressAmplitude))
 </script>
 
 <style scoped>

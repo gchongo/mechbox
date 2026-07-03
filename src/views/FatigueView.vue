@@ -34,6 +34,10 @@
         <FatigueDiagram
           :stress-amplitude="stressAmplitude"
           :endurance-limit="result.enduranceLimit"
+          :life="result.life"
+          :sf="currentMaterial.sf"
+          :b="currentMaterial.b"
+          :cycle-limit="currentMaterial.cycleLimit ?? 1e6"
         />
 
         <div v-if="stressAmplitude > 0" class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
@@ -111,6 +115,8 @@ const { rm, resultError } = useResultI18n()
 const { ch } = useChartI18n()
 
 const snMaterials = computed(() => optionMap(SN_MATERIALS, 'snMaterials'))
+
+const currentMaterial = computed(() => SN_MATERIALS[material.value] ?? SN_MATERIALS.steel_45)
 
 const calcMode = ref('complete')
 const material = ref('steel_45')
