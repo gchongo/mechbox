@@ -1,5 +1,7 @@
 /** 直齿轮几何参数 */
 import { GEAR_MATERIALS } from '@/constants/gear-materials'
+import { analyzeGearISO6336 } from '@/utils/gear-iso6336'
+import { analyzeGearAGMA, compareGearStandards } from '@/utils/gear-agma'
 
 export function calcGearGeometry({ module, teeth, pressureAngle = 20 }) {
   const m = module
@@ -85,19 +87,59 @@ export function analyzeGearStrength(input) {
   }
 }
 
-/** 统一入口：按 calcMode 返回简化 / ISO / 对照结果 */
+/** 归一化齿轮输入（小齿/大齿齿数） */
+export function normalizeGearInput(input) {
+  const z1 = input.pinionTeeth ?? input.teeth ?? 24
+  const z2 =
+    input.gearTeeth ??
+    Math.round(z1 * (input.gearRatio ?? 3))
+  return {
+    ...input,
+    pinionTeeth: z1,
+    gearTeeth: z2,
+    gearRatio: z2 / z1,
+  }
+}
+
+/** 统一入口：按 calcMode 返回简化 / ISO6336 / ISO+AGMA 对照 */
 export function analyzeGear(input) {
   const calcMode = input.calcMode ?? 'complete'
+  const normalized = normalizeGearInput(input)
+
   if (calcMode === 'simple') {
     return analyzeGearStrength({
-      ...input,
-      teeth: input.teeth ?? input.pinionTeeth,
-      gearRatio: (input.gearTeeth ?? input.pinionTeeth) / (input.pinionTeeth ?? input.teeth ?? 1),
+      ...normalized,
+      teeth: normalized.pinionTeeth,
     })
   }
-  return {
+
+  const iso = analyzeGearISO6336(normalized)
+  const result = {
     calcMode,
-    needsISO: calcMode === 'complete' || calcMode === 'professional',
-    needsCompare: calcMode === 'professional',
+    standard: 'ISO6336',
+    geometry: iso.geometry,
+    tangentialForce: iso.tangentialForce,
+    pitchLineVelocity: iso.pitchLineVelocity,
+    bendingStress: iso.bendingStress,
+    contactStress: iso.contactStress,
+    factors: iso.factors,
+    limits: iso.limits,
+    safetyBending: iso.safetyBending,
+    safetyContact: iso.safetyContact,
+    bendingPass: iso.bendingPass,
+    contactPass: iso.contactPass,
+    materials: iso.materials,
+    iso1328: iso.iso1328,
+    pass: iso.bendingPass && iso.contactPass,
+    estimateOnly: false,
   }
+
+  if (calcMode === 'professional') {
+    const agma = analyzeGearAGMA(normalized)
+    result.agma = agma
+    result.compare = compareGearStandards(iso, agma)
+    result.pass = result.compare.bothPass
+  }
+
+  return result
 }

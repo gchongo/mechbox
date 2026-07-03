@@ -11,7 +11,7 @@ import { calcRodBucklingLoad, calcCylinderForce, calcCylinderArea } from '@/util
 import { calcKeyCrushStress } from '@/utils/key-calc'
 import { calcToleranceLimits } from '@/utils/iso-286-calc'
 import { analyzeFatigue } from '@/utils/fatigue-calc'
-import { analyzeGearStrength } from '@/utils/gear-calc'
+import { analyzeGearStrength, analyzeGear } from '@/utils/gear-calc'
 import { combineStackAdvice, evaluateStackFromRings, assessMcWorstGap } from '@/utils/stack-method-advice'
 import { analyzeBeam } from '@/utils/beam-calc'
 import { batchValidate } from '@/utils/batch-analysis'
@@ -21,6 +21,8 @@ import { calcSpringEffectiveAmplitude, analyzeSpring } from '@/utils/spring-calc
 import { calcJointUnderAxialLoad, analyzeBoltPreload } from '@/utils/bolt-preload-calc'
 import { analyzeButtWeld } from '@/utils/weld-calc'
 import { analyzeShaftCombined } from '@/utils/shaft-combined'
+import { assessComponentFatigue } from '@/utils/fatigue-calc'
+import { analyzeBoltGroup, calcSlipResistance } from '@/utils/bolt-group-calc'
 import { analyzeBearingLife } from '@/utils/bearing-calc'
 
 describe('process-capability', () => {
@@ -300,7 +302,7 @@ describe('shaft combined strength', () => {
     expect(r.pass).toBe(r.equivalentStress <= 80)
   })
 
-  it('complete mode derives allow from yield', () => {
+  it('complete mode derives allow from yield (von Mises σ_eq ≤ Sy)', () => {
     const r = analyzeShaftCombined({
       calcMode: 'complete',
       diameter: 40,
@@ -308,7 +310,7 @@ describe('shaft combined strength', () => {
       bendingMoment: 200,
       yieldStrength: 235,
     })
-    expect(r.allowableStress).toBeCloseTo(235 / Math.sqrt(3), 1)
+    expect(r.allowableStress).toBeCloseTo(235, 1)
   })
 })
 
@@ -385,6 +387,85 @@ describe('weld eurocode consistency', () => {
       calcMode: 'complete',
     })
     expect(r.eurocode.allow).toBeCloseTo(360 / (0.85 * 1.25), 1)
+  })
+})
+
+describe('component fatigue S-N integration', () => {
+  it('uses S-N endurance instead of yield fraction for shaft torsion', () => {
+    const fatigue = assessComponentFatigue({
+      materialId: '45',
+      stressMode: 'shear',
+      stressAmplitude: 200,
+      targetCycles: 1e6,
+    })
+    expect(fatigue.adjustedEndurance).toBeLessThan(200)
+    expect(fatigue.adjustedEndurance).toBeGreaterThan(100)
+    expect(fatigue.fatiguePass).toBe(false)
+  })
+
+  it('mean stress raises effective amplitude via Goodman', () => {
+    const low = assessComponentFatigue({
+      snMaterial: 'steel_45',
+      stressAmplitude: 120,
+      meanStress: 0,
+    })
+    const high = assessComponentFatigue({
+      snMaterial: 'steel_45',
+      stressAmplitude: 120,
+      meanStress: 150,
+    })
+    expect(high.effectiveAmplitude).toBeGreaterThan(low.effectiveAmplitude)
+  })
+})
+
+describe('gear analyzeGear modes', () => {
+  const base = {
+    module: 2,
+    pinionTeeth: 24,
+    gearTeeth: 72,
+    faceWidth: 20,
+    torque: 200,
+    rpm: 1500,
+    pinionMaterial: 'st-soft',
+    gearMaterial: 'st-soft',
+  }
+
+  it('complete mode runs ISO6336 instead of placeholder', () => {
+    const r = analyzeGear({ ...base, calcMode: 'complete' })
+    expect(r.needsISO).toBeUndefined()
+    expect(r.contactStress).toBeGreaterThan(0)
+    expect(r.bendingStress).toBeGreaterThan(0)
+    expect(r.pass).toBeDefined()
+  })
+
+  it('professional mode includes AGMA comparison', () => {
+    const r = analyzeGear({ ...base, calcMode: 'professional' })
+    expect(r.agma).toBeDefined()
+    expect(r.compare).toBeDefined()
+    expect(r.compare.bothPass).toBeDefined()
+  })
+})
+
+describe('bolt group friction and prying', () => {
+  it('slip resistance scales with clamp force and friction', () => {
+    const slip = calcSlipResistance(0.2, 10000, 4)
+    expect(slip.slipCapacity).toBe(8000)
+  })
+
+  it('complete mode fails slip when shear exceeds friction capacity', () => {
+    const r = analyzeBoltGroup({
+      calcMode: 'complete',
+      boltCount: 4,
+      boltCircleRadius: 50,
+      shearX: 20000,
+      shearY: 0,
+      moment: 0,
+      frictionCoeff: 0.2,
+      clampForcePerBolt: 5000,
+      allowPerBolt: 50000,
+    })
+    expect(r.friction.slipPass).toBe(false)
+    expect(r.pass).toBe(false)
   })
 })
 

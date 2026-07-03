@@ -3,6 +3,7 @@
  */
 
 import { findMaterial } from '@/constants/materials'
+import { assessComponentFatigue } from '@/utils/fatigue-calc'
 
 export const BEAM_CASES = {
   simply_center: {
@@ -163,11 +164,29 @@ export function analyzeBeam(input) {
     result.dynamicFactor = loadFactor
     result.stressConcentration = input.stressConcentration ?? 1
     if (input.loadMin != null && input.loadMax != null) {
+      const Kt = input.stressConcentration ?? 1
       const mMin = beamCase.maxMoment(input.loadMin, L)
       const mMax = beamCase.maxMoment(input.loadMax * loadFactor, L)
-      result.stressAmplitude = ((mMax - mMin) / section.W) * (input.stressConcentration ?? 1) / 2
-      const endurance = input.enduranceLimit ?? allowStress * 0.5
-      result.fatiguePass = result.stressAmplitude <= endurance
+      const sigmaAmp = (((mMax - mMin) / section.W) * Kt) / 2
+      const sigmaMean = (((mMax + mMin) / section.W) * Kt) / 2
+      const fatigue = assessComponentFatigue({
+        materialId: input.materialId,
+        snMaterial: input.snMaterial,
+        yieldStrength: mat?.sigmaS,
+        stressAmplitude: sigmaAmp,
+        meanStress: sigmaMean,
+        meanStressMethod: input.meanStressMethod,
+        surfaceFactor: input.surfaceFactor,
+        sizeFactor: input.sizeFactor,
+        targetCycles: input.targetCycles ?? 1e6,
+      })
+      result.stressAmplitude = sigmaAmp
+      result.stressMean = sigmaMean
+      result.effectiveStressAmplitude = fatigue.effectiveAmplitude
+      result.fatigueEndurance = fatigue.adjustedEndurance
+      result.fatigueLife = fatigue.fatigueLife
+      result.snMaterial = fatigue.snMaterial
+      result.fatiguePass = fatigue.fatiguePass
       result.pass = result.pass && result.fatiguePass
     }
   }

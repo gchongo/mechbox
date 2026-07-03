@@ -1,5 +1,7 @@
 /** 平键连接强度 (GB/T 1096 简化) */
 
+import { assessComponentFatigue } from '@/utils/fatigue-calc'
+
 export const KEY_SIZE_TABLE = [
   { dMin: 6, dMax: 8, width: 2, height: 2 },
   { dMin: 8, dMax: 10, width: 3, height: 3 },
@@ -87,10 +89,24 @@ export function analyzeKeyConnection(input) {
     if (tAmp > 0) {
       const fAmp = calcTangentialForce(tAmp, shaftD) / keyCount
       const tauAmp = calcKeyShearStress(fAmp, keyWidth, keyLength)
-      const endurance = input.enduranceLimit ?? allowTau * 0.45
+      const tMean = input.torqueMean ?? Math.max(0, (input.torque ?? 0) - tAmp)
+      const fMean = calcTangentialForce(tMean, shaftD) / keyCount
+      const tauMean = calcKeyShearStress(fMean, keyWidth, keyLength)
+      const fatigue = assessComponentFatigue({
+        snMaterial: input.snMaterial ?? 'steel_45',
+        stressMode: 'shear',
+        stressAmplitude: tauAmp,
+        meanStress: tauMean,
+        meanStressMethod: input.meanStressMethod,
+        targetCycles: input.targetCycles ?? 1e6,
+      })
       result.shearAmplitude = tauAmp
-      result.fatigueEndurance = endurance
-      result.fatiguePass = tauAmp <= endurance
+      result.shearMean = tauMean
+      result.effectiveShearAmplitude = fatigue.effectiveAmplitude
+      result.fatigueEndurance = fatigue.adjustedEndurance
+      result.fatigueLife = fatigue.fatigueLife
+      result.snMaterial = fatigue.snMaterial
+      result.fatiguePass = fatigue.fatiguePass
       result.pass = result.pass && result.fatiguePass
     }
     if (input.requiredSafetyFactor) {

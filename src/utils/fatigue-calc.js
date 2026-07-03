@@ -51,6 +51,100 @@ export const SN_MATERIALS = {
   },
 }
 
+/** 材料库 id → S-N 曲线键 */
+export const MATERIAL_ID_TO_SN = {
+  q235: 'steel_45',
+  q345: 'steel_45',
+  '45': 'steel_45',
+  '40cr': 'steel_40cr',
+  '20crmnti': 'steel_40cr',
+  '304': 'steel_45',
+  cast_iron: 'cast_iron',
+}
+
+export function resolveSnMaterialKey(input = {}) {
+  if (input.snMaterial && SN_MATERIALS[input.snMaterial]) return input.snMaterial
+  if (input.materialId && MATERIAL_ID_TO_SN[input.materialId]) {
+    return MATERIAL_ID_TO_SN[input.materialId]
+  }
+  const sy = input.yieldStrength
+  if (sy != null && sy >= 500) return 'steel_40cr'
+  return 'steel_45'
+}
+
+/** 正应力 / 切应力强度换算（von Mises） */
+export function getStressModeLimits(snKey, stressMode = 'normal') {
+  const m = SN_MATERIALS[snKey] ?? SN_MATERIALS.steel_45
+  const k = stressMode === 'shear' ? 1 / Math.sqrt(3) : 1
+  return {
+    uts: m.uts * k,
+    yieldMin: m.yieldMin * k,
+    enduranceLimit: m.enduranceLimit * k,
+    label: m.label,
+  }
+}
+
+/** Goodman / Soderberg 等效应力幅 */
+export function calcMeanStressEffectiveAmplitude(
+  amplitude,
+  mean,
+  snKey,
+  method = 'goodman',
+  stressMode = 'normal',
+) {
+  const Sa = amplitude ?? 0
+  if (Sa <= 0) return 0
+  const sm = mean ?? 0
+  if (sm <= 0) return Sa
+  const limits = getStressModeLimits(snKey, stressMode)
+  const denom = method === 'soderberg' ? limits.yieldMin : limits.uts
+  if (sm >= denom) return Infinity
+  return Sa / (1 - sm / denom)
+}
+
+/**
+ * 构件疲劳评估 — 统一 S-N + Goodman/Soderberg
+ * @returns {{ snMaterial, effectiveAmplitude, adjustedEndurance, fatigueLife, fatiguePass }}
+ */
+export function assessComponentFatigue(input = {}) {
+  const snKey = resolveSnMaterialKey(input)
+  const limits = getStressModeLimits(snKey, input.stressMode ?? 'normal')
+  const amp = input.stressAmplitude ?? 0
+  const mean = input.meanStress ?? 0
+  const method = input.meanStressMethod ?? 'goodman'
+  const ka = input.surfaceFactor ?? 1
+  const kb = input.sizeFactor ?? 1
+  const target = input.targetCycles ?? input.targetLife ?? 1e6
+
+  const effectiveAmplitude = calcMeanStressEffectiveAmplitude(amp, mean, snKey, method, input.stressMode)
+  const adjustedEndurance = limits.enduranceLimit * ka * kb
+  const basquinStress =
+    input.stressMode === 'shear' ? effectiveAmplitude * Math.sqrt(3) : effectiveAmplitude
+  let fatigueLife = null
+  if (effectiveAmplitude > 0 && Number.isFinite(effectiveAmplitude)) {
+    fatigueLife =
+      effectiveAmplitude <= adjustedEndurance
+        ? Infinity
+        : calcLifeFromStress(snKey, basquinStress)
+  }
+  const fatiguePass =
+    amp <= 0 ||
+    (Number.isFinite(effectiveAmplitude) &&
+      (effectiveAmplitude <= adjustedEndurance || (fatigueLife != null && fatigueLife >= target)))
+
+  return {
+    snMaterial: snKey,
+    snMaterialLabel: limits.label,
+    stressAmplitude: amp,
+    meanStress: mean,
+    effectiveAmplitude,
+    adjustedEndurance,
+    fatigueLife,
+    fatiguePass,
+    targetCycles: target,
+  }
+}
+
 /** 疲劳强度 at N cycles (MPa) — 双对数 Basquin */
 export function calcFatigueStrength(material, cycles) {
   const m = SN_MATERIALS[material] ?? SN_MATERIALS.steel_45

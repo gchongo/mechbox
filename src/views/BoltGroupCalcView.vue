@@ -30,6 +30,24 @@
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('allowPerBolt')">
             <el-input-number v-model="form.allowPerBolt" :min="100" :step="500" />
           </CalcFormItem>
+          <template v-if="form.calcMode !== 'simple'">
+            <CalcFormItem :label="pf('frictionCoeff')">
+              <el-input-number v-model="form.frictionCoeff" :min="0" :max="0.6" :precision="2" :step="0.05" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('clampForcePerBolt')">
+              <el-input-number v-model="form.clampForcePerBolt" :min="0" :step="1000" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('axialTension')">
+              <el-input-number v-model="form.axialTension" :min="0" :step="500" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('pryingArm')">
+              <el-input-number v-model="form.pryingArm" :min="0" :step="5" />
+              <span class="ml-2 text-xs text-gray-500">mm</span>
+            </CalcFormItem>
+            <CalcFormItem :label="pf('allowTensionPerBolt')">
+              <el-input-number v-model="form.allowTensionPerBolt" :min="100" :step="500" />
+            </CalcFormItem>
+          </template>
         </el-form>
 
         <BoltGroupDiagram
@@ -60,6 +78,24 @@
             <ResultLabel :text="pr('criticalBolt')" />
             <dd class="font-mono">#{{ result.criticalBoltIndex }}</dd>
           </div>
+          <template v-if="result.friction">
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('slipCapacity')" />
+              <dd class="font-mono">{{ result.friction.slipCapacity.toFixed(0) }} N</dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('slipPass')" />
+              <dd class="font-mono" :class="result.slipPass ? 'text-success' : 'text-error'">
+                {{ result.slipPass ? '✓' : '✗' }}
+              </dd>
+            </div>
+          </template>
+          <template v-if="result.prying?.pryingTension > 0">
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('pryingTension')" />
+              <dd class="font-mono">{{ result.prying.pryingTension.toFixed(0) }} N</dd>
+            </div>
+          </template>
         </dl>
 
         <template v-if="result.bolts?.length">
@@ -99,6 +135,11 @@ const form = reactive({
   shearY: 2000,
   moment: 120000,
   allowPerBolt: 8000,
+  frictionCoeff: 0.2,
+  clampForcePerBolt: 25000,
+  axialTension: 0,
+  pryingArm: 40,
+  allowTensionPerBolt: 8000,
 })
 
 const result = computed(() => analyzeBoltGroup(form))

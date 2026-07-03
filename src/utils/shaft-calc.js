@@ -1,6 +1,7 @@
 /** 实心/空心圆轴扭转应力与变形 */
 
 import { findMaterial } from '@/constants/materials'
+import { assessComponentFatigue } from '@/utils/fatigue-calc'
 
 export function calcPolarMoment(diameter, innerDiameter = 0) {
   const d = diameter
@@ -93,10 +94,26 @@ export function analyzeShaftTorsion(input) {
 
     if (input.torqueAmplitude != null && input.torqueAmplitude > 0) {
       const tauAmp = calcTorsionStress(input.torqueAmplitude, d, di) * Kt
-      const endurance = input.enduranceLimit ?? 0.577 * (input.yieldStrength ?? 235)
+      const torqueMean = input.torqueMean ?? Math.max(0, (input.torque ?? 0) - input.torqueAmplitude)
+      const fatigue = assessComponentFatigue({
+        materialId: input.materialId,
+        snMaterial: input.snMaterial,
+        yieldStrength: input.yieldStrength ?? mat?.sigmaS,
+        stressMode: 'shear',
+        stressAmplitude: tauAmp,
+        meanStress: calcTorsionStress(torqueMean, d, di) * Kt,
+        meanStressMethod: input.meanStressMethod,
+        surfaceFactor: input.surfaceFactor,
+        sizeFactor: input.sizeFactor,
+        targetCycles: input.targetCycles ?? 1e6,
+      })
       result.fatigueAmplitude = tauAmp
-      result.fatigueEndurance = endurance
-      result.fatiguePass = tauAmp <= endurance
+      result.fatigueMean = fatigue.meanStress
+      result.effectiveFatigueAmplitude = fatigue.effectiveAmplitude
+      result.fatigueEndurance = fatigue.adjustedEndurance
+      result.fatigueLife = fatigue.fatigueLife
+      result.snMaterial = fatigue.snMaterial
+      result.fatiguePass = fatigue.fatiguePass
       result.pass = result.pass && result.peakPass && result.fatiguePass
     } else {
       result.pass = result.pass && result.peakPass

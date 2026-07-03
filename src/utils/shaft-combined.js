@@ -1,6 +1,7 @@
 /** 轴弯扭合成强度 (第三/第四强度理论) */
 
 import { findMaterial } from '@/constants/materials'
+import { assessComponentFatigue } from '@/utils/fatigue-calc'
 
 export function calcBendingStress(moment, diameter, innerDiameter = 0) {
   const d = diameter
@@ -44,17 +45,16 @@ export function analyzeShaftCombined(input) {
     allow = mat.sigmaAllow
   }
   if (allow == null && input.yieldStrength) {
-    allow = theory === 'third' ? input.yieldStrength / 2 : input.yieldStrength / Math.sqrt(3)
+    allow = input.yieldStrength
   }
   if (allow == null && calcMode === 'simple') {
     return { errorKey: 'material_required', calcMode, needsMaterialInput: true }
   }
   if (allow == null) {
-    allow = 0.577 * (input.yieldStrength ?? 235)
+    allow = input.yieldStrength ?? 235
   }
 
-  const componentAllow =
-    theory === 'third' ? allow : allow / Math.sqrt(3)
+  const torsionAllow = theory === 'third' ? allow / 2 : allow / Math.sqrt(3)
 
   const result = {
     calcMode,
@@ -74,7 +74,7 @@ export function analyzeShaftCombined(input) {
   if (calcMode === 'complete' || calcMode === 'professional') {
     if (allow != null) {
       result.bendingPass = bending <= allow
-      result.torsionPass = torsion <= componentAllow
+      result.torsionPass = torsion <= torsionAllow
       result.combinedPass = equiv <= allow
       result.pass = result.combinedPass
     }
@@ -85,11 +85,29 @@ export function analyzeShaftCombined(input) {
     result.stressConcentrationTorsion = input.stressConcentrationTorsion ?? 1
 
     if (input.bendingAmplitude != null && input.bendingAmplitude > 0) {
-      const sigmaAmp = calcBendingStress(input.bendingAmplitude, d, di) * (input.stressConcentrationBending ?? 1)
-      const endurance = input.enduranceLimit ?? 0.5 * (input.yieldStrength ?? 235)
+      const Kt = input.stressConcentrationBending ?? 1
+      const sigmaAmp = calcBendingStress(input.bendingAmplitude, d, di) * Kt
+      const sigmaMean =
+        calcBendingStress(input.bendingMean ?? Math.max(0, (input.bendingMoment ?? 0) - input.bendingAmplitude), d, di) *
+        Kt
+      const fatigue = assessComponentFatigue({
+        materialId: input.materialId,
+        snMaterial: input.snMaterial,
+        yieldStrength: input.yieldStrength ?? mat?.sigmaS,
+        stressAmplitude: sigmaAmp,
+        meanStress: sigmaMean,
+        meanStressMethod: input.meanStressMethod,
+        surfaceFactor: input.surfaceFactor,
+        sizeFactor: input.sizeFactor,
+        targetCycles: input.targetCycles ?? 1e6,
+      })
       result.fatigueAmplitude = sigmaAmp
-      result.fatigueEndurance = endurance
-      result.fatiguePass = sigmaAmp <= endurance
+      result.fatigueMean = fatigue.meanStress
+      result.effectiveFatigueAmplitude = fatigue.effectiveAmplitude
+      result.fatigueEndurance = fatigue.adjustedEndurance
+      result.fatigueLife = fatigue.fatigueLife
+      result.snMaterial = fatigue.snMaterial
+      result.fatiguePass = fatigue.fatiguePass
       result.pass = result.pass && result.fatiguePass
     }
   }
