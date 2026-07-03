@@ -205,7 +205,7 @@
         </div>
 
         <p class="mt-3 text-xs text-gray-500">
-          {{ pr('compareTorque') }} {{ result.compareLabel }} ≈ {{ result.compareTorque.toFixed(2) }} N·m
+          {{ pr('compareTorque') }} {{ rm('boltPreload', `compare_${result.compareLabelKey}`) }} ≈ {{ result.compareTorque.toFixed(2) }} N·m
         </p>
 
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
@@ -258,13 +258,13 @@
             <p class="text-xs text-gray-500">{{ pf('wizardSharedHint') }}</p>
           </section>
           <section ref="wizardPanelRef" class="card-panel">
-            <el-alert v-if="wizardResult?.error" :title="wizardResult.error" type="warning" show-icon />
-            <template v-else-if="wizardResult">
+            <el-alert v-if="wizardDisplay?.error" :title="wizardDisplay.error" type="warning" show-icon />
+            <template v-else-if="wizardDisplay">
               <el-tag class="mb-3" :type="wizardOverallType">
                 {{ pr('overall') }}: {{ wizardOverallLabel }}
               </el-tag>
               <el-collapse accordion>
-                <el-collapse-item v-for="s in wizardResult.steps" :key="s.id" :name="s.id">
+                <el-collapse-item v-for="s in wizardDisplay.steps" :key="s.id" :name="s.id">
                   <template #title>
                     <span class="mr-2 font-mono text-xs">{{ s.id }}</span>
                     <span>{{ s.title }}</span>
@@ -300,12 +300,16 @@ import {
   estimateReplacementOuterDiameter,
   EMBEDMENT_PRESETS,
 } from '@/utils/bolt-preload-calc'
-import { runVdi2230Wizard, TIGHTENING_METHODS, buildWizardReportText } from '@/utils/vdi2230-wizard'
+import { runVdi2230Wizard, TIGHTENING_METHODS, buildWizardReportText, localizeVdiWizard } from '@/utils/vdi2230-wizard'
 import { exportToolReportPdf } from '@/utils/export'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('bolt-preload')
+const { optionMap } = useOptionsI18n()
+const { rm } = useResultI18n()
 
 const calcModePanel = computed({
   get: () => (form.calcMode === 'vdi2230' ? 'complete' : form.calcMode),
@@ -317,10 +321,10 @@ const calcModePanel = computed({
 const pageTab = ref('calc')
 const resultPanelRef = ref(null)
 const wizardPanelRef = ref(null)
-const tighteningMethods = TIGHTENING_METHODS
+const tighteningMethods = computed(() => optionMap(TIGHTENING_METHODS, 'tighteningMethods'))
 
-const grades = THREAD_GRADES
-const embedmentPresets = EMBEDMENT_PRESETS
+const grades = computed(() => optionMap(THREAD_GRADES, 'threadGrades'))
+const embedmentPresets = computed(() => optionMap(EMBEDMENT_PRESETS, 'embedmentPresets'))
 
 const form = reactive({
   calcMode: 'simple',
@@ -374,6 +378,11 @@ const wizardResult = computed(() =>
   }),
 )
 
+const wizardDisplay = computed(() => {
+  locale.value
+  return localizeVdiWizard(wizardResult.value, locale.value)
+})
+
 const wizardOverallType = computed(() => {
   const o = wizardResult.value?.overall
   return { ok: 'success', warn: 'warning', fail: 'danger' }[o] ?? 'info'
@@ -396,33 +405,33 @@ function stepStatusLabel(s) {
 async function exportCalcPdf() {
   const r = result.value
   await exportToolReportPdf({
-    title: '螺栓预紧力计算报告',
+    title: pt('title'),
     subtitle: `M${form.diameter} · ${form.grade} · ${form.calcMode}`,
     sections: [
       {
-        heading: '结果',
+        heading: ct('results'),
         rows: [
-          { label: '预紧力 (N)', value: r.preload.toFixed(0) },
-          { label: '扭矩 (N·m)', value: r.torque.toFixed(2) },
-          { label: '应力 (MPa)', value: r.stress.toFixed(1) },
-          { label: '校核', value: r.pass ? '通过' : '未通过' },
+          { label: `${pf('preload')} (N)`, value: r.preload.toFixed(0) },
+          { label: `${pf('torque')} (N·m)`, value: r.torque.toFixed(2) },
+          { label: `${pr('tensileStress')} (MPa)`, value: r.stress.toFixed(1) },
+          { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
         ],
       },
     ],
     element: resultPanelRef.value,
-    filename: `螺栓预紧力_M${form.diameter}_${Date.now()}.pdf`,
+    filename: `bolt-preload_M${form.diameter}_${Date.now()}.pdf`,
   })
 }
 
 async function exportWizardPdf() {
   const w = wizardResult.value
-  if (!w || w.error) return
+  if (!w || w.errorKey) return
   await exportToolReportPdf({
-    title: 'VDI 2230 分步校核报告',
+    title: pf('tabWizard'),
     subtitle: `M${form.diameter} · ${form.grade}`,
     sections: [
       {
-        heading: '关键结果',
+        heading: pr('keyResults'),
         rows: [
           { label: 'F_M (N)', value: w.keyResults.FM.toFixed(0) },
           { label: 'F_V (N)', value: w.keyResults.FV.toFixed(0) },
@@ -431,8 +440,8 @@ async function exportWizardPdf() {
         ],
       },
       {
-        heading: '分步明细',
-        text: buildWizardReportText(w),
+        heading: pr('stepDetails'),
+        text: buildWizardReportText(w, locale.value),
       },
     ],
     element: wizardPanelRef.value,

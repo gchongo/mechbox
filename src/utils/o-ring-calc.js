@@ -65,10 +65,7 @@ export function analyzeORingSeal(input) {
     sealingPressureEstimate: sealingPressure,
     contactStressEstimate: contactStress,
     pass: compressionOk && widthOk && fillOk,
-    notes:
-      pressure > 0
-        ? '动压密封建议压缩率 12–20%，并校核挤出间隙'
-        : '静密封建议压缩率 15–25%',
+    notesKey: pressure > 0 ? 'dynamic' : 'static',
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {

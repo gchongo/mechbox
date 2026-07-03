@@ -65,7 +65,7 @@ export const SECTION_TYPES = {
 
 function calcSection(sectionType, dims) {
   const sec = SECTION_TYPES[sectionType]
-  if (!sec) return { error: '未知截面类型' }
+  if (!sec) return { errorKey: 'unknown_section' }
 
   if (sectionType === 'solid_round') {
     const d = dims.diameter
@@ -73,21 +73,21 @@ function calcSection(sectionType, dims) {
   }
   if (sectionType === 'hollow_round') {
     const { diameter: D, innerDiameter: d } = dims
-    if (d >= D) return { error: '内径须小于外径' }
+    if (d >= D) return { errorKey: 'inner_gte_outer' }
     return { I: sec.inertia(D, d), W: sec.sectionModulus(D, d) }
   }
   if (sectionType === 'rectangle') {
     const { width: b, height: h } = dims
     return { I: sec.inertia(b, h), W: sec.sectionModulus(b, h) }
   }
-  return { error: '截面计算失败' }
+  return { errorKey: 'section_calc_failed' }
 }
 
 export function analyzeBeam(input) {
   const calcMode = input.calcMode ?? 'simple'
   const beamCase = BEAM_CASES[input.caseId] ?? BEAM_CASES.simply_center
   const section = calcSection(input.sectionType ?? 'solid_round', input)
-  if (section.error) return { error: section.error, calcMode }
+  if (section.errorKey) return { errorKey: section.errorKey, calcMode }
 
   const L = input.spanLength
   const E = input.elasticModulus ?? 210000

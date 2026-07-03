@@ -359,6 +359,8 @@ export const fieldsZh = {
         headMoment: '头部 M_K',
         compareTorque: '对照',
         overall: '总体',
+        keyResults: '关键结果',
+        stepDetails: '分步明细',
       },
     },
     'o-ring': {
@@ -1142,6 +1144,8 @@ export const fieldsEn = {
         headMoment: 'Head M_K',
         compareTorque: 'Reference',
         overall: 'Overall',
+        keyResults: 'Key results',
+        stepDetails: 'Step details',
       },
     },
     'o-ring': {

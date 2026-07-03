@@ -72,7 +72,7 @@ describe('modal-calc', () => {
   it('resonance margin', () => {
     const r = calcResonanceMargin(50, 52)
     expect(r.margin).toBeLessThan(0.1)
-    expect(r.assessment).toContain('危险')
+    expect(r.assessmentKey).toBe('danger')
   })
 })
 

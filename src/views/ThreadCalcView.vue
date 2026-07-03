@@ -158,10 +158,12 @@ import {
 import ThreadDiagram from '@/components/thread/ThreadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('thread')
+const { optionMap } = useOptionsI18n()
 
-const grades = THREAD_GRADES
+const grades = computed(() => optionMap(THREAD_GRADES, 'threadGrades'))
 
 const form = reactive({
   calcMode: 'simple',

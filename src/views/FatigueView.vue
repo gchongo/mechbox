@@ -13,7 +13,7 @@
         <el-form label-width="120px">
           <el-form-item :label="pf('material')">
             <el-select v-model="material" class="w-full">
-              <el-option v-for="(m, k) in SN_MATERIALS" :key="k" :label="m.label" :value="k" />
+              <el-option v-for="(m, k) in snMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
           <el-form-item :label="pf('stressAmplitude')">
@@ -101,8 +101,12 @@ import {
 import FatigueDiagram from '@/components/fatigue/FatigueDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const { pt, ct, pf, pr } = useCalcPage('fatigue')
+const { optionMap } = useOptionsI18n()
+
+const snMaterials = computed(() => optionMap(SN_MATERIALS, 'snMaterials'))
 
 const calcMode = ref('complete')
 const material = ref('steel_45')

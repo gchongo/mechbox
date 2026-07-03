@@ -14,7 +14,7 @@
             <el-form label-width="120px">
               <el-form-item :label="pf('fluid')">
                 <el-select v-model="fluid" @change="applyFluid">
-                  <el-option v-for="(f, k) in FLUID_PRESETS" :key="k" :label="f.label" :value="k" />
+                  <el-option v-for="(f, k) in fluidPresets" :key="k" :label="f.label" :value="k" />
                 </el-select>
               </el-form-item>
               <el-form-item :label="pf('innerDiameter')">
@@ -80,7 +80,7 @@
             <el-form label-width="120px">
               <el-form-item :label="pf('edgeCondition')">
                 <el-select v-model="plate.edgeCondition" class="w-full">
-                  <el-option v-for="(e, k) in PLATE_EDGE_CONDITIONS" :key="k" :label="e.label" :value="k" />
+                  <el-option v-for="(e, k) in plateEdgeConditions" :key="k" :label="e.label" :value="k" />
                 </el-select>
               </el-form-item>
               <el-form-item :label="pf('plateThickness')"><el-input-number v-model="plate.thickness" :min="0.1" /></el-form-item>
@@ -132,7 +132,7 @@
             <el-form label-width="120px">
               <el-form-item :label="pf('modelCase')">
                 <el-select v-model="modal.caseId" class="w-full">
-                  <el-option v-for="(c, k) in MODAL_CASES" :key="k" :label="c.label" :value="k" />
+                  <el-option v-for="(c, k) in modalCases" :key="k" :label="c.label" :value="k" />
                 </el-select>
               </el-form-item>
               <template v-if="modal.caseId === 'sdof'">
@@ -163,9 +163,9 @@
             <div class="rounded bg-primary/5 p-4 text-center">
               <dt class="text-sm text-gray-500">{{ pr('naturalFreq') }}</dt>
               <dd class="font-mono text-3xl text-primary">{{ modalResult.modal?.fn?.toFixed(2) ?? '—' }} Hz</dd>
-              <p class="mt-1 text-xs">{{ modalResult.modal?.mode }}</p>
+              <p class="mt-1 text-xs">{{ rm('modal', `mode_${modalResult.modal?.modeKey}`) }}</p>
             </div>
-            <template v-if="modalResult.resonance && !modalResult.resonance.error">
+            <template v-if="modalResult.resonance && !modalResult.resonance.errorKey">
               <dl class="mt-4 space-y-2 text-sm">
                 <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
                   <dt>{{ pr('resonanceMargin') }}</dt><dd class="font-mono">{{ modalResult.resonance.marginPercent?.toFixed(1) }}%</dd>
@@ -174,7 +174,7 @@
                   <dt>{{ pr('amplification') }}</dt><dd class="font-mono">{{ modalResult.amplificationFactor?.toFixed(2) }}</dd>
                 </div>
                 <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>{{ pr('assessment') }}</dt><dd :class="modalResult.resonance.pass ? 'text-success' : 'text-error'">{{ modalResult.resonance.assessment }}</dd>
+                  <dt>{{ pr('assessment') }}</dt><dd :class="modalResult.resonance.pass ? 'text-success' : 'text-error'">{{ rm('modal', `assessment_${modalResult.resonance.assessmentKey}`) }}</dd>
                 </div>
               </dl>
             </template>
@@ -193,8 +193,16 @@ import { analyzeModal, MODAL_CASES } from '@/utils/modal-calc'
 import StructuralDiagram from '@/components/structural/StructuralDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('structural')
+const { optionMap } = useOptionsI18n()
+const { rm } = useResultI18n()
+
+const fluidPresets = computed(() => optionMap(FLUID_PRESETS, 'fluidPresets'))
+const plateEdgeConditions = computed(() => optionMap(PLATE_EDGE_CONDITIONS, 'plateEdgeConditions'))
+const modalCases = computed(() => optionMap(MODAL_CASES, 'modalCases'))
 
 const tab = ref('pipe')
 const fluid = ref('water')

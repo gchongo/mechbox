@@ -7,6 +7,7 @@ import {
   THREAD_GRADES,
 } from '@/utils/bolt-preload-calc'
 import { calcPitchDiameter, calcTensileStressArea } from '@/utils/thread-calc'
+import { t } from '@/i18n'
 
 export const TIGHTENING_METHODS = {
   torque: { label: '扭矩法', factorScatter: 0.25 },
@@ -15,13 +16,35 @@ export const TIGHTENING_METHODS = {
   hydraulic: { label: '液压拉伸', factorScatter: 0.08 },
 }
 
+function msg(locale, key, params) {
+  return t(`calc.messages.vdi2230.${key}`, locale, params)
+}
+
+function errMsg(locale, key) {
+  return t(`calc.messages.errors.${key}`, locale)
+}
+
+function methodLabel(methodKey, locale) {
+  const path = `calc.options.tighteningMethods.${methodKey}.label`
+  const val = t(path, locale)
+  return val !== path ? val : methodKey
+}
+
+function gradeLabel(gradeKey, locale) {
+  const path = `calc.options.threadGrades.${gradeKey}.label`
+  const val = t(path, locale)
+  return val !== path ? val : gradeKey
+}
+
 /** 运行 VDI 2230 分步校核 */
 export function runVdi2230Wizard(input) {
   const d = input.diameter
   const P = input.pitch ?? METRIC_THREAD_PITCH[Math.round(d)] ?? 1.5
-  const grade = THREAD_GRADES[input.grade ?? '8.8'] ?? THREAD_GRADES['8.8']
+  const gradeKey = input.grade ?? '8.8'
+  const grade = THREAD_GRADES[gradeKey] ?? THREAD_GRADES['8.8']
   const As = calcTensileStressArea(d, P)
-  const method = TIGHTENING_METHODS[input.tighteningMethod ?? 'torque'] ?? TIGHTENING_METHODS.torque
+  const methodKey = input.tighteningMethod ?? 'torque'
+  const method = TIGHTENING_METHODS[methodKey] ?? TIGHTENING_METHODS.torque
 
   const preloadResult = analyzeBoltPreload({
     ...input,
@@ -30,7 +53,7 @@ export function runVdi2230Wizard(input) {
   })
 
   const joint = preloadResult.joint
-  if (!joint) return { error: '需要专业模型参数以运行 VDI 2230 向导' }
+  if (!joint) return { errorKey: 'vdi_need_professional' }
   const FM = preloadResult.preloadResidual
   const FV = preloadResult.preloadTightening
   const FZ = joint.embedmentLoss
@@ -49,98 +72,161 @@ export function runVdi2230Wizard(input) {
   const utilization = sigmaAllow ? sigmaRed / sigmaAllow : 0
 
   const dW = input.headContactDiameter ?? 1.5 * d
-  const pMax = FM / (Math.PI * dW ** 2 / 4) * 1000 // MPa rough
+  const pMax = FM / (Math.PI * dW ** 2 / 4) * 1000
   const pAllow = input.allowSurfacePressure ?? 600
 
   const steps = []
 
-  steps.push(step('R0', '拧紧方法', 'ok', {
-    summary: method.label,
-    detail: `离散系数 ±${(scatter * 100).toFixed(0)}%`,
-  }))
+  steps.push(
+    step('R0', 'ok', {
+      summaryKey: 'steps.R0.summary',
+      summaryParams: { method: methodKey, scatter: (scatter * 100).toFixed(0) },
+      detailKey: 'steps.R0.detail',
+      detailParams: { scatter: (scatter * 100).toFixed(0) },
+    }),
+  )
 
-  steps.push(step('R1', '摩擦与几何', 'ok', {
-    summary: `μ_G=${input.muG ?? 0.12}, μ_K=${input.muK ?? 0.12}`,
-    detail: `d₂=${calcPitchDiameter(d, P).toFixed(3)} mm, A_s=${As.toFixed(2)} mm²`,
-  }))
+  steps.push(
+    step('R1', 'ok', {
+      summaryKey: 'steps.R1.summary',
+      summaryParams: { muG: input.muG ?? 0.12, muK: input.muK ?? 0.12 },
+      detailKey: 'steps.R1.detail',
+      detailParams: {
+        d2: calcPitchDiameter(d, P).toFixed(3),
+        as: As.toFixed(2),
+      },
+    }),
+  )
 
   const r2Pass = FM >= F_Kerf
-  steps.push(step('R2', '最小夹紧力 F_Kerf', r2Pass ? 'ok' : 'fail', {
-    summary: `F_Kerf=${F_Kerf.toFixed(0)} N`,
-    detail: `残余预紧 F_M=${FM.toFixed(0)} N ${r2Pass ? '≥' : '<'} F_Kerf`,
-    formula: 'F_Kerf = F_Ax·(1−Φ) 或用户指定',
-  }))
+  steps.push(
+    step('R2', r2Pass ? 'ok' : 'fail', {
+      summaryKey: 'steps.R2.summary',
+      summaryParams: { fKerf: F_Kerf.toFixed(0) },
+      detailKey: 'steps.R2.detail',
+      detailParams: {
+        fm: FM.toFixed(0),
+        cmp: r2Pass ? 'detail_pass' : 'detail_fail',
+      },
+      formulaKey: 'steps.R2.formula',
+    }),
+  )
 
-  steps.push(step('R3', '载荷系数 Φ', 'ok', {
-    summary: `Φ=${(Phi * 100).toFixed(1)}%`,
-    detail: `k_S=${joint.kS.toFixed(0)} N/mm, k_P=${joint.kP.toFixed(0)} N/mm`,
-    formula: 'Φ = k_P / (k_S + k_P)',
-  }))
+  steps.push(
+    step('R3', 'ok', {
+      summaryKey: 'steps.R3.summary',
+      summaryParams: { phi: (Phi * 100).toFixed(1) },
+      detailKey: 'steps.R3.detail',
+      detailParams: { kS: joint.kS.toFixed(0), kP: joint.kP.toFixed(0) },
+      formulaKey: 'steps.R3.formula',
+    }),
+  )
 
-  steps.push(step('R4', '预紧力变化', 'ok', {
-    summary: `F_Z=${FZ.toFixed(0)} N, ΔF_VT=${deltaFVT.toFixed(0)} N`,
-    detail: `嵌入 f_Z=${joint.embedmentUm.toFixed(0)} μm`,
-    formula: 'F_V = F_M + F_Z − ΔF_VT',
-  }))
+  steps.push(
+    step('R4', 'ok', {
+      summaryKey: 'steps.R4.summary',
+      summaryParams: { fz: FZ.toFixed(0), dfvt: deltaFVT.toFixed(0) },
+      detailKey: 'steps.R4.detail',
+      detailParams: { embed: joint.embedmentUm.toFixed(0) },
+      formulaKey: 'steps.R4.formula',
+    }),
+  )
 
-  steps.push(step('R5', '装配预紧力范围', 'ok', {
-    summary: `F_Mmin=${F_Mmin.toFixed(0)} N, F_Mmax=${F_Mmax.toFixed(0)} N`,
-    detail: `拧紧预紧 F_V=${FV.toFixed(0)} N, T=${preloadResult.torque.toFixed(2)} N·m`,
-  }))
+  steps.push(
+    step('R5', 'ok', {
+      summaryKey: 'steps.R5.summary',
+      summaryParams: { fmin: F_Mmin.toFixed(0), fmax: F_Mmax.toFixed(0) },
+      detailKey: 'steps.R5.detail',
+      detailParams: { fv: FV.toFixed(0), torque: preloadResult.torque.toFixed(2) },
+    }),
+  )
 
   const r6Pass = sigmaRed <= sigmaAllow
-  steps.push(step('R6', '螺栓应力校核', r6Pass ? 'ok' : 'fail', {
-    summary: `σ=${sigmaRed.toFixed(1)} / ${sigmaAllow} MPa`,
-    detail: `利用率 ${(utilization * 100).toFixed(1)}%`,
-    formula: 'σ = F_V / A_s',
-  }))
+  steps.push(
+    step('R6', r6Pass ? 'ok' : 'fail', {
+      summaryKey: 'steps.R6.summary',
+      summaryParams: { sigma: sigmaRed.toFixed(1), allow: sigmaAllow },
+      detailKey: 'steps.R6.detail',
+      detailParams: { util: (utilization * 100).toFixed(1) },
+      formulaKey: 'steps.R6.formula',
+    }),
+  )
 
   const r7Pass = pMax <= pAllow
-  steps.push(step('R7', '支承面比压', r7Pass ? 'ok' : 'warn', {
-    summary: `p≈${pMax.toFixed(0)} / ${pAllow} MPa`,
-    detail: `头部支承直径 d_W≈${dW.toFixed(1)} mm（简化）`,
-  }))
+  steps.push(
+    step('R7', r7Pass ? 'ok' : 'warn', {
+      summaryKey: 'steps.R7.summary',
+      summaryParams: { pmax: pMax.toFixed(0), pallow: pAllow },
+      detailKey: 'steps.R7.detail',
+      detailParams: { dw: dW.toFixed(1) },
+    }),
+  )
 
   const r8Status = FAlt > 0 ? (utilization < 0.85 ? 'ok' : 'warn') : 'skip'
-  steps.push(step('R8', '疲劳（简化）', r8Status, {
-    summary: FAlt > 0 ? `交变载荷 ${FAlt.toFixed(0)} N` : '未输入交变载荷',
-    detail: FAlt > 0 ? '建议进一步按 VDI 2230 完整疲劳公式校核' : '跳过',
-  }))
+  steps.push(
+    step('R8', r8Status, {
+      summaryKey: FAlt > 0 ? 'steps.R8.summary_alt' : 'steps.R8.summary_none',
+      summaryParams: FAlt > 0 ? { falt: FAlt.toFixed(0) } : undefined,
+      detailKey: FAlt > 0 ? 'steps.R8.detail_check' : 'steps.R8.detail_skip',
+    }),
+  )
 
-  steps.push(step('R9', '抗滑移（简化）', FAx > 0 ? 'warn' : 'skip', {
-    summary: FAx > 0 ? `轴向载荷 ${FAx.toFixed(0)} N` : '无横向/轴向外载',
-    detail: '完整校核需摩擦面 μ_T 与横向力 F_Q',
-  }))
+  steps.push(
+    step('R9', FAx > 0 ? 'warn' : 'skip', {
+      summaryKey: FAx > 0 ? 'steps.R9.summary_axial' : 'steps.R9.summary_none',
+      summaryParams: FAx > 0 ? { fax: FAx.toFixed(0) } : undefined,
+      detailKey: 'steps.R9.detail',
+    }),
+  )
 
-  steps.push(step('R10', '抗内压/密封', 'skip', {
-    summary: '未启用',
-    detail: '密封连接需额外输入密封压力与有效面积',
-  }))
+  steps.push(
+    step('R10', 'skip', {
+      summaryKey: 'steps.R10.summary',
+      detailKey: 'steps.R10.detail',
+    }),
+  )
 
-  steps.push(step('R11', '螺纹旋合长度', 'ok', {
-    summary: `m_eff ≥ ${(0.8 * d).toFixed(1)} mm 建议`,
-    detail: '按材料与等级查 VDI 2230 表',
-  }))
+  steps.push(
+    step('R11', 'ok', {
+      summaryKey: 'steps.R11.summary',
+      summaryParams: { meff: (0.8 * d).toFixed(1) },
+      detailKey: 'steps.R11.detail',
+    }),
+  )
 
-  steps.push(step('R12', '拧紧力矩上限', preloadResult.torque <= input.maxTorque || !input.maxTorque ? 'ok' : 'fail', {
-    summary: `T=${preloadResult.torque.toFixed(2)} N·m`,
-    detail: input.maxTorque ? `上限 ${input.maxTorque} N·m` : '未设上限',
-  }))
+  steps.push(
+    step('R12', preloadResult.torque <= input.maxTorque || !input.maxTorque ? 'ok' : 'fail', {
+      summaryKey: 'steps.R12.summary',
+      summaryParams: { torque: preloadResult.torque.toFixed(2) },
+      detailKey: input.maxTorque ? 'steps.R12.detail_limit' : 'steps.R12.detail_no_limit',
+      detailParams: input.maxTorque ? { max: input.maxTorque } : undefined,
+    }),
+  )
 
   const failed = steps.filter((s) => s.status === 'fail').length
   const warned = steps.filter((s) => s.status === 'warn').length
   const overall = failed > 0 ? 'fail' : warned > 0 ? 'warn' : 'ok'
 
-  steps.push(step('R13', '校核汇总', overall, {
-    summary: failed ? `${failed} 项未通过` : warned ? `${warned} 项需关注` : '全部通过',
-    detail: `性能等级 ${grade.label}，M${d}×${P}`,
-  }))
+  steps.push(
+    step('R13', overall, {
+      summaryKey: failed
+        ? 'steps.R13.summary_fail'
+        : warned
+          ? 'steps.R13.summary_warn'
+          : 'steps.R13.summary_ok',
+      summaryParams: failed || warned ? { count: failed || warned } : undefined,
+      detailKey: 'steps.R13.detail',
+      detailParams: { grade: gradeKey, d, pitch: P },
+    }),
+  )
 
   return {
     steps,
     overall,
     failedCount: failed,
     warnCount: warned,
+    gradeKey,
+    methodKey,
     keyResults: {
       FM,
       FV,
@@ -158,23 +244,68 @@ export function runVdi2230Wizard(input) {
   }
 }
 
-function step(id, title, status, payload) {
-  return { id, title, status, ...payload }
+function step(id, status, payload) {
+  return { id, status, titleKey: `steps.${id}.title`, ...payload }
 }
 
-export function buildWizardReportText(wizardResult) {
-  const lines = ['=== VDI 2230 分步校核报告 ===', '']
-  for (const s of wizardResult.steps) {
+/** Resolve step text for UI / PDF */
+export function localizeVdiStep(step, locale = 'zh') {
+  const resolve = (key, params) => {
+    if (!key) return ''
+    let text = msg(locale, key, params)
+    if (key === 'steps.R0.summary' && step.summaryParams?.method) {
+      text = text.replace('{method}', methodLabel(step.summaryParams.method, locale))
+    }
+    if (key === 'steps.R2.detail' && params?.cmp) {
+      const cmp = msg(locale, `steps.R2.${params.cmp}`)
+      text = text.replace('{cmp}', cmp)
+    }
+    if (key === 'steps.R13.detail' && params?.grade) {
+      text = text.replace('{grade}', gradeLabel(params.grade, locale))
+    }
+    return text
+  }
+
+  return {
+    ...step,
+    title: resolve(step.titleKey),
+    summary: resolve(step.summaryKey, step.summaryParams),
+    detail: resolve(step.detailKey, step.detailParams),
+    formula: step.formulaKey ? resolve(step.formulaKey) : undefined,
+  }
+}
+
+export function localizeVdiWizard(wizardResult, locale = 'zh') {
+  if (!wizardResult) return wizardResult
+  if (wizardResult.errorKey) {
+    return { ...wizardResult, error: errMsg(locale, wizardResult.errorKey) }
+  }
+  return {
+    ...wizardResult,
+    steps: wizardResult.steps.map((s) => localizeVdiStep(s, locale)),
+  }
+}
+
+export function buildWizardReportText(wizardResult, locale = 'zh') {
+  const localized = localizeVdiWizard(wizardResult, locale)
+  if (localized?.error) return localized.error
+
+  const statusLabel = (s) => {
+    const path = `calc.fields.common.step${s.charAt(0).toUpperCase()}${s.slice(1)}`
+    const map = { ok: 'stepPass', fail: 'stepFail', warn: 'stepWarn', skip: 'stepSkip' }
+    const key = `calc.fields.common.${map[s] ?? s}`
+    const val = t(key, locale)
+    return val !== key ? val : s
+  }
+
+  const lines = [msg(locale, 'report_title'), '']
+  for (const s of localized.steps) {
     lines.push(`[${s.id}] ${s.title} — ${statusLabel(s.status)}`)
     lines.push(`  ${s.summary}`)
     if (s.detail) lines.push(`  ${s.detail}`)
-    if (s.formula) lines.push(`  式: ${s.formula}`)
+    if (s.formula) lines.push(`  ${msg(locale, 'report_formula_prefix', { formula: s.formula })}`)
     lines.push('')
   }
-  lines.push(`总体: ${statusLabel(wizardResult.overall)}`)
+  lines.push(msg(locale, 'report_overall', { status: statusLabel(localized.overall) }))
   return lines.join('\n')
-}
-
-function statusLabel(s) {
-  return { ok: '通过', fail: '未通过', warn: '关注', skip: '跳过' }[s] ?? s
 }

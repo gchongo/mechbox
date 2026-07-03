@@ -77,9 +77,24 @@ export function linkISO1328ToISO6336(input) {
     recommendedAccuracyGrade: tolerances.grade,
     dynamicFactorKV: KV,
     notes: [
-      `ISO 1328 等级 ${tolerances.grade}：单齿距 f_pt ≈ ${tolerances.f_pt.toFixed(1)} μm`,
-      `齿形 f_fα ≈ ${tolerances.f_falpha.toFixed(1)} μm，齿向 F_β ≈ ${tolerances.F_beta.toFixed(1)} μm`,
-      `建议 ISO 6336 动载系数 KV ≈ ${KV.toFixed(3)}`,
+      {
+        key: 'note_grade',
+        params: {
+          grade: tolerances.grade,
+          fpt: tolerances.f_pt.toFixed(1),
+        },
+      },
+      {
+        key: 'note_profile',
+        params: {
+          ff: tolerances.f_falpha.toFixed(1),
+          fbeta: tolerances.F_beta.toFixed(1),
+        },
+      },
+      {
+        key: 'note_kv',
+        params: { kv: KV.toFixed(3) },
+      },
     ],
   }
 }

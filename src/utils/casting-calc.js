@@ -46,10 +46,7 @@ export function calcDraftAngle(input) {
     linearIncreasePerSide: depth * Math.tan(rad),
     totalWidthIncrease: linearIncrease,
     pass: recommended >= minAngle,
-    note:
-      recommended > 3
-        ? '拔模角偏大，建议优化分型或采用滑块'
-        : '拔模角在常规范围内',
+    noteKey: recommended > 3 ? 'high_draft' : 'normal',
   }
 }
 

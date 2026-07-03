@@ -14,7 +14,7 @@ describe('heat-treatment-calc', () => {
   it('computes carbon equivalent', () => {
     const r = calcCarbonEquivalent(STEEL_PRESETS['4140'])
     expect(r.ce).toBeGreaterThan(0.5)
-    expect(r.weldability).toBeTruthy()
+    expect(r.weldabilityKey).toBeTruthy()
   })
 
   it('Jominy hardness decreases with distance', () => {
@@ -28,7 +28,7 @@ describe('heat-treatment-calc', () => {
     const ce = calcCarbonEquivalent(STEEL_PRESETS['1045']).ce
     const r = assessHardenability(ce, 80)
     expect(r.idealCriticalDiameter).toBeGreaterThan(0)
-    expect(r.verdict).toBeTruthy()
+    expect(r.verdictKey).toBeTruthy()
   })
 
   it('tempering reduces hardness', () => {

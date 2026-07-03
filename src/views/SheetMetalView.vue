@@ -27,7 +27,7 @@
           <el-form-item :label="pf('kFactor')">
             <el-input-number v-model="form.kFactor" :min="0.2" :max="0.5" :precision="3" :step="0.01" />
             <el-select v-model="kPreset" class="ml-2 w-36" :placeholder="fc('preset')" @change="applyK">
-              <el-option v-for="(p, k) in K_FACTOR_PRESETS" :key="k" :label="p.label" :value="k" />
+              <el-option v-for="(p, k) in kFactorPresets" :key="k" :label="p.label" :value="k" />
             </el-select>
           </el-form-item>
           <el-form-item v-if="form.method === 'bend_deduction'" :label="pf('outerSum')">
@@ -74,7 +74,7 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pf('unfoldResults') }}</h2>
-        <el-alert v-if="result.error" :title="result.error" type="error" show-icon />
+        <el-alert v-if="result.errorKey" :title="re(result.errorKey)" type="error" show-icon />
         <template v-else>
           <div class="mb-4 rounded-lg bg-primary/5 p-4 text-center">
             <dt class="text-sm text-gray-500">{{ pf('flatLength') }}</dt>
@@ -124,8 +124,14 @@ import { analyzeSheetMetalUnfold, K_FACTOR_PRESETS } from '@/utils/sheet-metal-c
 import SheetMetalBendDiagram from '@/components/sheet-metal/SheetMetalBendDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('sheet-metal')
+const { optionMap } = useOptionsI18n()
+const { re } = useResultI18n()
+
+const kFactorPresets = computed(() => optionMap(K_FACTOR_PRESETS, 'kFactorPresets'))
 
 const calcMode = ref('simple')
 

@@ -279,10 +279,7 @@ export function analyzeHAZ(input) {
     hazAllowNormal: round(hazAllowNormal, 1),
     weldStress: round(tau, 1),
     pass: !tau || tau <= hazAllowShear,
-    note:
-      heatInput > 2.5
-        ? '热输入偏高，HAZ 软化与脆化风险增加'
-        : '热输入在常规范围',
+    noteKey: heatInput > 2.5 ? 'high' : 'normal',
   }
 }
 

@@ -146,10 +146,8 @@ export function scoreMaterials(requirements = {}, weights = {}) {
     result.bestStrength = [...filtered].sort((a, b) => b.sigmaAllow - a.sigmaAllow)[0] ?? null
     result.bestWeight = [...filtered].sort((a, b) => a.density - b.density)[0] ?? null
     result.bestCost = [...filtered].sort((a, b) => a.costIndex - b.costIndex)[0] ?? null
-    result.tradeoffNote =
-      result.bestStrength?.id !== result.topPick?.id
-        ? '强度最优与综合首选不一致，请按工况权衡'
-        : '综合首选与主要指标一致'
+    result.tradeoffNoteKey =
+      result.bestStrength?.id !== result.topPick?.id ? 'mismatch' : 'match'
   }
 
   return result

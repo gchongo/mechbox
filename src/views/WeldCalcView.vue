@@ -37,7 +37,7 @@
               </template>
               <el-form-item :label="pf('steelGrade')">
                 <el-select v-model="form.steelGrade" class="w-full">
-                  <el-option v-for="(g, k) in WELD_STEEL_GRADES" :key="k" :label="g.label" :value="k" />
+                  <el-option v-for="(g, k) in weldSteelGrades" :key="k" :label="g.label" :value="k" />
                 </el-select>
               </el-form-item>
             </el-form>
@@ -148,7 +148,7 @@
               </el-form-item>
               <el-form-item :label="pf('detailCategory')">
                 <el-select v-model="fatigue.detailCategory" class="w-full">
-                  <el-option v-for="(d, k) in WELD_DETAIL_CATEGORIES" :key="k" :label="d.label" :value="k" />
+                  <el-option v-for="(d, k) in weldDetailCategories" :key="k" :label="d.label" :value="k" />
                 </el-select>
               </el-form-item>
             </el-form>
@@ -192,7 +192,7 @@
               </el-form-item>
               <el-form-item :label="pf('steelGrade')">
                 <el-select v-model="haz.steelGrade" class="w-full">
-                  <el-option v-for="(g, k) in WELD_STEEL_GRADES" :key="k" :label="g.label" :value="k" />
+                  <el-option v-for="(g, k) in weldSteelGrades" :key="k" :label="g.label" :value="k" />
                 </el-select>
               </el-form-item>
               <el-form-item :label="pf('legSize')">
@@ -228,7 +228,7 @@
                 </dd>
               </div>
             </dl>
-            <p class="mt-3 text-xs text-gray-500">{{ hazResult.note }}</p>
+            <p class="mt-3 text-xs text-gray-500">{{ rm('weld', `haz_note_${hazResult.noteKey}`) }}</p>
           </section>
         </div>
       </el-tab-pane>
@@ -261,8 +261,15 @@ import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import FilletWeldDiagram from '@/components/weld/FilletWeldDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('weld')
+const { optionMap } = useOptionsI18n()
+const { rm } = useResultI18n()
+
+const weldSteelGrades = computed(() => optionMap(WELD_STEEL_GRADES, 'weldSteelGrades'))
+const weldDetailCategories = computed(() => optionMap(WELD_DETAIL_CATEGORIES, 'weldDetailCategories'))
 
 const tab = ref('fillet')
 const form = reactive({

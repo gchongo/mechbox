@@ -55,8 +55,8 @@
           <p class="text-xl font-semibold text-primary">{{ result.topPick.name }}</p>
           <p class="mt-1 text-sm">{{ pr('totalScore') }} {{ result.topPick.totalScore.toFixed(1) }} · [σ] = {{ result.topPick.sigmaAllow }} MPa</p>
         </div>
-        <div v-if="result.tradeoffNote" class="mb-3 rounded bg-gray-50 p-2 text-xs dark:bg-gray-900">
-          {{ result.tradeoffNote }}
+        <div v-if="result.tradeoffNoteKey" class="mb-3 rounded bg-gray-50 p-2 text-xs dark:bg-gray-900">
+          {{ rm('materialSelection', `tradeoff_${result.tradeoffNoteKey}`) }}
         </div>
         <div v-if="calcMode === 'professional' && result.bestStrength" class="mb-3 space-y-1 text-xs text-gray-500">
           <p>{{ pr('bestStrength') }}: {{ result.bestStrength.name }} · {{ pr('bestWeight') }}: {{ result.bestWeight?.name }} · {{ pr('bestCost') }}: {{ result.bestCost?.name }}</p>
@@ -85,8 +85,10 @@ import { reactive, computed, ref } from 'vue'
 import { scoreMaterials } from '@/utils/material-selection-calc'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, pf, pr } = useCalcPage('material-selection')
+const { rm } = useResultI18n()
 
 const calcMode = ref('complete')
 

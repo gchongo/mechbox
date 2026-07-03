@@ -82,10 +82,12 @@ import { analyzeSpring, SPRING_MATERIALS } from '@/utils/spring-calc'
 import SpringDiagram from '@/components/spring/SpringDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('spring')
+const { optionMap } = useOptionsI18n()
 
-const materials = SPRING_MATERIALS
+const materials = computed(() => optionMap(SPRING_MATERIALS, 'springMaterials'))
 const form = reactive({
   calcMode: 'simple',
   material: 'oil_tempered',

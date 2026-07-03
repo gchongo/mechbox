@@ -34,7 +34,7 @@ export function analyzeSheetMetalUnfold(input) {
   const method = input.method ?? 'k_factor'
   const segments = input.segments ?? []
 
-  if (!segments.length) return { error: '至少需要一个直段', calcMode }
+  if (!segments.length) return { errorKey: 'need_one_segment', calcMode }
 
   let flatLength = 0
   const details = []

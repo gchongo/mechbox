@@ -14,8 +14,8 @@ export function calcCarbonEquivalent(composition) {
   const ce = C + Mn / 6 + (Cr + Mo + V) / 5 + (Ni + Cu) / 15
   return {
     ce: round(ce, 3),
-    weldability:
-      ce < 0.35 ? '良好' : ce < 0.45 ? '一般（需预热）' : ce < 0.6 ? '较差' : '差（高预热/后热）',
+    weldabilityKey:
+      ce < 0.35 ? 'excellent' : ce < 0.45 ? 'fair' : ce < 0.6 ? 'poor' : 'bad',
   }
 }
 
@@ -48,23 +48,23 @@ export function generateJominyCurve(ce, grainSize = 7, maxDistance = 50, step = 
 export function assessHardenability(ce, partDiameterMm, grainSize = 7) {
   const di = estimateIdealCriticalDiameter(ce, grainSize)
   const ratio = partDiameterMm / di
-  let verdict
+  let verdictKey
   let coreHRC
   if (ratio <= 0.5) {
-    verdict = '全截面可淬硬'
+    verdictKey = 'full'
     coreHRC = estimateJominyHardness(ce, partDiameterMm * 0.25, grainSize)
   } else if (ratio <= 1) {
-    verdict = '心部可能未完全淬硬'
+    verdictKey = 'core_partial'
     coreHRC = estimateJominyHardness(ce, partDiameterMm * 0.5, grainSize)
   } else {
-    verdict = '仅表层可淬硬，心部偏软'
+    verdictKey = 'surface_only'
     coreHRC = estimateJominyHardness(ce, partDiameterMm * 0.8, grainSize)
   }
   return {
     idealCriticalDiameter: di,
     partDiameter: partDiameterMm,
     ratio: round(ratio, 2),
-    verdict,
+    verdictKey,
     estimatedCoreHRC: coreHRC,
     surfaceHRC: estimateJominyHardness(ce, 0, grainSize),
   }
@@ -72,7 +72,7 @@ export function assessHardenability(ce, partDiameterMm, grainSize = 7) {
 
 /** Hollomon-Jaffe 参数与回火硬度 */
 export function calcTemperedHardness(asQuenchedHRC, temperTempC, timeHours) {
-  if (asQuenchedHRC <= 0) return { error: '淬火硬度无效' }
+  if (asQuenchedHRC <= 0) return { errorKey: 'invalid_quench_hrc' }
   const tSec = Math.max(timeHours, 0.01) * 3600
   const T = temperTempC + 273
   const pj = T * (20 + Math.log10(tSec))
@@ -114,7 +114,7 @@ export function analyzeHeatTreatment(input) {
   const temperTemp = input.temperTemp ?? 550
   const temperTime = input.temperTime ?? 2
 
-  const { ce, weldability } = calcCarbonEquivalent(comp)
+  const { ce, weldabilityKey } = calcCarbonEquivalent(comp)
   const hardenability = assessHardenability(ce, partDiameter, grainSize)
   const jominyCurve = generateJominyCurve(ce, grainSize)
   const temper = calcTemperedHardness(hardenability.surfaceHRC, temperTemp, temperTime)
@@ -123,8 +123,8 @@ export function analyzeHeatTreatment(input) {
     calcMode,
     composition: comp,
     carbonEquivalent: ce,
-    weldability,
-    hardenability: calcMode === 'simple' ? { surfaceHRC: hardenability.surfaceHRC, verdict: hardenability.verdict } : hardenability,
+    weldabilityKey,
+    hardenability: calcMode === 'simple' ? { surfaceHRC: hardenability.surfaceHRC, verdictKey: hardenability.verdictKey } : hardenability,
     jominyCurve: calcMode === 'simple' ? [] : jominyCurve,
     temper: calcMode === 'simple' ? null : temper,
   }

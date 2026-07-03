@@ -18,7 +18,7 @@
           </el-form-item>
           <el-form-item :label="pf('sectionType')">
             <el-select v-model="form.sectionType" class="w-full">
-              <el-option v-for="(s, k) in SECTION_TYPES" :key="k" :label="s.label" :value="k" />
+              <el-option v-for="(s, k) in sectionTypes" :key="k" :label="s.label" :value="k" />
             </el-select>
           </el-form-item>
           <el-form-item v-for="p in sectionParams" :key="p.key" :label="p.label">
@@ -62,7 +62,7 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-alert v-if="result.error" :title="result.error" type="error" show-icon />
+        <el-alert v-if="result.errorKey" :title="re(result.errorKey)" type="error" show-icon />
         <template v-else>
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -116,8 +116,12 @@ import { analyzeBeam, BEAM_CASES, SECTION_TYPES } from '@/utils/beam-calc'
 import BeamDiagram from '@/components/beam/BeamDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('beam')
+const { optionEntries, optionMap, ol } = useOptionsI18n()
+const { re } = useResultI18n()
 
 const form = reactive({
   calcMode: 'simple',
@@ -138,9 +142,15 @@ const form = reactive({
   loadMax: 2000,
 })
 
-const caseOptions = Object.values(BEAM_CASES)
-const sectionParams = computed(() => SECTION_TYPES[form.sectionType]?.params ?? [])
-const loadLabel = computed(() => BEAM_CASES[form.caseId]?.loadLabel ?? fc('load'))
+const caseOptions = computed(() => optionEntries(BEAM_CASES, 'beamCases'))
+const sectionTypes = computed(() => optionMap(SECTION_TYPES, 'sectionTypes'))
+const sectionParams = computed(() =>
+  (SECTION_TYPES[form.sectionType]?.params ?? []).map((p) => ({
+    ...p,
+    label: ol('sectionParams', p.key),
+  })),
+)
+const loadLabel = computed(() => ol('beamCases', form.caseId, 'loadLabel') || fc('load'))
 
 watch(
   () => form.spanLength,

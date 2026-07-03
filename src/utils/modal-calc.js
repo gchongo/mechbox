@@ -4,10 +4,10 @@
 
 /** 单自由度 k-m 系统 fn = (1/2π)√(k/m) */
 export function calcSDOFFrequency(stiffness, mass) {
-  if (!mass || !stiffness) return { error: '刚度与质量须大于 0' }
+  if (!mass || !stiffness) return { errorKey: 'stiffness_mass_zero' }
   const omega = Math.sqrt(stiffness / mass)
   const fn = omega / (2 * Math.PI)
-  return { omega, fn, period: 1 / fn }
+  return { omega, fn, period: 1 / fn, modeKey: 'sdof' }
 }
 
 /** 简支梁一阶弯曲固有频率 fn = (π/2L²)√(EI/ρA) */
@@ -26,7 +26,7 @@ export function calcSimplySupportedBeamFreq(input) {
     fn: fnCorrect,
     spanLength: L,
     inertia: I,
-    mode: '一阶弯曲（简支）',
+    modeKey: 'beam_ss',
   }
 }
 
@@ -42,19 +42,19 @@ export function calcCantileverBeamFreq(input) {
   const lambda1 = 1.875
   const fn = (lambda1 ** 2 / (2 * Math.PI * L ** 2)) * Math.sqrt((E * I) / (rho * A))
 
-  return { fn, spanLength: L, mode: '一阶弯曲（悬臂）' }
+  return { fn, spanLength: L, modeKey: 'beam_cant' }
 }
 
 /** 共振裕度：|f_excitation - fn| / fn */
 export function calcResonanceMargin(fn, excitationFreq) {
-  if (!fn || !excitationFreq) return { error: '频率须大于 0' }
+  if (!fn || !excitationFreq) return { errorKey: 'frequency_zero' }
   const delta = Math.abs(excitationFreq - fn)
   const margin = delta / fn
   const ratio = excitationFreq / fn
 
-  let assessment = '安全'
-  if (margin < 0.1) assessment = '危险 — 接近共振'
-  else if (margin < 0.2) assessment = '警告 — 裕度不足'
+  let assessmentKey = 'safe'
+  if (margin < 0.1) assessmentKey = 'danger'
+  else if (margin < 0.2) assessmentKey = 'warn'
 
   return {
     naturalFreq: fn,
@@ -62,7 +62,7 @@ export function calcResonanceMargin(fn, excitationFreq) {
     margin,
     marginPercent: margin * 100,
     frequencyRatio: ratio,
-    assessment,
+    assessmentKey,
     pass: margin >= 0.2,
   }
 }

@@ -13,7 +13,7 @@
         <el-form label-width="148px">
           <el-form-item :label="pf('material1')">
             <el-select v-model="mat1" class="w-full" @change="onMat1">
-              <el-option v-for="(m, k) in THERMAL_MATERIALS" :key="k" :label="m.label" :value="k" />
+              <el-option v-for="(m, k) in thermalMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
           <el-form-item :label="pf('length1')">
@@ -50,7 +50,7 @@
         <el-form label-width="148px">
           <el-form-item :label="pf('material2')">
             <el-select v-model="mat2" class="w-full" @change="onMat2">
-              <el-option v-for="(m, k) in THERMAL_MATERIALS" :key="k" :label="m.label" :value="k" />
+              <el-option v-for="(m, k) in thermalMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
           <el-form-item :label="pf('shaftDiameter')">
@@ -117,8 +117,12 @@ import { analyzeThermalExpansion, THERMAL_MATERIALS } from '@/utils/thermal-expa
 import ThermalExpansionDiagram from '@/components/thermal/ThermalExpansionDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const { pt, ct, pf, pr } = useCalcPage('thermal-expansion')
+const { optionMap } = useOptionsI18n()
+
+const thermalMaterials = computed(() => optionMap(THERMAL_MATERIALS, 'thermalMaterials'))
 
 const calcMode = ref('simple')
 const mat1 = ref('steel')

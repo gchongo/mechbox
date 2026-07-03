@@ -15,7 +15,7 @@
             <el-form label-width="100px">
               <el-form-item :label="pf('steelPreset')">
                 <el-select v-model="preset" class="w-full" @change="applyPreset">
-                  <el-option v-for="(p, k) in STEEL_PRESETS" :key="k" :label="p.label" :value="k" />
+                  <el-option v-for="(p, k) in steelPresets" :key="k" :label="p.label" :value="k" />
                 </el-select>
               </el-form-item>
               <el-form-item v-for="el in elements" :key="el.key" :label="el.label">
@@ -49,7 +49,7 @@
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>{{ pr('weldability') }}</dt>
-                <dd>{{ result.weldability }}</dd>
+                <dd>{{ rm('heatTreatment', `weldability_${result.weldabilityKey}`) }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>{{ pr('idealCriticalDiameter') }}</dt>
@@ -65,7 +65,7 @@
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>{{ pr('hardenabilityVerdict') }}</dt>
-                <dd>{{ result.hardenability?.verdict }}</dd>
+                <dd>{{ rm('heatTreatment', `verdict_${result.hardenability?.verdictKey}`) }}</dd>
               </div>
               <div v-if="calcMode === 'complete' || calcMode === 'professional'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>{{ pr('preheatAdvice') }}</dt>
@@ -140,8 +140,14 @@ import {
 import HeatTreatmentDiagram from '@/components/heat/HeatTreatmentDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('heat-treatment')
+const { optionMap } = useOptionsI18n()
+const { rm } = useResultI18n()
+
+const steelPresets = computed(() => optionMap(STEEL_PRESETS, 'steelPresets'))
 
 const tab = ref('hardenability')
 const calcMode = ref('complete')

@@ -67,7 +67,7 @@
             </el-form-item>
             <el-form-item :label="pf('iso1328Grade')">
               <el-select v-model="form.iso1328Grade" class="w-full">
-                <el-option v-for="g in iso1328Grades" :key="g" :label="gradeLabels[g]" :value="g" />
+                <el-option v-for="g in iso1328Grades" :key="g" :label="gradeLabel('iso1328Grades', g)" :value="g" />
               </el-select>
             </el-form-item>
             <el-form-item :label="pf('accuracyGrade')">
@@ -195,7 +195,7 @@
                 <div><dt class="text-gray-500">F_β</dt><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_beta.toFixed(1) }} μm</dd></div>
               </dl>
               <ul class="mt-2 list-inside list-disc text-xs text-gray-500">
-                <li v-for="(n, i) in isoResult.iso1328.notes" :key="i">{{ n }}</li>
+                <li v-for="(n, i) in iso1328Notes" :key="i">{{ n }}</li>
               </ul>
             </el-collapse-item>
             <el-collapse-item :title="pr('iso6336FactorsTitle')" name="factors">
@@ -244,12 +244,16 @@ import MathTex from '@/components/common/MathTex.vue'
 import { analyzeGearStrength } from '@/utils/gear-calc'
 import { analyzeGearISO6336, GEAR_MATERIALS } from '@/utils/gear-iso6336'
 import { analyzeGearAGMA, compareGearStandards } from '@/utils/gear-agma'
-import { ISO1328_GRADES, ISO1328_GRADE_LABELS } from '@/utils/iso-1328'
+import { ISO1328_GRADES } from '@/utils/iso-1328'
 import GearPairDiagram from '@/components/gear/GearPairDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, locale } = useCalcPage('gear')
+const { optionEntries, gradeLabel } = useOptionsI18n()
+const { rm } = useResultI18n()
 
 const calcMode = ref('complete')
 const mode = ref('iso6336')
@@ -265,9 +269,13 @@ watch(mode, (m) => {
   else if (m === 'compare') calcMode.value = 'professional'
   else if (m !== 'agma') calcMode.value = 'complete'
 })
-const materials = Object.values(GEAR_MATERIALS)
+const materials = computed(() => optionEntries(GEAR_MATERIALS, 'gearMaterials'))
 const iso1328Grades = ISO1328_GRADES
-const gradeLabels = ISO1328_GRADE_LABELS
+const iso1328Notes = computed(() => {
+  locale.value
+  const notes = isoResult.value.iso1328?.notes ?? []
+  return notes.map((n) => rm('iso1328', n.key, n.params))
+})
 
 const form = reactive({
   module: 2,

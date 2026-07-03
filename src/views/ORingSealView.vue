@@ -133,7 +133,7 @@
             <dd class="font-mono">{{ result.maxAllowPressure?.toFixed(1) }} MPa</dd>
           </div>
         </dl>
-        <p class="mt-4 text-xs text-gray-500">{{ result.notes }}</p>
+        <p class="mt-4 text-xs text-gray-500">{{ rm('oRing', `notes_${result.notesKey}`) }}</p>
       </section>
     </div>
   </div>
@@ -145,10 +145,14 @@ import { analyzeORingSeal, recommendGroove, ORING_SECTIONS, ORING_MATERIALS } fr
 import ORingSealDiagram from '@/components/oring/ORingSealDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('o-ring')
+const { optionMap } = useOptionsI18n()
+const { rm } = useResultI18n()
 
-const materials = ORING_MATERIALS
+const materials = computed(() => optionMap(ORING_MATERIALS, 'oringMaterials'))
 const form = reactive({
   calcMode: 'simple',
   crossSection: 3.53,

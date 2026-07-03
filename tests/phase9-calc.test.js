@@ -798,6 +798,6 @@ describe('material-selection modes', () => {
   it('professional tradeoff picks', () => {
     const r = scoreMaterials({ calcMode: 'professional', minSigmaAllow: 100, maxCostIndex: 10 })
     expect(r.bestStrength).toBeTruthy()
-    expect(r.tradeoffNote).toBeTruthy()
+    expect(r.tradeoffNoteKey).toBeTruthy()
   })
 })

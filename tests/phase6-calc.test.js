@@ -77,7 +77,7 @@ describe('vdi2230-wizard', () => {
 
   it('runs all R steps', () => {
     const r = runVdi2230Wizard(baseInput)
-    expect(r.error).toBeUndefined()
+    expect(r.errorKey).toBeUndefined()
     expect(r.steps).toHaveLength(14)
     expect(r.steps[0].id).toBe('R0')
     expect(r.steps[13].id).toBe('R13')

@@ -255,16 +255,16 @@ export function analyzeBoltPreload(input) {
   const simpleTorque = calcTighteningTorqueSimple(preloadTightening, d, input.frictionCoeff ?? 0.2)
   const vdiTorque = calcTighteningTorqueVDI2230(preloadTightening, vdiParams)
 
-  let compareLabel = 'VDI 2230 扭矩'
+  let compareLabelKey = 'vdi'
   let compareTorque = vdiTorque
   if (calcMode === 'simple') {
-    compareLabel = 'VDI 2230 扭矩'
+    compareLabelKey = 'vdi'
     compareTorque = vdiTorque
   } else if (calcMode === 'vdi2230') {
-    compareLabel = '简化公式扭矩'
+    compareLabelKey = 'simple'
     compareTorque = simpleTorque
   } else {
-    compareLabel = '简化公式扭矩'
+    compareLabelKey = 'simple'
     compareTorque = simpleTorque
   }
 
@@ -287,7 +287,7 @@ export function analyzeBoltPreload(input) {
     breakdown,
     joint,
     compareTorque,
-    compareLabel,
+    compareLabelKey,
   }
 }
 

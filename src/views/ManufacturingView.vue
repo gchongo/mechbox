@@ -19,7 +19,7 @@
               </el-form-item>
               <el-form-item :label="pf('toleranceGrade')">
                 <el-select v-model="mach.toleranceGrade" class="w-full">
-                  <el-option v-for="(g, k) in TOLERANCE_GRADES" :key="k" :label="g.label" :value="k" />
+                  <el-option v-for="(g, k) in toleranceGrades" :key="k" :label="g.label" :value="k" />
                 </el-select>
               </el-form-item>
               <el-form-item v-if="mach.calcMode !== 'simple'" :label="pf('operations')">
@@ -75,7 +75,9 @@
               </div>
             </dl>
             <el-table :data="machResult.details" size="small" border class="mt-4">
-              <el-table-column prop="operation" :label="fc('operation')" />
+              <el-table-column :label="fc('operation')">
+                <template #default="{ row }">{{ ol('machiningOps', row.operation) }}</template>
+              </el-table-column>
               <el-table-column :label="pr('radialAllowance')">
                 <template #default="{ row }">{{ row.radialAllowance?.toFixed(2) }}</template>
               </el-table-column>
@@ -92,12 +94,12 @@
             <el-form label-width="120px">
               <el-form-item :label="pfCast('castMaterial')">
                 <el-select v-model="cast.material" class="w-full">
-                  <el-option v-for="(m, k) in CAST_MATERIALS" :key="k" :label="m.label" :value="k" />
+                  <el-option v-for="(m, k) in castMaterials" :key="k" :label="m.label" :value="k" />
                 </el-select>
               </el-form-item>
               <el-form-item :label="pfCast('surfaceType')">
                 <el-select v-model="cast.surfaceType" class="w-full">
-                  <el-option v-for="(s, k) in SURFACE_TYPES" :key="k" :label="s.label" :value="k" />
+                  <el-option v-for="(s, k) in surfaceTypes" :key="k" :label="s.label" :value="k" />
                 </el-select>
               </el-form-item>
               <el-form-item :label="pfCast('draftDepth')">
@@ -133,7 +135,7 @@
                 <dt>{{ prCast('totalWidthIncrease') }}</dt><dd class="font-mono">{{ castResult.totalWidthIncrease?.toFixed(2) }} mm</dd>
               </div>
             </dl>
-            <p class="mt-3 text-xs text-gray-500">{{ castResult.note }}</p>
+            <p class="mt-3 text-xs text-gray-500">{{ rm('casting', `note_${castResult.noteKey}`) }}</p>
             <el-tag v-if="cast.actualDraftAngle > 0" class="mt-3" :type="verifyResult.pass ? 'success' : 'danger'">
               {{ prCast('actualAngleLabel') }} {{ cast.actualDraftAngle }}° — {{ verifyResult.pass ? fc('satisfy') : fc('insufficient') }}
             </el-tag>
@@ -152,9 +154,17 @@ import MachiningAllowanceDiagram from '@/components/manufacturing/MachiningAllow
 import CastingDraftDiagram from '@/components/manufacturing/CastingDraftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('manufacturing')
 const { pf: pfCast, pr: prCast } = useCalcPage('manufacturing-cast')
+const { optionMap, ol } = useOptionsI18n()
+const { rm } = useResultI18n()
+
+const toleranceGrades = computed(() => optionMap(TOLERANCE_GRADES, 'toleranceGrades'))
+const castMaterials = computed(() => optionMap(CAST_MATERIALS, 'castMaterials'))
+const surfaceTypes = computed(() => optionMap(SURFACE_TYPES, 'surfaceTypes'))
 
 const tab = ref('machining')
 
