@@ -169,6 +169,8 @@ export const contentZh = {
       铝合金: '铝合金',
       铜合金: '铜合金',
       钛合金: '钛合金',
+      模具钢: '模具钢',
+      高温合金: '高温合金',
     },
   },
   tutorial: {
@@ -380,6 +382,8 @@ export const contentEn = {
       铝合金: 'Aluminum alloy',
       铜合金: 'Copper alloy',
       钛合金: 'Titanium alloy',
+      模具钢: 'Mold steel',
+      高温合金: 'Superalloy',
     },
   },
   tutorial: {
