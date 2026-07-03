@@ -2,12 +2,12 @@
   <div class="oring-diagram">
     <header class="oring-diagram__head">
       <h3 class="oring-diagram__title">沟槽截面示意图</h3>
-      <p class="oring-diagram__hint">径向静密封沟槽 — 对照标注理解各输入尺寸</p>
+      <p class="oring-diagram__hint">对照下图理解各输入项在沟槽中的位置与含义</p>
     </header>
 
     <svg
       class="oring-diagram__svg"
-      viewBox="0 0 720 420"
+      viewBox="0 0 540 300"
       role="img"
       aria-label="O 型圈沟槽参数示意图"
     >
@@ -20,11 +20,11 @@
         </marker>
       </defs>
 
-      <!-- 缸孔 / 壳体 -->
-      <rect x="56" y="48" width="420" height="280" rx="4" class="housing" />
-      <text x="68" y="72" class="label label--muted">壳体 / 孔壁</text>
+      <!-- 壳体 -->
+      <rect x="32" y="36" width="340" height="220" rx="4" class="housing" />
+      <text x="44" y="58" class="txt-muted" font-size="16">壳体 / 孔壁</text>
 
-      <!-- 沟槽腔 -->
+      <!-- 沟槽 -->
       <rect
         :x="grooveLeft"
         :y="grooveTop"
@@ -33,8 +33,6 @@
         rx="2"
         class="groove-cavity"
       />
-
-      <!-- 沟槽底面 -->
       <line
         :x1="grooveLeft"
         :y1="grooveTop + grooveHpx"
@@ -43,14 +41,8 @@
         class="groove-floor"
       />
 
-      <!-- O 型圈（压缩后略扁） -->
-      <ellipse
-        :cx="oringCx"
-        :cy="oringCy"
-        :rx="oringRx"
-        :ry="oringRy"
-        class="oring"
-      />
+      <!-- O 型圈 -->
+      <ellipse :cx="oringCx" :cy="oringCy" :rx="oringRx" :ry="oringRy" class="oring" />
 
       <!-- 挤出间隙 -->
       <template v-if="showExtrusion && extrusionGapPx > 2">
@@ -61,98 +53,129 @@
           :y2="oringCy"
           class="gap-line"
         />
-        <text :x="grooveLeft + grooveWpx + extrusionGapPx + 4" :y="oringCy + 4" class="label label--pro">
+        <text
+          :x="grooveLeft + grooveWpx + extrusionGapPx + 6"
+          :y="oringCy + 6"
+          class="txt-pro"
+          font-size="17"
+        >
           挤出间隙
         </text>
       </template>
 
-      <!-- 压力方向 -->
+      <!-- 压力 -->
       <template v-if="pressure > 0">
-        <line x1="24" y1="150" x2="44" y2="150" marker-end="url(#oring-arrow-blue)" class="pressure-arrow" />
-        <text x="8" y="142" class="label label--primary">P</text>
+        <line x1="16" y1="140" x2="36" y2="140" marker-end="url(#oring-arrow-blue)" class="pressure-arrow" />
+        <text x="8" y="132" class="txt-primary" font-size="20" font-weight="700">P</text>
       </template>
 
-      <!-- d_cs 截面直径 -->
+      <!-- d_cs -->
       <line
         :x1="oringCx - oringRx"
-        :y1="oringCy - oringRy - 10"
+        :y1="oringCy - oringRy - 12"
         :x2="oringCx + oringRx"
-        :y2="oringCy - oringRy - 10"
+        :y2="oringCy - oringRy - 12"
         marker-start="url(#oring-arrow)"
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="oringCx - 28" :y="oringCy - oringRy - 14" class="label">d_cs {{ crossSection }}</text>
-      <text :x="oringCx - 18" :y="oringCy - oringRy - 2" class="label-sub">mm</text>
+      <text :x="oringCx - 42" :y="oringCy - oringRy - 18" class="txt" font-size="19" font-weight="600">
+        d_cs = {{ crossSection }} mm
+      </text>
 
-      <!-- 沟槽宽度 w -->
+      <!-- w 沟槽宽 -->
       <line
         :x1="grooveLeft"
-        :y1="grooveTop - 14"
+        :y1="grooveTop - 16"
         :x2="grooveLeft + grooveWpx"
-        :y2="grooveTop - 14"
+        :y2="grooveTop - 16"
         marker-start="url(#oring-arrow)"
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="grooveLeft + grooveWpx / 2 - 36" :y="grooveTop - 18" class="label">w 沟槽宽 {{ grooveWidth }}</text>
+      <text :x="grooveLeft + grooveWpx / 2 - 48" :y="grooveTop - 22" class="txt" font-size="19" font-weight="600">
+        w = {{ grooveWidth }} mm
+      </text>
 
-      <!-- 沟槽深度 h -->
+      <!-- h 沟槽深 -->
       <line
-        :x1="grooveLeft - 14"
+        :x1="grooveLeft - 16"
         :y1="grooveTop"
-        :x2="grooveLeft - 14"
+        :x2="grooveLeft - 16"
         :y2="grooveTop + grooveHpx"
         marker-start="url(#oring-arrow)"
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="grooveLeft - 52" :y="grooveTop + grooveHpx / 2 + 4" class="label">h</text>
-      <text :x="grooveLeft - 58" :y="grooveTop + grooveHpx / 2 + 16" class="label-sub">{{ grooveDepthLabel }} mm</text>
+      <text :x="grooveLeft - 72" :y="grooveTop + grooveHpx / 2 - 4" class="txt" font-size="19" font-weight="600">h</text>
+      <text :x="grooveLeft - 88" :y="grooveTop + grooveHpx / 2 + 16" class="txt-sub" font-size="17">
+        {{ grooveDepthLabel }} mm
+      </text>
 
-      <!-- 压缩量 -->
+      <!-- 压缩 -->
       <template v-if="compression > 0">
         <line
-          :x1="oringCx + oringRx + 8"
+          :x1="oringCx + oringRx + 10"
           :y1="oringCy - oringRy"
-          :x2="oringCx + oringRx + 8"
+          :x2="oringCx + oringRx + 10"
           :y2="oringCy - oringRy + compressPx"
           class="compress-line"
         />
-        <text :x="oringCx + oringRx + 12" :y="oringCy - oringRy + compressPx / 2 + 4" class="label label--compress">
+        <text
+          :x="oringCx + oringRx + 14"
+          :y="oringCy - oringRy + compressPx / 2 + 6"
+          class="txt-primary"
+          font-size="18"
+          font-weight="600"
+        >
           压缩 {{ compressionPercent?.toFixed(0) }}%
         </text>
       </template>
 
-      <!-- 沟槽底径 d_g -->
+      <!-- d_g -->
       <line
         :x1="grooveLeft + grooveWpx / 2"
-        :y1="grooveTop + grooveHpx + 8"
+        :y1="grooveTop + grooveHpx + 10"
         :x2="grooveLeft + grooveWpx / 2"
-        :y2="360"
+        y2="268"
         class="dim-line dim-line--dg"
       />
-      <text :x="grooveLeft + grooveWpx / 2 - 52" y="382" class="label label--primary">d_g 沟槽底径</text>
-      <text :x="grooveLeft + grooveWpx / 2 - 28" y="402" class="label-sub">{{ grooveDiameter }} mm</text>
+      <text
+        :x="grooveLeft + grooveWpx / 2 - 58"
+        y="284"
+        class="txt-primary"
+        font-size="19"
+        font-weight="700"
+      >
+        d_g = {{ grooveDiameter }} mm
+      </text>
+      <text :x="grooveLeft + grooveWpx / 2 - 36" y="298" class="txt-sub" font-size="16">沟槽底径</text>
 
-      <!-- 孔径示意 -->
+      <!-- 孔径 -->
       <template v-if="boreDiameter">
-        <path d="M 520 48 L 520 328" class="bore-line" />
-        <text x="528" y="190" class="label label--muted">孔径 Ø{{ boreDiameter }}</text>
+        <line x1="388" y1="36" x2="388" y2="256" class="bore-line" />
+        <text x="396" y="150" class="txt-muted" font-size="17">孔径 Ø{{ boreDiameter }}</text>
       </template>
 
-      <!-- 放大：自由截面 -->
-      <g transform="translate(520, 260)">
-        <rect x="0" y="0" width="160" height="100" rx="8" class="inset-box" />
-        <text x="12" y="22" class="label-inset-title">自由截面</text>
-        <circle cx="56" cy="58" :r="insetR" class="oring-inset" />
-        <line :x1="56 - insetR" y1="82" :x2="56 + insetR" y2="82" marker-start="url(#oring-arrow)" marker-end="url(#oring-arrow)" class="dim-line" />
-        <text x="32" y="96" class="label-inset">d_cs = {{ crossSection }} mm</text>
+      <!-- 自由截面放大 -->
+      <g transform="translate(388, 168)">
+        <rect x="0" y="0" width="132" height="96" rx="6" class="inset-box" />
+        <text x="10" y="22" class="txt-muted" font-size="16">自由截面</text>
+        <circle cx="48" cy="54" :r="insetR" class="oring-inset" />
+        <line
+          :x1="48 - insetR"
+          y1="76"
+          :x2="48 + insetR"
+          y2="76"
+          marker-start="url(#oring-arrow)"
+          marker-end="url(#oring-arrow)"
+          class="dim-line"
+        />
+        <text x="14" y="92" class="txt" font-size="17" font-weight="600">d_cs {{ crossSection }} mm</text>
       </g>
 
-      <!-- 专业：安装拉伸 -->
       <template v-if="showPro && stretchPercent > 0">
-        <text x="56" y="408" class="label label--pro">安装拉伸 {{ stretchPercent?.toFixed(1) }}%</text>
+        <text x="36" y="292" class="txt-pro" font-size="17">安装拉伸 {{ stretchPercent?.toFixed(1) }}%</text>
       </template>
     </svg>
 
@@ -185,24 +208,24 @@ const props = defineProps({
   boreDiameter: { type: Number, default: 0 },
 })
 
-const PX_PER_MM = 9
+const PX_PER_MM = 8
 
-const grooveWpx = computed(() => Math.min(180, Math.max(56, props.grooveWidth * PX_PER_MM)))
-const grooveHpx = computed(() => Math.min(120, Math.max(40, props.grooveDepth * PX_PER_MM)))
-const oringRx = computed(() => Math.max(16, (props.crossSection * PX_PER_MM) / 2))
+const grooveWpx = computed(() => Math.min(140, Math.max(48, props.grooveWidth * PX_PER_MM)))
+const grooveHpx = computed(() => Math.min(90, Math.max(32, props.grooveDepth * PX_PER_MM)))
+const oringRx = computed(() => Math.max(14, (props.crossSection * PX_PER_MM) / 2))
 const oringRy = computed(() => {
   const compressRatio = 1 - (props.compressionPercent ?? 20) / 200
-  return Math.max(12, oringRx.value * compressRatio)
+  return Math.max(10, oringRx.value * compressRatio)
 })
 const compressPx = computed(() => oringRx.value - oringRy.value)
-const extrusionGapPx = computed(() => (props.extrusionGap ?? 0.15) * PX_PER_MM * 2.5)
+const extrusionGapPx = computed(() => (props.extrusionGap ?? 0.15) * PX_PER_MM * 2)
 
-const grooveLeft = computed(() => 220)
-const grooveTop = computed(() => 130)
-const oringCx = computed(() => grooveLeft.value + grooveWpx.value * 0.45)
+const grooveLeft = computed(() => 168)
+const grooveTop = computed(() => 108)
+const oringCx = computed(() => grooveLeft.value + grooveWpx.value * 0.42)
 const oringCy = computed(() => grooveTop.value + grooveHpx.value - oringRy.value - 2)
 
-const insetR = computed(() => Math.min(28, Math.max(14, props.crossSection * PX_PER_MM * 0.38)))
+const insetR = computed(() => Math.min(22, Math.max(12, props.crossSection * PX_PER_MM * 0.38)))
 const grooveDepthLabel = computed(() => props.grooveDepth?.toFixed(2) ?? '—')
 
 const showExtrusion = computed(() => props.calcMode !== 'simple')
@@ -218,7 +241,6 @@ const legendItems = computed(() => {
   if (props.calcMode !== 'simple') {
     base.push(
       { key: 'gap', name: '挤出间隙', desc: '动压密封时沟槽与对偶面之间的间隙', tone: 'complete' },
-      { key: 'fill', name: '填充率', desc: 'O 型圈截面积占沟槽截面积 65–85%', tone: 'complete' },
     )
   }
   if (showPro.value) {
@@ -233,31 +255,29 @@ const legendItems = computed(() => {
 
 <style scoped>
 .oring-diagram {
-  @apply rounded-lg border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-600 dark:bg-gray-900/40;
+  @apply mt-5 rounded-lg border border-gray-200 bg-gray-50/80 p-3 dark:border-gray-600 dark:bg-gray-900/40;
 }
 
 .oring-diagram__head {
-  @apply mb-3;
+  @apply mb-2;
 }
 
 .oring-diagram__title {
-  @apply text-base font-semibold text-gray-800 dark:text-gray-100;
+  @apply text-sm font-semibold text-gray-800 dark:text-gray-100;
 }
 
 .oring-diagram__hint {
-  @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
+  @apply mt-0.5 text-xs text-gray-500 dark:text-gray-400;
 }
 
 .oring-diagram__svg {
-  @apply mx-auto block w-full;
-  min-height: 280px;
-  max-height: min(520px, 70vh);
+  @apply mx-auto block w-full max-w-lg;
 }
 
 .oring-diagram__svg .housing {
   fill: #e2e8f0;
   stroke: #94a3b8;
-  stroke-width: 1;
+  stroke-width: 1.5;
 }
 
 .dark .oring-diagram__svg .housing {
@@ -268,7 +288,7 @@ const legendItems = computed(() => {
 .oring-diagram__svg .groove-cavity {
   fill: #f8fafc;
   stroke: #64748b;
-  stroke-width: 1.2;
+  stroke-width: 1.5;
 }
 
 .dark .oring-diagram__svg .groove-cavity {
@@ -277,13 +297,13 @@ const legendItems = computed(() => {
 
 .oring-diagram__svg .groove-floor {
   stroke: #475569;
-  stroke-width: 2;
+  stroke-width: 2.5;
 }
 
 .oring-diagram__svg .oring {
   fill: #1e293b;
   stroke: #0f172a;
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
 
 .dark .oring-diagram__svg .oring {
@@ -294,78 +314,73 @@ const legendItems = computed(() => {
 .oring-diagram__svg .oring-inset {
   fill: #334155;
   stroke: #64748b;
-  stroke-width: 1;
+  stroke-width: 1.5;
 }
 
 .oring-diagram__svg .gap-line {
   stroke: #f59e0b;
-  stroke-width: 2;
+  stroke-width: 2.5;
   stroke-dasharray: 4 3;
 }
 
 .oring-diagram__svg .compress-line {
   stroke: #409eff;
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
 
 .oring-diagram__svg .pressure-arrow {
   stroke: #409eff;
-  stroke-width: 2;
+  stroke-width: 2.5;
 }
 
 .oring-diagram__svg .dim-line {
   stroke: #64748b;
-  stroke-width: 1.2;
+  stroke-width: 2;
 }
 
 .oring-diagram__svg .dim-line--dg {
-  stroke-dasharray: 4 3;
+  stroke-dasharray: 5 4;
 }
 
 .oring-diagram__svg .bore-line {
   stroke: #94a3b8;
-  stroke-width: 1.5;
+  stroke-width: 2;
   stroke-dasharray: 6 4;
 }
 
-.oring-diagram__svg .label {
-  font-size: 14px;
-  fill: #475569;
-  font-family: system-ui, sans-serif;
+.oring-diagram__svg .txt {
+  fill: #334155;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-.dark .oring-diagram__svg .label {
-  fill: #cbd5e1;
+.dark .oring-diagram__svg .txt {
+  fill: #e2e8f0;
 }
 
-.oring-diagram__svg .label--primary {
+.oring-diagram__svg .txt-primary {
   fill: #409eff;
-  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-.oring-diagram__svg .label--compress {
-  fill: #409eff;
-  font-size: 13px;
+.oring-diagram__svg .txt-sub {
+  fill: #64748b;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-.oring-diagram__svg .label--pro {
+.oring-diagram__svg .txt-muted {
+  fill: #94a3b8;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.oring-diagram__svg .txt-pro {
   fill: #8b5cf6;
-  font-size: 13px;
-}
-
-.oring-diagram__svg .label--muted {
-  fill: #94a3b8;
-  font-size: 13px;
-}
-
-.oring-diagram__svg .label-sub {
-  font-size: 12px;
-  fill: #94a3b8;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .oring-diagram__svg .inset-box {
   fill: white;
-  stroke: #e2e8f0;
+  stroke: #cbd5e1;
+  stroke-width: 1.5;
 }
 
 .dark .oring-diagram__svg .inset-box {
@@ -373,18 +388,8 @@ const legendItems = computed(() => {
   stroke: #475569;
 }
 
-.oring-diagram__svg .label-inset-title {
-  font-size: 12px;
-  fill: #94a3b8;
-}
-
-.oring-diagram__svg .label-inset {
-  font-size: 13px;
-  fill: #64748b;
-}
-
 .oring-diagram__legend {
-  @apply mt-4 grid gap-2 border-t border-gray-200 pt-4 text-sm dark:border-gray-600 sm:grid-cols-2 lg:grid-cols-3;
+  @apply mt-3 grid gap-1.5 border-t border-gray-200 pt-3 text-xs dark:border-gray-600 sm:grid-cols-2;
 }
 
 .oring-diagram__legend-item {

@@ -21,22 +21,6 @@
       </div>
     </section>
 
-    <section class="card-panel mb-6">
-      <ORingSealDiagram
-        :calc-mode="form.calcMode"
-        :cross-section="form.crossSection"
-        :groove-diameter="form.grooveDiameter"
-        :groove-width="form.grooveWidth"
-        :groove-depth="result.grooveDepth ?? 0"
-        :compression="result.compression ?? 0"
-        :compression-percent="result.compressionPercent ?? form.compressionPercent"
-        :extrusion-gap="form.extrusionGap"
-        :stretch-percent="form.stretchPercent"
-        :pressure="form.pressure"
-        :bore-diameter="boreForRec"
-      />
-    </section>
-
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">输入参数</h2>
@@ -88,6 +72,20 @@
             <el-button class="ml-2" size="small" @click="applyRecommend">应用推荐沟槽</el-button>
           </el-form-item>
         </el-form>
+
+        <ORingSealDiagram
+          :calc-mode="form.calcMode"
+          :cross-section="form.crossSection"
+          :groove-diameter="form.grooveDiameter"
+          :groove-width="form.grooveWidth"
+          :groove-depth="result.grooveDepth ?? 0"
+          :compression="result.compression ?? 0"
+          :compression-percent="result.compressionPercent ?? form.compressionPercent"
+          :extrusion-gap="form.extrusionGap"
+          :stretch-percent="form.stretchPercent"
+          :pressure="form.pressure"
+          :bore-diameter="boreForRec"
+        />
       </section>
 
       <section class="card-panel">
