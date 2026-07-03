@@ -194,6 +194,7 @@ export function analyzeFit(nominalMm, holeCode, shaftCode, calcModeOrOpts = 'sim
     result.holeIT = hole.tolerance
     result.shaftIT = shaft.tolerance
     result.fitQuality = result.toleranceSpan > 0 ? round(result.meanClearance / result.toleranceSpan, 2) : 0
+    result.pass = evaluateFitGeometry(minClearance, maxClearance)
   }
 
   if (calcMode === 'professional') {
@@ -206,14 +207,9 @@ export function analyzeFit(nominalMm, holeCode, shaftCode, calcModeOrOpts = 'sim
     result.thermalShift = round(clearanceShift, 5)
     result.minClearanceHot = round(minClearance + clearanceShift, 5)
     result.maxClearanceHot = round(maxClearance + clearanceShift, 5)
-    result.pass = fitType !== 'interference' || minClearance < 0
-    if (deltaT !== 0 && result.minClearanceHot < 0 && fitType === 'clearance') {
-      result.thermalRiskKey = 'thermal_interference_risk'
-      result.pass = false
-    } else {
-      result.thermalRiskKey = null
-      result.pass = true
-    }
+    const thermal = evaluateFitThermal(fitType, result.minClearanceHot, result.maxClearanceHot, deltaT)
+    result.thermalRiskKey = thermal.thermalRiskKey
+    result.pass = result.pass !== false && thermal.pass
   }
 
   return result
@@ -223,6 +219,34 @@ function classifyFit(minC, maxC) {
   if (minC >= 0) return 'clearance'
   if (maxC <= 0) return 'interference'
   return 'transition'
+}
+
+/** 几何配合是否自洽（与 fitType 分类一致） */
+export function evaluateFitGeometry(minClearance, maxClearance) {
+  const fitType = classifyFit(minClearance, maxClearance)
+  if (fitType === 'clearance') return minClearance >= 0
+  if (fitType === 'interference') return maxClearance <= 0
+  return minClearance <= 0 && maxClearance >= 0
+}
+
+/** 热膨胀后配合是否仍满足设计意图 */
+export function evaluateFitThermal(fitType, minClearanceHot, maxClearanceHot, deltaT = 0) {
+  if (!deltaT) {
+    return { pass: true, thermalRiskKey: null }
+  }
+  if (fitType === 'clearance' && minClearanceHot < 0) {
+    return { pass: false, thermalRiskKey: 'thermal_interference_risk' }
+  }
+  if (fitType === 'interference' && maxClearanceHot > 0) {
+    return { pass: false, thermalRiskKey: 'thermal_clearance_risk' }
+  }
+  if (fitType === 'transition' && minClearanceHot < 0 && maxClearanceHot < 0) {
+    return { pass: false, thermalRiskKey: 'thermal_interference_risk' }
+  }
+  if (fitType === 'transition' && minClearanceHot > 0 && maxClearanceHot > 0) {
+    return { pass: false, thermalRiskKey: 'thermal_clearance_risk' }
+  }
+  return { pass: true, thermalRiskKey: null }
 }
 
 const FIT_TYPE_LABELS = {

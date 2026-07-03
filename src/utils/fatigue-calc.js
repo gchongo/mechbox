@@ -7,6 +7,7 @@ export const SN_MATERIALS = {
   steel_45: {
     label: '45 钢（调质）',
     uts: 600,
+    yieldMin: 355,
     enduranceLimit: 280,
     sf: 900,
     b: -0.085,
@@ -15,6 +16,7 @@ export const SN_MATERIALS = {
   steel_40cr: {
     label: '40Cr（调质）',
     uts: 785,
+    yieldMin: 540,
     enduranceLimit: 350,
     sf: 1100,
     b: -0.09,
@@ -23,6 +25,7 @@ export const SN_MATERIALS = {
   spring_steel: {
     label: '弹簧钢',
     uts: 1600,
+    yieldMin: 1400,
     enduranceLimit: 450,
     sf: 2000,
     b: -0.1,
@@ -31,6 +34,7 @@ export const SN_MATERIALS = {
   aluminum_6061: {
     label: '6061-T6 铝合金',
     uts: 310,
+    yieldMin: 276,
     enduranceLimit: 97,
     sf: 450,
     b: -0.102,
@@ -39,6 +43,7 @@ export const SN_MATERIALS = {
   cast_iron: {
     label: '灰铸铁',
     uts: 250,
+    yieldMin: 200,
     enduranceLimit: 100,
     sf: 400,
     b: -0.08,
@@ -137,11 +142,12 @@ export function analyzeFatigue(input) {
   if (calcMode === 'professional' && input.meanStress != null) {
     const method = input.meanStressMethod ?? 'goodman'
     const uts = m.uts
-    const Se = m.enduranceLimit * (input.surfaceFactor ?? 1) * (input.sizeFactor ?? 1)
-    if (method === 'soderberg') {
-      stressAmplitude = stressAmplitude / (1 - (input.meanStress / (uts || 1)))
+    const yieldStrength = input.yieldStrength ?? m.yieldMin ?? uts * 0.6
+    const meanDenom = method === 'soderberg' ? yieldStrength : uts
+    if (meanDenom > 0 && input.meanStress < meanDenom) {
+      stressAmplitude = stressAmplitude / (1 - input.meanStress / meanDenom)
     } else {
-      stressAmplitude = stressAmplitude / (1 - (input.meanStress / (uts || 1)))
+      stressAmplitude = Infinity
     }
     stressAmplitude = Math.max(stressAmplitude, 0)
   }

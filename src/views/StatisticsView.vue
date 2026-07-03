@@ -148,23 +148,39 @@
       <section id="sigma" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionSigma') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('targetTolerance')">
-            <el-input-number v-model="targetTolerance" :precision="3" :step="0.01" />
+          <el-form-item :label="pf('specLower')">
+            <el-input-number v-model="specLower" :precision="4" :step="0.01" class="w-full" />
           </el-form-item>
-          <el-form-item :label="pf('actualSigma')">
-            <el-input-number v-model="actualSigma" :precision="4" :step="0.001" />
+          <el-form-item :label="pf('specUpper')">
+            <el-input-number v-model="specUpper" :precision="4" :step="0.01" class="w-full" />
+          </el-form-item>
+          <el-form-item :label="pf('processMean')">
+            <el-input-number v-model="processMean" :precision="4" :step="0.01" class="w-full" />
+            <el-button class="mt-2" size="small" @click="applySampleToProcess">
+              {{ pt('applySampleStats') }}
+            </el-button>
+          </el-form-item>
+          <el-form-item :label="pf('processSigma')">
+            <el-input-number v-model="processSigma" :precision="4" :step="0.001" class="w-full" />
           </el-form-item>
           <el-form-item :label="pf('sigmaLevel')">
             <MathTex :expr="sigmaLevelLatex" />
           </el-form-item>
           <el-form-item :label="pf('passRate')">
-            <span class="font-mono text-lg text-success">{{ passRate }}</span>
+            <span class="font-mono text-lg" :class="capabilityPassRateOk ? 'text-success' : 'text-error'">
+              {{ passRateDisplay }}
+            </span>
           </el-form-item>
           <el-form-item :label="pf('cValue')">
             <MathTex :expr="cValueLatex" />
           </el-form-item>
           <el-form-item :label="pf('cpk')">
-            <span class="font-mono text-lg">{{ cpkValue }}</span>
+            <span class="font-mono text-lg" :class="capabilityCpkOk ? 'text-success' : 'text-warning'">
+              {{ cpkDisplay }}
+            </span>
+          </el-form-item>
+          <el-form-item :label="pf('dppm')">
+            <span class="font-mono">{{ capability?.dppm ?? '—' }}</span>
           </el-form-item>
         </el-form>
       </section>
@@ -335,6 +351,7 @@ import DistributionChart from '@/components/charts/DistributionChart.vue'
 import ControlChart from '@/components/charts/ControlChart.vue'
 import MathTex from '@/components/common/MathTex.vue'
 import { calcSkewness, calcKurtosis, weightedRss } from '@/utils/distribution-pdf'
+import { calcProcessCapability } from '@/utils/process-capability'
 import {
   parseNumberList,
   oneSampleTTest,
@@ -349,9 +366,6 @@ import {
   sigmaToTolerance,
   rssMethod,
   modifiedRssMethod,
-  calculateSigmaLevel,
-  calculatePassRate,
-  calculateCpk,
 } from '@/utils/size-chain'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -372,8 +386,10 @@ const convertInput = ref(0.25)
 const dataInput = ref('10,12,15,18,20')
 const toleranceList = ref('0.06,0.05,0.04')
 const factorList = ref('1,1,1')
-const targetTolerance = ref(0.25)
-const actualSigma = ref(0.042)
+const specLower = ref(9.875)
+const specUpper = ref(10.125)
+const processMean = ref(10)
+const processSigma = ref(0.042)
 const chartTolerance = ref(0.25)
 const modRssDistribution = ref('skewed')
 const controlData = ref('10.2,10.5,10.1,10.8,10.3,10.4,10.6,10.2')
@@ -424,22 +440,47 @@ const convertLatex = computed(() => {
 const sigmaLevelLatex = computed(() => {
   locale.value
   const sub = locale.value === 'en' ? 'level' : '水平'
-  if (!actualSigma.value) return `\\sigma_{\\text{${sub}}} = \\text{—}`
-  const level = calculateSigmaLevel(targetTolerance.value, actualSigma.value).toFixed(2)
-  return `\\sigma_{\\text{${sub}}} = ${level}\\sigma`
+  if (!capability.value) return `\\sigma_{\\text{${sub}}} = \\text{—}`
+  return `\\sigma_{\\text{${sub}}} = ${capability.value.sigmaLevel.toFixed(2)}\\sigma`
 })
 
 const cValueLatex = computed(() => {
-  if (!actualSigma.value) return 'C = \\text{—}'
-  const c = (targetTolerance.value / (6 * actualSigma.value)).toFixed(2)
-  return `C = ${c}`
+  if (!capability.value) return 'C = \\text{—}'
+  return `C = ${capability.value.c.toFixed(2)}`
 })
 
-const cpkValue = computed(() => {
-  if (!actualSigma.value) return '—'
-  const mean = targetTolerance.value / 2
-  return calculateCpk(targetTolerance.value, 0, mean, actualSigma.value).toFixed(2)
+const capability = computed(() => {
+  if (!processSigma.value || specUpper.value <= specLower.value) return null
+  return calcProcessCapability({
+    lsl: specLower.value,
+    usl: specUpper.value,
+    mean: processMean.value,
+    sigma: processSigma.value,
+  })
 })
+
+const passRateDisplay = computed(() => {
+  if (!capability.value) return '—'
+  return `${(capability.value.passRate * 100).toFixed(2)}%`
+})
+
+const cpkDisplay = computed(() => {
+  if (!capability.value) return '—'
+  return capability.value.cpk.toFixed(2)
+})
+
+const capabilityPassRateOk = computed(() => capability.value && capability.value.passRate >= 0.9973)
+
+const capabilityCpkOk = computed(() => capability.value && capability.value.cpk > 1.33)
+
+function applySampleToProcess() {
+  const nums = parseNumbers(dataInput.value)
+  if (!nums.length) return
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length
+  const variance = nums.reduce((s, x) => s + (x - mean) ** 2, 0) / nums.length
+  processMean.value = Number(mean.toFixed(4))
+  processSigma.value = Number(Math.sqrt(variance).toFixed(4))
+}
 
 const stats = computed(() => {
   const nums = parseNumbers(dataInput.value)
@@ -521,12 +562,6 @@ const anovaResult = computed(() => {
 const corrResult = computed(() =>
   pearsonCorrelation(parseNumberList(corrX.value), parseNumberList(corrY.value)),
 )
-
-const passRate = computed(() => {
-  if (!actualSigma.value) return '-'
-  const level = calculateSigmaLevel(targetTolerance.value, actualSigma.value)
-  return `${(calculatePassRate(level) * 100).toFixed(2)}%`
-})
 
 function exportChart() {
   chartRef.value?.exportPng(`distribution_${distribution.value}.png`)

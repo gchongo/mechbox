@@ -47,7 +47,7 @@ const pagesZh = {
     gear: {
       title: '齿轮强度计算',
       subtitle: 'Lewis 简化 + ISO 6336 / AGMA 2101 完整校核（接触 + 弯曲安全系数）',
-      hintSimple: 'Lewis 弯曲 + 接触应力估算。',
+      hintSimple: 'Lewis 弯曲 + 接触应力估算（绑定材料许用值，方案级）。',
       hintComplete: 'ISO 6336 全系数校核。',
       hintProfessional: 'ISO / AGMA 双标准对照。',
     },
@@ -195,6 +195,12 @@ export const calcZh = {
     fail: '不通过',
     saveToHistory: '💾 保存到历史',
     savedToHistory: '已保存到历史记录',
+    disclaimerTitle: '工程计算免责说明',
+    disclaimerBody:
+      '本工具输出为简化模型下的辅助校核结果，不能替代完整国家标准、制造商手册、有限元分析或持证工程师的最终审批。涉及人身与设备安全的螺栓、焊缝、压力容器、起重件等，须按企业规范复核并留档后再用于生产放行。',
+    simpleModeWarningTitle: '简化模式 — 仅用于方案估算',
+    simpleModeWarningBody:
+      '当前为简化模型，默认参数与许用值可能未覆盖您的材料、工况与安全系数要求。正式设计请切换至「完整」或「专业」模式，并由工程师逐项确认输入与结论。',
   },
   fields: fieldsZh,
   pages: mergeCalcPageFields(pagesZh, fieldsZh.pages),
@@ -245,7 +251,7 @@ const pagesEn = {
     gear: {
       title: 'Gear strength calculation',
       subtitle: 'Lewis simplified + ISO 6336 / AGMA 2101 contact and bending safety factors',
-      hintSimple: 'Lewis bending + contact stress estimate.',
+      hintSimple: 'Lewis bending + contact estimate (material allowables; concept stage only).',
       hintComplete: 'Full ISO 6336 factor set.',
       hintProfessional: 'ISO / AGMA side-by-side comparison.',
     },
@@ -393,6 +399,12 @@ export const calcEn = {
     fail: 'Fail',
     saveToHistory: '💾 Save to history',
     savedToHistory: 'Saved to history',
+    disclaimerTitle: 'Engineering calculation notice',
+    disclaimerBody:
+      'Results are auxiliary checks from simplified models. They do not replace full standards, manufacturer data, FEA, or sign-off by a qualified engineer. Bolts, welds, pressure vessels, lifting gear, and other safety-critical items require review against your company procedures before production release.',
+    simpleModeWarningTitle: 'Basic mode — estimation only',
+    simpleModeWarningBody:
+      'The basic model may use default allowables that do not match your material, duty cycle, or required safety factors. For release drawings, switch to Full or Advanced mode and verify every input and conclusion.',
   },
   fields: fieldsEn,
   pages: mergeCalcPageFields(pagesEn, fieldsEn.pages),

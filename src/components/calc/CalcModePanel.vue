@@ -1,5 +1,15 @@
 <template>
   <section class="card-panel mb-6">
+    <el-alert
+      v-if="modelValue === 'simple'"
+      class="mb-3"
+      type="info"
+      :closable="false"
+      show-icon
+      :title="ct('simpleModeWarningTitle')"
+    >
+      <p class="text-sm">{{ ct('simpleModeWarningBody') }}</p>
+    </el-alert>
     <div class="flex flex-wrap items-center gap-3">
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ ct('model') }}</span>
       <el-radio-group :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">

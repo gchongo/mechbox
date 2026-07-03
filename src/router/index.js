@@ -234,6 +234,49 @@ const routes = [
   },
 ]
 
+const ENGINEERING_ROUTE_NAMES = new Set([
+  'editor',
+  'editor-detail',
+  'statistics',
+  'monte-carlo',
+  'batch',
+  'allocation',
+  'gear',
+  'thread',
+  'bolt-preload',
+  'bearing',
+  'shaft',
+  'key',
+  'weld',
+  'bolt-group',
+  'spring',
+  'clutch',
+  'belt',
+  'chain',
+  'cylinder',
+  'interference-fit',
+  'beam',
+  'thermal-expansion',
+  'quality',
+  'sheet-metal',
+  'o-ring',
+  'fatigue',
+  'analytics',
+  'structural',
+  'material-selection',
+  'manufacturing',
+  'heat-treatment',
+  'units',
+  'fit',
+  'gdt-stack',
+])
+
+for (const route of routes) {
+  if (ENGINEERING_ROUTE_NAMES.has(route.name)) {
+    route.meta = { ...route.meta, engineeringCalc: true }
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,

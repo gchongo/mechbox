@@ -16,13 +16,31 @@ export function calcFlowRate(area, velocity) {
   return (area * velocity * 60) / 1e6
 }
 
-/** 活塞杆柱屈曲 (Euler 简化) */
+/** 活塞杆柱屈曲 — Euler（弹性）与 Johnson（弹塑性）取较小值，返回临界载荷 (N) */
 export function calcRodBucklingLoad(rodDiameter, length, yieldStrength = 235, endFixity = 0.5) {
-  const I = (Math.PI * rodDiameter ** 4) / 64
+  const d = rodDiameter
   const L = length
-  if (!I || !L) return 0
+  if (!d || !L) return 0
+
+  const A = (Math.PI * d ** 2) / 4
+  const I = (Math.PI * d ** 4) / 64
+  const r = Math.sqrt(I / A)
   const E = 210000
-  return (Math.PI ** 2 * E * I * endFixity) / (L ** 2) / 1000
+  const Fy = yieldStrength
+  const Le = endFixity * L
+  if (!Le || !r) return 0
+
+  const P_euler = (Math.PI ** 2 * E * I) / (Le ** 2)
+  const P_yield = A * Fy
+  const slenderness = Le / r
+
+  if (P_euler <= P_yield) {
+    return P_euler
+  }
+
+  const sigmaJohnson = Fy - (Fy ** 2 / (4 * Math.PI ** 2 * E)) * slenderness ** 2
+  const P_johnson = A * Math.max(0, sigmaJohnson)
+  return Math.min(P_yield, P_johnson)
 }
 
 export function analyzeHydraulicCylinder(input) {

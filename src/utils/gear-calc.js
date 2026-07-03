@@ -1,4 +1,6 @@
 /** 直齿轮几何参数 */
+import { GEAR_MATERIALS } from '@/constants/gear-materials'
+
 export function calcGearGeometry({ module, teeth, pressureAngle = 20 }) {
   const m = module
   const z = teeth
@@ -58,8 +60,12 @@ export function analyzeGearStrength(input) {
   })
   const velocity = calcPitchLineVelocity(geo.pitchDiameter, input.rpm ?? 0)
 
-  const allowBend = input.allowBending ?? 300
-  const allowContact = input.allowContact ?? 900
+  const matKey = input.material ?? 'st-soft'
+  const mat = GEAR_MATERIALS[matKey] ?? GEAR_MATERIALS['st-soft']
+  const bendingSf = input.bendingSafetyFactor ?? 1.4
+  const contactSf = input.contactSafetyFactor ?? 1.0
+  const allowBend = input.allowBending ?? mat.sigmaFlim / bendingSf
+  const allowContact = input.allowContact ?? mat.sigmaHlim / contactSf
 
   return {
     calcMode: 'simple',
@@ -72,7 +78,10 @@ export function analyzeGearStrength(input) {
     contactPass: sigmaH <= allowContact,
     allowBending: allowBend,
     allowContact: allowContact,
+    material: matKey,
+    materialLabel: mat.label,
     pass: sigmaF <= allowBend && sigmaH <= allowContact,
+    estimateOnly: true,
   }
 }
 

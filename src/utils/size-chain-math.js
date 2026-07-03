@@ -270,44 +270,15 @@ export function buildFormulaLatex(
   return lines
 }
 
-function cdfNormalZ(z) {
-  const t = 1 / (1 + 0.2316419 * Math.abs(z))
-  const d = 0.3989423 * Math.exp((-z * z) / 2)
-  const p =
-    d *
-    t *
-    (0.3193815 +
-      t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))))
-  return z > 0 ? 1 - p : p
-}
-
-function cdfNormalAt(x, mean, sigma) {
-  if (sigma <= 0) return x >= mean ? 1 : 0
-  return cdfNormalZ((x - mean) / sigma)
-}
+import { calcProcessCapability, formatCapabilitySummary } from '@/utils/process-capability'
 
 /** 西格玛分析摘要（基于 RSS 结果与规格限） */
 export function buildSigmaSummary(closedRing, rssResult) {
   const usl = closedRing.max
   const lsl = closedRing.min
-  const targetTolerance = usl - lsl
   const processSigma = rssResult.processSigma ?? rssResult.totalTolerance / 6
   const mean = rssResult.nominal ?? (usl + lsl) / 2
-
-  const c = targetTolerance / (6 * processSigma || 1)
-  const cpu = (usl - mean) / (3 * processSigma || 1)
-  const cpl = (mean - lsl) / (3 * processSigma || 1)
-  const cpk = Math.min(cpu, cpl)
-
-  const pass = cdfNormalAt(usl, mean, processSigma) - cdfNormalAt(lsl, mean, processSigma)
-  const passClamped = Math.max(0, Math.min(1, pass))
-  const sigmaLevel = Math.max(0, cpk) * 3
-
-  return {
-    c: c.toFixed(2),
-    cpk: cpk.toFixed(2),
-    sigmaLevel: sigmaLevel.toFixed(2),
-    passRate: `${(passClamped * 100).toFixed(2)}%`,
-    dppm: Math.round((1 - passClamped) * 1_000_000),
-  }
+  return formatCapabilitySummary(
+    calcProcessCapability({ lsl, usl, mean, sigma: processSigma }),
+  )
 }
