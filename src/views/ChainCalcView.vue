@@ -34,11 +34,11 @@
       </section>
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('ratio') }}</dt><dd class="font-mono">{{ result.ratio.toFixed(2) }}</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('chainLength') }}</dt><dd class="font-mono">{{ result.chainLength.toFixed(0) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('links') }}</dt><dd class="font-mono">{{ result.links }}</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('chainSpeed') }}</dt><dd class="font-mono" :class="result.speedPass === false ? 'text-error' : ''">{{ result.chainSpeed.toFixed(2) }} m/s</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('chainTension') }}</dt><dd class="font-mono" :class="result.tensionPass === false ? 'text-error' : ''">{{ result.chainTension.toFixed(0) }} N</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('ratio')" /><dd class="font-mono">{{ result.ratio.toFixed(2) }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('chainLength')" /><dd class="font-mono">{{ result.chainLength.toFixed(0) }} mm</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('links')" /><dd class="font-mono">{{ result.links }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('chainSpeed')" /><dd class="font-mono" :class="result.speedPass === false ? 'text-error' : ''">{{ result.chainSpeed.toFixed(2) }} m/s</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('chainTension')" /><dd class="font-mono" :class="result.tensionPass === false ? 'text-error' : ''">{{ result.chainTension.toFixed(0) }} N</dd></div>
           <div v-if="result.estimatedLifeHours" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('lifeHours') }}</dt><dd class="font-mono">{{ Math.round(result.estimatedLifeHours).toLocaleString() }} h</dd></div>
         </dl>
       </section>

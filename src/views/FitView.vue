@@ -52,12 +52,10 @@
             <span class="text-sm text-gray-500">{{ presetUse }}</span>
           </div>
           <dl class="space-y-2 text-sm">
-            <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('maxClearance') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxClearance')" />
               <dd class="font-mono">{{ (result.maxClearance * 1000).toFixed(1) }} μm</dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('minClearance') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('minClearance')" />
               <dd class="font-mono">{{ (result.minClearance * 1000).toFixed(1) }} μm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">

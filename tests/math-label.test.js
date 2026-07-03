@@ -17,7 +17,8 @@ describe('math-label enrichMathText', () => {
     expect(enrichMathText(s)).toBe(s)
   })
 
-  it('converts bolt preload hint', () => {
-    expect(enrichMathText('μ_G/μ_K 分解')).toContain('\\mu_G')
+  it('converts stack method symbols', () => {
+    expect(enrichMathText('T=ΣTᵢ')).toContain('\\sum T_i')
+    expect(enrichMathText('D_km · μ_K')).toContain('D_{km}')
   })
 })

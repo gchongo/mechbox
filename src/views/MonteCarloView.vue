@@ -80,40 +80,40 @@
 
         <div v-if="simResult" class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('mean') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('mean')" />
             <dd class="mt-1 font-mono text-lg">{{ simResult.mean.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('std') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('std')" />
             <dd class="mt-1 font-mono text-lg">{{ simResult.std.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('min') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('min')" />
             <dd class="mt-1 font-mono text-lg">{{ simResult.min.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('max') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('max')" />
             <dd class="mt-1 font-mono text-lg">{{ simResult.max.toFixed(4) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('percentiles') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('percentiles')" />
             <dd class="mt-1 font-mono text-sm">
               {{ simResult.p05.toFixed(3) }} / {{ simResult.p50.toFixed(3) }} /
               {{ simResult.p95.toFixed(3) }}
             </dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('passRate') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('passRate')" />
             <dd class="mt-1 font-mono text-lg text-success">
               {{ (simResult.passRate * 100).toFixed(2) }}%
             </dd>
           </div>
         </div>
         <div v-if="stackAdviceHint" class="mt-4 rounded-lg px-3 py-2.5 text-xs leading-relaxed" :class="stackAdviceHintClass">
-          {{ stackAdviceHint }}
+          <MathContent :text="stackAdviceHint" />
         </div>
         <div v-if="mcAdviceHint" class="mt-3 rounded-lg bg-red-50 px-3 py-2.5 text-xs leading-relaxed text-red-800 dark:bg-red-950/50 dark:text-red-200">
-          {{ mcAdviceHint }}
+          <MathContent :text="mcAdviceHint" />
         </div>
         <el-empty v-if="!simResult" :description="pt('emptyRun')" />
       </section>
@@ -148,7 +148,7 @@
         </el-button>
       </div>
       <p class="mb-3 text-xs text-gray-500">
-        {{ pt('sensitivityHint') }}
+        <MathContent :text="enrichedHint(pt('sensitivityHint'))" />
       </p>
       <template v-if="sensitivityResult">
         <TornadoChart
@@ -196,6 +196,7 @@ import {
   deserializeMonteCarloPayload,
 } from '@/constants/editor-bridge'
 import { getSettings } from '@/utils/settings'
+import { enrichMathText } from '@/utils/math-label'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useLocale } from '@/composables/useLocale'
@@ -224,6 +225,10 @@ const sensitivityRunning = ref(false)
 const sensitivityResult = ref(null)
 const stackEval = ref(null)
 
+function enrichedHint(text) {
+  return enrichMathText(text)
+}
+
 const editorI18n = computed(() => (locale.value === 'en' ? editorPagesEn : editorPagesZh))
 
 function stackMsg(key) {
@@ -240,9 +245,11 @@ const stackAdviceHint = computed(() => {
   if (!advice?.warningKey) return null
   const msg = stackMsg(advice.warningKey)
   if (advice.divergence?.ratio != null) {
-    return `💡 ${msg}，${pt('methodRatio', { ratio: advice.divergence.ratio.toFixed(2) })}`
+    return enrichMathText(
+      `💡 ${msg}，${pt('methodRatio', { ratio: advice.divergence.ratio.toFixed(2) })}`,
+    )
   }
-  return `💡 ${msg}`
+  return enrichMathText(`💡 ${msg}`)
 })
 
 const stackAdviceHintClass = computed(() => {
@@ -258,7 +265,7 @@ const stackAdviceHintClass = computed(() => {
 
 const mcAdviceHint = computed(() => {
   if (!mcWorstGap.value.warningKey) return null
-  return `💡 ${stackMsg(mcWorstGap.value.warningKey)}`
+  return enrichMathText(`💡 ${stackMsg(mcWorstGap.value.warningKey)}`)
 })
 
 function refreshStackEval(rings) {

@@ -49,20 +49,15 @@
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <el-tag class="mb-3" size="small">{{ machResult.calcMode }} · {{ machResult.operations?.join(' + ') }}</el-tag>
             <dl class="space-y-3 text-sm">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('totalRadialAllowance') }}</dt><dd class="font-mono">{{ machResult.totalRadialAllowance?.toFixed(2) }} mm</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('totalRadialAllowance')" /><dd class="font-mono">{{ machResult.totalRadialAllowance?.toFixed(2) }} mm</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('recommendedStockDiameter') }}</dt><dd class="font-mono text-lg text-primary">{{ machResult.recommendedStockDiameter?.toFixed(1) }} mm</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('recommendedStockDiameter')" /><dd class="font-mono text-lg text-primary">{{ machResult.recommendedStockDiameter?.toFixed(1) }} mm</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('recommendedStockLength') }}</dt><dd class="font-mono">{{ machResult.recommendedStockLength?.toFixed(1) }} mm</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('recommendedStockLength')" /><dd class="font-mono">{{ machResult.recommendedStockLength?.toFixed(1) }} mm</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('endFaceAllowance') }}</dt><dd class="font-mono">{{ machResult.endFaceAllowance }} mm {{ fc('perFace') }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('endFaceAllowance')" /><dd class="font-mono">{{ machResult.endFaceAllowance }} mm {{ fc('perFace') }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('materialRemovalVolume') }}</dt><dd class="font-mono">{{ (machResult.materialRemovalVolume / 1000).toFixed(1) }} cm³</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('materialRemovalVolume')" /><dd class="font-mono">{{ (machResult.materialRemovalVolume / 1000).toFixed(1) }} cm³</dd>
               </div>
               <div v-if="mach.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>{{ pr('grindingAllowance') }}</dt><dd class="font-mono">{{ machResult.grindingAllowance?.toFixed(2) }} mm</dd>
@@ -128,11 +123,9 @@
               <dd class="font-mono text-3xl text-primary">{{ castResult.draftAngleDeg?.toFixed(2) }}°</dd>
             </div>
             <dl class="mt-4 space-y-3 text-sm">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ prCast('linearIncreasePerSide') }}</dt><dd class="font-mono">{{ castResult.linearIncreasePerSide?.toFixed(2) }} mm</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="prCast('linearIncreasePerSide')" /><dd class="font-mono">{{ castResult.linearIncreasePerSide?.toFixed(2) }} mm</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ prCast('totalWidthIncrease') }}</dt><dd class="font-mono">{{ castResult.totalWidthIncrease?.toFixed(2) }} mm</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="prCast('totalWidthIncrease')" /><dd class="font-mono">{{ castResult.totalWidthIncrease?.toFixed(2) }} mm</dd>
               </div>
             </dl>
             <p class="mt-3 text-xs text-gray-500">{{ rm('casting', `note_${castResult.noteKey}`) }}</p>

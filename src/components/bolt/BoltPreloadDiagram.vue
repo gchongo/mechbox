@@ -67,7 +67,7 @@
 
       <!-- 预紧力 F -->
       <line x1="260" y1="42" x2="260" y2="64" marker-end="url(#arrow-blue)" class="dim-force" />
-      <text x="268" y="50" class="label label--primary">{{ dt('preloadF') }}</text>
+      <SvgMathText :x="268" :y="50" :text="dt('preloadF')" class-name="label--primary" color="#409eff" :width="100" />
 
       <!-- 扭矩 T -->
       <path
@@ -76,19 +76,19 @@
         fill="none"
         class="torque-arc"
       />
-      <text x="318" y="72" class="label label--primary">T</text>
+      <SvgMathText :x="318" :y="72" text="$T$" class-name="label--primary" color="#409eff" :width="24" />
 
       <!-- 公称直径 d -->
       <line x1="248" y1="108" x2="218" y2="108" marker-end="url(#arrow-gray)" />
       <line x1="272" y1="108" x2="302" y2="108" marker-end="url(#arrow-gray)" />
-      <text x="188" y="104" class="label">{{ dt('nominalD') }}</text>
+      <SvgMathText :x="188" :y="104" :text="dt('nominalD')" :width="100" />
 
       <!-- 夹紧长度 L_K -->
       <template v-if="showPro">
         <line x1="292" y1="118" x2="292" y2="190" class="dim-line" />
         <line x1="286" y1="118" x2="298" y2="118" class="dim-tick" />
         <line x1="286" y1="190" x2="298" y2="190" class="dim-tick" />
-        <text x="300" y="158" class="label label--pro">L_K</text>
+        <SvgMathText :x="300" :y="158" text="$L_K$" class-name="label--pro" color="#8b5cf6" :width="36" />
         <text x="300" y="172" class="label-sub">{{ gripLength }} mm</text>
       </template>
 
@@ -96,24 +96,24 @@
       <template v-if="showPro">
         <line x1="238" y1="202" x2="208" y2="202" marker-end="url(#arrow-gray)" />
         <line x1="282" y1="202" x2="312" y2="202" marker-end="url(#arrow-gray)" />
-        <text x="168" y="218" class="label label--pro">{{ dt('holeD') }}</text>
+        <SvgMathText :x="168" :y="218" :text="dt('holeD')" class-name="label--pro" color="#8b5cf6" :width="80" />
       </template>
 
       <!-- d_W 头部支承 -->
       <template v-if="showPro">
         <line x1="236" y1="68" x2="206" y2="68" marker-end="url(#arrow-gray)" />
         <line x1="284" y1="68" x2="314" y2="68" marker-end="url(#arrow-gray)" />
-        <text x="318" y="72" class="label label--pro">d_W</text>
+        <SvgMathText :x="318" :y="72" text="$d_W$" class-name="label--pro" color="#8b5cf6" :width="36" />
       </template>
 
       <!-- D_km -->
       <template v-if="showVdi">
-        <text x="318" y="92" class="label label--vdi">D_km · μ_K</text>
+        <SvgMathText :x="318" :y="92" text="D_km · μ_K" class-name="label--vdi" color="#409eff" :width="88" />
       </template>
 
       <!-- μ_G -->
       <template v-if="showVdi">
-        <text x="168" y="188" class="label label--vdi">{{ dt('threadMu') }}</text>
+        <SvgMathText :x="168" :y="188" :text="dt('threadMu')" class-name="label--vdi" color="#409eff" :width="110" />
       </template>
 
       <!-- 嵌入 f_Z -->
@@ -122,28 +122,28 @@
           <line x1="130" y1="118" x2="130" y2="124" />
           <line x1="126" y1="118" x2="134" y2="118" />
           <line x1="126" y1="124" x2="134" y2="124" />
-          <text x="72" y="124" class="label label--embed">{{ dt('embedFZ') }}</text>
+          <SvgMathText :x="72" :y="124" :text="dt('embedFZ')" class-name="label--embed" color="#8b5cf6" :width="72" />
         </g>
       </template>
 
       <!-- 螺距 P 放大示意 -->
       <g transform="translate(400, 218)">
         <rect x="0" y="0" width="96" height="56" rx="6" class="inset-box" />
-        <text x="8" y="16" class="label-inset-title">{{ dt('threadZoom') }}</text>
+        <SvgMathText :x="8" :y="16" :text="dt('threadZoom')" :width="88" :height="18" />
         <path d="M 12 36 L 28 28 L 44 36 L 60 28 L 76 36" fill="none" class="thread-profile" />
         <line x1="12" y1="44" x2="76" y2="44" class="dim-line" />
-        <text x="28" y="54" class="label-inset">{{ dt('pitchP') }}</text>
+        <SvgMathText :x="28" :y="54" :text="dt('pitchP')" :width="56" :height="18" />
       </g>
 
       <!-- 简化模式 μ -->
       <template v-if="calcMode === 'simple'">
-        <text x="318" y="92" class="label label--simple">{{ dt('muCombined') }}</text>
+        <SvgMathText :x="318" :y="92" :text="dt('muCombined')" class-name="label--simple" color="#f59e0b" :width="72" />
         <ellipse cx="260" cy="88" rx="28" ry="7" class="friction friction--simple" />
       </template>
 
       <!-- ΔT 专业 -->
       <template v-if="showPro && deltaT">
-        <text x="24" y="148" class="label label--pro">{{ dt('deltaT') }}</text>
+        <SvgMathText :x="24" :y="148" :text="dt('deltaT')" class-name="label--pro" color="#8b5cf6" :width="48" />
         <text x="24" y="162" class="label-sub">{{ deltaT > 0 ? '+' : '' }}{{ deltaT }} °C</text>
       </template>
     </svg>
@@ -152,8 +152,8 @@
       <li v-for="item in legendItems" :key="item.key" class="bolt-diagram__legend-item">
         <span class="bolt-diagram__dot" :class="`bolt-diagram__dot--${item.tone}`" />
         <span>
-          <strong>{{ item.name }}</strong>
-          <span class="text-gray-500"> — {{ item.desc }}</span>
+          <strong><MathContent :text="enrichedName(item.name)" /></strong>
+          <span class="text-gray-500"> — <MathContent :text="enrichedDesc(item.desc)" /></span>
         </span>
       </li>
     </ul>
@@ -163,8 +163,17 @@
 <script setup>
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
+import { enrichMathText } from '@/utils/math-label'
 
 const { dt, locale } = useDiagramI18n('boltPreload')
+
+function enrichedName(name) {
+  return enrichMathText(name)
+}
+
+function enrichedDesc(desc) {
+  return enrichMathText(desc)
+}
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },

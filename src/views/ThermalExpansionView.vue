@@ -40,7 +40,7 @@
         />
 
         <div class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
-          <dt class="text-gray-500">{{ pf('deltaL1') }}</dt>
+          <ResultLabel label-class="text-gray-500" :text="pf('deltaL1')" />
           <dd class="mt-1 font-mono text-lg">{{ linearResult.linearExpansion?.toFixed(4) }} mm</dd>
         </div>
       </section>
@@ -76,16 +76,13 @@
         </el-form>
         <template v-if="linearResult.fit">
           <dl class="space-y-3 text-sm">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('initialInterference') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('initialInterference')" />
               <dd class="font-mono">{{ linearResult.fit.initialInterference?.toFixed(4) }} mm</dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('interferenceChange') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('interferenceChange')" />
               <dd class="font-mono">{{ linearResult.fit.interferenceChange?.toFixed(4) }} mm</dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('finalInterference') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('finalInterference')" />
               <dd class="font-mono" :class="linearResult.fit.becomesClearance ? 'text-warning' : 'text-success'">
                 {{ linearResult.fit.finalInterference?.toFixed(4) }} mm
               </dd>

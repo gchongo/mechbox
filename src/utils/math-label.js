@@ -4,8 +4,13 @@
  */
 
 const REPLACEMENTS = [
-  // 公式短语（编辑器步骤提示等）
-  ['T=6\\sqrt{\\sum (T_i/K_i)^2}', null], // placeholder — handled in FORMULA_HINTS
+  // 公式短语（术语表 symbol、编辑器提示等）
+  ['T=6√(Σ(Tᵢ/Kᵢ)²)', '$T=6\\sqrt{\\sum (T_i/K_i)^2}$'],
+  ['T=k·√ΣTᵢ²', '$T=k\\sqrt{\\sum T_i^2}$'],
+  ['T=√ΣTᵢ²', '$T=\\sqrt{\\sum T_i^2}$'],
+  ['T=ΣTᵢ', '$T=\\sum T_i$'],
+  ['σ水平', '$\\sigma_{\\text{水平}}$'],
+  ['L₁…Lₙ', '$L_1 \\ldots L_n$'],
   ['F_i = F/n + M×r/I_p', '$F_i = F/n + M \\times r / I_p$'],
   ['T = μFRn', '$T = \\mu F R n$'],
   ['T = K·F·d', '$T = K \\cdot F \\cdot d$'],
@@ -22,6 +27,20 @@ const REPLACEMENTS = [
   ['σ₋₁', '$\\sigma_{-1}$'],
   ['τ_a', '$\\tau_a$'],
   ['m_eff', '$m_{eff}$'],
+  ['D_km · μ_K', '$D_{km} \\cdot \\mu_K$'],
+  ['σ = T/K', '$\\sigma = T/K$'],
+  ['σ_H', '$\\sigma_H$'],
+  ['σ_F', '$\\sigma_F$'],
+  ['σ_M', '$\\sigma_M$'],
+  ['σ_b', '$\\sigma_b$'],
+  ['σ_s', '$\\sigma_s$'],
+  ['d_h', '$d_h$'],
+  ['d_W', '$d_W$'],
+  ['L_K', '$L_K$'],
+  ['f_Z', '$f_Z$'],
+  ['k_S', '$k_S$'],
+  ['k_P', '$k_P$'],
+  ['d_2', '$d_2$'],
   ['D_km', '$D_{km}$'],
   ['μ_G', '$\\mu_G$'],
   ['μ_K', '$\\mu_K$'],

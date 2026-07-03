@@ -80,19 +80,19 @@
         <h2 class="mb-4 font-semibold">{{ pt('sectionResults') }}</h2>
         <div v-if="result" class="mb-4 grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('method') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('method')" />
             <dd class="mt-1 font-medium">{{ methodLabel(result.methodId) }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('rssVerify') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('rssVerify')" />
             <dd class="mt-1 font-mono text-lg">{{ displayVerify.stacked.toFixed(4) }} mm</dd>
           </div>
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('target') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('target')" />
             <dd class="mt-1 font-mono text-lg">{{ targetTolerance.toFixed(4) }} mm</dd>
           </div>
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('utilization') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('utilization')" />
             <dd
               class="mt-1 font-mono text-lg"
               :class="displayVerify.pass ? 'text-success' : 'text-error'"
@@ -102,7 +102,7 @@
             </dd>
           </div>
           <div v-if="result.totalCost != null" class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('totalCost') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('totalCost')" />
             <dd class="mt-1 font-mono text-lg">{{ result.totalCost.toFixed(2) }}</dd>
           </div>
         </div>

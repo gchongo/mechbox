@@ -47,8 +47,7 @@
                 <dt>{{ pr('carbonEquivalent') }}</dt>
                 <dd class="font-mono text-lg text-primary">{{ result.carbonEquivalent }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('weldability') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('weldability')" />
                 <dd>{{ rm('heatTreatment', `weldability_${result.weldabilityKey}`) }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -110,16 +109,13 @@
                 <dt>{{ pr('temperedHRC') }}</dt>
                 <dd class="font-mono text-lg text-primary">{{ temperResult.temperedHRC }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('hardnessDrop') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hardnessDrop')" />
                 <dd class="font-mono">{{ temperResult.hardnessDrop }} HRC</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('hollomonJaffe') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hollomonJaffe')" />
                 <dd class="font-mono">{{ temperResult.hollomonJaffe }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('temperState') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('temperState')" />
                 <dd>{{ temperResult.temperState }}</dd>
               </div>
             </dl>

@@ -87,12 +87,10 @@
             <dt>{{ pr('thermalInterference') }}</dt>
             <dd class="font-mono">{{ result.interference?.toFixed(4) }} mm (Δi {{ result.thermal.interferenceChange?.toFixed(4) }})</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('contactPressure') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('contactPressure')" />
             <dd class="font-mono">{{ result.pressure?.toFixed(1) }} MPa</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('hoopStress') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hoopStress')" />
             <dd class="font-mono" :class="result.hoopPass === false ? 'text-error' : ''">
               {{ result.hoopHub?.toFixed(1) }} / {{ result.hoopShaft?.toFixed(1) }} MPa
               <span v-if="form.calcMode !== 'simple'">{{ result.hoopPass ? ' ✓' : ' ✗' }}</span>
@@ -102,16 +100,13 @@
             <dt>{{ pr('hollowShaft') }}</dt>
             <dd class="font-mono">{{ fc('yes') }}</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('pressForce') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('pressForce')" />
             <dd class="font-mono">{{ result.pressForce?.toFixed(0) }} N</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('torqueCapacity') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torqueCapacity')" />
             <dd class="font-mono">{{ result.torqueCapacityNm?.toFixed(1) }} N·m</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('minWall') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('minWall')" />
             <dd class="font-mono">{{ result.minHubWall?.toFixed(2) }} mm</dd>
           </div>
         </dl>

@@ -41,7 +41,7 @@
         />
 
         <div v-if="stressAmplitude > 0" class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
-          <dt class="text-gray-500">{{ pf('estimatedLife') }}</dt>
+          <ResultLabel label-class="text-gray-500" :text="pf('estimatedLife')" />
           <dd class="mt-1 font-mono text-lg">{{ lifeDisplay }}</dd>
           <p class="mt-1 text-xs text-gray-500">{{ pf('enduranceLimit') }} = {{ result.enduranceLimit }} MPa</p>
         </div>
@@ -63,13 +63,13 @@
         <template v-else-if="result.miner && !result.miner.errorKey">
           <div class="mb-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('totalDamage') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('totalDamage')" />
               <dd class="font-mono text-xl" :class="result.miner.pass ? 'text-success' : 'text-error'">
                 {{ result.miner.totalDamage?.toFixed(4) }}
               </dd>
             </div>
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('status') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('status')" />
               <dd class="mt-1">{{ rm('fatigue', `status_${result.miner.statusKey}`) }}</dd>
             </div>
           </div>

@@ -51,23 +51,19 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('throat') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('throat')" />
                 <dd class="font-mono">{{ filletResult.throat?.toFixed(2) }} mm</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('shearStress') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress')" />
                 <dd class="font-mono">{{ filletResult.shearStress?.toFixed(1) }} MPa</dd>
               </div>
               <template v-if="filletResult.combined">
-                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                  <dt>{{ pr('combinedStress') }}</dt>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('combinedStress')" />
                   <dd class="font-mono" :class="filletResult.combinedPass ? 'text-success' : 'text-error'">
                     {{ filletResult.combined.equivalentStress?.toFixed(1) }} MPa
                   </dd>
                 </div>
-                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                  <dt>{{ pr('hazAllowWeld') }}</dt>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hazAllowWeld')" />
                   <dd class="font-mono">{{ filletResult.haz?.hazAllowShear }} / {{ filletResult.haz?.weldStress }} MPa</dd>
                 </div>
               </template>
@@ -161,12 +157,10 @@
                 <dt>{{ pr('estimatedLife') }}</dt>
                 <dd class="font-mono text-primary">{{ fatigueResult.estimatedLife?.toLocaleString() }} {{ pr('lifeUnit') }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('allowableAtCycles') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('allowableAtCycles')" />
                 <dd class="font-mono">{{ fatigueResult.allowableAtCycles }} MPa</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('enduranceLimit') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('enduranceLimit')" />
                 <dd class="font-mono">{{ fatigueResult.enduranceLimit }} MPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
@@ -213,16 +207,13 @@
                 <dt>{{ pr('hazWidth') }}</dt>
                 <dd class="font-mono text-primary">{{ hazResult.hazWidthMm }} mm</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('hazAllowShear') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hazAllowShear')" />
                 <dd class="font-mono">{{ hazResult.hazAllowShear }} MPa</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('baseAllowShear') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('baseAllowShear')" />
                 <dd class="font-mono">{{ hazResult.baseAllowShear }} MPa</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('weldStress') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('weldStress')" />
                 <dd class="font-mono" :class="hazResult.pass ? 'text-success' : 'text-error'">
                   {{ hazResult.weldStress }} MPa
                 </dd>

@@ -19,11 +19,15 @@
         class="card-panel"
       >
         <div class="mb-2 flex flex-wrap items-center gap-2">
-          <span class="text-2xl font-serif text-primary">{{ item.symbol }}</span>
+          <span class="text-2xl font-serif text-primary">
+            <MathContent :text="enrichedText(item.symbol)" />
+          </span>
           <h2 class="text-lg font-semibold">{{ item.term }}</h2>
           <el-tag size="small" type="info">{{ item.category }}</el-tag>
         </div>
-        <p class="text-sm leading-relaxed text-gray-700">{{ item.definition }}</p>
+        <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+          <MathContent :text="enrichedText(item.definition)" />
+        </p>
         <div class="mt-3 flex flex-wrap gap-1">
           <el-tag v-for="tag in item.tags" :key="tag" size="small" effect="plain">
             {{ tag }}
@@ -39,9 +43,14 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useContentI18n } from '@/composables/useContentI18n'
+import { enrichMathText } from '@/utils/math-label'
 
 const { ct, glossaryTerms, filterGlossary } = useContentI18n()
 const query = ref('')
+
+function enrichedText(text) {
+  return enrichMathText(text)
+}
 
 const filtered = computed(() => filterGlossary(glossaryTerms.value, query.value))
 </script>

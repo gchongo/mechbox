@@ -73,37 +73,37 @@
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('stressArea') }} <MathTex expr="A_s" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('stressArea') + ' $A_s$'" />
             <dd class="font-mono">{{ result.stressArea.toFixed(2) }} mm²</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('pitchMinorDiam') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('pitchMinorDiam')" />
             <dd class="font-mono">
               {{ result.pitchDiameter.toFixed(3) }} / {{ result.minorDiameter?.toFixed(3) }} mm
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('tensileStress') }} <MathTex expr="\sigma" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('tensileStress') + ' $\sigma$'" />
             <dd class="font-mono" :class="result.tensilePass ? 'text-success' : 'text-error'">
               {{ result.tensileStress.toFixed(1) }} MPa {{ result.tensilePass ? '✓' : '✗' }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('shearStress') }} <MathTex expr="\tau" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('shearStress') + ' $\tau$'" />
             <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
               {{ result.shearStress.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
             </dd>
           </div>
           <template v-if="form.calcMode !== 'simple'">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('shearBoth') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('shearBoth')" />
               <dd class="font-mono">
                 {{ result.shearExternal?.toFixed(1) }} / {{ result.shearInternal?.toFixed(1) }} MPa
                 ({{ pr('criticalSide') }}: {{ result.criticalShearSide }})
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('minEngagement') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('minEngagement')" />
               <dd class="font-mono" :class="result.engagementPass ? 'text-success' : 'text-error'">
                 {{ result.minEngagementLength?.toFixed(1) }} mm
                 {{ result.engagementPass ? '✓' : '✗' }}
@@ -111,7 +111,7 @@
             </div>
           </template>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('tighteningTorque') }} <MathTex expr="T" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('tighteningTorque') + ' $T$'" />
             <dd class="font-mono">
               {{ result.tighteningTorque.toFixed(2) }} N·m
               <span class="text-xs text-gray-500">（{{ result.torqueMethod }}）</span>
@@ -119,16 +119,16 @@
           </div>
           <template v-if="form.calcMode === 'professional'">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('maxPreload') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('maxPreload')" />
               <dd class="font-mono">{{ result.recommendedMaxPreload?.toFixed(0) }} N</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('utilization') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('utilization')" />
               <dd class="font-mono">{{ ((result.utilization ?? 0) * 100).toFixed(1) }} %</dd>
             </div>
           </template>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('overall') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('overall')" />
             <dd class="font-mono" :class="result.pass ? 'text-success' : 'text-error'">
               {{ result.pass ? fc('passOk') : fc('passFail') }}
             </dd>

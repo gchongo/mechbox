@@ -45,16 +45,13 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('directPerBolt') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('directPerBolt')" />
             <dd class="font-mono">{{ result.directPerBolt?.toFixed(0) }} N</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('torsionPerBolt') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torsionPerBolt')" />
             <dd class="font-mono">{{ result.torsionPerBolt?.toFixed(0) }} N</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('maxBoltForce') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxBoltForce')" />
             <dd class="font-mono text-lg" :class="result.pass ? 'text-success' : 'text-error'">
               {{ result.maxBoltForce?.toFixed(0) }} N {{ result.pass ? '✓' : '✗' }}
             </dd>

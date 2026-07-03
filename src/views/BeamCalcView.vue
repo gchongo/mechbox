@@ -70,33 +70,27 @@
         <el-alert v-if="result.errorKey" :title="re(result.errorKey)" type="error" show-icon />
         <template v-else>
           <dl class="space-y-3 text-sm">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('moment') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('moment')" />
               <dd class="font-mono">{{ result.moment?.toFixed(0) }} N·mm</dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('stress') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('stress')" />
               <dd class="font-mono" :class="result.stressPass ? 'text-success' : 'text-error'">
                 {{ result.stress?.toFixed(1) }} MPa {{ result.stressPass ? '✓' : '✗' }}
               </dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('deflection') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" />
               <dd class="font-mono" :class="result.deflectionPass ? 'text-success' : 'text-error'">
                 {{ result.deflection?.toFixed(4) }} mm {{ result.deflectionPass ? '✓' : '✗' }}
               </dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('inertia') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('inertia')" />
               <dd class="font-mono">{{ result.inertia?.toExponential(3) }} mm⁴</dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('sectionModulus') }}</dt>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('sectionModulus')" />
               <dd class="font-mono">{{ result.sectionModulus?.toFixed(1) }} mm³</dd>
             </div>
             <template v-if="form.calcMode !== 'simple'">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('utilization') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('utilization')" />
                 <dd class="font-mono">{{ ((result.stressUtilization ?? 0) * 100).toFixed(1) }}% / {{ ((result.deflectionUtilization ?? 0) * 100).toFixed(1) }}%</dd>
               </div>
               <div v-if="result.slendernessWarning" class="text-xs text-amber-600">{{ pr('slendernessWarning') }}</div>

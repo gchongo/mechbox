@@ -14,6 +14,8 @@ import MathTex from './components/common/MathTex.vue'
 import MathContent from './components/common/MathContent.vue'
 import FormMathLabel from './components/common/FormMathLabel.vue'
 import CalcFormItem from './components/calc/CalcFormItem.vue'
+import ResultLabel from './components/common/ResultLabel.vue'
+import SvgMathText from './components/common/SvgMathText.vue'
 
 const app = createApp(App)
 
@@ -25,6 +27,8 @@ app.component('MathTex', MathTex)
 app.component('MathContent', MathContent)
 app.component('FormMathLabel', FormMathLabel)
 app.component('CalcFormItem', CalcFormItem)
+app.component('ResultLabel', ResultLabel)
+app.component('SvgMathText', SvgMathText)
 
 app.use(ElementPlus)
 app.use(router)

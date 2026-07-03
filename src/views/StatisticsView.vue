@@ -90,27 +90,27 @@
         </CalcFormItem>
         <dl class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('mean') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('mean')" />
             <dd class="mt-1 font-mono text-lg">{{ stats.mean }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('std') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('std')" />
             <dd class="mt-1 font-mono text-lg">{{ stats.std }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('variance') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('variance')" />
             <dd class="mt-1 font-mono text-lg">{{ stats.variance }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('range') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('range')" />
             <dd class="mt-1 font-mono text-lg">{{ stats.range }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('skewness') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('skewness')" />
             <dd class="mt-1 font-mono text-lg">{{ stats.skewness }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3">
-            <dt class="text-gray-500">{{ pr('kurtosis') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('kurtosis')" />
             <dd class="mt-1 font-mono text-lg">{{ stats.kurtosis }}</dd>
           </div>
         </dl>
@@ -212,21 +212,21 @@
           </el-form>
           <div v-if="tTestResult && !tTestResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('tStat') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('tStat')" />
               <dd class="mt-1 font-mono">{{ tTestResult.tStatistic?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('pValue') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('pValue')" />
               <dd class="mt-1 font-mono">{{ tTestResult.pValue?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('significance') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('significance')" />
               <dd class="mt-1" :class="tTestResult.significant ? 'text-error' : 'text-success'">
                 {{ tTestResult.significant ? pr('significant') : pr('notSignificant') }}
               </dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2 lg:col-span-1">
-              <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('conclusion')" />
               <dd class="mt-1">{{ rm('hypothesis', tTestResult.conclusionKey) }}</dd>
             </div>
           </div>
@@ -244,19 +244,19 @@
           </el-form>
           <div v-if="chiResult && !chiResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('chi2') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('chi2')" />
               <dd class="mt-1 font-mono">{{ chiResult.chi2?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('df') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('df')" />
               <dd class="mt-1 font-mono">{{ chiResult.df }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('pValue') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('pValue')" />
               <dd class="mt-1 font-mono">{{ chiResult.pValue?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('conclusion')" />
               <dd class="mt-1">{{ rm('hypothesis', chiResult.conclusionKey) }}</dd>
             </div>
           </div>
@@ -277,15 +277,15 @@
           </el-form>
           <div v-if="anovaResult && !anovaResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('fStat') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('fStat')" />
               <dd class="mt-1 font-mono">{{ anovaResult.fStatistic?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('pValue') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('pValue')" />
               <dd class="mt-1 font-mono">{{ anovaResult.pValue?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2">
-              <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('conclusion')" />
               <dd class="mt-1">{{ rm('hypothesis', anovaResult.conclusionKey) }}</dd>
             </div>
           </div>
@@ -303,15 +303,15 @@
           </el-form>
           <div v-if="corrResult && !corrResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('pearsonR') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('pearsonR')" />
               <dd class="mt-1 font-mono">{{ corrResult.r?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm">
-              <dt class="text-gray-500">{{ pr('pValue') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('pValue')" />
               <dd class="mt-1 font-mono">{{ corrResult.pValue?.toFixed(4) }}</dd>
             </div>
             <div class="rounded bg-gray-50 p-3 text-sm sm:col-span-2">
-              <dt class="text-gray-500">{{ pr('conclusion') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('conclusion')" />
               <dd class="mt-1">{{ rm('hypothesis', corrResult.conclusionKey) }}</dd>
             </div>
           </div>

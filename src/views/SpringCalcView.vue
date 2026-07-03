@@ -54,17 +54,17 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('springRate') }}</dt><dd class="font-mono">{{ result.springRate.toFixed(2) }} N/mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('deflection') }}</dt><dd class="font-mono">{{ result.deflection.toFixed(2) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('shearStress') }} <MathTex expr="\tau" /></dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('springIndex') }}</dt><dd class="font-mono">{{ result.springIndex?.toFixed(2) }} / {{ result.wahlFactor.toFixed(3) }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springRate')" /><dd class="font-mono">{{ result.springRate.toFixed(2) }} N/mm</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" /><dd class="font-mono">{{ result.deflection.toFixed(2) }} mm</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress') + ' $\tau$'" /><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springIndex')" /><dd class="font-mono">{{ result.springIndex?.toFixed(2) }} / {{ result.wahlFactor.toFixed(3) }}</dd></div>
           <template v-if="form.calcMode !== 'simple'">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('buckling') }}</dt><dd class="font-mono" :class="result.buckling?.bucklingPass ? '' : 'text-error'">{{ result.buckling?.slenderness?.toFixed(2) }} (≤ {{ result.buckling?.criticalSlenderness }})</dd></div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('solidMargin') }}</dt><dd class="font-mono">{{ result.solidPass ? pr('solidOk') : pr('solidBad') }}</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('buckling')" /><dd class="font-mono" :class="result.buckling?.bucklingPass ? '' : 'text-error'">{{ result.buckling?.slenderness?.toFixed(2) }} (≤ {{ result.buckling?.criticalSlenderness }})</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('solidMargin')" /><dd class="font-mono">{{ result.solidPass ? pr('solidOk') : pr('solidBad') }}</dd></div>
           </template>
           <template v-if="form.calcMode === 'professional' && result.fatigueLife">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('shearAmplitude') }}</dt><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('fatigueLife') }}</dt><dd class="font-mono">{{ result.fatigueLife?.toLocaleString() }} {{ pr('cyclesUnit') }}</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueLife')" /><dd class="font-mono">{{ result.fatigueLife?.toLocaleString() }} {{ pr('cyclesUnit') }}</dd></div>
           </template>
         </dl>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">

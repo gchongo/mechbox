@@ -107,21 +107,21 @@
         <template v-if="mode === 'agma'">
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('contactStressC') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('contactStressC')" />
               <dd class="font-mono">{{ agmaResult.contactStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('bendingStressT') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('bendingStressT')" />
               <dd class="font-mono">{{ agmaResult.bendingStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('safetyContactShort') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('safetyContactShort')" />
               <dd class="font-mono text-lg" :class="agmaResult.contactPass ? 'text-success' : 'text-error'">
                 {{ agmaResult.safetyContact.toFixed(2) }} {{ agmaResult.contactPass ? '✓' : '✗' }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('safetyBendingShort') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('safetyBendingShort')" />
               <dd class="font-mono text-lg" :class="agmaResult.bendingPass ? 'text-success' : 'text-error'">
                 {{ agmaResult.safetyBending.toFixed(2) }} {{ agmaResult.bendingPass ? '✓' : '✗' }}
               </dd>
@@ -158,29 +158,29 @@
         <template v-else-if="mode === 'iso6336'">
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('gearRatio') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('gearRatio')" />
               <dd class="font-mono">{{ isoResult.geometry.gearRatio.toFixed(2) }}</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('contactRatio') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('contactRatio')" />
               <dd class="font-mono">{{ isoResult.geometry.contactRatio.toFixed(3) }}</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('contactStress') }} <MathTex expr="\sigma_H" /></dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('contactStress') + ' $\sigma_H$'" />
               <dd class="font-mono">{{ isoResult.contactStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('bendingStress') }} <MathTex expr="\sigma_F" /></dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('bendingStress') + ' $\sigma_F$'" />
               <dd class="font-mono">{{ isoResult.bendingStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('safetyContact') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('safetyContact')" />
               <dd class="font-mono text-lg" :class="isoResult.contactPass ? 'text-success' : 'text-error'">
                 {{ isoResult.safetyContact.toFixed(2) }} {{ isoResult.contactPass ? '✓' : '✗' }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('safetyBending') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('safetyBending')" />
               <dd class="font-mono text-lg" :class="isoResult.bendingPass ? 'text-success' : 'text-error'">
                 {{ isoResult.safetyBending.toFixed(2) }} {{ isoResult.bendingPass ? '✓' : '✗' }}
               </dd>
@@ -216,17 +216,17 @@
         <template v-else>
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('pitchDiameter') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('pitchDiameter')" />
               <dd class="font-mono">{{ simpleResult.geometry.pitchDiameter.toFixed(2) }} mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('bendingStress') }} <MathTex expr="\sigma_F" /></dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('bendingStress') + ' $\sigma_F$'" />
               <dd class="font-mono" :class="simpleResult.bendingPass ? 'text-success' : 'text-error'">
                 {{ simpleResult.bendingStress.toFixed(1) }} MPa {{ simpleResult.bendingPass ? '✓' : '✗' }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pr('contactStress') }} <MathTex expr="\sigma_H" /></dt>
+              <ResultLabel label-class="text-gray-500" :text="pr('contactStress') + ' $\sigma_H$'" />
               <dd class="font-mono" :class="simpleResult.contactPass ? 'text-success' : 'text-error'">
                 {{ simpleResult.contactStress.toFixed(1) }} MPa {{ simpleResult.contactPass ? '✓' : '✗' }}
               </dd>

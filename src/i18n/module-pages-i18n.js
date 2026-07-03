@@ -321,7 +321,7 @@ export const modulePagesZh = {
     rssMethod: 'RSS 公差',
     pass: '通过',
     fail: '未通过',
-    methodRatio: '极值/RSS 公差比 = {ratio}',
+    methodRatio: '极值/RSS 公差比 $= {ratio}$',
     fields: {
       closedMin: '封闭环 min',
       closedMax: '封闭环 max',
@@ -388,10 +388,10 @@ export const modulePagesZh = {
       advice: '方法风险提示',
     },
     advice: {
-      rss_pass_worst_fail: 'RSS✓ 极值✗',
-      stack_method_caution: '公差比偏大',
-      stack_method_warn: '公差比≥2',
-      worst_pass_rss_fail: '极值✓ RSS✗',
+      rss_pass_worst_fail: 'RSS ✓ 极值 ✗ — 勿仅依据 RSS 放行',
+      stack_method_caution: '极值/RSS 公差比偏大',
+      stack_method_warn: '极值/RSS 公差比 $≥ 2$',
+      worst_pass_rss_fail: '极值 ✓ RSS ✗ — 核对过程能力',
     },
   },
 }
@@ -717,7 +717,7 @@ export const modulePagesEn = {
     rssMethod: 'RSS tolerance',
     pass: 'Pass',
     fail: 'Fail',
-    methodRatio: 'Worst/RSS tolerance ratio = {ratio}',
+    methodRatio: 'Worst/RSS tolerance ratio $= {ratio}$',
     fields: {
       closedMin: 'Closed loop min',
       closedMax: 'Closed loop max',
@@ -784,10 +784,10 @@ export const modulePagesEn = {
       advice: 'Method risk',
     },
     advice: {
-      rss_pass_worst_fail: 'RSS✓ worst✗',
-      stack_method_caution: 'Large tol. ratio',
-      stack_method_warn: 'Ratio ≥2',
-      worst_pass_rss_fail: 'Worst✓ RSS✗',
+      rss_pass_worst_fail: 'RSS ✓ worst ✗ — do not release on RSS alone',
+      stack_method_caution: 'Worst/RSS tolerance ratio is large',
+      stack_method_warn: 'Worst/RSS ratio $≥ 2$',
+      worst_pass_rss_fail: 'Worst ✓ RSS ✗ — verify process capability',
     },
   },
 }

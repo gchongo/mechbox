@@ -49,20 +49,16 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('velocity') }}</dt><dd class="font-mono">{{ pipeResult.velocity?.toFixed(3) }} m/s</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('velocity')" /><dd class="font-mono">{{ pipeResult.velocity?.toFixed(3) }} m/s</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('reynolds') }}</dt><dd class="font-mono">{{ pipeResult.reynolds?.toFixed(0) }} ({{ pipeResult.flowRegime }})</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('reynolds')" /><dd class="font-mono">{{ pipeResult.reynolds?.toFixed(0) }} ({{ pipeResult.flowRegime }})</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('frictionDrop') }}</dt><dd class="font-mono">{{ pipeResult.pressureDropKPa?.toFixed(2) }} kPa</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('frictionDrop')" /><dd class="font-mono">{{ pipeResult.pressureDropKPa?.toFixed(2) }} kPa</dd>
               </div>
               <div v-if="pipeResult.methodCompare" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>{{ pr('hwCompare') }}</dt><dd class="font-mono">{{ pipeResult.methodCompare.hazenKPa?.toFixed(2) }} kPa</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('totalDrop') }}</dt><dd class="font-mono text-lg text-primary">{{ pipeResult.totalPressureDropKPa?.toFixed(2) }} kPa</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('totalDrop')" /><dd class="font-mono text-lg text-primary">{{ pipeResult.totalPressureDropKPa?.toFixed(2) }} kPa</dd>
               </div>
               <el-tag v-if="pipe.calcMode === 'professional'" class="mt-3" :type="pipeResult.pass ? 'success' : 'danger'">
                 {{ pipeResult.pass ? pr('pipePass') : pr('pipeFail') }} · {{ pr('erosion') }} {{ pipeResult.erosionRisk }}
@@ -101,11 +97,9 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('criticalStress') }}</dt><dd class="font-mono">{{ plateResult.criticalStress?.toFixed(1) }} MPa</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('criticalStress')" /><dd class="font-mono">{{ plateResult.criticalStress?.toFixed(1) }} MPa</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('safetyFactor') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('safetyFactor')" />
                 <dd class="font-mono" :class="plateResult.pass ? 'text-success' : 'text-error'">
                   {{ plateResult.safetyFactor === Infinity ? '—' : plateResult.safetyFactor?.toFixed(2) }}
                 </dd>
@@ -167,14 +161,12 @@
             </div>
             <template v-if="modalResult.resonance && !modalResult.resonance.errorKey">
               <dl class="mt-4 space-y-2 text-sm">
-                <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>{{ pr('resonanceMargin') }}</dt><dd class="font-mono">{{ modalResult.resonance.marginPercent?.toFixed(1) }}%</dd>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('resonanceMargin')" /><dd class="font-mono">{{ modalResult.resonance.marginPercent?.toFixed(1) }}%</dd>
                 </div>
                 <div v-if="modalResult.amplificationFactor" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
                   <dt>{{ pr('amplification') }}</dt><dd class="font-mono">{{ modalResult.amplificationFactor?.toFixed(2) }}</dd>
                 </div>
-                <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>{{ pr('assessment') }}</dt><dd :class="modalResult.resonance.pass ? 'text-success' : 'text-error'">{{ rm('modal', `assessment_${modalResult.resonance.assessmentKey}`) }}</dd>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('assessment')" /><dd :class="modalResult.resonance.pass ? 'text-success' : 'text-error'">{{ rm('modal', `assessment_${modalResult.resonance.assessmentKey}`) }}</dd>
                 </div>
               </dl>
             </template>

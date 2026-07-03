@@ -100,28 +100,23 @@
           {{ result.pass ? fc('designOk') : fc('designAdjust') }}
         </el-tag>
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('compressionAmount') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('compressionAmount')" />
             <dd class="font-mono" :class="result.compressionOk ? 'text-success' : 'text-error'">
               {{ result.compression?.toFixed(3) }} mm ({{ result.compressionPercent?.toFixed(1) }}%)
             </dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('grooveDepth') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('grooveDepth')" />
             <dd class="font-mono">{{ result.grooveDepth?.toFixed(3) }} mm</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('fillPercent') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fillPercent')" />
             <dd class="font-mono" :class="result.fillOk ? 'text-success' : 'text-error'">
               {{ result.fillPercent?.toFixed(1) }}% (65–85%)
             </dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('recommendedWidth') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('recommendedWidth')" />
             <dd class="font-mono">{{ result.recommendedWidth?.toFixed(2) }} mm</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('widthCheck') }}</dt>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('widthCheck')" />
             <dd>{{ result.widthOk ? pr('widthOk') : pr('widthBad') }}</dd>
           </div>
           <div v-if="result.extrusionPass != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">

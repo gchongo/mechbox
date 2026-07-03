@@ -97,33 +97,33 @@
         />
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('equivalentLoad') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('equivalentLoad')" />
             <dd class="font-mono">{{ result.equivalentLoad.toFixed(1) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('lifeL10') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('lifeL10')" />
             <dd class="font-mono">{{ formatNum(result.l10MillionRev) }}</dd>
           </div>
           <div v-if="form.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('modifierProduct') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('modifierProduct')" />
             <dd class="font-mono">
               {{ formatNum(result.modifiedLifeMillionRev) }}
               (a₁×aISO{{ form.calcMode === 'professional' ? '×a₂' : '' }}={{ modifierProduct }})
             </dd>
           </div>
           <div v-if="form.calcMode === 'professional' && result.temperatureFactor < 1" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('tempFactorA2') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('tempFactorA2')" />
             <dd class="font-mono">{{ result.temperatureFactor?.toFixed(2) }}</dd>
           </div>
           <el-alert v-if="result.speedWarningKey" type="warning" :title="rm('bearing', result.speedWarningKey, result.speedWarningParams)" show-icon class="mb-2" />
           <div v-if="result.staticSafetyFactor != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('staticSafety') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('staticSafety')" />
             <dd class="font-mono" :class="result.staticPass ? 'text-success' : 'text-error'">
               {{ result.staticSafetyFactor.toFixed(2) }} {{ result.staticPass ? '✓' : '✗' }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('lifeHours') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('lifeHours')" />
             <dd class="font-mono text-lg" :class="result.pass ? 'text-success' : 'text-error'">
               {{ formatHours(result.lifeHours) }} {{ result.pass ? '✓' : '✗' }}
             </dd>

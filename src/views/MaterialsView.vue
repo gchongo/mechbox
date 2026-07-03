@@ -31,11 +31,11 @@
           <el-tag size="small" class="mt-2">{{ m.displayCategory ?? categoryLabel(m.category) }}</el-tag>
         <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
           <div>
-            <dt class="text-gray-500"><MathTex expr="\sigma_b" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="'$\sigma_b$'" />
             <dd class="font-mono">{{ m.sigmaB }} MPa</dd>
           </div>
           <div>
-            <dt class="text-gray-500"><MathTex expr="\sigma_s" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="'$\sigma_s$'" />
             <dd class="font-mono">{{ m.sigmaS || '—' }} MPa</dd>
           </div>
           <div>
@@ -51,11 +51,11 @@
             <dd class="font-mono">{{ tempAllow(m).tauAllow }} MPa</dd>
           </div>
           <div>
-            <dt class="text-gray-500"><MathTex expr="E" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="'$E$'" />
             <dd class="font-mono">{{ m.E }} MPa</dd>
           </div>
           <div>
-            <dt class="text-gray-500"><MathTex expr="\rho" /></dt>
+            <ResultLabel label-class="text-gray-500" :text="'$\rho$'" />
             <dd class="font-mono">{{ m.density }} g/cm³</dd>
           </div>
         </dl>

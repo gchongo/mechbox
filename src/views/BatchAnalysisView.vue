@@ -37,23 +37,23 @@
         <h2 class="mb-4 font-semibold">{{ pt('sectionSummary') }}</h2>
         <div v-if="summary" class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('total') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('total')" />
             <dd class="mt-1 font-mono text-lg">{{ summary.total }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('rssPass') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('rssPass')" />
             <dd class="mt-1 font-mono text-lg text-success">{{ summary.rssPass }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('worstPass') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('worstPass')" />
             <dd class="mt-1 font-mono text-lg text-success">{{ summary.worstPass }}</dd>
           </div>
           <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">{{ pr('fail') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('fail')" />
             <dd class="mt-1 font-mono text-lg text-error">{{ summary.fail }}</dd>
           </div>
           <div v-if="summary.criticalGap" class="rounded bg-red-50 p-3 dark:bg-red-950/30">
-            <dt class="text-gray-500">{{ pr('criticalGap') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pr('criticalGap')" />
             <dd class="mt-1 font-mono text-lg text-error">{{ summary.criticalGap }}</dd>
           </div>
         </div>
@@ -102,7 +102,7 @@
               :type="row.adviceLevel === 'critical' ? 'danger' : 'warning'"
               size="small"
             >
-              {{ pt(`advice.${row.adviceKey}`) }}
+              <MathContent :text="enrichedAdvice(row.adviceKey)" />
             </el-tag>
             <span v-else>—</span>
           </template>
@@ -116,6 +116,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { parseBatchCsv, batchValidate } from '@/utils/batch-analysis'
+import { enrichMathText } from '@/utils/math-label'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
@@ -144,6 +145,10 @@ const summary = computed(() => {
     criticalGap: valid.filter((r) => r.adviceLevel === 'critical').length,
   }
 })
+
+function enrichedAdvice(key) {
+  return enrichMathText(pt(`advice.${key}`))
+}
 
 function runBatch() {
   const rows = parseBatchCsv(csvInput.value)

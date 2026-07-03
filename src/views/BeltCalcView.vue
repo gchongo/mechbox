@@ -33,11 +33,11 @@
       </section>
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('ratio') }}</dt><dd class="font-mono">{{ result.ratio.toFixed(2) }}</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('beltLength') }}</dt><dd class="font-mono">{{ result.beltLength.toFixed(0) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('beltSpeedWrap') }}</dt><dd class="font-mono">{{ result.beltSpeed.toFixed(2) }} m/s · {{ result.wrapAngle?.toFixed(1) }}°</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('tightSide') }}</dt><dd class="font-mono">{{ result.F1.toFixed(0) }} N</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('slackSide') }}</dt><dd class="font-mono">{{ result.F2.toFixed(0) }} N</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('ratio')" /><dd class="font-mono">{{ result.ratio.toFixed(2) }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('beltLength')" /><dd class="font-mono">{{ result.beltLength.toFixed(0) }} mm</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('beltSpeedWrap')" /><dd class="font-mono">{{ result.beltSpeed.toFixed(2) }} m/s · {{ result.wrapAngle?.toFixed(1) }}°</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('tightSide')" /><dd class="font-mono">{{ result.F1.toFixed(0) }} N</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('slackSide')" /><dd class="font-mono">{{ result.F2.toFixed(0) }} N</dd></div>
           <div v-if="result.beltCount" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('beltCount') }}</dt><dd class="font-mono">{{ result.beltCount }} {{ pr('beltCountUnit') }}</dd></div>
           <div v-if="result.estimatedLifeHours" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('lifeHours') }}</dt><dd class="font-mono">{{ Math.round(result.estimatedLifeHours).toLocaleString() }} h</dd></div>
         </dl>

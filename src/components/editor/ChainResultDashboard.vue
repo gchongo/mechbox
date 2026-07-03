@@ -9,7 +9,7 @@
             <p class="mb-2 text-xs font-medium text-gray-500">{{ pt('dashboard.worstTitle') }}</p>
             <dl class="space-y-1.5 text-sm">
               <div class="flex justify-between">
-                <dt class="text-gray-500">{{ pt('dashboard.nominal') }}</dt>
+                <ResultLabel label-class="text-gray-500" :text="pt('dashboard.nominal')" />
                 <dd class="font-mono">{{ fmt(worst.nominal) }}</dd>
               </div>
               <div class="flex justify-between">
@@ -21,7 +21,7 @@
                 <dd class="font-mono text-error">{{ fmtSigned(worst.ei) }}</dd>
               </div>
               <div class="flex justify-between border-t border-gray-200 pt-1.5 dark:border-gray-700">
-                <dt class="text-gray-500">{{ pt('dashboard.range') }}</dt>
+                <ResultLabel label-class="text-gray-500" :text="pt('dashboard.range')" />
                 <dd class="font-mono text-xs">{{ fmt(worst.lower) }} ~ {{ fmt(worst.upper) }}</dd>
               </div>
             </dl>
@@ -50,7 +50,7 @@
                 <dd class="font-mono">{{ fmt(rss.tolerance) }}</dd>
               </div>
               <div class="flex justify-between border-t border-gray-200 pt-1.5 dark:border-gray-700">
-                <dt class="text-gray-500">{{ pt('dashboard.range') }}</dt>
+                <ResultLabel label-class="text-gray-500" :text="pt('dashboard.range')" />
                 <dd class="font-mono text-xs">{{ fmt(rss.lower) }} ~ {{ fmt(rss.upper) }}</dd>
               </div>
             </dl>
@@ -76,11 +76,11 @@
         <h3 class="mb-3 font-semibold">{{ pt('dashboard.designReq') }}</h3>
         <dl class="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <dt class="text-gray-500">{{ pt('dashboard.targetSize') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pt('dashboard.targetSize')" />
             <dd class="mt-1 font-mono text-lg">{{ fmt(design.target) }} {{ unit }}</dd>
           </div>
           <div>
-            <dt class="text-gray-500">{{ pt('dashboard.totalTolerance') }}</dt>
+            <ResultLabel label-class="text-gray-500" :text="pt('dashboard.totalTolerance')" />
             <dd class="mt-1 font-mono text-lg">{{ fmt(design.tolerance) }} {{ unit }}</dd>
           </div>
           <div>

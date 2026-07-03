@@ -126,12 +126,10 @@
                 <p class="mt-2 text-sm">R² = <span class="font-mono">{{ rsmResult.fit.r2?.toFixed(4) }}</span></p>
               </div>
               <dl class="space-y-2 text-sm">
-                <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>{{ pr('optimumCoded') }}</dt>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('optimumCoded')" />
                   <dd class="font-mono">({{ rsmResult.fit.optimum.codedX1 }}, {{ rsmResult.fit.optimum.codedX2 }})</dd>
                 </div>
-                <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>{{ pr('maxResponse') }}</dt>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxResponse')" />
                   <dd class="font-mono text-primary">{{ rsmResult.fit.optimum.predictedY }}</dd>
                 </div>
               </dl>

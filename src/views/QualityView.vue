@@ -46,17 +46,13 @@
           <section class="card-panel">
             <h3 class="mb-3 font-semibold">{{ pt('sectionVarComponents') }}</h3>
             <dl class="grid gap-2 text-sm sm:grid-cols-2">
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('grr') }}</dt><dd class="font-mono">{{ msaResult.GRR?.toFixed(4) }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('grr')" /><dd class="font-mono">{{ msaResult.GRR?.toFixed(4) }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('partPV') }}</dt><dd class="font-mono">{{ msaResult.PV?.toFixed(4) }} ({{ msaResult.pctPV?.toFixed(1) }}%)</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('partPV')" /><dd class="font-mono">{{ msaResult.PV?.toFixed(4) }} ({{ msaResult.pctPV?.toFixed(1) }}%)</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('totalTV') }}</dt><dd class="font-mono">{{ msaResult.TV?.toFixed(4) }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('totalTV')" /><dd class="font-mono">{{ msaResult.TV?.toFixed(4) }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ pr('config') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('config')" />
                 <dd>{{ pr('configValue', { ops: msaResult.nOperators, parts: msaResult.nParts, trials: msaResult.nTrials }) }}</dd>
               </div>
             </dl>
@@ -78,7 +74,7 @@
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><dt class="text-gray-500">R̄</dt><dd class="font-mono">{{ xrResult.rBar?.toFixed(4) }}</dd></div>
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><dt class="text-gray-500">σ</dt><dd class="font-mono">{{ xrResult.sigma?.toFixed(4) }}</dd></div>
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">{{ pt('outOfControl') }}</dt>
+              <ResultLabel label-class="text-gray-500" :text="pt('outOfControl')" />
               <dd>{{ pt('outOfControlCount', { count: outOfControlCount }) }}</dd>
             </div>
           </div>
@@ -178,17 +174,13 @@
           </section>
           <section class="card-panel">
             <dl class="space-y-3 text-sm">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('sampleCode') }}</dt><dd class="font-mono">{{ aqlPlan.sampleSizeCode }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('sampleCode')" /><dd class="font-mono">{{ aqlPlan.sampleSizeCode }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('sampleN') }}</dt><dd class="font-mono">{{ aqlPlan.sampleSize }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('sampleN')" /><dd class="font-mono">{{ aqlPlan.sampleSize }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('acRe') }}</dt><dd class="font-mono">{{ aqlPlan.acceptNumber }} / {{ aqlPlan.rejectNumber }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('acRe')" /><dd class="font-mono">{{ aqlPlan.acceptNumber }} / {{ aqlPlan.rejectNumber }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('decision') }}</dt>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('decision')" />
                 <dd :class="aqlPlan.pass ? 'text-success' : 'text-error'">{{ rm('aql', aqlPlan.decisionKey) }}</dd>
               </div>
             </dl>
