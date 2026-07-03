@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { applySeoMeta } from '@/utils/seo-meta'
 
 const routes = [
   {
@@ -303,21 +304,11 @@ router.afterEach((to) => {
   setTimeout(scrollTop, 0)
   setTimeout(scrollTop, 100)
 
-  document.title = to.meta.title
-    ? `${to.meta.title} - 机械工具箱`
-    : '机械工具箱 — 尺寸链与机械强度计算'
+  applySeoMeta(to)
+})
 
-  let desc = document.querySelector('meta[name="description"]')
-  if (!desc) {
-    desc = document.createElement('meta')
-    desc.setAttribute('name', 'description')
-    document.head.appendChild(desc)
-  }
-  desc.setAttribute(
-    'content',
-    to.meta.description
-      ?? `${to.meta.title ?? '机械工具箱'} — 在线尺寸链叠加分析、概率统计与机械强度计算工具。`,
-  )
+window.addEventListener('mechbox-settings', () => {
+  applySeoMeta(router.currentRoute.value)
 })
 
 export default router

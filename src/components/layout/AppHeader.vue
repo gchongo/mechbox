@@ -15,7 +15,7 @@
           class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors md:hidden"
           :class="route.path.startsWith('/editor') ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300'"
         >
-          分析
+          {{ t('nav.analysis', locale) }}
         </router-link>
 
         <router-link
@@ -33,6 +33,7 @@
           :hide-on-click="true"
           teleported
           popper-class="app-header-tools-popper"
+          :popper-options="toolsPopperOptions"
           @command="goTool"
         >
           <button
@@ -44,20 +45,28 @@
             <el-icon class="ml-0.5 align-middle"><ArrowDown /></el-icon>
           </button>
           <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item
-                v-for="tool in allTools"
-                :key="tool.path"
-                :command="tool.path"
-                :class="{ 'is-active': route.path === tool.path }"
-              >
-                {{ tool.label }}
-              </el-dropdown-item>
+            <el-dropdown-menu class="app-header-tools-menu">
+              <el-scrollbar max-height="var(--app-tools-menu-max-h)" wrap-class="app-header-tools-scroll">
+                <el-dropdown-item
+                  v-for="tool in allTools"
+                  :key="tool.path"
+                  :command="tool.path"
+                  :class="{ 'is-active': route.path === tool.path }"
+                >
+                  {{ tool.label }}
+                </el-dropdown-item>
+              </el-scrollbar>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
 
-        <el-dropdown trigger="click" @command="goTool">
+        <el-dropdown
+          trigger="click"
+          teleported
+          popper-class="app-header-more-popper"
+          :popper-options="toolsPopperOptions"
+          @command="goTool"
+        >
           <button
             type="button"
             class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:py-2"
@@ -78,7 +87,7 @@
         <router-link
           to="/account"
           class="flex items-center rounded-md p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 sm:px-2 sm:py-2"
-          :title="user ? user.username : '登录'"
+          :title="user ? user.username : t('nav.login', locale)"
         >
           <el-icon :size="18"><User /></el-icon>
           <span v-if="user" class="ml-1 hidden max-w-[80px] truncate lg:inline">{{ user.username }}</span>
@@ -86,7 +95,7 @@
         <router-link
           to="/settings"
           class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 sm:p-2"
-          title="设置"
+          :title="t('nav.settings', locale)"
         >
           <el-icon :size="18"><Setting /></el-icon>
         </router-link>
@@ -100,7 +109,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from '@/utils/auth'
 import { getSettings } from '@/utils/settings'
-import { t } from '@/i18n'
+import { t, localizedToolLabel } from '@/i18n'
 import AppLogo from '@/components/common/AppLogo.vue'
 
 const route = useRoute()
@@ -117,44 +126,41 @@ const navItems = computed(() => [
   { path: '/manual', label: t('nav.manual', locale.value) },
 ])
 
-const toolGroups = computed(() => ({
+const toolsPopperOptions = {
+  strategy: 'fixed',
+  modifiers: [
+    { name: 'offset', options: { offset: [0, 6] } },
+    { name: 'preventOverflow', options: { padding: 8, altAxis: true } },
+    { name: 'flip', options: { fallbackPlacements: ['bottom-end', 'top-end'] } },
+  ],
+}
+
+const TOOL_PATHS = {
   chain: [
-    { path: '/batch', label: locale.value === 'en' ? 'Batch verify' : '批量验证' },
-    { path: '/allocation', label: locale.value === 'en' ? 'Tolerance allocation' : '公差分配' },
-    { path: '/fit', label: locale.value === 'en' ? 'ISO 286 fit' : 'ISO 286 配合' },
-    { path: '/gdt-stack', label: locale.value === 'en' ? 'GD&T stack' : 'GD&T 公差栈' },
-    { path: '/units', label: locale.value === 'en' ? 'Unit converter' : '单位换算' },
-    { path: '/fatigue', label: locale.value === 'en' ? 'Fatigue life' : '疲劳寿命' },
-    { path: '/interference-fit', label: locale.value === 'en' ? 'Interference fit' : '过盈配合' },
-    { path: '/thermal-expansion', label: locale.value === 'en' ? 'Thermal expansion' : '热膨胀' },
-    { path: '/gear', label: locale.value === 'en' ? 'Gear ISO/AGMA' : '齿轮 ISO/AGMA' },
-    { path: '/thread', label: locale.value === 'en' ? 'Thread strength' : '螺纹强度' },
-    { path: '/bolt-preload', label: locale.value === 'en' ? 'Bolt preload' : '螺栓预紧力' },
-    { path: '/bearing', label: locale.value === 'en' ? 'Bearing life' : '轴承寿命' },
+    '/batch', '/allocation', '/fit', '/gdt-stack', '/units', '/fatigue',
+    '/interference-fit', '/thermal-expansion', '/gear', '/thread', '/bolt-preload', '/bearing',
   ],
   drive: [
-    { path: '/beam', label: locale.value === 'en' ? 'Beam deflection' : '梁挠度' },
-    { path: '/sheet-metal', label: locale.value === 'en' ? 'Sheet metal' : '钣金展开' },
-    { path: '/o-ring', label: locale.value === 'en' ? 'O-ring seal' : 'O型圈密封' },
-    { path: '/shaft', label: locale.value === 'en' ? 'Shaft strength' : '轴强度' },
-    { path: '/key', label: locale.value === 'en' ? 'Key connection' : '平键连接' },
-    { path: '/weld', label: locale.value === 'en' ? 'Weld strength' : '焊缝强度' },
-    { path: '/bolt-group', label: locale.value === 'en' ? 'Bolt group' : '螺栓组' },
-    { path: '/spring', label: locale.value === 'en' ? 'Spring design' : '弹簧设计' },
-    { path: '/clutch', label: locale.value === 'en' ? 'Clutch' : '离合器' },
-    { path: '/belt', label: locale.value === 'en' ? 'Belt drive' : '皮带传动' },
-    { path: '/chain', label: locale.value === 'en' ? 'Chain drive' : '链传动' },
+    '/beam', '/sheet-metal', '/o-ring', '/shaft', '/key', '/weld',
+    '/bolt-group', '/spring', '/clutch', '/belt', '/chain',
   ],
   material: [
-    { path: '/structural', label: locale.value === 'en' ? 'Structural / fluid' : '结构/流体' },
-    { path: '/analytics', label: locale.value === 'en' ? 'Regression / DOE' : '回归/DOE' },
-    { path: '/cylinder', label: locale.value === 'en' ? 'Hydraulic / cylinder' : '液压/气缸' },
-    { path: '/materials', label: locale.value === 'en' ? 'Materials' : '材料库' },
-    { path: '/material-selection', label: locale.value === 'en' ? 'Material selection' : '材料选型' },
-    { path: '/heat-treatment', label: locale.value === 'en' ? 'Heat treatment' : '热处理硬度' },
-    { path: '/manufacturing', label: locale.value === 'en' ? 'Manufacturing' : '制造工艺' },
-    { path: '/quality', label: locale.value === 'en' ? 'MSA / SPC / FMEA' : 'MSA / FMEA' },
+    '/structural', '/analytics', '/cylinder', '/materials', '/material-selection',
+    '/heat-treatment', '/manufacturing', '/quality',
   ],
+}
+
+function mapToolPaths(paths) {
+  return paths.map((path) => ({
+    path,
+    label: localizedToolLabel(path, locale.value),
+  }))
+}
+
+const toolGroups = computed(() => ({
+  chain: mapToolPaths(TOOL_PATHS.chain),
+  drive: mapToolPaths(TOOL_PATHS.drive),
+  material: mapToolPaths(TOOL_PATHS.material),
 }))
 
 const allTools = computed(() => [
@@ -164,12 +170,12 @@ const allTools = computed(() => [
 ])
 
 const moreItems = computed(() => [
-  { path: '/tools', label: locale.value === 'en' ? 'Tool map' : '工具地图' },
+  { path: '/tools', label: t('tools.tool-map', locale.value) },
   { path: '/tutorial', label: t('nav.tutorial', locale.value) },
   { path: '/glossary', label: t('nav.glossary', locale.value) },
   { path: '/faq', label: t('nav.faq', locale.value) },
   { path: '/quiz', label: t('nav.quiz', locale.value) },
-  { path: '/history', label: locale.value === 'en' ? 'History' : '历史记录' },
+  { path: '/history', label: t('tools.history', locale.value) },
 ])
 
 const allToolPaths = computed(() => [
@@ -241,22 +247,48 @@ function goTool(path) {
 
 <!-- popper 挂载到 body，需非 scoped 样式 -->
 <style>
-.app-header-tools-popper.el-popper {
-  overflow: hidden;
+:root {
+  --app-tools-menu-max-h: min(420px, calc(100dvh - 72px));
 }
 
-.app-header-tools-popper .el-dropdown-menu {
-  max-height: min(420px, 65vh);
-  overflow-y: auto;
-  overflow-x: hidden;
+@media (max-width: 768px) {
+  :root {
+    --app-tools-menu-max-h: calc(100dvh - 64px);
+  }
+}
+
+.app-header-tools-popper.el-popper,
+.app-header-more-popper.el-popper {
+  padding: 0;
+}
+
+.app-header-tools-menu {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.app-header-tools-scroll {
   overscroll-behavior: contain;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
-.app-header-tools-popper .el-dropdown-menu::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+.app-header-tools-scroll .el-scrollbar__wrap {
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-header-tools-scroll .el-scrollbar__view {
+  padding: 4px 0;
+}
+
+.app-header-tools-popper .el-dropdown-menu__item,
+.app-header-more-popper .el-dropdown-menu__item {
+  line-height: 1.4;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 </style>

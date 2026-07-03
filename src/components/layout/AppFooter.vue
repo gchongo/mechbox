@@ -4,10 +4,10 @@
       <div class="app-footer__brand">
         <div class="mb-1.5 flex items-center gap-2">
           <AppLogo :size="28" />
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">机械工具箱</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ t('appName') }}</h3>
         </div>
         <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-          尺寸链叠加分析、概率统计与机械强度计算
+          {{ t('footer.tagline') }}
         </p>
         <a
           href="https://cax.do"
@@ -21,7 +21,7 @@
 
       <div class="app-footer__links">
         <div class="app-footer__col">
-          <h4 class="app-footer__heading">学习资源</h4>
+          <h4 class="app-footer__heading">{{ t('footer.learn') }}</h4>
           <nav class="app-footer__nav">
             <router-link v-for="link in learnLinks" :key="link.path" :to="link.path">
               {{ link.label }}
@@ -29,41 +29,44 @@
           </nav>
         </div>
         <div class="app-footer__col">
-          <h4 class="app-footer__heading">常用入口</h4>
+          <h4 class="app-footer__heading">{{ t('footer.shortcuts') }}</h4>
           <nav class="app-footer__nav">
-            <router-link to="/editor">尺寸链分析</router-link>
-            <router-link to="/statistics">概率统计</router-link>
-            <router-link to="/cases">案例库</router-link>
-            <router-link to="/history">历史记录</router-link>
+            <router-link to="/editor">{{ t('footer.stackAnalysis') }}</router-link>
+            <router-link to="/statistics">{{ t('footer.statistics') }}</router-link>
+            <router-link to="/cases">{{ t('footer.cases') }}</router-link>
+            <router-link to="/history">{{ t('footer.history') }}</router-link>
           </nav>
         </div>
         <div class="app-footer__col">
-          <h4 class="app-footer__heading">帮助</h4>
+          <h4 class="app-footer__heading">{{ t('footer.help') }}</h4>
           <nav class="app-footer__nav">
-            <router-link to="/faq">常见问题</router-link>
-            <router-link to="/glossary">术语词典</router-link>
-            <router-link to="/settings">设置</router-link>
+            <router-link to="/faq">{{ t('footer.faq') }}</router-link>
+            <router-link to="/glossary">{{ t('footer.glossary') }}</router-link>
+            <router-link to="/settings">{{ t('footer.settings') }}</router-link>
           </nav>
         </div>
       </div>
 
-      <p class="app-footer__copy">© {{ year }} 机械工具箱</p>
+      <p class="app-footer__copy">{{ t('footer.copyright', { year }) }}</p>
     </div>
   </footer>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import AppLogo from '@/components/common/AppLogo.vue'
+import { useLocale } from '@/composables/useLocale'
 
+const { t } = useLocale()
 const year = new Date().getFullYear()
 
-const learnLinks = [
-  { path: '/tutorial', label: '教程' },
-  { path: '/cases', label: '案例库' },
-  { path: '/quiz', label: '练习题' },
-  { path: '/manual', label: '公式手册' },
-  { path: '/glossary', label: '术语词典' },
-]
+const learnLinks = computed(() => [
+  { path: '/tutorial', label: t('nav.tutorial') },
+  { path: '/cases', label: t('footer.cases') },
+  { path: '/quiz', label: t('footer.quiz') },
+  { path: '/manual', label: t('footer.manual') },
+  { path: '/glossary', label: t('footer.glossary') },
+])
 </script>
 
 <style scoped>

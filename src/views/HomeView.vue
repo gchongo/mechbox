@@ -2,26 +2,23 @@
   <div class="home-page">
     <section class="home-quick">
       <div class="home-quick__main">
-        <p class="home-quick__desc">尺寸链叠加 · 概率统计 · 机械强度计算</p>
+        <p class="home-quick__desc">{{ t('home.quickDesc') }}</p>
       </div>
       <div class="home-quick__actions">
         <el-button type="primary" size="large" class="home-quick__btn" @click="startNewAnalysis">
           <el-icon class="mr-1"><Promotion /></el-icon>
-          快速分析
+          {{ t('home.quickStart') }}
         </el-button>
-        <router-link to="/history">
-          <el-button size="large" plain class="home-quick__btn">历史记录</el-button>
-        </router-link>
         <router-link to="/tools">
-          <el-button size="large" plain class="home-quick__btn">工具地图</el-button>
+          <el-button size="large" plain class="home-quick__btn">{{ t('home.toolMap') }}</el-button>
         </router-link>
       </div>
     </section>
 
     <section class="home-section">
       <header class="home-section__head">
-        <h2 class="home-section__title">分析类型</h2>
-        <router-link to="/editor" class="home-section__link">进入编辑器 →</router-link>
+        <h2 class="home-section__title">{{ t('home.analysisTypes') }}</h2>
+        <router-link to="/editor" class="home-section__link">{{ t('home.enterEditor') }}</router-link>
       </header>
       <div class="home-analysis-grid">
         <div
@@ -31,7 +28,7 @@
         >
           <h3 class="home-analysis-group__title">
             <el-icon class="text-primary"><component :is="group.icon" /></el-icon>
-            {{ group.label }}
+            {{ t(`analysisGroups.${group.id}`) }}
           </h3>
           <ul class="home-analysis-list">
             <li v-for="type in group.types" :key="type.id">
@@ -48,8 +45,8 @@
 
     <section class="home-section">
       <header class="home-section__head">
-        <h2 class="home-section__title">统计工具</h2>
-        <router-link to="/statistics" class="home-section__link">全部统计 →</router-link>
+        <h2 class="home-section__title">{{ t('home.statTools') }}</h2>
+        <router-link to="/statistics" class="home-section__link">{{ t('home.allStats') }}</router-link>
       </header>
       <div class="home-grid">
         <button
@@ -66,11 +63,11 @@
 
     <section class="home-section">
       <header class="home-section__head">
-        <h2 class="home-section__title">机械计算工具</h2>
+        <h2 class="home-section__title">{{ t('home.mechTools') }}</h2>
       </header>
 
       <div v-for="group in toolGroups" :key="group.label" class="home-tool-block">
-        <h3 class="home-tool-block__label">{{ group.label }}</h3>
+        <h3 class="home-tool-block__label">{{ t(`toolGroups.${group.id}`) }}</h3>
         <div class="home-grid">
           <router-link
             v-for="tool in group.tools"
@@ -87,15 +84,27 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ANALYSIS_GROUPS } from '@/constants/analysis-types'
 import { STAT_TOOLS, TOOL_GROUPS } from '@/constants/tool-catalog'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
+import { useLocale } from '@/composables/useLocale'
+import { localizedToolLabel } from '@/i18n'
 
 const router = useRouter()
+const { locale, t } = useLocale()
 
 const statTools = STAT_TOOLS
-const toolGroups = TOOL_GROUPS.filter((g) => g.id !== 'reference')
+const toolGroups = computed(() =>
+  TOOL_GROUPS.filter((g) => g.id !== 'reference').map((g) => ({
+    ...g,
+    tools: g.tools.map((tool) => ({
+      ...tool,
+      label: localizedToolLabel(tool.path, locale.value),
+    })),
+  })),
+)
 
 function startNewAnalysis() {
   router.push({ name: 'editor' })
