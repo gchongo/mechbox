@@ -11,40 +11,40 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pf('requirementsTitle') }}</h2>
         <el-form label-width="140px">
-          <el-form-item :label="pf('minAllowStress')">
+          <CalcFormItem :label="pf('minAllowStress')">
             <el-input-number v-model="req.minSigmaAllow" :min="0" :step="50" />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
-          </el-form-item>
-          <el-form-item :label="pf('maxDensity')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('maxDensity')">
             <el-input-number v-model="req.maxDensity" :min="1" :max="20" :precision="2" :step="0.5" />
             <span class="ml-2 text-sm text-gray-500">g/cm³</span>
-          </el-form-item>
-          <el-form-item :label="pf('workingTemp')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('workingTemp')">
             <el-input-number v-model="req.tempC" :min="20" :max="500" :step="10" />
             <span class="ml-2 text-sm text-gray-500">°C</span>
-          </el-form-item>
-          <el-form-item :label="pf('minWeldability')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('minWeldability')">
             <el-slider v-model="req.minWeldability" :min="1" :max="5" :step="1" show-stops />
-          </el-form-item>
-          <el-form-item :label="pf('maxCostIndex')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('maxCostIndex')">
             <el-input-number v-model="req.maxCostIndex" :min="0.5" :max="10" :step="0.5" />
-          </el-form-item>
+          </CalcFormItem>
           <el-divider content-position="left">{{ pf('dividerWeights') }}</el-divider>
-          <el-form-item :label="pf('weightStrength')">
+          <CalcFormItem :label="pf('weightStrength')">
             <el-slider v-model="weights.strength" :min="0" :max="1" :step="0.05" />
-          </el-form-item>
-          <el-form-item :label="pf('weightLight')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('weightLight')">
             <el-slider v-model="weights.weight" :min="0" :max="1" :step="0.05" />
-          </el-form-item>
-          <el-form-item :label="pf('weightCost')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('weightCost')">
             <el-slider v-model="weights.cost" :min="0" :max="1" :step="0.05" />
-          </el-form-item>
-          <el-form-item :label="pf('weightWeldability')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('weightWeldability')">
             <el-slider v-model="weights.weldability" :min="0" :max="1" :step="0.05" />
-          </el-form-item>
-          <el-form-item :label="pf('weightMachinability')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('weightMachinability')">
             <el-slider v-model="weights.machinability" :min="0" :max="1" :step="0.05" />
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
       </section>
 

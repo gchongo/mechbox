@@ -11,33 +11,33 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ fc('parameters') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('method')">
+          <CalcFormItem :label="pf('method')">
             <el-radio-group v-model="form.method">
               <el-radio value="k_factor">{{ pf('methodKFactor') }}</el-radio>
               <el-radio value="bend_deduction">{{ pf('methodBendDeduction') }}</el-radio>
             </el-radio-group>
-          </el-form-item>
-          <el-form-item :label="pf('thickness')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('thickness')">
             <el-input-number v-model="form.thickness" :min="0.3" :max="20" :precision="2" :step="0.1" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('bendRadius')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('bendRadius')">
             <el-input-number v-model="form.bendRadius" :min="0.1" :max="50" :precision="2" />
-          </el-form-item>
-          <el-form-item :label="pf('kFactor')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('kFactor')">
             <el-input-number v-model="form.kFactor" :min="0.2" :max="0.5" :precision="3" :step="0.01" />
             <el-select v-model="kPreset" class="ml-2 w-36" :placeholder="fc('preset')" @change="applyK">
               <el-option v-for="(p, k) in kFactorPresets" :key="k" :label="p.label" :value="k" />
             </el-select>
-          </el-form-item>
-          <el-form-item v-if="form.method === 'bend_deduction'" :label="pf('outerSum')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.method === 'bend_deduction'" :label="pf('outerSum')">
             <el-input-number v-model="form.outerSum" :min="1" :precision="2" />
             <span class="ml-2 text-xs text-gray-500">{{ pf('outerSumHint') }}</span>
-          </el-form-item>
-          <el-form-item v-if="calcMode === 'professional'" :label="pf('springbackFactor')">
+          </CalcFormItem>
+          <CalcFormItem v-if="calcMode === 'professional'" :label="pf('springbackFactor')">
             <el-input-number v-model="form.springbackFactor" :min="0" :max="3" :precision="1" :step="0.1" />
             <span class="ml-2 text-xs text-gray-500">{{ pf('springbackHint') }}</span>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
 
         <h3 class="mb-2 text-sm font-medium">{{ pf('segmentList') }}</h3>

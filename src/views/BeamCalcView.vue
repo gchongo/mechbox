@@ -16,49 +16,49 @@
               <el-option v-for="m in materialOptions" :key="m.id" :label="m.label" :value="m.id" />
             </el-select>
           </el-form-item>
-          <el-form-item :label="pf('caseId')">
+          <CalcFormItem :label="pf('caseId')">
             <el-select v-model="form.caseId" class="w-full">
               <el-option v-for="c in caseOptions" :key="c.id" :label="c.label" :value="c.id" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('sectionType')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('sectionType')">
             <el-select v-model="form.sectionType" class="w-full">
               <el-option v-for="(s, k) in sectionTypes" :key="k" :label="s.label" :value="k" />
             </el-select>
-          </el-form-item>
+          </CalcFormItem>
           <el-form-item v-for="p in sectionParams" :key="p.key" :label="p.label">
             <el-input-number v-model="form[p.key]" :min="p.min ?? 0.1" :precision="2" />
           </el-form-item>
-          <el-form-item :label="pf('spanLength')">
+          <CalcFormItem :label="pf('spanLength')">
             <el-input-number v-model="form.spanLength" :min="10" :max="10000" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="loadLabel">
+          </CalcFormItem>
+          <CalcFormItem :label="loadLabel">
             <el-input-number v-model="form.load" :min="0" :precision="2" />
-          </el-form-item>
-          <el-form-item :label="pf('elasticModulus')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('elasticModulus')">
             <el-input-number v-model="form.elasticModulus" :min="1000" :step="10000" />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
-          </el-form-item>
-          <el-form-item :label="pf('allowableStress')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('allowableStress')">
             <el-input-number v-model="form.allowableStress" :min="1" :disabled="form.calcMode === 'simple'" />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
-          </el-form-item>
-          <el-form-item :label="pf('allowableDeflection')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('allowableDeflection')">
             <el-input-number v-model="form.allowableDeflection" :min="0.001" :precision="4" :step="0.01" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('dynamicFactor')">
+            <CalcFormItem :label="pf('dynamicFactor')">
               <el-input-number v-model="form.dynamicFactor" :min="1" :max="3" :step="0.1" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('stressConcentration')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('stressConcentration')">
               <el-input-number v-model="form.stressConcentration" :min="1" :max="4" :step="0.1" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('loadRange')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('loadRange')">
               <el-input-number v-model="form.loadMin" :min="0" class="w-28" />
               <el-input-number v-model="form.loadMax" :min="0" class="ml-2 w-28" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

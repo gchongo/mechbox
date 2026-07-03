@@ -11,7 +11,7 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
-          <el-form-item :label="pf('crossSection')">
+          <CalcFormItem :label="pf('crossSection')">
             <div class="flex w-full flex-wrap items-center gap-2">
               <el-input-number
                 v-model="form.crossSection"
@@ -35,48 +35,48 @@
                 {{ s.cs }}
               </el-button>
             </div>
-          </el-form-item>
-          <el-form-item :label="pf('grooveDiameter')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('grooveDiameter')">
             <el-input-number v-model="form.grooveDiameter" :min="1" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('grooveWidth')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('grooveWidth')">
             <el-input-number v-model="form.grooveWidth" :min="0.5" :precision="2" />
-          </el-form-item>
-          <el-form-item :label="pf('compressionPercent')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('compressionPercent')">
             <el-input-number v-model="form.compressionPercent" :min="5" :max="35" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">%</span>
-          </el-form-item>
-          <el-form-item :label="pf('stretchPercent')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('stretchPercent')">
             <el-input-number v-model="form.stretchPercent" :min="0" :max="8" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">%</span>
-          </el-form-item>
-          <el-form-item :label="pf('workingPressure')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('workingPressure')">
             <el-input-number v-model="form.pressure" :min="0" :max="50" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">{{ pf('pressureHint') }}</span>
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item :label="pf('extrusionGap')">
+            <CalcFormItem :label="pf('extrusionGap')">
               <el-input-number v-model="form.extrusionGap" :min="0.05" :max="0.5" :precision="2" :step="0.01" />
-            </el-form-item>
+            </CalcFormItem>
             <el-form-item :label="fc('material')">
               <el-select v-model="form.material" class="w-full">
                 <el-option v-for="(m, k) in materials" :key="k" :label="m.label" :value="k" />
               </el-select>
             </el-form-item>
-            <el-form-item :label="pf('operatingTemp')">
+            <CalcFormItem :label="pf('operatingTemp')">
               <el-input-number v-model="form.operatingTemp" :min="-40" :max="250" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('strokeSpeed')">
+            <CalcFormItem :label="pf('strokeSpeed')">
               <el-input-number v-model="form.strokeSpeed" :min="0" :max="2" :precision="2" :step="0.1" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
-          <el-form-item :label="pf('boreRecommend')">
+          <CalcFormItem :label="pf('boreRecommend')">
             <el-input-number v-model="boreForRec" :min="5" />
             <el-button class="ml-2" size="small" @click="applyRecommend">{{ pf('applyRecommendGroove') }}</el-button>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
 
         <ORingSealDiagram

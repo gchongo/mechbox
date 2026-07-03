@@ -18,22 +18,22 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionParams') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('closedMin')">
+          <CalcFormItem :label="pf('closedMin')">
             <el-input-number v-model="closedMin" :precision="3" :step="0.01" />
-          </el-form-item>
-          <el-form-item :label="pf('closedMax')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('closedMax')">
             <el-input-number v-model="closedMax" :precision="3" :step="0.01" />
-          </el-form-item>
-          <el-form-item :label="pf('toleranceList')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('toleranceList')">
             <el-input v-model="toleranceList" placeholder="0.06,0.05,0.04" />
-          </el-form-item>
-          <el-form-item :label="pf('sizeList')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('sizeList')">
             <el-input v-model="sizeList" :placeholder="pf('sizeListPh')" />
-          </el-form-item>
-          <el-form-item :label="pf('typeList')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('typeList')">
             <el-input v-model="typeList" :placeholder="pf('typeListPh')" />
-          </el-form-item>
-          <el-form-item :label="pf('distribution')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('distribution')">
             <el-select v-model="distribution" class="w-full">
               <el-option
                 v-for="(d, k) in distributions"
@@ -42,14 +42,14 @@
                 :value="k"
               />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('customK')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('customK')">
             <el-input-number v-model="customK" :min="0" :precision="2" :step="0.1" />
             <span class="ml-2 text-xs text-gray-400">{{ pf('customKHint') }}</span>
-          </el-form-item>
-          <el-form-item :label="pf('iterations')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('iterations')">
             <el-input-number v-model="iterations" :min="1000" :max="100000" :step="1000" />
-          </el-form-item>
+          </CalcFormItem>
           <el-button type="primary" :loading="running" @click="runSimulation">
             {{ pt('runSimulation') }}
           </el-button>

@@ -12,6 +12,8 @@ import { initSettings } from './utils/settings'
 import { applySeoMeta } from './utils/seo-meta'
 import MathTex from './components/common/MathTex.vue'
 import MathContent from './components/common/MathContent.vue'
+import FormMathLabel from './components/common/FormMathLabel.vue'
+import CalcFormItem from './components/calc/CalcFormItem.vue'
 
 const app = createApp(App)
 
@@ -21,6 +23,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 app.component('MathTex', MathTex)
 app.component('MathContent', MathContent)
+app.component('FormMathLabel', FormMathLabel)
+app.component('CalcFormItem', CalcFormItem)
 
 app.use(ElementPlus)
 app.use(router)

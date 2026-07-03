@@ -11,23 +11,23 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pf('linearExpansion') }}</h2>
         <el-form label-width="148px">
-          <el-form-item :label="pf('material1')">
+          <CalcFormItem :label="pf('material1')">
             <el-select v-model="mat1" class="w-full" @change="onMat1">
               <el-option v-for="(m, k) in thermalMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('length1')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('length1')">
             <el-input-number v-model="form.length" :min="1" :max="10000" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('deltaT')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('deltaT')">
             <el-input-number v-model="form.deltaT" :min="-300" :max="800" :step="10" />
             <span class="ml-2 text-sm text-gray-500">°C</span>
-          </el-form-item>
-          <el-form-item :label="pf('alpha1')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('alpha1')">
             <el-input-number v-model="form.alpha" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
             <span class="ml-2 text-xs text-gray-500">{{ pf('alphaHint') }}</span>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
 
         <ThermalExpansionDiagram
@@ -48,30 +48,30 @@
       <section v-if="calcMode !== 'simple'" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pf('fitChange') }}</h2>
         <el-form label-width="148px">
-          <el-form-item :label="pf('material2')">
+          <CalcFormItem :label="pf('material2')">
             <el-select v-model="mat2" class="w-full" @change="onMat2">
               <el-option v-for="(m, k) in thermalMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('shaftDiameter')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('shaftDiameter')">
             <el-input-number v-model="form.shaftDiameter" :min="1" :max="500" :precision="2" />
-          </el-form-item>
-          <el-form-item :label="pf('holeDiameter')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('holeDiameter')">
             <el-input-number v-model="form.holeDiameter" :min="1" :max="500" :precision="2" />
-          </el-form-item>
-          <el-form-item :label="pf('alpha2')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('alpha2')">
             <el-input-number v-model="form.alpha2" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
             <span class="ml-2 text-xs text-gray-500">×10⁻⁶ /°C</span>
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="calcMode === 'professional'">
-            <el-form-item :label="pf('assemblyDeltaT')">
+            <CalcFormItem :label="pf('assemblyDeltaT')">
               <el-input-number v-model="form.assemblyDeltaT" :min="-200" :max="400" :step="10" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
-            </el-form-item>
-            <el-form-item :label="pf('serviceDeltaT')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('serviceDeltaT')">
               <el-input-number v-model="form.serviceDeltaT" :min="-200" :max="800" :step="10" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
         <template v-if="linearResult.fit">

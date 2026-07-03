@@ -13,23 +13,23 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="100px">
-              <el-form-item :label="pf('steelPreset')">
+              <CalcFormItem :label="pf('steelPreset')">
                 <el-select v-model="preset" class="w-full" @change="applyPreset">
                   <el-option v-for="(p, k) in steelPresets" :key="k" :label="p.label" :value="k" />
                 </el-select>
-              </el-form-item>
+              </CalcFormItem>
               <el-form-item v-for="el in elements" :key="el.key" :label="el.label">
                 <el-input-number v-model="comp[el.key]" :min="0" :max="5" :step="0.01" :precision="2" />
                 <span class="ml-2 text-xs text-gray-500">%</span>
               </el-form-item>
-              <el-form-item v-if="calcMode !== 'simple'" :label="pf('austeniteGrain')">
+              <CalcFormItem v-if="calcMode !== 'simple'" :label="pf('austeniteGrain')">
                 <el-input-number v-model="grainSize" :min="1" :max="8" />
                 <span class="ml-2 text-xs text-gray-500">ASTM</span>
-              </el-form-item>
-              <el-form-item v-if="calcMode !== 'simple'" :label="pf('partDiameter')">
+              </CalcFormItem>
+              <CalcFormItem v-if="calcMode !== 'simple'" :label="pf('partDiameter')">
                 <el-input-number v-model="partDiameter" :min="5" :max="300" />
                 <span class="ml-2 text-xs text-gray-500">mm</span>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
 
             <HeatTreatmentDiagram
@@ -89,17 +89,17 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('asQuenchedHRC')">
+              <CalcFormItem :label="pf('asQuenchedHRC')">
                 <el-input-number v-model="asQuenchedHRC" :min="20" :max="65" :precision="1" />
-              </el-form-item>
-              <el-form-item :label="pf('temperTemp')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('temperTemp')">
                 <el-input-number v-model="temperTemp" :min="150" :max="700" />
                 <span class="ml-2 text-xs text-gray-500">°C</span>
-              </el-form-item>
-              <el-form-item :label="pf('temperTime')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('temperTime')">
                 <el-input-number v-model="temperTime" :min="0.1" :max="24" :step="0.5" :precision="1" />
                 <span class="ml-2 text-xs text-gray-500">h</span>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
             <p class="text-xs text-gray-500">{{ pf('temperHint') }}</p>
           </section>

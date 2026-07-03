@@ -9,12 +9,12 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionTarget') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('targetMin')">
+          <CalcFormItem :label="pf('targetMin')">
             <el-input-number v-model="targetMin" :precision="3" :step="0.01" />
-          </el-form-item>
-          <el-form-item :label="pf('targetMax')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('targetMax')">
             <el-input-number v-model="targetMax" :precision="3" :step="0.01" />
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
 
         <h2 class="mb-3 font-semibold">{{ pt('sectionInput') }}</h2>

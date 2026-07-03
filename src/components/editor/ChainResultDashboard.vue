@@ -35,18 +35,18 @@
           </div>
 
           <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
-            <p class="mb-2 text-xs font-medium text-gray-500">{{ pt('dashboard.rssTitle') }}</p>
+            <p class="mb-2 text-xs font-medium text-gray-500"><MathContent :text="pt('dashboard.rssTitle')" /></p>
             <dl class="space-y-1.5 text-sm">
               <div class="flex justify-between">
-                <dt class="text-gray-500">{{ pt('dashboard.meanMu') }}</dt>
+                <dt class="text-gray-500"><MathContent :text="pt('dashboard.meanMu')" /></dt>
                 <dd class="font-mono">{{ fmt(rss.nominal) }}</dd>
               </div>
               <div class="flex justify-between">
-                <dt class="text-gray-500">{{ pt('dashboard.sigmaLabel') }}</dt>
+                <dt class="text-gray-500"><MathContent :text="pt('dashboard.sigmaLabel')" /></dt>
                 <dd class="font-mono">{{ fmt(rss.processSigma) }}</dd>
               </div>
               <div class="flex justify-between">
-                <dt class="text-gray-500">{{ pt('dashboard.tol3sigma') }}</dt>
+                <dt class="text-gray-500"><MathContent :text="pt('dashboard.tol3sigma')" /></dt>
                 <dd class="font-mono">{{ fmt(rss.tolerance) }}</dd>
               </div>
               <div class="flex justify-between border-t border-gray-200 pt-1.5 dark:border-gray-700">
@@ -68,7 +68,7 @@
           class="mt-4 rounded-lg px-3 py-2.5 text-xs leading-relaxed"
           :class="stackAdviceHintClass"
         >
-          {{ stackAdviceHint }}
+          💡 <MathContent :text="stackAdviceHint" class="inline" />
         </div>
       </div>
 
@@ -97,7 +97,7 @@
           <span class="font-mono font-medium">{{ fmt(closedRing.min) }} ~ {{ fmt(closedRing.max) }} {{ unit }}</span>
         </div>
         <div class="mt-3 rounded-lg bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
-          {{ pt('dashboard.designHint') }}
+          <MathContent :text="pt('dashboard.designHint')" />
         </div>
       </div>
     </div>
@@ -188,9 +188,9 @@ const stackAdviceHint = computed(() => {
   if (!warningKey) return null
   const msg = pt(`dashboard.${warningKey}`)
   if (divergence.ratio != null) {
-    return `💡 ${msg}，${pt('dashboard.methodRatio', { ratio: divergence.ratio.toFixed(2) })}`
+    return `${msg}，${pt('dashboard.methodRatio', { ratio: divergence.ratio.toFixed(2) })}`
   }
-  return `💡 ${msg}`
+  return msg
 })
 
 const stackAdviceHintClass = computed(() => {

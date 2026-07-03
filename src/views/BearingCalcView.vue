@@ -11,50 +11,50 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="150px">
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('xyLookup')">
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('xyLookup')">
             <el-switch v-model="form.autoLookup" :active-text="fc('auto')" :inactive-text="fc('manual')" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple' && form.autoLookup" :label="pf('series')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple' && form.autoLookup" :label="pf('series')">
             <el-select v-model="form.seriesId" class="w-full" filterable>
               <el-option v-for="s in seriesList" :key="s.id" :label="s.label" :value="s.id" />
             </el-select>
-          </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple' && form.autoLookup" :label="pf('model')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple' && form.autoLookup" :label="pf('model')">
             <el-input v-model="form.bearingModel" :placeholder="pf('modelPlaceholder')" @change="onModelChange" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('bearingType')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('bearingType')">
             <el-select v-model="form.bearingType" class="w-full">
               <el-option :label="pf('ballBearing')" value="ball" />
               <el-option :label="pf('rollerBearing')" value="roller" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('dynamicLoad')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('dynamicLoad')">
             <el-input-number v-model="form.dynamicLoad" :min="100" :step="1000" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('staticLoad')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('staticLoad')">
             <el-input-number v-model="form.staticLoad" :min="0" :step="1000" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('lifeCondition')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('lifeCondition')">
             <el-select v-model="form.lifeCondition" class="w-full">
               <el-option v-for="(c, k) in lifeConditions" :key="k" :label="c.label" :value="k" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('radialLoad')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('radialLoad')">
             <el-input-number v-model="form.radialLoad" :min="0" :step="100" />
-          </el-form-item>
-          <el-form-item :label="pf('axialLoad')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('axialLoad')">
             <el-input-number v-model="form.axialLoad" :min="0" :step="50" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorX')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorX')">
             <el-input-number v-model="form.x" :min="0" :max="2" :precision="2" :step="0.1" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorY')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorY')">
             <el-input-number v-model="form.y" :min="0" :max="4" :precision="2" :step="0.1" />
-          </el-form-item>
-          <el-form-item :label="pf('rpm')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('rpm')">
             <el-input-number v-model="form.rpm" :min="1" :step="100" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('reliability')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('reliability')">
             <el-select v-model="form.reliability" class="w-full">
               <el-option label="90% (L10, a₁=1.0)" :value="90" />
               <el-option label="95% (a₁=0.64)" :value="95" />
@@ -63,17 +63,17 @@
               <el-option label="98% (a₁=0.37)" :value="98" />
               <el-option label="99% (a₁=0.25)" :value="99" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('targetHours')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('targetHours')">
             <el-input-number v-model="form.targetHours" :min="100" :step="1000" />
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('operatingTemp')">
+            <CalcFormItem :label="pf('operatingTemp')">
               <el-input-number v-model="form.operatingTemp" :min="80" :max="300" :step="10" />
-            </el-form-item>
-            <el-form-item :label="pf('limitingSpeed')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('limitingSpeed')">
               <el-input-number v-model="form.limitingSpeed" :min="0" :step="500" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

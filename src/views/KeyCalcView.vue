@@ -9,24 +9,24 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <el-form-item :label="pf('torque')"><el-input-number v-model="form.torque" :min="0" /></el-form-item>
-          <el-form-item :label="pf('shaftDiameter')"><el-input-number v-model="form.shaftDiameter" :min="10" /></el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('stdKey')">
+          <CalcFormItem :label="pf('torque')"><el-input-number v-model="form.torque" :min="0" /></CalcFormItem>
+          <CalcFormItem :label="pf('shaftDiameter')"><el-input-number v-model="form.shaftDiameter" :min="10" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('stdKey')">
             <span class="font-mono text-sm">{{ stdKey.width }} × {{ stdKey.height }} mm</span>
             <el-button class="ml-2" size="small" link @click="applyStdKey">{{ fc('apply') }}</el-button>
-          </el-form-item>
-          <el-form-item :label="pf('keyWidth')"><el-input-number v-model="form.keyWidth" :min="2" /></el-form-item>
-          <el-form-item :label="pf('keyLength')"><el-input-number v-model="form.keyLength" :min="5" /></el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('hubLength')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('keyWidth')"><el-input-number v-model="form.keyWidth" :min="2" /></CalcFormItem>
+          <CalcFormItem :label="pf('keyLength')"><el-input-number v-model="form.keyLength" :min="5" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('hubLength')">
             <el-input-number v-model="form.hubLength" :min="5" />
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('keyCount')">
+            <CalcFormItem :label="pf('keyCount')">
               <el-input-number v-model="form.keyCount" :min="1" :max="2" />
-            </el-form-item>
-            <el-form-item :label="pf('torqueAmplitude')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('torqueAmplitude')">
               <el-input-number v-model="form.torqueAmplitude" :min="0" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

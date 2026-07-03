@@ -9,12 +9,12 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ pt('sectionDataInput') }}</h2>
             <el-form label-width="100px">
-              <el-form-item :label="pf('fitType')">
+              <CalcFormItem :label="pf('fitType')">
                 <el-radio-group v-model="regType">
                   <el-radio value="linear">{{ pf('fitLinear') }}</el-radio>
                   <el-radio value="polynomial">{{ pf('fitPolynomial') }}</el-radio>
                 </el-radio-group>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
             <p class="mb-2 text-xs text-gray-500">{{ pt('hintXyRows') }}</p>
             <el-input v-model="xyText" type="textarea" :rows="8" placeholder="1,2.1&#10;2,4.2&#10;3,5.8&#10;4,8.1&#10;5,10.2" />
@@ -40,11 +40,11 @@
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="100px">
-              <el-form-item :label="pf('orthogonalArray')">
+              <CalcFormItem :label="pf('orthogonalArray')">
                 <el-select v-model="arrayId" class="w-full">
                   <el-option v-for="(a, k) in orthogonalOptions" :key="k" :label="a.label" :value="k" />
                 </el-select>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
             <h3 class="mb-2 text-sm font-medium">{{ pf('factorLevels') }}</h3>
             <div v-for="(f, i) in doeFactors" :key="i" class="mb-2 flex flex-wrap items-center gap-2">
@@ -53,9 +53,9 @@
               <el-input-number v-model="f.high" size="small" />
             </div>
             <el-button size="small" @click="addFactor">{{ pt('addFactor') }}</el-button>
-            <el-form-item :label="pf('responses')" class="mt-4">
+            <CalcFormItem class="mt-4" :label="pf('responses')">
               <el-input v-model="responseText" />
-            </el-form-item>
+            </CalcFormItem>
           </section>
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ pt('sectionMainEffects') }}</h2>
@@ -98,20 +98,20 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ pt('sectionFactorSetup') }}</h2>
             <el-form label-width="80px">
-              <el-form-item :label="pf('factor1')">
+              <CalcFormItem :label="pf('factor1')">
                 <el-input v-model="rsmF1.name" :placeholder="pf('name')" class="mb-1" />
                 <div class="flex gap-2">
                   <el-input-number v-model="rsmF1.low" :controls="false" :placeholder="pf('low')" />
                   <el-input-number v-model="rsmF1.high" :controls="false" :placeholder="pf('high')" />
                 </div>
-              </el-form-item>
-              <el-form-item :label="pf('factor2')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('factor2')">
                 <el-input v-model="rsmF2.name" :placeholder="pf('name')" class="mb-1" />
                 <div class="flex gap-2">
                   <el-input-number v-model="rsmF2.low" :controls="false" :placeholder="pf('low')" />
                   <el-input-number v-model="rsmF2.high" :controls="false" :placeholder="pf('high')" />
                 </div>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
             <p class="mb-2 text-xs text-gray-500">{{ pt('hintRsmResponses') }}</p>
             <el-input v-model="rsmResponseText" type="textarea" :rows="3" />

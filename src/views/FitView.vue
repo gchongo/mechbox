@@ -11,21 +11,21 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="100px">
-          <el-form-item :label="pf('nominalSize')">
+          <CalcFormItem :label="pf('nominalSize')">
             <el-input-number v-model="nominal" :min="1" :max="500" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('holeCode')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('holeCode')">
             <el-input v-model="holeCode" placeholder="H7" class="w-32" />
-          </el-form-item>
-          <el-form-item :label="pf('shaftCode')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('shaftCode')">
             <el-input v-model="shaftCode" placeholder="g6" class="w-32" />
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="calcMode === 'professional'">
-            <el-form-item :label="pf('assemblyDeltaT')">
+            <CalcFormItem :label="pf('assemblyDeltaT')">
               <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

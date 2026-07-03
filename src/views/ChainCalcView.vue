@@ -8,19 +8,19 @@
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <el-form label-width="140px">
-          <el-form-item :label="pf('pitch')"><el-input-number v-model="form.pitch" :min="5" :step="1.27" :precision="2" /></el-form-item>
-          <el-form-item :label="pf('driverTeeth')"><el-input-number v-model="form.driverTeeth" :min="11" /></el-form-item>
-          <el-form-item :label="pf('drivenTeeth')"><el-input-number v-model="form.drivenTeeth" :min="11" /></el-form-item>
-          <el-form-item :label="pf('centerDistance')"><el-input-number v-model="form.centerDistance" :min="100" :step="50" /></el-form-item>
-          <el-form-item :label="pf('rpm')"><el-input-number v-model="form.rpm" :min="0" /></el-form-item>
-          <el-form-item :label="pf('power')"><el-input-number v-model="form.power" :min="0" :precision="2" /></el-form-item>
+          <CalcFormItem :label="pf('pitch')"><el-input-number v-model="form.pitch" :min="5" :step="1.27" :precision="2" /></CalcFormItem>
+          <CalcFormItem :label="pf('driverTeeth')"><el-input-number v-model="form.driverTeeth" :min="11" /></CalcFormItem>
+          <CalcFormItem :label="pf('drivenTeeth')"><el-input-number v-model="form.drivenTeeth" :min="11" /></CalcFormItem>
+          <CalcFormItem :label="pf('centerDistance')"><el-input-number v-model="form.centerDistance" :min="100" :step="50" /></CalcFormItem>
+          <CalcFormItem :label="pf('rpm')"><el-input-number v-model="form.rpm" :min="0" /></CalcFormItem>
+          <CalcFormItem :label="pf('power')"><el-input-number v-model="form.power" :min="0" :precision="2" /></CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item :label="pf('allowTension')"><el-input-number v-model="form.allowTension" :min="1000" :step="1000" /></el-form-item>
-            <el-form-item :label="pf('maxChainSpeed')"><el-input-number v-model="form.maxChainSpeed" :min="5" :max="25" /></el-form-item>
+            <CalcFormItem :label="pf('allowTension')"><el-input-number v-model="form.allowTension" :min="1000" :step="1000" /></CalcFormItem>
+            <CalcFormItem :label="pf('maxChainSpeed')"><el-input-number v-model="form.maxChainSpeed" :min="5" :max="25" /></CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('serviceFactor')"><el-input-number v-model="form.serviceFactor" :min="1" :max="2" :step="0.1" :precision="1" /></el-form-item>
-            <el-form-item :label="pf('strands')"><el-input-number v-model="form.strands" :min="1" :max="4" /></el-form-item>
+            <CalcFormItem :label="pf('serviceFactor')"><el-input-number v-model="form.serviceFactor" :min="1" :max="2" :step="0.1" :precision="1" /></CalcFormItem>
+            <CalcFormItem :label="pf('strands')"><el-input-number v-model="form.strands" :min="1" :max="4" /></CalcFormItem>
           </template>
         </el-form>
 

@@ -11,59 +11,59 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
-          <el-form-item :label="pf('shaftDiameter')">
+          <CalcFormItem :label="pf('shaftDiameter')">
             <el-input-number v-model="form.shaftDiameter" :min="5" :max="200" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('holeDiameter')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('holeDiameter')">
             <el-input-number v-model="form.holeDiameter" :min="4" :max="199" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('interference')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('interference')">
             <span class="font-mono text-primary">{{ interference.toFixed(3) }} mm</span>
             <span class="ml-2 text-xs text-gray-500">{{ pf('interferenceFormula') }}</span>
-          </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('shaftInner')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('shaftInner')">
             <el-input-number v-model="form.shaftInnerDiameter" :min="0" :max="199" :precision="2" />
             <span class="ml-2 text-xs text-gray-500">{{ pf('shaftInnerHint') }}</span>
-          </el-form-item>
-          <el-form-item :label="pf('hubOuter')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('hubOuter')">
             <el-input-number v-model="form.hubOuterDiameter" :min="10" :max="400" :precision="1" />
             <el-button class="ml-1" size="small" link @click="resetOuter">{{ fc('recommend') }} {{ suggestedOuter }} mm</el-button>
-          </el-form-item>
-          <el-form-item :label="pf('fitLength')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('fitLength')">
             <el-input-number v-model="form.fitLength" :min="1" :max="300" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('friction')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('friction')">
             <el-input-number v-model="form.friction" :min="0.05" :max="0.4" :precision="2" :step="0.02" />
-          </el-form-item>
+          </CalcFormItem>
           <el-divider content-position="left">{{ pf('dividerMaterials') }}</el-divider>
-          <el-form-item :label="pf('shaftEv')">
+          <CalcFormItem :label="pf('shaftEv')">
             <el-input-number v-model="form.shaftE" :min="50000" :step="10000" class="w-28" />
             <el-input-number v-model="form.shaftNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 w-24" />
-          </el-form-item>
-          <el-form-item :label="pf('hubEv')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('hubEv')">
             <el-input-number v-model="form.hubE" :min="50000" :step="10000" class="w-28" />
             <el-input-number v-model="form.hubNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 w-24" />
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="form.calcMode === 'complete' || form.calcMode === 'professional'">
-            <el-form-item :label="pf('allowHoop')">
+            <CalcFormItem :label="pf('allowHoop')">
               <el-input-number v-model="form.shaftAllowHoop" :min="50" :step="50" class="w-28" />
               <span class="ml-1 text-xs text-gray-500">{{ pf('shaftLabel') }}</span>
               <el-input-number v-model="form.hubAllowHoop" :min="50" :step="50" class="ml-2 w-28" />
               <span class="ml-1 text-xs text-gray-500">{{ pf('hubLabel') }}</span>
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerTemp') }}</el-divider>
-            <el-form-item :label="pf('deltaT')">
+            <CalcFormItem :label="pf('deltaT')">
               <el-input-number v-model="form.deltaT" :min="-300" :max="500" :step="10" />
-            </el-form-item>
-            <el-form-item :label="pf('shaftAlpha')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('shaftAlpha')">
               <el-input-number v-model="form.shaftAlpha" :min="1e-6" :max="30e-6" :step="0.5e-6" :precision="7" class="w-32" />
               <el-input-number v-model="form.holeAlpha" :min="1e-6" :max="30e-6" :step="0.5e-6" :precision="7" class="ml-2 w-32" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
         <el-alert v-if="result.thinWallWarning" type="warning" show-icon :closable="false" class="mt-2"

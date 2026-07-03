@@ -11,25 +11,25 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <el-form-item :label="pf('boltCount')">
+          <CalcFormItem :label="pf('boltCount')">
             <el-input-number v-model="form.boltCount" :min="2" :max="24" />
-          </el-form-item>
-          <el-form-item :label="pf('boltCircleRadius')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('boltCircleRadius')">
             <el-input-number v-model="form.boltCircleRadius" :min="10" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('shearX')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('shearX')">
             <el-input-number v-model="form.shearX" :step="100" />
-          </el-form-item>
-          <el-form-item :label="pf('shearY')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('shearY')">
             <el-input-number v-model="form.shearY" :step="100" />
-          </el-form-item>
-          <el-form-item :label="pf('moment')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('moment')">
             <el-input-number v-model="form.moment" :step="1000" />
-          </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('allowPerBolt')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('allowPerBolt')">
             <el-input-number v-model="form.allowPerBolt" :min="100" :step="500" />
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
 
         <BoltGroupDiagram

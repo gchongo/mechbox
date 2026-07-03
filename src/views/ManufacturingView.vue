@@ -10,32 +10,32 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('nominalDiameter')">
+              <CalcFormItem :label="pf('nominalDiameter')">
                 <el-input-number v-model="mach.nominalDiameter" :min="5" />
                 <span class="ml-2 text-sm text-gray-500">mm</span>
-              </el-form-item>
-              <el-form-item :label="pf('length')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('length')">
                 <el-input-number v-model="mach.length" :min="1" />
-              </el-form-item>
-              <el-form-item :label="pf('toleranceGrade')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('toleranceGrade')">
                 <el-select v-model="mach.toleranceGrade" class="w-full">
                   <el-option v-for="(g, k) in toleranceGrades" :key="k" :label="g.label" :value="k" />
                 </el-select>
-              </el-form-item>
-              <el-form-item v-if="mach.calcMode !== 'simple'" :label="pf('operations')">
+              </CalcFormItem>
+              <CalcFormItem v-if="mach.calcMode !== 'simple'" :label="pf('operations')">
                 <el-checkbox-group v-model="mach.operations">
                   <el-checkbox value="rough">{{ pf('opRough') }}</el-checkbox>
                   <el-checkbox value="semi">{{ pf('opSemi') }}</el-checkbox>
                   <el-checkbox value="finish">{{ pf('opFinish') }}</el-checkbox>
                 </el-checkbox-group>
-              </el-form-item>
-              <el-form-item v-else :label="pf('operations')">
+              </CalcFormItem>
+              <CalcFormItem v-else :label="pf('operations')">
                 <span class="text-sm text-gray-500">{{ pf('operationsFixed') }}</span>
-              </el-form-item>
-              <el-form-item v-if="mach.calcMode === 'professional'" :label="pf('removalRate')">
+              </CalcFormItem>
+              <CalcFormItem v-if="mach.calcMode === 'professional'" :label="pf('removalRate')">
                 <el-input-number v-model="mach.removalRate" :min="10" :max="500" :step="10" />
                 <span class="ml-2 text-xs text-gray-500">{{ pf('removalRateHint') }}</span>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
 
             <MachiningAllowanceDiagram

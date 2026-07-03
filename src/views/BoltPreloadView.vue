@@ -13,63 +13,63 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
-          <el-form-item :label="pf('convertDirection')">
+          <CalcFormItem :label="pf('convertDirection')">
             <el-radio-group v-model="form.mode">
               <el-radio value="torque2force">{{ pf('modeTorque2force') }}</el-radio>
               <el-radio value="force2torque">{{ pf('modeForce2torque') }}</el-radio>
             </el-radio-group>
-          </el-form-item>
-          <el-form-item :label="pf('nominalDiameter')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('nominalDiameter')">
             <el-input-number v-model="form.diameter" :min="3" :max="48" :step="1" @change="onDiameterChange" />
             <span class="ml-2 text-sm text-gray-500">M{{ form.diameter }}</span>
-          </el-form-item>
-          <el-form-item :label="pf('pitch')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('pitch')">
             <el-input-number v-model="form.pitch" :min="0.5" :max="4" :precision="2" :step="0.25" />
             <el-button v-if="suggestedPitch" class="ml-2" size="small" link @click="form.pitch = suggestedPitch">
               {{ fc('standard') }} {{ suggestedPitch }}
             </el-button>
-          </el-form-item>
-          <el-form-item :label="pf('grade')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('grade')">
             <el-select v-model="form.grade" class="w-full">
               <el-option v-for="(g, k) in grades" :key="k" :label="g.label" :value="k" />
             </el-select>
-          </el-form-item>
+          </CalcFormItem>
 
           <template v-if="form.calcMode === 'simple'">
-            <el-form-item :label="pf('frictionCoeff')">
+            <CalcFormItem :label="pf('frictionCoeff')">
               <el-input-number v-model="form.frictionCoeff" :min="0.1" :max="0.5" :precision="2" :step="0.05" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-else>
-            <el-form-item :label="pf('muG')">
+            <CalcFormItem :label="pf('muG')">
               <el-input-number v-model="form.muG" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
-            </el-form-item>
-            <el-form-item :label="pf('muK')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('muK')">
               <el-input-number v-model="form.muK" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
-            </el-form-item>
-            <el-form-item :label="pf('dKm')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('dKm')">
               <el-input-number v-model="form.dKm" :min="5" :max="80" :precision="2" :step="0.5" />
               <el-button class="ml-1" size="small" link @click="resetDKm">{{ estimatedDKm.toFixed(1) }} mm</el-button>
-            </el-form-item>
+            </CalcFormItem>
           </template>
 
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerGrip') }}</el-divider>
-            <el-form-item :label="pf('gripLength')">
+            <CalcFormItem :label="pf('gripLength')">
               <el-input-number v-model="form.gripLength" :min="1" :max="500" :precision="1" />
               <el-button class="ml-1" size="small" link @click="resetGrip">{{ estimatedGrip }} mm</el-button>
-            </el-form-item>
-            <el-form-item :label="pf('holeDiameter')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('holeDiameter')">
               <el-input-number v-model="form.holeDiameter" :min="1" :max="60" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('headContact')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('headContact')">
               <el-input-number v-model="form.headContactDiameter" :min="3" :max="80" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('outerDiameter')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('outerDiameter')">
               <el-input-number v-model="form.outerDiameter" :min="5" :max="200" :precision="1" />
               <el-button class="ml-1" size="small" link @click="resetOuter">{{ estimatedOuter.toFixed(1) }} mm</el-button>
-            </el-form-item>
-            <el-form-item :label="pf('embedment')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('embedment')">
               <el-select v-model="form.embedmentPreset" class="w-full" @change="onEmbedmentPreset">
                 <el-option
                   v-for="(p, key) in embedmentPresets"
@@ -78,25 +78,25 @@
                   :value="key"
                 />
               </el-select>
-            </el-form-item>
-            <el-form-item v-if="form.embedmentPreset === 'custom'" :label="pf('embedmentFZ')">
+            </CalcFormItem>
+            <CalcFormItem v-if="form.embedmentPreset === 'custom'" :label="pf('embedmentFZ')">
               <el-input-number v-model="form.embedmentUm" :min="1" :max="50" :precision="1" />
               <span class="ml-2 text-sm text-gray-500">μm</span>
-            </el-form-item>
-            <el-form-item :label="pf('deltaT')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('deltaT')">
               <el-input-number v-model="form.deltaT" :min="-200" :max="500" :precision="1" :step="10" />
               <span class="ml-2 text-xs text-gray-500">{{ pf('deltaTHint') }}</span>
-            </el-form-item>
+            </CalcFormItem>
           </template>
 
-          <el-form-item v-if="form.mode === 'torque2force'" :label="pf('torque')">
+          <CalcFormItem v-if="form.mode === 'torque2force'" :label="pf('torque')">
             <el-input-number v-model="form.torque" :min="0" :precision="2" :step="1" />
             <span class="ml-2 text-sm text-gray-500">N·m</span>
-          </el-form-item>
-          <el-form-item v-else :label="preloadLabel">
+          </CalcFormItem>
+          <CalcFormItem v-else :label="preloadLabel">
             <el-input-number v-model="form.preload" :min="0" :step="500" />
             <span class="ml-2 text-sm text-gray-500">N</span>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
 
         <BoltPreloadDiagram
@@ -234,26 +234,26 @@
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="140px">
-              <el-form-item :label="pf('tighteningR0')">
+              <CalcFormItem :label="pf('tighteningR0')">
                 <el-select v-model="wizardForm.tighteningMethod" class="w-full">
                   <el-option v-for="(m, k) in tighteningMethods" :key="k" :label="m.label" :value="k" />
                 </el-select>
-              </el-form-item>
-              <el-form-item :label="pf('externalAxial')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('externalAxial')">
                 <el-input-number v-model="wizardForm.externalAxialLoad" :min="0" :step="500" />
                 <span class="ml-2 text-xs text-gray-500">N</span>
-              </el-form-item>
-              <el-form-item :label="pf('alternatingLoad')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('alternatingLoad')">
                 <el-input-number v-model="wizardForm.alternatingLoad" :min="0" :step="100" />
-              </el-form-item>
-              <el-form-item :label="pf('requiredClamp')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('requiredClamp')">
                 <el-input-number v-model="wizardForm.requiredClampLoad" :min="0" :step="500" />
                 <span class="ml-2 text-xs text-gray-500">{{ pf('requiredClampHint') }}</span>
-              </el-form-item>
-              <el-form-item :label="pf('maxTorque')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('maxTorque')">
                 <el-input-number v-model="wizardForm.maxTorque" :min="0" :precision="1" />
                 <span class="ml-2 text-xs text-gray-500">N·m</span>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
             <p class="text-xs text-gray-500">{{ pf('wizardSharedHint') }}</p>
           </section>

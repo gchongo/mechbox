@@ -9,20 +9,20 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="130px">
-          <el-form-item :label="pf('frictionCoeff')"><el-input-number v-model="form.frictionCoeff" :min="0.05" :max="0.6" :precision="2" :step="0.05" /></el-form-item>
-          <el-form-item :label="pf('force')"><el-input-number v-model="form.force" :min="0" :step="100" /></el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple'" :label="pf('radius')"><el-input-number v-model="form.radius" :min="10" /></el-form-item>
+          <CalcFormItem :label="pf('frictionCoeff')"><el-input-number v-model="form.frictionCoeff" :min="0.05" :max="0.6" :precision="2" :step="0.05" /></CalcFormItem>
+          <CalcFormItem :label="pf('force')"><el-input-number v-model="form.force" :min="0" :step="100" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('radius')"><el-input-number v-model="form.radius" :min="10" /></CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item :label="pf('innerOuterDiam')">
+            <CalcFormItem :label="pf('innerOuterDiam')">
               <el-input-number v-model="form.innerDiameter" :min="20" class="w-28" />
               <el-input-number v-model="form.outerDiameter" :min="30" class="ml-2 w-28" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
-          <el-form-item :label="pf('surfaces')"><el-input-number v-model="form.surfaces" :min="1" :max="10" /></el-form-item>
-          <el-form-item :label="pf('rpm')"><el-input-number v-model="form.rpm" :min="0" :step="100" /></el-form-item>
+          <CalcFormItem :label="pf('surfaces')"><el-input-number v-model="form.surfaces" :min="1" :max="10" /></CalcFormItem>
+          <CalcFormItem :label="pf('rpm')"><el-input-number v-model="form.rpm" :min="0" :step="100" /></CalcFormItem>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('requiredTorque')"><el-input-number v-model="form.requiredTorque" :min="0" :precision="1" /></el-form-item>
-            <el-form-item :label="pf('thermalFade')"><el-input-number v-model="form.thermalFade" :min="0.5" :max="1" :step="0.05" :precision="2" /></el-form-item>
+            <CalcFormItem :label="pf('requiredTorque')"><el-input-number v-model="form.requiredTorque" :min="0" :precision="1" /></CalcFormItem>
+            <CalcFormItem :label="pf('thermalFade')"><el-input-number v-model="form.thermalFade" :min="0.5" :max="1" :step="0.05" :precision="2" /></CalcFormItem>
           </template>
         </el-form>
 

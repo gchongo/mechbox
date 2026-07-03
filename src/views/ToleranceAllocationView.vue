@@ -7,11 +7,11 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionParams') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('targetRss')">
+          <CalcFormItem :label="pf('targetRss')">
             <el-input-number v-model="targetTolerance" :min="0.001" :precision="4" :step="0.01" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pf('method')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('method')">
             <el-select v-model="methodId" class="w-full">
               <el-option
                 v-for="m in methodOptions"
@@ -20,7 +20,7 @@
                 :value="m.id"
               />
             </el-select>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
         <p class="mb-4 text-xs text-gray-500">
           <template v-if="currentMethodDescLatex">
@@ -50,21 +50,21 @@
               </el-button>
             </div>
             <el-form label-width="80px" size="small">
-              <el-form-item :label="pf('name')">
+              <CalcFormItem :label="pf('name')">
                 <el-input v-model="ring.name" />
-              </el-form-item>
-              <el-form-item :label="pf('factor')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('factor')">
                 <el-input-number v-model="ring.factor" :min="0" :max="10" :precision="2" :step="0.1" />
-              </el-form-item>
-              <el-form-item :label="pf('nominal')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('nominal')">
                 <el-input-number v-model="ring.nominal" :min="0.001" :precision="3" :step="1" />
-              </el-form-item>
-              <el-form-item v-if="methodId === 'min-cost' || isAdvancedMethod" :label="pf('cost')">
+              </CalcFormItem>
+              <CalcFormItem v-if="methodId === 'min-cost' || isAdvancedMethod" :label="pf('cost')">
                 <el-input-number v-model="ring.cost" :min="0.1" :precision="2" :step="0.5" />
-              </el-form-item>
-              <el-form-item v-if="needsSensitivity" :label="pf('sensitivity')">
+              </CalcFormItem>
+              <CalcFormItem v-if="needsSensitivity" :label="pf('sensitivity')">
                 <el-input-number v-model="ring.sensitivity" :min="0.001" :precision="3" :step="0.1" />
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
           </div>
         </div>

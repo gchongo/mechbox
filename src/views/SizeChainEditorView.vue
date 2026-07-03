@@ -68,7 +68,7 @@
         {{ pt('step2Desc') }}
       </p>
       <el-form label-width="130px" class="max-w-xl">
-        <el-form-item :label="pf('name')" required :error="fieldError('name')">
+        <CalcFormItem required :error="fieldError('name')" :label="pf('name')">
           <el-input
             v-model="closedRing.name"
             :placeholder="pf('namePlaceholder')"
@@ -76,8 +76,8 @@
             :class="{ 'ring-error': fieldError('name') }"
             @blur="touchField('name')"
           />
-        </el-form-item>
-        <el-form-item :label="pf('min')" required :error="fieldError('min')">
+        </CalcFormItem>
+        <CalcFormItem required :error="fieldError('min')" :label="pf('min')">
           <el-input-number
             v-model="closedRing.min"
             :precision="2"
@@ -85,8 +85,8 @@
             @blur="touchField('min')"
           />
           <span class="ml-2 text-sm text-gray-500">{{ unit }}</span>
-        </el-form-item>
-        <el-form-item :label="pf('max')" required :error="fieldError('max')">
+        </CalcFormItem>
+        <CalcFormItem required :error="fieldError('max')" :label="pf('max')">
           <el-input-number
             v-model="closedRing.max"
             :precision="2"
@@ -94,10 +94,10 @@
             @blur="touchField('max')"
           />
           <span class="ml-2 text-sm text-gray-500">{{ unit }}</span>
-        </el-form-item>
-        <el-form-item :label="pf('tolerance')">
+        </CalcFormItem>
+        <CalcFormItem :label="pf('tolerance')">
           <span>{{ closedRingTolerance.toFixed(2) }} {{ unit }} {{ pt('toleranceAuto') }}</span>
-        </el-form-item>
+        </CalcFormItem>
         <el-form-item v-if="isClosedRingValid" :label="pt('equivStatement')">
           <span class="text-sm">
             {{ pt('equivTarget', {
@@ -108,20 +108,20 @@
             }) }}
           </span>
         </el-form-item>
-        <el-form-item :label="pf('direction')">
+        <CalcFormItem :label="pf('direction')">
           <el-radio-group v-model="closedRing.direction" @change="syncAllRingTypes">
             <el-radio-button label="left">←</el-radio-button>
             <el-radio-button label="up">↑</el-radio-button>
             <el-radio-button label="right">→</el-radio-button>
             <el-radio-button label="down">↓</el-radio-button>
           </el-radio-group>
-        </el-form-item>
-        <el-form-item :label="pf('unit')">
+        </CalcFormItem>
+        <CalcFormItem :label="pf('unit')">
           <el-radio-group v-model="closedRing.unit" @change="onUnitChange">
             <el-radio label="mm">mm</el-radio>
             <el-radio label="inch">inch</el-radio>
           </el-radio-group>
-        </el-form-item>
+        </CalcFormItem>
       </el-form>
       <p class="text-sm text-gray-500">
         {{ pt('closedRingHint') }}
@@ -219,16 +219,16 @@
           <span class="method-card__hint">{{ pt('methodCards.modifiedHint') }}</span>
         </el-radio>
         <el-radio value="sigma6-rss" border class="method-card">
-          <span class="method-card__title">{{ pt('methodCards.sigma6Title') }}</span>
+          <span class="method-card__title"><MathContent :text="pt('methodCards.sigma6Title')" /></span>
           <span class="method-card__hint">{{ pt('methodCards.sigma6Hint') }}</span>
         </el-radio>
       </el-radio-group>
       <p class="mt-2 text-xs text-gray-500">
-        {{ pt('step4FormulaHint') }}
+        <MathContent :text="pt('step4FormulaHint')" />
       </p>
       <div v-if="method === 'modified-rss' || method === 'sigma6-rss'" class="mt-4 max-w-md">
         <el-form label-width="100px">
-          <el-form-item :label="pf('distribution')">
+          <CalcFormItem :label="pf('distribution')">
             <el-select v-model="rssDistribution" class="w-full">
               <el-option
                 v-for="(d, k) in DISTRIBUTIONS"
@@ -237,7 +237,7 @@
                 :value="k"
               />
             </el-select>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
       </div>
       <div class="mt-6 flex justify-end gap-2">
@@ -253,17 +253,17 @@
       <el-collapse v-if="gdtModeInfo" class="mb-4">
         <el-collapse-item :title="pt('gdtCollapseTitle')" name="mmc">
           <el-form label-width="120px" class="max-w-lg">
-            <el-form-item :label="pf('materialCondition')">
+            <CalcFormItem :label="pf('materialCondition')">
               <el-radio-group v-model="gdtModifier">
                 <el-radio value="RFS">{{ pt('gdtModifiers.RFS') }}</el-radio>
                 <el-radio value="MMC">{{ pt('gdtModifiers.MMC') }}</el-radio>
                 <el-radio value="LMC">{{ pt('gdtModifiers.LMC') }}</el-radio>
               </el-radio-group>
-            </el-form-item>
-            <el-form-item v-if="gdtModifier !== 'RFS'" :label="pf('bonusTolerance')">
+            </CalcFormItem>
+            <CalcFormItem v-if="gdtModifier !== 'RFS'" :label="pf('bonusTolerance')">
               <el-input-number v-model="bonusTolerance" :min="0" :precision="4" :step="0.01" />
               <span class="ml-2 text-xs text-gray-500">{{ pf('bonusHint') }}</span>
-            </el-form-item>
+            </CalcFormItem>
           </el-form>
         </el-collapse-item>
       </el-collapse>

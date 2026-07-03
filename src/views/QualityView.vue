@@ -102,12 +102,12 @@
       <el-tab-pane :label="pt('tabP')" name="p">
         <section class="card-panel mb-6">
           <el-form label-width="120px" class="max-w-xl">
-            <el-form-item :label="pf('defects')">
+            <CalcFormItem :label="pf('defects')">
               <el-input v-model="pDefects" placeholder="2,0,3,1,2" />
-            </el-form-item>
-            <el-form-item :label="pf('sampleSize')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('sampleSize')">
               <el-input v-model="pSamples" placeholder="100,100,100,100,100" />
-            </el-form-item>
+            </CalcFormItem>
           </el-form>
         </section>
         <template v-if="pResult && !pResult.errorKey">
@@ -163,17 +163,17 @@
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="100px">
-              <el-form-item :label="pf('lotSize')">
+              <CalcFormItem :label="pf('lotSize')">
                 <el-input-number v-model="aqlLot" :min="1" :step="100" />
-              </el-form-item>
-              <el-form-item :label="pf('aqlLevel')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('aqlLevel')">
                 <el-select v-model="aqlLevel" class="w-full">
                   <el-option v-for="a in AQL_LEVELS" :key="a" :label="String(a)" :value="a" />
                 </el-select>
-              </el-form-item>
-              <el-form-item :label="pf('measuredDefects')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('measuredDefects')">
                 <el-input-number v-model="aqlDefects" :min="0" />
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
           </section>
           <section class="card-panel">

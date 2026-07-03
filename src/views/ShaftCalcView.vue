@@ -17,38 +17,38 @@
               <el-option v-for="m in materialOptions" :key="m.id" :label="m.label" :value="m.id" />
             </el-select>
           </el-form-item>
-          <el-form-item :label="pf('diameter')"><el-input-number v-model="form.diameter" :min="1" /></el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('innerDiameter')">
+          <CalcFormItem :label="pf('diameter')"><el-input-number v-model="form.diameter" :min="1" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('innerDiameter')">
             <el-input-number v-model="form.innerDiameter" :min="0" :max="form.diameter - 1" />
             <span class="ml-2 text-xs text-gray-500">{{ pf('innerDiameterHint') }}</span>
-          </el-form-item>
-          <el-form-item :label="pf('torque')"><el-input-number v-model="form.torque" :min="0" :precision="2" /></el-form-item>
-          <el-form-item v-if="mode === 'torsion'" :label="pf('shaftLength')"><el-input-number v-model="form.length" :min="10" :step="50" /></el-form-item>
-          <el-form-item v-if="mode === 'combined'" :label="pf('bendingMoment')"><el-input-number v-model="form.bendingMoment" :min="0" :precision="2" /></el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('yieldStrength')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('torque')"><el-input-number v-model="form.torque" :min="0" :precision="2" /></CalcFormItem>
+          <CalcFormItem v-if="mode === 'torsion'" :label="pf('shaftLength')"><el-input-number v-model="form.length" :min="10" :step="50" /></CalcFormItem>
+          <CalcFormItem v-if="mode === 'combined'" :label="pf('bendingMoment')"><el-input-number v-model="form.bendingMoment" :min="0" :precision="2" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('yieldStrength')">
             <el-input-number v-model="form.yieldStrength" :min="100" :step="50" />
-          </el-form-item>
+          </CalcFormItem>
           <el-form-item :label="mode === 'combined' ? pf('allowableCombined') : pf('allowableShear')">
             <el-input-number v-model="form.allowable" :min="10" :disabled="form.calcMode === 'simple'" />
           </el-form-item>
           <template v-if="form.calcMode === 'professional' && mode === 'torsion'">
-            <el-form-item :label="pf('ktTorsion')">
+            <CalcFormItem :label="pf('ktTorsion')">
               <el-input-number v-model="form.stressConcentrationTorsion" :min="1" :max="5" :step="0.1" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('torqueAmplitude')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('torqueAmplitude')">
               <el-input-number v-model="form.torqueAmplitude" :min="0" :precision="2" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional' && mode === 'combined'">
-            <el-form-item :label="pf('ktBending')">
+            <CalcFormItem :label="pf('ktBending')">
               <el-input-number v-model="form.stressConcentrationBending" :min="1" :max="5" :step="0.1" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('ktTorsion')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('ktTorsion')">
               <el-input-number v-model="form.stressConcentrationTorsion" :min="1" :max="5" :step="0.1" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('bendingAmplitude')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('bendingAmplitude')">
               <el-input-number v-model="form.bendingAmplitude" :min="0" :precision="2" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

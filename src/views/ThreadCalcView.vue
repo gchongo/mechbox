@@ -11,54 +11,54 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <el-form-item :label="pf('nominalDiameter')">
+          <CalcFormItem :label="pf('nominalDiameter')">
             <el-input-number v-model="form.diameter" :min="3" :max="48" :step="1" @change="onDiameterChange" />
             <span class="ml-2 text-sm text-gray-500">mm (M{{ form.diameter }})</span>
-          </el-form-item>
-          <el-form-item :label="pf('pitch')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('pitch')">
             <el-input-number v-model="form.pitch" :min="0.5" :max="4" :precision="2" :step="0.25" />
             <el-button v-if="suggestedPitch" class="ml-2" size="small" link @click="form.pitch = suggestedPitch">
               {{ fc('standard') }} {{ suggestedPitch }}
             </el-button>
-          </el-form-item>
-          <el-form-item :label="pf('grade')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('grade')">
             <el-select v-model="form.grade" class="w-full">
               <el-option v-for="(g, k) in grades" :key="k" :label="g.label" :value="k" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('axialForce')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('axialForce')">
             <el-input-number v-model="form.axialForce" :min="0" :step="500" />
-          </el-form-item>
-          <el-form-item :label="pf('engagedLength')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('engagedLength')">
             <el-input-number v-model="form.engagedLength" :min="1" :precision="1" />
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="form.calcMode === 'simple'">
-            <el-form-item :label="pf('frictionCoeff')">
+            <CalcFormItem :label="pf('frictionCoeff')">
               <el-input-number v-model="form.frictionCoeff" :min="0.1" :max="0.5" :precision="2" :step="0.05" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'complete' || form.calcMode === 'professional'">
-            <el-form-item :label="pf('nutMaterial')">
+            <CalcFormItem :label="pf('nutMaterial')">
               <el-select v-model="form.nutMaterial" class="w-full">
                 <el-option :label="pf('nutSteel')" value="steel" />
                 <el-option :label="pf('nutSoft')" value="soft" />
               </el-select>
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerVdi') }}</el-divider>
-            <el-form-item :label="pf('muG')">
+            <CalcFormItem :label="pf('muG')">
               <el-input-number v-model="form.muG" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
-            </el-form-item>
-            <el-form-item :label="pf('muK')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('muK')">
               <el-input-number v-model="form.muK" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
-            </el-form-item>
-            <el-form-item :label="pf('dKm')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('dKm')">
               <el-input-number v-model="form.dKm" :min="5" :max="80" :precision="2" :step="0.5" />
               <el-button class="ml-1" size="small" link @click="form.dKm = 1.45 * form.diameter">
                 {{ (1.45 * form.diameter).toFixed(1) }} mm
               </el-button>
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

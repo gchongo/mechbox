@@ -13,22 +13,22 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <el-form-item :label="pf('boreDiameter')"><el-input-number v-model="form.boreDiameter" :min="10" /></el-form-item>
-          <el-form-item :label="pf('rodDiameter')"><el-input-number v-model="form.rodDiameter" :min="0" /></el-form-item>
+          <CalcFormItem :label="pf('boreDiameter')"><el-input-number v-model="form.boreDiameter" :min="10" /></CalcFormItem>
+          <CalcFormItem :label="pf('rodDiameter')"><el-input-number v-model="form.rodDiameter" :min="0" /></CalcFormItem>
           <el-form-item :label="mode === 'hydraulic' ? pf('pressureHydraulic') : pf('pressurePneumatic')">
             <el-input-number v-model="form.pressure" :min="0.1" :precision="2" :step="0.1" />
           </el-form-item>
-          <el-form-item :label="pf('flowRate')"><el-input-number v-model="form.flowRate" :min="0" :precision="1" /></el-form-item>
-          <el-form-item v-if="mode === 'pneumatic'" :label="pf('efficiency')">
+          <CalcFormItem :label="pf('flowRate')"><el-input-number v-model="form.flowRate" :min="0" :precision="1" /></CalcFormItem>
+          <CalcFormItem v-if="mode === 'pneumatic'" :label="pf('efficiency')">
             <el-input-number v-model="form.efficiency" :min="0.5" :max="1" :precision="2" :step="0.05" />
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item :label="pf('externalLoad')"><el-input-number v-model="form.externalLoad" :min="0" :step="100" /></el-form-item>
-            <el-form-item :label="pf('strokeLength')"><el-input-number v-model="form.strokeLength" :min="0" :step="50" /></el-form-item>
+            <CalcFormItem :label="pf('externalLoad')"><el-input-number v-model="form.externalLoad" :min="0" :step="100" /></CalcFormItem>
+            <CalcFormItem :label="pf('strokeLength')"><el-input-number v-model="form.strokeLength" :min="0" :step="50" /></CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('loadMass')"><el-input-number v-model="form.loadMass" :min="0" :precision="1" /></el-form-item>
-            <el-form-item :label="pf('acceleration')"><el-input-number v-model="form.acceleration" :min="0" :precision="2" /></el-form-item>
+            <CalcFormItem :label="pf('loadMass')"><el-input-number v-model="form.loadMass" :min="0" :precision="1" /></CalcFormItem>
+            <CalcFormItem :label="pf('acceleration')"><el-input-number v-model="form.acceleration" :min="0" :precision="2" /></CalcFormItem>
           </template>
         </el-form>
 

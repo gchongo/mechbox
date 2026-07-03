@@ -53,13 +53,13 @@
       <section id="convert" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionConvert') }}</h2>
         <el-form label-width="100px">
-          <el-form-item :label="pf('convertDirection')">
+          <CalcFormItem :label="pf('convertDirection')">
             <el-radio-group v-model="convertDirection">
               <el-radio value="t2s"><MathTex expr="T \to \sigma" /></el-radio>
               <el-radio value="s2t"><MathTex expr="\sigma \to T" /></el-radio>
             </el-radio-group>
-          </el-form-item>
-          <el-form-item :label="pf('distribution')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('distribution')">
             <el-select v-model="distribution" class="w-full">
               <el-option
                 v-for="(dist, key) in distributions"
@@ -68,26 +68,26 @@
                 :value="key"
               />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('inputValue')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('inputValue')">
             <el-input-number v-model="convertInput" :precision="4" :step="0.01" class="w-full" />
-          </el-form-item>
-          <el-form-item :label="pf('outputValue')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('outputValue')">
             <MathTex :expr="convertLatex" />
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
       </section>
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionBasicStats') }}</h2>
-        <el-form-item :label="pf('inputData')" label-width="80px">
+        <CalcFormItem label-width="80px" :label="pf('inputData')">
           <el-input
             v-model="dataInput"
             type="textarea"
             :rows="3"
             placeholder="10,12,15,18,20"
           />
-        </el-form-item>
+        </CalcFormItem>
         <dl class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3">
             <dt class="text-gray-500">{{ pr('mean') }}</dt>
@@ -119,19 +119,19 @@
       <section id="rss" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionRss') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('toleranceList')">
+          <CalcFormItem :label="pf('toleranceList')">
             <el-input v-model="toleranceList" placeholder="0.06,0.05,0.04" />
-          </el-form-item>
-          <el-form-item :label="pf('baseRss')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('baseRss')">
             <MathTex :expr="`T_{\\text{RSS}} = ${rssTotal === '-' ? '\\text{—}' : rssTotal}\\,\\text{mm}`" />
-          </el-form-item>
-          <el-form-item :label="pf('sensitivityFactors')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('sensitivityFactors')">
             <el-input v-model="factorList" placeholder="1,1,1" />
-          </el-form-item>
-          <el-form-item :label="pf('weightedRss')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('weightedRss')">
             <MathTex :expr="`T_{\\text{wRSS}} = ${weightedRssTotal === '-' ? '\\text{—}' : weightedRssTotal}\\,\\text{mm}`" />
-          </el-form-item>
-          <el-form-item :label="pf('modifiedRss')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('modifiedRss')">
             <el-select v-model="modRssDistribution" class="mb-2 w-full" size="small">
               <el-option
                 v-for="(d, k) in distributions"
@@ -141,47 +141,47 @@
               />
             </el-select>
             <MathTex :expr="modifiedRssLatexExpr" />
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
       </section>
 
       <section id="sigma" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionSigma') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('specLower')">
+          <CalcFormItem :label="pf('specLower')">
             <el-input-number v-model="specLower" :precision="4" :step="0.01" class="w-full" />
-          </el-form-item>
-          <el-form-item :label="pf('specUpper')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('specUpper')">
             <el-input-number v-model="specUpper" :precision="4" :step="0.01" class="w-full" />
-          </el-form-item>
-          <el-form-item :label="pf('processMean')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('processMean')">
             <el-input-number v-model="processMean" :precision="4" :step="0.01" class="w-full" />
             <el-button class="mt-2" size="small" @click="applySampleToProcess">
               {{ pt('applySampleStats') }}
             </el-button>
-          </el-form-item>
-          <el-form-item :label="pf('processSigma')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('processSigma')">
             <el-input-number v-model="processSigma" :precision="4" :step="0.001" class="w-full" />
-          </el-form-item>
-          <el-form-item :label="pf('sigmaLevel')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('sigmaLevel')">
             <MathTex :expr="sigmaLevelLatex" />
-          </el-form-item>
-          <el-form-item :label="pf('passRate')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('passRate')">
             <span class="font-mono text-lg" :class="capabilityPassRateOk ? 'text-success' : 'text-error'">
               {{ passRateDisplay }}
             </span>
-          </el-form-item>
-          <el-form-item :label="pf('cValue')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('cValue')">
             <MathTex :expr="cValueLatex" />
-          </el-form-item>
-          <el-form-item :label="pf('cpk')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('cpk')">
             <span class="font-mono text-lg" :class="capabilityCpkOk ? 'text-success' : 'text-warning'">
               {{ cpkDisplay }}
             </span>
-          </el-form-item>
-          <el-form-item :label="pf('dppm')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('dppm')">
             <span class="font-mono">{{ capability?.dppm ?? '—' }}</span>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
       </section>
     </div>
@@ -191,24 +191,24 @@
       <el-tabs v-model="hypothesisTab">
         <el-tab-pane :label="pt('tabT')" name="t">
           <el-form label-width="100px" class="max-w-2xl">
-            <el-form-item :label="pf('testType')">
+            <CalcFormItem :label="pf('testType')">
               <el-radio-group v-model="tTestMode">
                 <el-radio value="one">{{ pf('tOneSample') }}</el-radio>
                 <el-radio value="two">{{ pf('tTwoSample') }}</el-radio>
               </el-radio-group>
-            </el-form-item>
-            <el-form-item v-if="tTestMode === 'one'" :label="pf('sampleData')">
+            </CalcFormItem>
+            <CalcFormItem v-if="tTestMode === 'one'" :label="pf('sampleData')">
               <el-input v-model="tSample1" placeholder="10.1,10.2,10.5,10.3" />
-            </el-form-item>
-            <el-form-item v-if="tTestMode === 'one'" :label="pf('mu0')">
+            </CalcFormItem>
+            <CalcFormItem v-if="tTestMode === 'one'" :label="pf('mu0')">
               <el-input-number v-model="tMu0" :precision="4" :step="0.1" />
-            </el-form-item>
-            <el-form-item v-if="tTestMode === 'two'" :label="pf('sampleA')">
+            </CalcFormItem>
+            <CalcFormItem v-if="tTestMode === 'two'" :label="pf('sampleA')">
               <el-input v-model="tSample1" placeholder="10.1,10.2,10.5,10.3" />
-            </el-form-item>
-            <el-form-item v-if="tTestMode === 'two'" :label="pf('sampleB')">
+            </CalcFormItem>
+            <CalcFormItem v-if="tTestMode === 'two'" :label="pf('sampleB')">
               <el-input v-model="tSample2" placeholder="9.8,10.0,10.1,9.9" />
-            </el-form-item>
+            </CalcFormItem>
           </el-form>
           <div v-if="tTestResult && !tTestResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
@@ -235,12 +235,12 @@
 
         <el-tab-pane :label="pt('tabChi2')" name="chi2">
           <el-form label-width="100px" class="max-w-2xl">
-            <el-form-item :label="pf('observed')">
+            <CalcFormItem :label="pf('observed')">
               <el-input v-model="chiObserved" placeholder="50,30,20" />
-            </el-form-item>
-            <el-form-item :label="pf('expected')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('expected')">
               <el-input v-model="chiExpected" placeholder="40,40,20" />
-            </el-form-item>
+            </CalcFormItem>
           </el-form>
           <div v-if="chiResult && !chiResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
@@ -265,15 +265,15 @@
 
         <el-tab-pane :label="pt('tabAnova')" name="anova">
           <el-form label-width="100px" class="max-w-2xl">
-            <el-form-item :label="pf('group1')">
+            <CalcFormItem :label="pf('group1')">
               <el-input v-model="anovaGroup1" placeholder="10,11,12" />
-            </el-form-item>
-            <el-form-item :label="pf('group2')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('group2')">
               <el-input v-model="anovaGroup2" placeholder="9,10,11" />
-            </el-form-item>
-            <el-form-item :label="pf('group3')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('group3')">
               <el-input v-model="anovaGroup3" placeholder="12,13,12" />
-            </el-form-item>
+            </CalcFormItem>
           </el-form>
           <div v-if="anovaResult && !anovaResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
@@ -294,12 +294,12 @@
 
         <el-tab-pane :label="pt('tabCorr')" name="corr">
           <el-form label-width="100px" class="max-w-2xl">
-            <el-form-item :label="pf('varX')">
+            <CalcFormItem :label="pf('varX')">
               <el-input v-model="corrX" placeholder="1,2,3,4,5" />
-            </el-form-item>
-            <el-form-item :label="pf('varY')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('varY')">
               <el-input v-model="corrY" placeholder="2,4,5,4,5" />
-            </el-form-item>
+            </CalcFormItem>
           </el-form>
           <div v-if="corrResult && !corrResult.errorKey" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded bg-gray-50 p-3 text-sm">
@@ -326,12 +326,12 @@
         <el-button size="small" @click="exportControlChart">{{ pt('exportControlPng') }}</el-button>
       </div>
       <el-form label-width="100px" class="mb-4 max-w-xl">
-        <el-form-item :label="pf('measureData')">
+        <CalcFormItem :label="pf('measureData')">
           <el-input v-model="controlData" placeholder="10.2,10.5,10.1,10.8,10.3" />
-        </el-form-item>
-        <el-form-item :label="pf('target')">
+        </CalcFormItem>
+        <CalcFormItem :label="pf('target')">
           <el-input-number v-model="controlTarget" :precision="3" :step="0.1" />
-        </el-form-item>
+        </CalcFormItem>
       </el-form>
       <ControlChart
         :key="locale"

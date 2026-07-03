@@ -29,31 +29,31 @@
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <el-form label-width="100px">
-          <el-form-item :label="pf('gdtType')">
+          <CalcFormItem :label="pf('gdtType')">
             <el-select v-model="form.typeId" class="w-full">
               <el-option v-for="(m, k) in gdtModes" :key="k" :label="m.label" :value="k" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('stackMethod')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('stackMethod')">
             <el-select v-model="form.method" class="w-full">
               <el-option value="rss" :label="ol('stackMethods', 'rss')" />
               <el-option value="worst" :label="ol('stackMethods', 'worst')" />
               <el-option value="modified-rss" :label="ol('stackMethods', 'modified-rss')" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('closedMax')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('closedMax')">
             <el-input-number v-model="form.closedMax" :min="0.001" :precision="4" :step="0.01" />
-          </el-form-item>
-          <el-form-item :label="pf('materialCondition')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('materialCondition')">
             <el-radio-group v-model="form.toleranceModifier">
               <el-radio label="RFS">RFS</el-radio>
               <el-radio label="MMC">MMC</el-radio>
               <el-radio label="LMC">LMC</el-radio>
             </el-radio-group>
-          </el-form-item>
-          <el-form-item v-if="form.toleranceModifier !== 'RFS'" :label="pf('bonusTolerance')">
+          </CalcFormItem>
+          <CalcFormItem v-if="form.toleranceModifier !== 'RFS'" :label="pf('bonusTolerance')">
             <el-input-number v-model="form.bonusTolerance" :min="0" :precision="4" :step="0.005" />
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
 
         <h3 class="mb-2 text-sm font-semibold">{{ pt('sectionRings') }}</h3>

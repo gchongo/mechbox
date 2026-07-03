@@ -11,23 +11,23 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pf('materialAndStress') }}</h2>
         <el-form label-width="120px">
-          <el-form-item :label="pf('material')">
+          <CalcFormItem :label="pf('material')">
             <el-select v-model="material" class="w-full">
               <el-option v-for="(m, k) in snMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pf('stressAmplitude')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('stressAmplitude')">
             <el-input-number v-model="stressAmplitude" :min="0" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="calcMode === 'professional'">
-            <el-form-item :label="pf('meanStress')">
+            <CalcFormItem :label="pf('meanStress')">
               <el-input-number v-model="meanStress" :min="0" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('surfaceSizeFactor')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('surfaceSizeFactor')">
               <el-input-number v-model="surfaceFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="w-28" />
               <el-input-number v-model="sizeFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="ml-2 w-28" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

@@ -8,19 +8,19 @@
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="80px">
-              <el-form-item :label="pf('category')">
+              <CalcFormItem :label="pf('category')">
                 <el-select v-model="category" class="w-full">
                   <el-option v-for="(c, k) in categoryOptions" :key="k" :label="c.label" :value="k" />
                 </el-select>
-              </el-form-item>
-              <el-form-item :label="pf('inputValue')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('inputValue')">
                 <el-input-number v-model="inputValue" :precision="6" class="w-full" />
-              </el-form-item>
-              <el-form-item :label="pf('fromUnit')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('fromUnit')">
                 <el-select v-model="fromUnit" class="w-full">
                   <el-option v-for="u in units" :key="u" :label="u" :value="u" />
                 </el-select>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
           </section>
           <section class="card-panel">
@@ -52,9 +52,9 @@
         </div>
         <section v-if="quickIndex != null" class="card-panel mt-4">
           <el-form inline>
-            <el-form-item :label="pf('quickInput')">
+            <CalcFormItem :label="pf('quickInput')">
               <el-input-number v-model="quickValue" :precision="6" />
-            </el-form-item>
+            </CalcFormItem>
           </el-form>
           <el-alert v-if="quickResult?.errorKey" :title="resultError(quickResult)" type="warning" show-icon />
           <p v-else-if="quickResult" class="text-lg">

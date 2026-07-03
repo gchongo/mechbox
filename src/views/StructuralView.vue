@@ -12,35 +12,35 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('fluid')">
+              <CalcFormItem :label="pf('fluid')">
                 <el-select v-model="fluid" @change="applyFluid">
                   <el-option v-for="(f, k) in fluidPresets" :key="k" :label="f.label" :value="k" />
                 </el-select>
-              </el-form-item>
-              <el-form-item :label="pf('innerDiameter')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('innerDiameter')">
                 <el-input-number v-model="pipe.diameter" :min="1" /> mm
-              </el-form-item>
-              <el-form-item :label="pf('pipeLength')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('pipeLength')">
                 <el-input-number v-model="pipe.length" :min="0.1" /> m
-              </el-form-item>
-              <el-form-item :label="pf('flowRate')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('flowRate')">
                 <el-input-number v-model="pipe.flowRate" :min="0.1" /> L/min
-              </el-form-item>
-              <el-form-item :label="pf('roughness')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('roughness')">
                 <el-input-number v-model="pipe.roughness" :min="0.001" :precision="3" /> mm
-              </el-form-item>
-              <el-form-item v-if="pipe.calcMode !== 'simple'" :label="pf('localLossK')">
+              </CalcFormItem>
+              <CalcFormItem v-if="pipe.calcMode !== 'simple'" :label="pf('localLossK')">
                 <el-input-number v-model="pipe.localLossK" :min="0" :precision="1" />
-              </el-form-item>
+              </CalcFormItem>
               <template v-if="pipe.calcMode === 'professional'">
-                <el-form-item :label="pf('maxVelocity')">
+                <CalcFormItem :label="pf('maxVelocity')">
                   <el-input-number v-model="pipe.maxVelocity" :min="0.5" :max="10" :precision="1" />
                   <span class="ml-2 text-xs text-gray-500">m/s</span>
-                </el-form-item>
-                <el-form-item :label="pf('maxPressureDrop')">
+                </CalcFormItem>
+                <CalcFormItem :label="pf('maxPressureDrop')">
                   <el-input-number v-model="pipe.maxPressureDropKPa" :min="1" :max="1000" />
                   <span class="ml-2 text-xs text-gray-500">kPa</span>
-                </el-form-item>
+                </CalcFormItem>
               </template>
             </el-form>
 
@@ -78,21 +78,21 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('edgeCondition')">
+              <CalcFormItem :label="pf('edgeCondition')">
                 <el-select v-model="plate.edgeCondition" class="w-full">
                   <el-option v-for="(e, k) in plateEdgeConditions" :key="k" :label="e.label" :value="k" />
                 </el-select>
-              </el-form-item>
-              <el-form-item :label="pf('plateThickness')"><el-input-number v-model="plate.thickness" :min="0.1" /></el-form-item>
-              <el-form-item :label="pf('plateWidth')"><el-input-number v-model="plate.width" :min="1" /></el-form-item>
-              <el-form-item :label="pf('plateLength')"><el-input-number v-model="plate.length" :min="1" /></el-form-item>
-              <el-form-item :label="pf('appliedStress')"><el-input-number v-model="plate.appliedStress" :min="0" /></el-form-item>
+              </CalcFormItem>
+              <CalcFormItem :label="pf('plateThickness')"><el-input-number v-model="plate.thickness" :min="0.1" /></CalcFormItem>
+              <CalcFormItem :label="pf('plateWidth')"><el-input-number v-model="plate.width" :min="1" /></CalcFormItem>
+              <CalcFormItem :label="pf('plateLength')"><el-input-number v-model="plate.length" :min="1" /></CalcFormItem>
+              <CalcFormItem :label="pf('appliedStress')"><el-input-number v-model="plate.appliedStress" :min="0" /></CalcFormItem>
               <template v-if="plate.calcMode !== 'simple'">
-                <el-form-item :label="pf('transverseStress')"><el-input-number v-model="plate.appliedStressTransverse" :min="0" /></el-form-item>
-                <el-form-item :label="pf('imperfectionFactor')"><el-input-number v-model="plate.imperfectionFactor" :min="0.5" :max="1" :step="0.05" :precision="2" /></el-form-item>
+                <CalcFormItem :label="pf('transverseStress')"><el-input-number v-model="plate.appliedStressTransverse" :min="0" /></CalcFormItem>
+                <CalcFormItem :label="pf('imperfectionFactor')"><el-input-number v-model="plate.imperfectionFactor" :min="0.5" :max="1" :step="0.05" :precision="2" /></CalcFormItem>
               </template>
               <template v-if="plate.calcMode === 'professional'">
-                <el-form-item :label="pf('inPlaneShear')"><el-input-number v-model="plate.appliedShear" :min="0" /></el-form-item>
+                <CalcFormItem :label="pf('inPlaneShear')"><el-input-number v-model="plate.appliedShear" :min="0" /></CalcFormItem>
               </template>
             </el-form>
 
@@ -130,30 +130,30 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('modelCase')">
+              <CalcFormItem :label="pf('modelCase')">
                 <el-select v-model="modal.caseId" class="w-full">
                   <el-option v-for="(c, k) in modalCases" :key="k" :label="c.label" :value="k" />
                 </el-select>
-              </el-form-item>
+              </CalcFormItem>
               <template v-if="modal.caseId === 'sdof'">
-                <el-form-item :label="pf('stiffness')"><el-input-number v-model="modal.stiffness" :min="1" /></el-form-item>
-                <el-form-item :label="pf('mass')"><el-input-number v-model="modal.mass" :min="0.001" :step="0.1" /></el-form-item>
+                <CalcFormItem :label="pf('stiffness')"><el-input-number v-model="modal.stiffness" :min="1" /></CalcFormItem>
+                <CalcFormItem :label="pf('mass')"><el-input-number v-model="modal.mass" :min="0.001" :step="0.1" /></CalcFormItem>
               </template>
               <template v-else>
-                <el-form-item :label="pf('spanLength')"><el-input-number v-model="modal.spanLength" :min="10" /></el-form-item>
-                <el-form-item :label="pf('diameter')"><el-input-number v-model="modal.diameter" :min="1" /></el-form-item>
+                <CalcFormItem :label="pf('spanLength')"><el-input-number v-model="modal.spanLength" :min="10" /></CalcFormItem>
+                <CalcFormItem :label="pf('diameter')"><el-input-number v-model="modal.diameter" :min="1" /></CalcFormItem>
               </template>
-              <el-form-item v-if="modal.calcMode === 'professional'" :label="pf('dampingRatio')">
+              <CalcFormItem v-if="modal.calcMode === 'professional'" :label="pf('dampingRatio')">
                 <el-input-number v-model="modal.dampingRatio" :min="0.001" :max="0.2" :step="0.005" :precision="3" />
-              </el-form-item>
+              </CalcFormItem>
               <el-form-item v-if="modal.calcMode !== 'simple'" :label="fc('rpm')">
                 <el-input-number v-model="modal.rpm" :min="0" :step="100" />
                 <span class="ml-2 text-xs text-gray-500">{{ pf('rpmOptional') }}</span>
               </el-form-item>
-              <el-form-item :label="pf('excitationFreq')">
+              <CalcFormItem :label="pf('excitationFreq')">
                 <el-input-number v-model="modal.excitationFreq" :min="0" :precision="1" />
                 <span class="ml-2 text-xs text-gray-500">{{ pf('hzOptional') }}</span>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
 
             <StructuralDiagram variant="modal" :excitation-freq="modal.excitationFreq" />

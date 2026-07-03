@@ -10,36 +10,36 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('legSize')">
+              <CalcFormItem :label="pf('legSize')">
                 <el-input-number v-model="form.legSize" :min="3" :step="1" />
                 <span class="ml-2 text-sm text-gray-500">mm</span>
-              </el-form-item>
-              <el-form-item :label="pf('weldLength')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('weldLength')">
                 <el-input-number v-model="form.weldLength" :min="10" />
-              </el-form-item>
-              <el-form-item :label="pf('force')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('force')">
                 <el-input-number v-model="form.force" :min="0" :step="100" />
                 <span class="ml-2 text-sm text-gray-500">N</span>
-              </el-form-item>
+              </CalcFormItem>
               <template v-if="form.calcMode === 'professional'">
-                <el-form-item :label="pf('eccentricity')">
+                <CalcFormItem :label="pf('eccentricity')">
                   <el-input-number v-model="form.eccentricity" :min="0" :precision="1" />
-                </el-form-item>
-                <el-form-item :label="pf('heatInput')">
+                </CalcFormItem>
+                <CalcFormItem :label="pf('heatInput')">
                   <el-input-number v-model="form.heatInput" :min="0.5" :max="5" :precision="2" :step="0.1" />
-                </el-form-item>
-                <el-form-item :label="pf('plateThickness')">
+                </CalcFormItem>
+                <CalcFormItem :label="pf('plateThickness')">
                   <el-input-number v-model="form.plateThickness" :min="3" />
-                </el-form-item>
-                <el-form-item :label="pf('stressRangeDelta')">
+                </CalcFormItem>
+                <CalcFormItem :label="pf('stressRangeDelta')">
                   <el-input-number v-model="form.stressRange" :min="0" :precision="1" />
-                </el-form-item>
+                </CalcFormItem>
               </template>
-              <el-form-item :label="pf('steelGrade')">
+              <CalcFormItem :label="pf('steelGrade')">
                 <el-select v-model="form.steelGrade" class="w-full">
                   <el-option v-for="(g, k) in weldSteelGrades" :key="k" :label="g.label" :value="k" />
                 </el-select>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
 
             <FilletWeldDiagram
@@ -98,21 +98,21 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('thickness')">
+              <CalcFormItem :label="pf('thickness')">
                 <el-input-number v-model="butt.thickness" :min="3" />
-              </el-form-item>
-              <el-form-item :label="pf('weldLength')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('weldLength')">
                 <el-input-number v-model="butt.weldLength" :min="10" />
-              </el-form-item>
-              <el-form-item :label="pf('tensionForce')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('tensionForce')">
                 <el-input-number v-model="butt.force" :min="0" :step="500" />
-              </el-form-item>
-              <el-form-item v-if="butt.calcMode === 'professional'" :label="pf('penetrationEfficiency')">
+              </CalcFormItem>
+              <CalcFormItem v-if="butt.calcMode === 'professional'" :label="pf('penetrationEfficiency')">
                 <el-input-number v-model="butt.penetrationEfficiency" :min="0.5" :max="1" :step="0.05" :precision="2" />
-              </el-form-item>
-              <el-form-item v-if="butt.calcMode === 'professional'" :label="pf('stressConcentrationKf')">
+              </CalcFormItem>
+              <CalcFormItem v-if="butt.calcMode === 'professional'" :label="pf('stressConcentrationKf')">
                 <el-input-number v-model="butt.stressConcentration" :min="1" :max="3" :step="0.1" :precision="1" />
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
           </section>
           <section class="card-panel">
@@ -139,18 +139,18 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('stressRangeDelta')">
+              <CalcFormItem :label="pf('stressRangeDelta')">
                 <el-input-number v-model="fatigue.stressRange" :min="1" :precision="1" />
                 <span class="ml-2 text-xs text-gray-500">MPa</span>
-              </el-form-item>
-              <el-form-item :label="pf('cycles')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('cycles')">
                 <el-input-number v-model="fatigue.cycles" :min="1000" :step="10000" />
-              </el-form-item>
-              <el-form-item :label="pf('detailCategory')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('detailCategory')">
                 <el-select v-model="fatigue.detailCategory" class="w-full">
                   <el-option v-for="(d, k) in weldDetailCategories" :key="k" :label="d.label" :value="k" />
                 </el-select>
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
           </section>
           <section class="card-panel">
@@ -183,27 +183,27 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item :label="pf('heatInputQ')">
+              <CalcFormItem :label="pf('heatInputQ')">
                 <el-input-number v-model="haz.heatInput" :min="0.5" :max="5" :step="0.1" :precision="2" />
                 <span class="ml-2 text-xs text-gray-500">kJ/mm</span>
-              </el-form-item>
-              <el-form-item :label="pf('plateThickness')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('plateThickness')">
                 <el-input-number v-model="haz.plateThickness" :min="3" />
-              </el-form-item>
-              <el-form-item :label="pf('steelGrade')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('steelGrade')">
                 <el-select v-model="haz.steelGrade" class="w-full">
                   <el-option v-for="(g, k) in weldSteelGrades" :key="k" :label="g.label" :value="k" />
                 </el-select>
-              </el-form-item>
-              <el-form-item :label="pf('legSize')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('legSize')">
                 <el-input-number v-model="haz.legSize" :min="3" />
-              </el-form-item>
-              <el-form-item :label="pf('force')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('force')">
                 <el-input-number v-model="haz.force" :min="0" :step="100" />
-              </el-form-item>
-              <el-form-item :label="pf('weldLength')">
+              </CalcFormItem>
+              <CalcFormItem :label="pf('weldLength')">
                 <el-input-number v-model="haz.weldLength" :min="10" />
-              </el-form-item>
+              </CalcFormItem>
             </el-form>
           </section>
           <section class="card-panel">

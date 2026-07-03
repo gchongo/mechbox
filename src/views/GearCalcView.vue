@@ -18,79 +18,79 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <el-form-item :label="pf('module')">
+          <CalcFormItem :label="pf('module')">
             <el-input-number v-model="form.module" :min="0.5" :precision="2" :step="0.5" />
-          </el-form-item>
-          <el-form-item :label="pf('pinionTeeth')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('pinionTeeth')">
             <el-input-number v-model="form.pinionTeeth" :min="17" :step="1" />
-          </el-form-item>
-          <el-form-item v-if="mode !== 'simple'" :label="pf('gearTeeth')">
+          </CalcFormItem>
+          <CalcFormItem v-if="mode !== 'simple'" :label="pf('gearTeeth')">
             <el-input-number v-model="form.gearTeeth" :min="17" :step="1" />
-          </el-form-item>
-          <el-form-item v-else :label="pf('teeth')">
+          </CalcFormItem>
+          <CalcFormItem v-else :label="pf('teeth')">
             <el-input-number v-model="form.pinionTeeth" :min="12" :step="1" />
-          </el-form-item>
-          <el-form-item :label="pf('faceWidth')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('faceWidth')">
             <el-input-number v-model="form.faceWidth" :min="1" :precision="1" />
-          </el-form-item>
-          <el-form-item :label="pf('torque')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('torque')">
             <el-input-number v-model="form.torque" :min="0" :precision="2" />
-          </el-form-item>
-          <el-form-item :label="pf('rpm')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('rpm')">
             <el-input-number v-model="form.rpm" :min="0" :step="100" />
-          </el-form-item>
-          <el-form-item :label="pf('pressureAngle')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('pressureAngle')">
             <el-input-number v-model="form.pressureAngle" :min="14.5" :max="25" :precision="1" />
-          </el-form-item>
+          </CalcFormItem>
           <template v-if="mode !== 'simple'">
-            <el-form-item :label="pf('helixAngle')">
+            <CalcFormItem :label="pf('helixAngle')">
               <el-input-number v-model="form.helixAngle" :min="0" :max="30" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('profileShiftPinion')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('profileShiftPinion')">
               <el-input-number v-model="form.profileShiftPinion" :min="-1" :max="1" :step="0.05" :precision="2" />
-            </el-form-item>
-            <el-form-item :label="pf('profileShiftGear')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('profileShiftGear')">
               <el-input-number v-model="form.profileShiftGear" :min="-1" :max="1" :step="0.05" :precision="2" />
-            </el-form-item>
-            <el-form-item :label="pf('pinionMaterial')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('pinionMaterial')">
               <el-select v-model="form.pinionMaterial" class="w-full">
                 <el-option v-for="m in materials" :key="m.id" :label="m.label" :value="m.id" />
               </el-select>
-            </el-form-item>
-            <el-form-item :label="pf('gearMaterial')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('gearMaterial')">
               <el-select v-model="form.gearMaterial" class="w-full">
                 <el-option v-for="m in materials" :key="m.id" :label="m.label" :value="m.id" />
               </el-select>
-            </el-form-item>
-            <el-form-item :label="pf('applicationFactor')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('applicationFactor')">
               <el-input-number v-model="form.applicationFactor" :min="1" :max="2" :precision="2" :step="0.05" />
-            </el-form-item>
-            <el-form-item :label="pf('iso1328Grade')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('iso1328Grade')">
               <el-select v-model="form.iso1328Grade" class="w-full">
                 <el-option v-for="g in iso1328Grades" :key="g" :label="gradeLabel('iso1328Grades', g)" :value="g" />
               </el-select>
-            </el-form-item>
-            <el-form-item :label="pf('accuracyGrade')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('accuracyGrade')">
               <el-input-number v-model="form.accuracyGrade" :min="5" :max="12" :step="1" />
               <span class="ml-2 text-xs text-gray-500">{{ pf('accuracyGradeHint') }}</span>
-            </el-form-item>
-            <el-form-item :label="pf('minSH')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('minSH')">
               <el-input-number v-model="form.minSafetyContact" :min="0.8" :max="2" :precision="1" :step="0.1" />
-            </el-form-item>
-            <el-form-item :label="pf('minSF')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('minSF')">
               <el-input-number v-model="form.minSafetyBending" :min="1" :max="2.5" :precision="1" :step="0.1" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-else>
-            <el-form-item :label="pf('formFactor')">
+            <CalcFormItem :label="pf('formFactor')">
               <el-input-number v-model="form.formFactor" :min="1.5" :max="4" :precision="2" :step="0.1" />
-            </el-form-item>
-            <el-form-item :label="pf('allowBending')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('allowBending')">
               <el-input-number v-model="form.allowBending" :min="100" :step="10" />
-            </el-form-item>
-            <el-form-item :label="pf('allowContact')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('allowContact')">
               <el-input-number v-model="form.allowContact" :min="200" :step="50" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 

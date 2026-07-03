@@ -8,18 +8,18 @@
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <el-form label-width="140px">
-          <el-form-item :label="pf('driverDiameter')"><el-input-number v-model="form.driverDiameter" :min="50" /></el-form-item>
-          <el-form-item :label="pf('drivenDiameter')"><el-input-number v-model="form.drivenDiameter" :min="50" /></el-form-item>
-          <el-form-item :label="pf('centerDistance')"><el-input-number v-model="form.centerDistance" :min="100" :step="50" /></el-form-item>
-          <el-form-item :label="pf('rpm')"><el-input-number v-model="form.rpm" :min="0" /></el-form-item>
-          <el-form-item :label="pf('power')"><el-input-number v-model="form.power" :min="0" :precision="2" /></el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple'" :label="pf('wrapAngle')"><el-input-number v-model="form.wrapAngle" :min="120" :max="180" /></el-form-item>
+          <CalcFormItem :label="pf('driverDiameter')"><el-input-number v-model="form.driverDiameter" :min="50" /></CalcFormItem>
+          <CalcFormItem :label="pf('drivenDiameter')"><el-input-number v-model="form.drivenDiameter" :min="50" /></CalcFormItem>
+          <CalcFormItem :label="pf('centerDistance')"><el-input-number v-model="form.centerDistance" :min="100" :step="50" /></CalcFormItem>
+          <CalcFormItem :label="pf('rpm')"><el-input-number v-model="form.rpm" :min="0" /></CalcFormItem>
+          <CalcFormItem :label="pf('power')"><el-input-number v-model="form.power" :min="0" :precision="2" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('wrapAngle')"><el-input-number v-model="form.wrapAngle" :min="120" :max="180" /></CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item :label="pf('powerPerBelt')"><el-input-number v-model="form.powerPerBelt" :min="0.5" :precision="1" :step="0.5" /></el-form-item>
-            <el-form-item :label="pf('maxBeltSpeed')"><el-input-number v-model="form.maxBeltSpeed" :min="10" :max="40" /></el-form-item>
+            <CalcFormItem :label="pf('powerPerBelt')"><el-input-number v-model="form.powerPerBelt" :min="0.5" :precision="1" :step="0.5" /></CalcFormItem>
+            <CalcFormItem :label="pf('maxBeltSpeed')"><el-input-number v-model="form.maxBeltSpeed" :min="10" :max="40" /></CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item :label="pf('serviceFactor')"><el-input-number v-model="form.serviceFactor" :min="1" :max="2" :step="0.1" :precision="1" /></el-form-item>
+            <CalcFormItem :label="pf('serviceFactor')"><el-input-number v-model="form.serviceFactor" :min="1" :max="2" :step="0.1" :precision="1" /></CalcFormItem>
           </template>
         </el-form>
 

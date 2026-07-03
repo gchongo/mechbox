@@ -14,33 +14,33 @@
               <el-option v-for="(m, k) in materials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
-          <el-form-item :label="pf('wireDiameter')"><el-input-number v-model="form.wireDiameter" :min="0.5" :precision="2" :step="0.1" /></el-form-item>
-          <el-form-item :label="pf('meanDiameter')"><el-input-number v-model="form.meanDiameter" :min="2" :precision="1" /></el-form-item>
-          <el-form-item :label="pf('activeCoils')"><el-input-number v-model="form.activeCoils" :min="1" :step="0.5" :precision="1" /></el-form-item>
-          <el-form-item :label="pf('load')"><el-input-number v-model="form.load" :min="0" :precision="1" /></el-form-item>
-          <el-form-item :label="pf('allowableShear')"><el-input-number v-model="form.allowableShear" :min="100" /></el-form-item>
+          <CalcFormItem :label="pf('wireDiameter')"><el-input-number v-model="form.wireDiameter" :min="0.5" :precision="2" :step="0.1" /></CalcFormItem>
+          <CalcFormItem :label="pf('meanDiameter')"><el-input-number v-model="form.meanDiameter" :min="2" :precision="1" /></CalcFormItem>
+          <CalcFormItem :label="pf('activeCoils')"><el-input-number v-model="form.activeCoils" :min="1" :step="0.5" :precision="1" /></CalcFormItem>
+          <CalcFormItem :label="pf('load')"><el-input-number v-model="form.load" :min="0" :precision="1" /></CalcFormItem>
+          <CalcFormItem :label="pf('allowableShear')"><el-input-number v-model="form.allowableShear" :min="100" /></CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item :label="pf('freeLength')">
+            <CalcFormItem :label="pf('freeLength')">
               <el-input-number v-model="form.freeLength" :min="5" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('endType')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('endType')">
               <el-select v-model="form.endType" class="w-full">
                 <el-option :label="pf('endFixed')" value="fixed" />
                 <el-option :label="pf('endFree')" value="free" />
               </el-select>
-            </el-form-item>
+            </CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerVarLoad') }}</el-divider>
-            <el-form-item :label="pf('loadMin')">
+            <CalcFormItem :label="pf('loadMin')">
               <el-input-number v-model="form.loadMin" :min="0" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('loadMax')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('loadMax')">
               <el-input-number v-model="form.loadMax" :min="0" :precision="1" />
-            </el-form-item>
-            <el-form-item :label="pf('targetCycles')">
+            </CalcFormItem>
+            <CalcFormItem :label="pf('targetCycles')">
               <el-input-number v-model="form.targetCycles" :min="1e4" :step="1e5" />
-            </el-form-item>
+            </CalcFormItem>
           </template>
         </el-form>
 
