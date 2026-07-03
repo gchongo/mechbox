@@ -128,6 +128,15 @@ const zh = {
     'tool-map': '工具地图',
     history: '历史记录',
   },
+  statTools: {
+    convert: { label: '公差转换', desc: 'T ↔ σ' },
+    rss: { label: 'RSS 计算', desc: '基础 + 加权 + 修正' },
+    sigma: { label: '西格玛分析', desc: 'C / Cpk / 合格率' },
+    chart: { label: '分布曲线', desc: 'Plotly PDF 图' },
+    'monte-carlo': { label: 'Monte Carlo', desc: '随机模拟 · 龙卷风图' },
+    quality: { label: 'MSA / SPC / FMEA', desc: 'Gage R&R · 控制图 · AQL' },
+    analytics: { label: '回归 / DOE / RSM', desc: '拟合 · 正交 · 响应面' },
+  },
   routes: {
     home: '首页',
     editor: '尺寸链分析',
@@ -324,6 +333,15 @@ const en = {
     'tool-map': 'Tool map',
     history: 'History',
   },
+  statTools: {
+    convert: { label: 'Tolerance conversion', desc: 'T ↔ σ' },
+    rss: { label: 'RSS calculator', desc: 'Basic + weighted + modified' },
+    sigma: { label: 'Sigma analysis', desc: 'C / Cpk / yield rate' },
+    chart: { label: 'Distribution curve', desc: 'Plotly PDF chart' },
+    'monte-carlo': { label: 'Monte Carlo', desc: 'Random simulation · tornado chart' },
+    quality: { label: 'MSA / SPC / FMEA', desc: 'Gage R&R · control charts · AQL' },
+    analytics: { label: 'Regression / DOE / RSM', desc: 'Fit · orthogonal · response surface' },
+  },
   routes: {
     home: 'Home',
     editor: 'Tolerance stack analysis',
@@ -437,4 +455,15 @@ export function t(key, locale = 'zh', params) {
 export function localizedToolLabel(path, locale = 'zh') {
   const key = toolKeyFromPath(path)
   return t(`tools.${key}`, locale) || path
+}
+
+export function localizedStatTool(tool, locale = 'zh') {
+  const key = tool.path ? toolKeyFromPath(tool.path) : tool.query
+  const node = messages[locale]?.statTools?.[key] ?? messages.zh?.statTools?.[key]
+  if (!node) return tool
+  return {
+    ...tool,
+    label: node.label ?? tool.label,
+    desc: node.desc ?? tool.desc,
+  }
 }

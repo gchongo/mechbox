@@ -16,11 +16,11 @@
 
       <!-- 水平板 -->
       <rect x="60" y="140" width="360" height="28" class="plate-h" />
-      <text x="70" y="158" class="txt-muted" font-size="11">水平板</text>
+      <text x="70" y="158" class="txt-muted" font-size="11">{{ dt('horizPlate') }}</text>
 
       <!-- 竖板 -->
       <rect x="60" y="40" width="28" height="128" class="plate-v" />
-      <text x="48" y="90" class="txt-muted" font-size="11" transform="rotate(-90 48 90)">竖板</text>
+      <text x="48" y="90" class="txt-muted" font-size="11" transform="rotate(-90 48 90)">{{ dt('vertPlate') }}</text>
 
       <!-- 角焊缝三角形 -->
       <polygon :points="weldPoints" class="weld-fill" />

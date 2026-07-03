@@ -72,7 +72,7 @@ import { STAT_TOOLS, TOOL_GROUPS, getAllToolsFlat } from '@/constants/tool-catal
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useLocale } from '@/composables/useLocale'
-import { localizedToolLabel } from '@/i18n'
+import { localizedToolLabel, localizedStatTool } from '@/i18n'
 
 const router = useRouter()
 const query = ref('')
@@ -90,10 +90,7 @@ const localizedGroups = computed(() =>
 )
 
 const localizedStatTools = computed(() =>
-  STAT_TOOLS.map((tool) => ({
-    ...tool,
-    label: tool.path ? localizedToolLabel(tool.path, locale.value) : tool.label,
-  })),
+  STAT_TOOLS.map((tool) => localizedStatTool(tool, locale.value)),
 )
 
 const localizedFlatTools = computed(() =>

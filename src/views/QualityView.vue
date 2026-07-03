@@ -202,9 +202,11 @@ import { analyzeFMEA, parseFMEATable } from '@/utils/fmea-calc'
 import { designAQLPlan, calcOCCurve, AQL_LEVELS } from '@/utils/aql-calc'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useDemoData } from '@/composables/useDemoData'
 
 const { pt, pf, pr, locale } = useCalcPage('quality')
 const { rm, resultError } = useResultI18n()
+const { demo } = useDemoData()
 
 const activeTab = ref('msa')
 const msaText = ref('')
@@ -329,31 +331,22 @@ watch([aqlLot, aqlLevel, aqlDefects, locale], () => {
 })
 
 function loadMsaSample() {
-  msaText.value = `A,1,10.02,10.05,10.03
-A,2,10.15,10.12,10.14
-A,3,10.08,10.10,10.09
-B,1,10.04,10.01,10.06
-B,2,10.18,10.16,10.17
-B,3,10.11,10.09,10.12
-C,1,10.00,10.03,10.02
-C,2,10.14,10.13,10.15
-C,3,10.07,10.08,10.06`
+  msaText.value = demo.value.msa
 }
 
 function loadXrSample() {
-  xrText.value = `10.1,10.3,10.2
-10.0,10.4,10.1
-10.2,10.2,10.3
-10.15,10.25,10.2
-10.05,10.1,10.08
-10.3,10.2,10.25`
+  xrText.value = demo.value.xr
 }
 
 function loadFmeaSample() {
-  fmeaText.value = `螺栓,断裂,连接失效,预紧力不足,8,4,3,增加扭矩监控
-密封圈,泄漏,污染,压缩率不足,7,5,4,沟槽尺寸管控
-轴承,异响,停机,润滑不良,6,3,5,定期换油`
+  fmeaText.value = demo.value.fmea
 }
+
+watch(locale, () => {
+  loadMsaSample()
+  loadXrSample()
+  loadFmeaSample()
+})
 
 onMounted(() => {
   loadMsaSample()

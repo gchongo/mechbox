@@ -62,7 +62,7 @@
       <text :x="cx + (rHole + rShaft) / 2" :y="cy - 8" fill="#e6a23c" font-size="12" text-anchor="middle">i = {{ fmt(interference) }}</text>
 
       <!-- 轴向长度 L -->
-      <text x="320" y="28" class="txt-muted" font-size="13">轴向配合段</text>
+      <text x="320" y="28" class="txt-muted" font-size="13">{{ dt('axialFitSection') }}</text>
       <rect x="320" y="100" :width="lenW" height="36" rx="3" class="fit-length" />
       <rect x="320" y="108" :width="lenW" height="20" rx="2" class="shaft-bar" />
       <line
@@ -75,8 +75,8 @@
         marker-end="url(#if-arrow-blue)"
       />
       <text :x="320 + lenW / 2" y="172" class="txt-primary" font-size="14" text-anchor="middle">L = {{ fmt(fitLength) }} mm</text>
-      <text x="320" y="88" class="txt-muted" font-size="11">轮毂</text>
-      <text x="320" y="118" class="txt-muted" font-size="11">轴</text>
+      <text x="320" y="88" class="txt-muted" font-size="11">{{ dt('hub') }}</text>
+      <text x="320" y="118" class="txt-muted" font-size="11">{{ dt('shaftPart') }}</text>
     </svg>
   </div>
 </template>

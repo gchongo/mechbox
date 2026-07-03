@@ -153,18 +153,16 @@ import { CASE_STORAGE_KEY } from '@/constants/cases'
 import { findAnalysisType } from '@/constants/analysis-types'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useDemoData } from '@/composables/useDemoData'
 
 const router = useRouter()
 const { pt, pf, pr, fc, locale } = useCalcPage('allocation')
 const { ol, optionEntries } = useOptionsI18n()
+const { demo } = useDemoData()
 
 const targetTolerance = ref(0.1)
 const methodId = ref('equal-effect')
-const rings = ref([
-  { name: '挡环厚度', factor: 1, nominal: 40, cost: 1, sensitivity: 1 },
-  { name: '齿轮宽度', factor: 1, nominal: 15, cost: 1.2, sensitivity: 1 },
-  { name: '轴径', factor: 1, nominal: 55, cost: 2, sensitivity: 1 },
-])
+const rings = ref([])
 const result = ref(null)
 const paretoResult = ref(null)
 const paretoChartRef = ref(null)
@@ -208,13 +206,11 @@ function removeRing(index) {
 function loadSample() {
   targetTolerance.value = 0.1
   methodId.value = 'equal-effect'
-  rings.value = [
-    { name: '挡环厚度', factor: 1, nominal: 40, cost: 1, sensitivity: 1 },
-    { name: '齿轮宽度', factor: 1, nominal: 15, cost: 1.5, sensitivity: 1.2 },
-    { name: '轴径', factor: 1, nominal: 55.25, cost: 2.5, sensitivity: 0.8 },
-  ]
+  rings.value = demo.value.allocation.sampleRings.map((r) => ({ ...r }))
   run()
 }
+
+watch(locale, loadSample)
 
 function run() {
   if (rings.value.length < 2) {
@@ -322,7 +318,7 @@ function applyToEditor() {
       selectedType: type,
       activeGroup: type?.groupId ?? '1d',
       closedRing: {
-        name: '间隙 L0',
+        name: demo.value.allocation.closedRingName,
         min: 0.1,
         max: 0.35,
         direction: closedDirection,

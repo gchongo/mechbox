@@ -156,10 +156,12 @@ import { analyzeRSM, parseRSMResponses } from '@/utils/rsm-calc'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useDemoData } from '@/composables/useDemoData'
 
 const { pt, pf, pr, locale } = useCalcPage('analytics')
 const { resultError } = useResultI18n()
 const { optionMap } = useOptionsI18n()
+const { demo } = useDemoData()
 
 const tab = ref('regression')
 const regType = ref('linear')
@@ -170,15 +172,11 @@ let plotly = null
 const orthogonalOptions = computed(() => optionMap(ORTHOGONAL_ARRAYS, 'orthogonalArrays'))
 
 const arrayId = ref('L4')
-const doeFactors = ref([
-  { name: '温度', low: 180, high: 220 },
-  { name: '压力', low: 50, high: 80 },
-  { name: '时间', low: 10, high: 30 },
-])
+const doeFactors = ref([])
 const responseText = ref('12.1,15.3,14.2,18.5')
 
-const rsmF1 = ref({ name: '温度', low: 180, high: 220 })
-const rsmF2 = ref({ name: '压力', low: 50, high: 80 })
+const rsmF1 = ref({ name: '', low: 180, high: 220 })
+const rsmF2 = ref({ name: '', low: 50, high: 80 })
 const rsmResponseText = ref('10.2,12.5,11.8,14.1,11.0,13.2,10.5,12.8,12.0,11.9,12.1')
 const rsmChartRef = ref(null)
 
@@ -279,13 +277,23 @@ function addFactor() {
   }
 }
 
+function applyAnalyticsDemo() {
+  doeFactors.value = demo.value.analytics.doeFactors.map((f) => ({ ...f }))
+  rsmF1.value = { ...demo.value.analytics.rsmF1 }
+  rsmF2.value = { ...demo.value.analytics.rsmF2 }
+}
+
 function loadRsmSample() {
-  rsmF1.value = { name: 'T', low: 180, high: 220 }
-  rsmF2.value = { name: 'P', low: 50, high: 80 }
+  applyAnalyticsDemo()
   rsmResponseText.value = '10.2,12.5,11.8,14.1,11.0,13.2,10.5,12.8,12.0,11.9,12.1'
 }
 
-onMounted(loadRegSample)
+onMounted(() => {
+  loadRegSample()
+  applyAnalyticsDemo()
+})
+
+watch(locale, applyAnalyticsDemo)
 onBeforeUnmount(() => {
   if (regChartRef.value && plotly) plotly.purge(regChartRef.value)
   if (rsmChartRef.value && plotly) plotly.purge(rsmChartRef.value)

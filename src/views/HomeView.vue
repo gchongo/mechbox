@@ -90,12 +90,14 @@ import { ANALYSIS_GROUPS } from '@/constants/analysis-types'
 import { STAT_TOOLS, TOOL_GROUPS } from '@/constants/tool-catalog'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
 import { useLocale } from '@/composables/useLocale'
-import { localizedToolLabel } from '@/i18n'
+import { localizedToolLabel, localizedStatTool } from '@/i18n'
 
 const router = useRouter()
 const { locale, t } = useLocale()
 
-const statTools = STAT_TOOLS
+const statTools = computed(() =>
+  STAT_TOOLS.map((tool) => localizedStatTool(tool, locale.value)),
+)
 const toolGroups = computed(() =>
   TOOL_GROUPS.filter((g) => g.id !== 'reference').map((g) => ({
     ...g,

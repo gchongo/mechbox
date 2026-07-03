@@ -136,6 +136,7 @@ export const messagesZh = {
     accept: '接收',
     reject: '拒收',
     pending: '待定（需加严/放宽）',
+    level_ii_normal: 'II（正常）',
   },
   fatigue: {
     status_safe: '安全',
@@ -380,6 +381,7 @@ export const messagesEn = {
     accept: 'Accept',
     reject: 'Reject',
     pending: 'Pending (tighten or relax plan)',
+    level_ii_normal: 'Level II (normal)',
   },
   fatigue: {
     status_safe: 'Safe',

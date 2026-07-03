@@ -28,7 +28,7 @@
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <div v-for="m in filtered" :key="m.id" class="card-panel">
         <h3 class="font-medium">{{ m.name }}</h3>
-        <el-tag size="small" class="mt-2">{{ categoryLabel(m.category) }}</el-tag>
+          <el-tag size="small" class="mt-2">{{ m.displayCategory ?? categoryLabel(m.category) }}</el-tag>
         <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
           <div>
             <dt class="text-gray-500"><MathTex expr="\sigma_b" /></dt>
@@ -72,8 +72,9 @@ import { Search } from '@element-plus/icons-vue'
 import MathTex from '@/components/common/MathTex.vue'
 import { searchMaterials, getCategories, getAllowableAtTemp } from '@/constants/materials'
 import { useContentI18n } from '@/composables/useContentI18n'
+import { materialsEn } from '@/i18n/materials-i18n'
 
-const { ct } = useContentI18n()
+const { ct, locale } = useContentI18n()
 const query = ref('')
 const category = ref('')
 const tempC = ref(20)
@@ -89,6 +90,13 @@ function tempAllow(m) {
 
 const filtered = computed(() => {
   let list = searchMaterials(query.value)
+  if (locale.value === 'en') {
+    list = list.map((m) => {
+      const en = materialsEn[m.id]
+      if (!en) return m
+      return { ...m, name: en.name, note: en.note, displayCategory: en.category }
+    })
+  }
   if (category.value) list = list.filter((m) => m.category === category.value)
   return list
 })

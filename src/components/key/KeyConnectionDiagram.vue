@@ -16,18 +16,18 @@
 
       <!-- 轮毂 -->
       <rect :x="hubX" :y="hubY" :width="hubW" :height="hubH" rx="4" class="hub-block" />
-      <text :x="hubX + hubW / 2" :y="hubY - 8" class="txt-muted" font-size="12" text-anchor="middle">轮毂</text>
+      <text :x="hubX + hubW / 2" :y="hubY - 8" class="txt-muted" font-size="12" text-anchor="middle">{{ dt('hub') }}</text>
 
       <!-- 轴 -->
       <rect :x="shaftX" :y="shaftY" :width="shaftW" :height="shaftH" rx="2" class="shaft-block" />
-      <text :x="shaftX - 8" :y="shaftY + shaftH / 2 + 4" class="txt-muted" font-size="12" text-anchor="end">轴</text>
+      <text :x="shaftX - 8" :y="shaftY + shaftH / 2 + 4" class="txt-muted" font-size="12" text-anchor="end">{{ dt('shaftPart') }}</text>
 
       <!-- 键槽（轴上） -->
       <rect :x="keyX" :y="keySlotY" :width="keyW" :height="keySlotH" class="key-slot" />
 
       <!-- 平键 -->
       <rect :x="keyX" :y="keyY" :width="keyW" :height="keyH" rx="1" class="key-block" />
-      <text :x="keyX + keyW / 2" :y="keyY + keyH / 2 + 4" class="txt-key" font-size="11" text-anchor="middle">键</text>
+      <text :x="keyX + keyW / 2" :y="keyY + keyH / 2 + 4" class="txt-key" font-size="11" text-anchor="middle">{{ dt('parallelKey') }}</text>
 
       <!-- d 轴径 -->
       <line

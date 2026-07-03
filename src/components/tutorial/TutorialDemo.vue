@@ -3,15 +3,15 @@
     <div class="mb-3 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2 text-white">
         <el-icon :size="20"><VideoPlay /></el-icon>
-        <span class="text-sm font-medium">演示模式</span>
+        <span class="text-sm font-medium">{{ ct('tutorial.demoMode') }}</span>
         <span class="text-xs text-gray-400">{{ tutorial.title }} · {{ tutorial.duration }}</span>
       </div>
       <div class="flex gap-2">
         <el-button v-if="!playing" size="small" type="primary" @click="start">
-          ▶ 播放
+          {{ ct('tutorial.demoPlay') }}
         </el-button>
-        <el-button v-else size="small" @click="pause">⏸ 暂停</el-button>
-        <el-button size="small" @click="stop">↺ 重置</el-button>
+        <el-button v-else size="small" @click="pause">{{ ct('tutorial.demoPause') }}</el-button>
+        <el-button size="small" @click="stop">{{ ct('tutorial.demoReset') }}</el-button>
       </div>
     </div>
 
@@ -39,12 +39,15 @@
 
 <script setup>
 import { ref, computed, onBeforeUnmount, watch } from 'vue'
+import { VideoPlay } from '@element-plus/icons-vue'
+import { useContentI18n } from '@/composables/useContentI18n'
 
 const props = defineProps({
   tutorial: { type: Object, required: true },
   intervalMs: { type: Number, default: 5000 },
 })
 
+const { ct } = useContentI18n()
 const playing = ref(false)
 const currentIndex = ref(0)
 let timer = null

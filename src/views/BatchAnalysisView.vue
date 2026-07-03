@@ -25,7 +25,7 @@
           v-model="csvInput"
           type="textarea"
           :rows="10"
-          placeholder="方案A,0.06,0.05,0.04&#10;方案B,0.08,0.06,0.05&#10;方案C,0.05,0.04,0.03"
+          :placeholder="csvPlaceholder"
         />
         <div class="mt-3 flex gap-2">
           <el-button type="primary" @click="runBatch">{{ pt('run') }}</el-button>
@@ -103,10 +103,14 @@ import { parseBatchCsv, batchValidate } from '@/utils/batch-analysis'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
+import { useDemoData } from '@/composables/useDemoData'
 
 const { pt, pf, pr, locale } = useCalcPage('batch')
 const { resultError } = useResultI18n()
 const { exportFilename } = useContentI18n()
+const { demo } = useDemoData()
+
+const csvPlaceholder = computed(() => demo.value.batchCsvPlaceholder)
 
 const targetMin = ref(0)
 const targetMax = ref(0.25)
@@ -143,9 +147,7 @@ function runBatch() {
 }
 
 function loadSample() {
-  const names = locale.value === 'en'
-    ? ['Scheme A', 'Scheme B', 'Scheme C', 'Scheme D', 'Scheme E']
-    : ['方案A', '方案B', '方案C', '方案D', '方案E']
+  const names = demo.value.batchSchemes
   csvInput.value = `${names[0]},0.06,0.05,0.04
 ${names[1]},0.08,0.06,0.05
 ${names[2]},0.05,0.04,0.03

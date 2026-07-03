@@ -79,7 +79,7 @@ export function designAQLPlan({ lotSize, aql = 2.5, defectCount = 0 }) {
     defectCount,
     decisionKey,
     pass: defectCount <= Ac,
-    inspectionLevel: 'II（正常）',
+    inspectionLevelKey: 'level_ii_normal',
   }
 }
 

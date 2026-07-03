@@ -130,6 +130,9 @@ export const contentZh = {
       铸铁: '铸铁',
       有色金属: '有色金属',
       非金属: '非金属',
+      铝合金: '铝合金',
+      铜合金: '铜合金',
+      钛合金: '钛合金',
     },
   },
   tutorial: {
@@ -137,6 +140,10 @@ export const contentZh = {
     subtitle: '5 个尺寸链教程，含 Bilibili 视频、演示模式与图文详解',
     openBilibili: '在 Bilibili 打开 ↗',
     openCase: '打开关联案例 →',
+    demoMode: '演示模式',
+    demoPlay: '▶ 播放',
+    demoPause: '⏸ 暂停',
+    demoReset: '↺ 重置',
   },
   quiz: {
     title: '练习题库',
@@ -293,6 +300,9 @@ export const contentEn = {
       铸铁: 'Cast iron',
       有色金属: 'Non-ferrous',
       非金属: 'Non-metal',
+      铝合金: 'Aluminum alloy',
+      铜合金: 'Copper alloy',
+      钛合金: 'Titanium alloy',
     },
   },
   tutorial: {
@@ -300,6 +310,10 @@ export const contentEn = {
     subtitle: '5 tolerance stack tutorials with Bilibili video, demos, and text',
     openBilibili: 'Open on Bilibili ↗',
     openCase: 'Open related case →',
+    demoMode: 'Demo mode',
+    demoPlay: '▶ Play',
+    demoPause: '⏸ Pause',
+    demoReset: '↺ Reset',
   },
   quiz: {
     title: 'Quiz',
