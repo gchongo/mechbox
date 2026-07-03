@@ -19,8 +19,14 @@ export const HELP_LEVELS = {
  *   summary: string,
  *   steps: string[],
  *   principle: string,
+ *   useCases?: string[],
+ *   inputs?: Array<{ name: string, meaning: string, source: string }>,
  *   formulas?: HelpFormula[],
+ *   outputs?: Array<{ name: string, meaning: string, judgement?: string }>,
  *   notes: string[],
+ *   reliability?: string[],
+ *   beginnerTips?: string[],
+ *   professionalChecks?: string[],
  *   standards?: string[],
  *   example?: string,
  *   related?: string[],
@@ -876,25 +882,611 @@ export const TOOL_HELP_ARTICLES = [
   },
 ]
 
+const COMMON_HELP_DETAILS = {
+  useCases: [
+    '当你已经有一组初步尺寸、载荷或材料参数，需要判断“是否够用”时使用。',
+    '当你想比较多个方案，或想知道哪个参数最影响结果时，配合页面底部「决策工具」使用。',
+  ],
+  inputs: [
+    {
+      name: '设计目标',
+      meaning: '需要满足的寿命、间隙、安全系数、许用应力或合格率。',
+      source: '来自图纸、客户需求、企业设计规范或课程题目条件。',
+    },
+    {
+      name: '几何尺寸',
+      meaning: '直接决定截面积、惯性矩、力臂、接触面积或尺寸链叠加关系。',
+      source: '来自草图、CAD、标准件样本或初步选型；先统一单位再填入。',
+    },
+    {
+      name: '载荷与工况',
+      meaning: '计算的驱动力。载荷越接近真实工况，结果越有参考价值。',
+      source: '来自受力分析、设备功率/扭矩、测试数据或上游计算；不确定时取最不利值。',
+    },
+    {
+      name: '材料/许用值',
+      meaning: '决定强度、刚度或寿命判据，是“结果是否通过”的基准。',
+      source: '来自材料牌号、热处理状态、标准手册、供应商数据或企业许用应力表。',
+    },
+  ],
+  outputs: [
+    {
+      name: '通过 / 不通过',
+      meaning: '工具把计算值与目标值或许用值比较后给出的初步判定。',
+      judgement: '通过表示当前模型和输入下满足判据；不通过表示至少一个关键指标不足。',
+    },
+    {
+      name: '关键指标',
+      meaning: '如总公差、寿命小时数、应力、安全系数、合格率等，是判断结果的主要依据。',
+      judgement: '先看关键指标是否越界，再看离边界有多少裕度。',
+    },
+    {
+      name: '建议与敏感度',
+      meaning: '用于判断下一步该改哪个参数，而不是盲目加大所有尺寸。',
+      judgement: '敏感度大的参数优先复核输入来源，也优先作为优化对象。',
+    },
+  ],
+  reliability: [
+    '计算结果来自明确公式、标准简化或工程经验模型，不是 AI 文本猜测；页面上的公式和关键指标就是判定依据。',
+    '可靠性取决于输入是否真实、单位是否一致、模型是否适用于当前结构。模型外的失效模式需要另外校核。',
+    '正式工程发布前应按企业流程复核：图纸尺寸、材料批次、载荷谱、标准版本、工艺能力和安全系数。',
+  ],
+  beginnerTips: [
+    '先用默认示例跑通，理解每个输入会让结果变大还是变小，再换成自己的数据。',
+    '优先关注红色/绿色判定、关键指标和单位；不要只看最后一个数字。',
+    '不确定某个参数时，不要随便填 0；先查手册、样本或用保守值。',
+  ],
+  professionalChecks: [
+    '确认标准版本、失效模式和安全系数是否符合项目要求。',
+    '检查边界条件：载荷方向、约束方式、材料状态、温度、润滑、制造误差等。',
+    '对安全关键件，建议用手算抽查、有限元、试验或企业计算书复核。',
+  ],
+}
+
+const DETAIL_OVERRIDES = {
+  'getting-started': {
+    useCases: [
+      '第一次使用 MechBox，想知道从哪里开始。',
+      '课程作业、毕业设计或方案初算，需要一套可解释的计算流程。',
+      '工程师想快速判断一个方案是否值得继续细化。',
+    ],
+    inputs: [
+      {
+        name: '目标',
+        meaning: '先写清楚你要保证什么：寿命、间隙、强度、安全系数还是合格率。',
+        source: '图纸技术要求、设计任务书、客户规范、课程题目。',
+      },
+      {
+        name: '模型选择',
+        meaning: '选择最接近问题本质的工具，例如装配间隙用尺寸链，转轴承载用轴强度，滚动支承用轴承寿命。',
+        source: '看帮助页的“什么时候用”；不确定时从设计链开始。',
+      },
+      {
+        name: '输入数据',
+        meaning: '包括尺寸、载荷、材料、工况。输入不可靠时，结果也不可靠。',
+        source: 'CAD、手册、样本、测试、上游计算。',
+      },
+    ],
+    outputs: [
+      {
+        name: '结果判定',
+        meaning: '先看是否通过，再看哪个指标最接近边界。',
+        judgement: '边界附近的方案不建议直接放行，应增加裕度或复核模型。',
+      },
+      {
+        name: '公式和假设',
+        meaning: '帮助你知道工具为什么这样算。',
+        judgement: '公式适用条件不满足时，结果只能做参考，不能当最终结论。',
+      },
+    ],
+    reliability: [
+      'MechBox 的定位是“可解释的工程初算平台”：每个结果都对应公式、标准简化或明确的工程模型。',
+      '它适合方案筛选、教学理解、设计早期校核；不替代完整标准计算书、试验验证或企业签审。',
+    ],
+  },
+  'decision-tools': {
+    useCases: [
+      '你已经有一个计算结果，但想比较多个设计方案。',
+      '你知道目标（例如寿命 ≥ 10000 h），但不知道某个输入至少要多大。',
+      '你想找出最影响结果的参数，优先改对地方。',
+    ],
+    inputs: [
+      {
+        name: '基准表单',
+        meaning: '当前工具页面上方已经填好的参数，作为方案对比、反算、敏感度的起点。',
+        source: '先完成主工具计算，再打开决策工具。',
+      },
+      {
+        name: '追踪指标',
+        meaning: '你关心的输出，例如寿命、总公差、应力或安全系数。',
+        source: '从下拉框选择；通常选最影响是否通过的指标。',
+      },
+      {
+        name: '扰动幅度',
+        meaning: '敏感度分析中每个输入上下变化的百分比。',
+        source: '入门先用 ±10%；工艺波动大时可试 ±20% 或 ±30%。',
+      },
+    ],
+    outputs: [
+      {
+        name: '方案表',
+        meaning: '记录多个方案的关键指标，避免只凭印象判断好坏。',
+        judgement: '同等通过时，优先选裕度足、成本低、制造更容易的方案。',
+      },
+      {
+        name: '反算解',
+        meaning: '满足目标的临界输入值。',
+        judgement: '应用前必须圆整到标准规格，例如标准轴径、键长、轴承型号。',
+      },
+      {
+        name: '敏感度条形图',
+        meaning: '显示每个参数扰动后结果变化有多大。',
+        judgement: '条越长，说明这个参数越值得优先控制或复核。',
+      },
+    ],
+  },
+  editor: {
+    useCases: [
+      '分析装配间隙、叠加公差、位置度/平面度等是否满足图纸要求。',
+      '比较极值法与 RSS 的差异，判断公差是否过紧或过松。',
+      '找出贡献最大的组成环，指导公差收紧或制造控制。',
+    ],
+    inputs: [
+      {
+        name: '封闭环',
+        meaning: '最终要保证的结果，例如间隙、总长度、位置误差或平面度误差。',
+        source: '图纸功能尺寸、装配要求或 GD&T 框格要求。',
+      },
+      {
+        name: '组成环',
+        meaning: '参与叠加的零件尺寸或形位误差。每个环都要有公称值和公差。',
+        source: '零件图、公差表、测量数据；ES/EI 用上/下偏差填写。',
+      },
+      {
+        name: '增环 / 减环 / 方向',
+        meaning: '决定该环变大时封闭环是变大还是变小。',
+        source: '画尺寸链草图，沿封闭环方向判断；工具会按方向辅助判断。',
+      },
+      {
+        name: '传递系数 k',
+        meaning: '组成环变化 1 单位时，封闭环变化的倍率。',
+        source: '普通 1D 尺寸通常为 1；杠杆、角度、投影关系需由几何关系推导。',
+      },
+      {
+        name: 'FOS 与尺寸公差',
+        meaning: 'GD&T 下的孔/轴尺寸要素，用于 MMC/LMC 自动奖励公差。',
+        source: '来自图纸尺寸要素及其尺寸公差；可由 ES/EI 自动同步。',
+      },
+    ],
+    outputs: [
+      {
+        name: '总公差',
+        meaning: '所有组成环按所选方法叠加后的封闭环波动范围。',
+        judgement: '总公差必须小于封闭环允许范围，才有机会通过。',
+      },
+      {
+        name: '上限 / 下限',
+        meaning: '封闭环预测的最小与最大结果。',
+        judgement: '必须落在目标 min/max 内；若极值法失败、RSS 通过，要看风险等级。',
+      },
+      {
+        name: '贡献度',
+        meaning: '每个环对总波动的占比。',
+        judgement: '贡献度最大的环是首要优化对象。',
+      },
+      {
+        name: 'Cpk / 合格率',
+        meaning: '统计假设下过程能力的估计。',
+        judgement: '依赖正态、独立、过程中心等假设；不等于真实批量合格率。',
+      },
+    ],
+    reliability: [
+      '极值法是保守的最坏情况模型，适合安全关键件和法规要求强的场景。',
+      'RSS 假设各环独立随机，适合稳定批量生产；若环之间相关或过程偏移，需用 Monte Carlo 或实测数据复核。',
+      'GD&T 自动奖励按 FOS 尺寸公差估计，适合早期判断；正式检测仍应按实际尺寸偏离和检具规则计算。',
+    ],
+    beginnerTips: [
+      '先只做 1D 间隙链：封闭环填目标间隙，组成环填零件尺寸，再看上下限是否落入目标。',
+      '不懂增减环时，把某个尺寸“想象变大”，看间隙是变大还是变小。',
+      '先看极值法，再看 RSS；两者差很多时，说明统计假设很重要。',
+    ],
+    professionalChecks: [
+      '复核尺寸链是否闭合，是否遗漏热变形、形位误差、装配变形或基准转换误差。',
+      '确认 RSS 的独立性、分布、过程能力和中心偏移是否有数据支撑。',
+      '对 GD&T 链，确认基准顺序、材料条件、FOS 定义和奖励公差来源。',
+    ],
+  },
+  bearing: {
+    useCases: [
+      '已知轴承载荷和转速，需要判断寿命是否满足目标小时数。',
+      '需要比较轴承型号、额定动载 C、工况系数、预紧或配对方式对寿命的影响。',
+    ],
+    inputs: [
+      {
+        name: 'C / C0',
+        meaning: '额定动载荷和额定静载荷，是寿命和静载安全的基础。',
+        source: '轴承样本、厂家数据表或标准目录。',
+      },
+      {
+        name: 'Fr / Fa',
+        meaning: '径向载荷与轴向载荷，决定当量动载荷 P。',
+        source: '轴系受力分析、齿轮/皮带/链传动载荷、测试或上游仿真。',
+      },
+      {
+        name: 'X / Y 或轴承系列',
+        meaning: '把 Fr/Fa 合成为 P 的载荷系数。',
+        source: '完整模式按系列查表；简化模式需按样本或标准手动填写。',
+      },
+      {
+        name: '转速 n 与目标寿命',
+        meaning: '把“百万转寿命”换算成小时寿命，并形成判据。',
+        source: '设备转速、工作制度、维护周期或任务书要求。',
+      },
+      {
+        name: '安装方式与预紧',
+        meaning: 'DB/DF/DT 和轴向预紧会改变等效载荷、额定载荷或刚度。',
+        source: '轴承布置方案、预紧设计值、厂家推荐值。',
+      },
+    ],
+    outputs: [
+      {
+        name: 'P 当量动载荷',
+        meaning: '寿命公式中真正参与计算的综合载荷。',
+        judgement: 'P 越大寿命急剧下降；先复核载荷方向和 X/Y。',
+      },
+      {
+        name: 'L10 / L10h',
+        meaning: '90% 可靠度基本额定寿命，单位为百万转或小时。',
+        judgement: 'L10h ≥ 目标寿命才通过；可靠度要求更高时寿命会折减。',
+      },
+      {
+        name: 'S0 静载安全',
+        meaning: 'C0 与静当量载荷的比值。',
+        judgement: '冲击或低速重载场景不能只看寿命，必须看 S0。',
+      },
+      {
+        name: '刚度估计',
+        meaning: '专业模式下的径向刚度粗估，用于比较预紧/配对方案。',
+        judgement: '这是方案比较指标，不替代厂家刚度曲线。',
+      },
+    ],
+    reliability: [
+      '寿命基于 ISO 281 额定寿命模型；真实寿命还受润滑、污染、安装误差、温度、冲击和密封影响。',
+      'X/Y 查表和系列选择必须正确；角接触配对、预紧和载荷方向不清楚时，应查厂家样本。',
+      'L10 是概率寿命，不代表每个轴承都能运行到该小时数。',
+    ],
+    beginnerTips: [
+      '先用完整模式选轴承系列，让工具自动查 X/Y。',
+      '结果不通过时，通常优先减小 P 或增大 C；因为寿命对 C/P 是三次方量级。',
+    ],
+    professionalChecks: [
+      '复核载荷谱、等效载荷、可靠度要求、润滑黏度比、污染等级和温度系数。',
+      '对预紧轴承，确认热膨胀导致的预紧变化和高速发热风险。',
+    ],
+  },
+  shaft: {
+    useCases: [
+      '校核传递扭矩的轴径是否足够，或反算最小轴径。',
+      '做轴系设计链的第一步，为轴承和键连接提供共享轴径。',
+    ],
+    inputs: [
+      {
+        name: '扭矩 T',
+        meaning: '轴传递功率时产生的主要载荷。',
+        source: '由功率和转速换算，或来自电机/减速器输出扭矩。',
+      },
+      {
+        name: '轴径 d',
+        meaning: '决定抗扭截面模量，影响应力最敏感。',
+        source: '初步结构尺寸、标准轴径或反算结果圆整。',
+      },
+      {
+        name: '材料屈服强度',
+        meaning: '判断是否屈服的强度基准。',
+        source: '材料牌号和热处理状态；优先用许用应力或企业规范。',
+      },
+      {
+        name: '弯矩/长度（完整模式）',
+        meaning: '用于弯扭合成，不只按纯扭转判断。',
+        source: '轴承支承反力、齿轮/带轮/链轮载荷和受力简图。',
+      },
+    ],
+    outputs: [
+      {
+        name: '剪应力 / 等效应力',
+        meaning: '工作载荷下轴截面的名义应力。',
+        judgement: '应低于许用值，并考虑键槽、台阶等应力集中。',
+      },
+      {
+        name: '安全系数',
+        meaning: '材料强度或许用应力相对工作应力的裕度。',
+        judgement: '越接近 1 越危险；冲击、疲劳或重要件需更高安全系数。',
+      },
+      {
+        name: '推荐轴径',
+        meaning: '反算得到满足目标的理论尺寸。',
+        judgement: '应向上圆整到标准轴径，并考虑配合、轴承内径和键槽削弱。',
+      },
+    ],
+    reliability: [
+      '纯扭转模型适合快速初算；实际轴常有弯矩、台阶、键槽、疲劳和挠度要求。',
+      '强度通过不代表刚度、临界转速或疲劳寿命通过。',
+    ],
+  },
+  'bolt-preload': {
+    useCases: [
+      '已知目标预紧力，估算需要的拧紧扭矩。',
+      '已知扭矩，反推可能产生的预紧力，并判断是否防分离。',
+    ],
+    inputs: [
+      {
+        name: '螺栓直径/螺距/等级',
+        meaning: '决定应力截面、强度和螺纹升角。',
+        source: '标准件规格、图纸或选型表。',
+      },
+      {
+        name: '摩擦系数 μG / μK',
+        meaning: '决定扭矩有多少转化为预紧力，是最大不确定因素。',
+        source: '润滑状态、表面处理、试验数据；无数据时用保守范围分析。',
+      },
+      {
+        name: '夹紧长度与外载',
+        meaning: '决定连接刚度分配和是否分离。',
+        source: '装配结构尺寸、受力分析和工况载荷。',
+      },
+    ],
+    outputs: [
+      {
+        name: '预紧力 / 扭矩',
+        meaning: '装配控制所需的目标值。',
+        judgement: '必须同时满足不分离和不过载。',
+      },
+      {
+        name: '工作应力',
+        meaning: '预紧加外载后螺栓承受的应力。',
+        judgement: '不能超过材料许用或屈服限制。',
+      },
+      {
+        name: '防分离结论',
+        meaning: '被连接件在外载下是否仍保持压紧。',
+        judgement: '分离会导致疲劳、松动或密封失效，应优先避免。',
+      },
+    ],
+    reliability: [
+      '扭矩法预紧离散性很大，同一扭矩下实际预紧力可能有明显波动。',
+      '重要连接应结合 VDI 2230、摩擦试验、扭矩-转角法或直接拉伸法复核。',
+    ],
+  },
+  key: {
+    inputs: [
+      {
+        name: 'T、d、b、h、L',
+        meaning: '扭矩、轴径、键宽、键高、键长共同决定剪切和挤压应力。',
+        source: '轴系设计、标准键规格和轮毂长度。',
+      },
+      {
+        name: '许用剪应力/挤压应力',
+        meaning: '判断键和轮毂材料是否足够的基准。',
+        source: '材料手册、企业规范或课程给定许用值。',
+      },
+    ],
+    outputs: [
+      {
+        name: '剪切应力',
+        meaning: '键被扭矩沿截面剪断的风险。',
+        judgement: '剪切应力应低于许用剪应力。',
+      },
+      {
+        name: '挤压应力',
+        meaning: '键侧面与轮毂/轴槽之间的接触压应力。',
+        judgement: '多数平键问题中挤压往往更控制。',
+      },
+    ],
+    reliability: [
+      '公式为名义应力简化，假设键长方向载荷均匀；键过长时实际载荷不均匀。',
+      '还需检查键槽削弱轴强度、轮毂壁厚和装配配合。',
+    ],
+  },
+  weld: {
+    inputs: [
+      {
+        name: '焊脚/焊缝长度',
+        meaning: '决定有效焊喉面积。',
+        source: '焊接图纸或结构初设；角焊缝常用焊喉约 0.7hf。',
+      },
+      {
+        name: '载荷与偏心',
+        meaning: '决定焊缝承受的剪力和附加弯矩。',
+        source: '结构受力分析、连接位置和力臂。',
+      },
+      {
+        name: '钢材/许用应力',
+        meaning: '判断焊缝强度的基准。',
+        source: '母材、焊材、焊接规范或企业许用表。',
+      },
+    ],
+    outputs: [
+      {
+        name: '焊缝应力',
+        meaning: '有效焊喉上的名义应力。',
+        judgement: '应低于许用值，并考虑焊缝等级和载荷类型。',
+      },
+      {
+        name: '通过/不通过',
+        meaning: '按当前简化规范判据得到的初步校核结论。',
+        judgement: '不通过时可增大焊脚、延长焊缝或改变结构布置。',
+      },
+    ],
+    reliability: [
+      '焊缝计算不能代替焊接工艺评定、探伤和疲劳校核。',
+      '动载、低温、厚板约束和缺陷敏感结构应按更完整规范复核。',
+    ],
+  },
+  'gdt-stack': {
+    inputs: [
+      {
+        name: '形位公差类型',
+        meaning: '决定是位置度、平面度、同轴度还是其他误差叠加模型。',
+        source: '图纸 GD&T 框格和功能要求。',
+      },
+      {
+        name: '基准与组成要素',
+        meaning: '定义误差来源和叠加方向。',
+        source: '基准体系、定位尺寸、检测方案。',
+      },
+      {
+        name: '材料条件与 FOS',
+        meaning: '决定是否有 MMC/LMC 奖励公差。',
+        source: '图纸上的 M/L/S 符号和孔/轴尺寸公差。',
+      },
+    ],
+    outputs: [
+      {
+        name: '叠加公差',
+        meaning: '各形位误差按所选方法合成后的总影响。',
+        judgement: '与目标公差带比较，判断是否满足功能要求。',
+      },
+      {
+        name: '奖励公差',
+        meaning: '尺寸要素偏离 MMC/LMC 时得到的额外可用公差。',
+        judgement: '自动奖励只用于早期评估，正式判定看实测尺寸状态。',
+      },
+    ],
+  },
+  'monte-carlo': {
+    useCases: [
+      'RSS 假设不够放心，想用随机模拟观察封闭环分布。',
+      '组成环分布不是简单正态，或想估计合格率和敏感度。',
+    ],
+    inputs: [
+      {
+        name: '组成环分布',
+        meaning: '每个尺寸在生产中的随机波动模型。',
+        source: '过程能力数据、测量记录；没有数据时只能假设正态或均匀分布。',
+      },
+      {
+        name: '迭代次数',
+        meaning: '随机抽样数量，越多越稳定但计算越慢。',
+        source: '入门用 10000；尾部概率很小时需更多样本。',
+      },
+      {
+        name: '规格上下限',
+        meaning: '判定每次模拟是否合格的目标边界。',
+        source: '封闭环 min/max 或图纸要求。',
+      },
+    ],
+    outputs: [
+      {
+        name: '分布图/直方图',
+        meaning: '展示封闭环结果集中在哪些范围。',
+        judgement: '分布中心越接近目标中心、尾部越少越稳健。',
+      },
+      {
+        name: '合格率/PPM',
+        meaning: '模拟样本中落在规格内的比例。',
+        judgement: '这是基于假设分布的估计，不等于真实批量保证。',
+      },
+      {
+        name: '敏感度排序',
+        meaning: '显示哪些输入波动最影响封闭环。',
+        judgement: '优先控制排序靠前的参数。',
+      },
+    ],
+    reliability: [
+      'Monte Carlo 的可信度主要取决于输入分布是否贴近真实制造过程。',
+      '随机模拟适合处理非线性和非正态，但不能弥补错误模型或错误数据。',
+    ],
+  },
+  statistics: {
+    inputs: [
+      {
+        name: '公差 T / 标准差 σ',
+        meaning: '把图纸公差和过程波动联系起来。',
+        source: '图纸公差、测量数据或过程能力报告。',
+      },
+      {
+        name: '规格限 USL/LSL 与均值 μ',
+        meaning: '用于判断过程是否居中及能力是否足够。',
+        source: '图纸上下限与实测样本统计。',
+      },
+    ],
+    outputs: [
+      {
+        name: 'C / Cpk',
+        meaning: '过程能力指标，Cpk 同时考虑波动和偏移。',
+        judgement: '常见要求 Cpk ≥ 1.33，但以企业/客户要求为准。',
+      },
+      {
+        name: '合格率',
+        meaning: '正态假设下落入规格内的概率。',
+        judgement: '数据不正态或样本太少时不要过度相信。',
+      },
+    ],
+  },
+  'design-powertrain': {
+    reliability: [
+      '设计链把多个单工具串起来，保证共享参数一致；每一步的计算依据仍来自对应单工具。',
+      '链级“全部通过”只说明轴、轴承、键三个简化校核通过，不代表整机振动、热、疲劳、装配全部通过。',
+    ],
+    professionalChecks: [
+      '复核轴承载荷是否来自完整受力分析，键槽削弱是否反馈到轴强度。',
+      '检查轴承布置、预紧、润滑、密封、临界转速和疲劳寿命。',
+    ],
+  },
+  'design-bolt-joint': {
+    reliability: [
+      '设计链保证预紧、螺栓组和焊缝之间参数同步，但各步仍是简化工程模型。',
+      '链级通过不等于连接不会松动或疲劳失效，关键连接需按完整规范和试验验证。',
+    ],
+    professionalChecks: [
+      '复核摩擦系数分散、载荷路径、接触刚度、剪切滑移和疲劳载荷谱。',
+      '确认焊缝计算与螺栓连接的载荷分配假设一致。',
+    ],
+  },
+}
+
+function withHelpDetails(article) {
+  if (!article) return null
+  const detail = DETAIL_OVERRIDES[article.id] ?? {}
+  return {
+    ...article,
+    useCases: detail.useCases ?? article.useCases ?? COMMON_HELP_DETAILS.useCases,
+    inputs: detail.inputs ?? article.inputs ?? COMMON_HELP_DETAILS.inputs,
+    outputs: detail.outputs ?? article.outputs ?? COMMON_HELP_DETAILS.outputs,
+    reliability: detail.reliability ?? article.reliability ?? COMMON_HELP_DETAILS.reliability,
+    beginnerTips: detail.beginnerTips ?? article.beginnerTips ?? COMMON_HELP_DETAILS.beginnerTips,
+    professionalChecks:
+      detail.professionalChecks ?? article.professionalChecks ?? COMMON_HELP_DETAILS.professionalChecks,
+    keywords: [...(article.keywords ?? []), ...(detail.keywords ?? [])],
+  }
+}
+
 export function getHelpArticle(id) {
-  return TOOL_HELP_ARTICLES.find((a) => a.id === id) ?? null
+  return withHelpDetails(TOOL_HELP_ARTICLES.find((a) => a.id === id) ?? null)
 }
 
 export function getHelpByPath(path) {
   const norm = (path ?? '').replace(/\/$/, '') || '/help'
-  return TOOL_HELP_ARTICLES.find((a) => a.path === norm) ?? null
+  return withHelpDetails(TOOL_HELP_ARTICLES.find((a) => a.path === norm) ?? null)
 }
 
 export function searchHelpArticles(query) {
   const q = String(query ?? '').trim().toLowerCase()
-  if (!q) return TOOL_HELP_ARTICLES
-  return TOOL_HELP_ARTICLES.filter((a) => {
+  const articles = TOOL_HELP_ARTICLES.map(withHelpDetails)
+  if (!q) return articles
+  return articles.filter((a) => {
     const hay = [
       a.title,
       a.summary,
       a.principle,
+      ...(a.useCases ?? []),
       ...(a.steps ?? []),
+      ...(a.inputs ?? []).flatMap((x) => [x.name, x.meaning, x.source]),
+      ...(a.outputs ?? []).flatMap((x) => [x.name, x.meaning, x.judgement]),
       ...(a.notes ?? []),
+      ...(a.reliability ?? []),
+      ...(a.beginnerTips ?? []),
+      ...(a.professionalChecks ?? []),
       ...(a.keywords ?? []),
       ...(a.standards ?? []),
     ]

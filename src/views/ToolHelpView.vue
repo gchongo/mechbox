@@ -54,6 +54,15 @@
           </el-button>
         </div>
 
+        <section v-if="article.useCases?.length" class="help-section help-section--first">
+          <h3 class="help-section__title">{{ ct('help.useCases') }}</h3>
+          <ul class="help-list">
+            <li v-for="(item, i) in article.useCases" :key="i">
+              <MathContent :text="item" />
+            </li>
+          </ul>
+        </section>
+
         <section class="help-section">
           <h3 class="help-section__title">{{ ct('help.steps') }}</h3>
           <ol class="help-list help-list--ordered">
@@ -69,6 +78,22 @@
             :text="article.principle"
             class="text-sm leading-relaxed text-gray-700 dark:text-gray-300"
           />
+        </section>
+
+        <section v-if="article.inputs?.length" class="help-section">
+          <h3 class="help-section__title">{{ ct('help.inputs') }}</h3>
+          <div class="help-table">
+            <div class="help-table__head">
+              <span>{{ ct('help.inputName') }}</span>
+              <span>{{ ct('help.inputMeaning') }}</span>
+              <span>{{ ct('help.inputSource') }}</span>
+            </div>
+            <div v-for="(row, i) in article.inputs" :key="i" class="help-table__row">
+              <strong>{{ row.name }}</strong>
+              <MathContent :text="row.meaning" />
+              <MathContent :text="row.source" />
+            </div>
+          </div>
         </section>
 
         <section v-if="article.formulas?.length" class="help-section">
@@ -87,6 +112,25 @@
           </div>
         </section>
 
+        <section v-if="article.outputs?.length" class="help-section">
+          <h3 class="help-section__title">{{ ct('help.outputs') }}</h3>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div
+              v-for="(row, i) in article.outputs"
+              :key="i"
+              class="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-900"
+            >
+              <h4 class="mb-1 font-semibold text-gray-800 dark:text-gray-100">{{ row.name }}</h4>
+              <p class="text-gray-600 dark:text-gray-300">
+                <MathContent :text="row.meaning" />
+              </p>
+              <p v-if="row.judgement" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <MathContent :text="row.judgement" />
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section class="help-section">
           <h3 class="help-section__title">{{ ct('help.notes') }}</h3>
           <ul class="help-list">
@@ -94,6 +138,40 @@
               <MathContent :text="note" />
             </li>
           </ul>
+        </section>
+
+        <section v-if="article.reliability?.length" class="help-section">
+          <h3 class="help-section__title">{{ ct('help.reliability') }}</h3>
+          <ul class="help-list">
+            <li v-for="(item, i) in article.reliability" :key="i">
+              <MathContent :text="item" />
+            </li>
+          </ul>
+        </section>
+
+        <section
+          v-if="article.beginnerTips?.length || article.professionalChecks?.length"
+          class="help-section"
+        >
+          <h3 class="help-section__title">{{ ct('help.howToTrust') }}</h3>
+          <div class="grid gap-3 md:grid-cols-2">
+            <div v-if="article.beginnerTips?.length" class="help-advice">
+              <h4>{{ ct('help.beginnerTips') }}</h4>
+              <ul class="help-list">
+                <li v-for="(item, i) in article.beginnerTips" :key="i">
+                  <MathContent :text="item" />
+                </li>
+              </ul>
+            </div>
+            <div v-if="article.professionalChecks?.length" class="help-advice">
+              <h4>{{ ct('help.professionalChecks') }}</h4>
+              <ul class="help-list">
+                <li v-for="(item, i) in article.professionalChecks" :key="i">
+                  <MathContent :text="item" />
+                </li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         <section v-if="article.standards?.length" class="help-section">
@@ -287,6 +365,10 @@ watch(filtered, (list) => {
   border-top: 1px solid rgb(229 231 235);
 }
 
+.help-section--first {
+  margin-top: 1rem;
+}
+
 .dark .help-section {
   border-top-color: rgb(55 65 81);
 }
@@ -320,5 +402,73 @@ watch(filtered, (list) => {
 
 .help-list:not(.help-list--ordered) {
   list-style: disc;
+}
+
+.help-table {
+  overflow: hidden;
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.dark .help-table {
+  border-color: rgb(55 65 81);
+}
+
+.help-table__head,
+.help-table__row {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1.5fr) minmax(0, 1.4fr);
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.help-table__head {
+  background: rgb(249 250 251);
+  color: rgb(107 114 128);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dark .help-table__head {
+  background: rgb(17 24 39);
+  color: rgb(156 163 175);
+}
+
+.help-table__row + .help-table__row {
+  border-top: 1px solid rgb(229 231 235);
+}
+
+.dark .help-table__row + .help-table__row {
+  border-top-color: rgb(55 65 81);
+}
+
+.help-advice {
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.75rem;
+  background: rgb(249 250 251);
+  padding: 0.875rem;
+}
+
+.dark .help-advice {
+  border-color: rgb(55 65 81);
+  background: rgb(17 24 39);
+}
+
+.help-advice h4 {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .help-table__head {
+    display: none;
+  }
+
+  .help-table__row {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
 }
 </style>
