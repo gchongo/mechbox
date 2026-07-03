@@ -1,5 +1,5 @@
 <template>
-  <dt :class="labelClass"><MathContent :text="enriched" /></dt>
+  <dt :class="[labelClass, 'result-label']"><MathContent :text="enriched" /></dt>
 </template>
 
 <script setup>
@@ -15,7 +15,17 @@ const enriched = computed(() => enrichMathText(props.text))
 </script>
 
 <style scoped>
+.result-label {
+  @apply shrink-0 whitespace-nowrap;
+}
+
 :deep(.math-content) {
   display: inline;
+}
+
+:deep(.math-inline),
+:deep(.math-inline .katex) {
+  display: inline;
+  white-space: nowrap;
 }
 </style>

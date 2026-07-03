@@ -52,4 +52,17 @@ describe('math-label enrichMathText', () => {
     expect(identToLatex('d_cs')).toBe('$d_{cs}$')
     expect(identToLatex('F_beta')).toBe('$F_{\\beta}$')
   })
+
+  it('does not duplicate symbols when label already includes them', () => {
+    const once = enrichMathText('切应力 τ')
+    expect(once.match(/\\tau/g)?.length).toBe(1)
+    expect(enrichMathText('切应力 τ τ').match(/\\tau/g)?.length).toBe(2)
+  })
+
+  it('shaft diagram hint without inner bore has no broken $$', () => {
+    const hint = enrichMathText('轴径 $d$，扭矩 $T$')
+    expect(hint).not.toContain('$$')
+    expect(hint).toContain('$d$')
+    expect(hint).toContain('$T$')
+  })
 })

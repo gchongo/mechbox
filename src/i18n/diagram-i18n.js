@@ -107,8 +107,8 @@ export const diagramZh = {
   shaft: {
     titleTorsion: '扭转轴示意',
     titleCombined: '弯扭合成轴示意',
-    hintTorsion: '轴径 $d${inner}$，扭矩 $T$',
-    hintCombined: '轴径 $d${inner}$，弯矩 $M$ + 扭矩 $T$',
+    hintTorsion: '轴径 $d${inner}，扭矩 $T$',
+    hintCombined: '轴径 $d${inner}，弯矩 $M$ + 扭矩 $T$',
     innerSuffix: '、内径 $d_i$',
     aria: '轴强度参数示意图',
   },
@@ -312,8 +312,8 @@ export const diagramEn = {
   shaft: {
     titleTorsion: 'Torsion shaft',
     titleCombined: 'Combined bending-torsion',
-    hintTorsion: 'Diameter $d${inner}$, torque $T$',
-    hintCombined: 'Diameter $d${inner}$, moment $M$ + torque $T$',
+    hintTorsion: 'Diameter $d${inner}, torque $T$',
+    hintCombined: 'Diameter $d${inner}, moment $M$ + torque $T$',
     innerSuffix: ', bore $d_i$',
     aria: 'Shaft strength diagram',
   },
