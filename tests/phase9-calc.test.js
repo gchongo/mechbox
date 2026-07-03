@@ -31,6 +31,9 @@ import { calcDraftAngle } from '@/utils/casting-calc'
 import { analyzePipeFlow } from '@/utils/pipe-flow-calc'
 import { analyzeModal } from '@/utils/modal-calc'
 import { analyzeButtWeld } from '@/utils/weld-calc'
+import { analyzeGdtStack } from '@/utils/gdt-stack-calc'
+import { analyzeFit } from '@/utils/iso-286-calc'
+import { scoreMaterials } from '@/utils/material-selection-calc'
 
 describe('thread-calc modes', () => {
   it('simple mode keeps basic pass/fail', () => {
@@ -650,6 +653,14 @@ describe('manufacturing modes', () => {
   it('machining simple two ops', () => {
     const r = calcMachiningAllowance({ calcMode: 'simple', nominalDiameter: 50, length: 100 })
     expect(r.details.length).toBe(2)
+    expect(r.operations).toEqual(['rough', 'finish'])
+    expect(r.endFaceAllowance).toBe(1)
+  })
+
+  it('machining complete grinding radial number', () => {
+    const r = calcMachiningAllowance({ calcMode: 'complete', nominalDiameter: 50, length: 100 })
+    expect(r.grindingAllowance).toBeGreaterThan(0)
+    expect(typeof r.grindingAllowance).toBe('number')
   })
 
   it('machining professional time estimate', () => {
@@ -731,5 +742,62 @@ describe('butt-weld modes', () => {
       stressConcentration: 1.5,
     })
     expect(r.effectiveStress).toBeGreaterThan(r.normalStress)
+  })
+})
+
+describe('gdt-stack modes', () => {
+  const base = {
+    typeId: 'flatness',
+    closedRing: { min: 0, max: 0.08 },
+    rings: [
+      { name: '面1', tolerance: 0.03, factor: 1, type: 'increasing' },
+      { name: '面2', tolerance: 0.025, factor: 1, type: 'increasing' },
+    ],
+  }
+
+  it('simple mode chain only', () => {
+    const r = analyzeGdtStack({ ...base, calcMode: 'simple' })
+    expect(r.chainResult.totalTolerance).toBeGreaterThan(0)
+    expect(r.contributions).toBeUndefined()
+  })
+
+  it('complete mode contributions', () => {
+    const r = analyzeGdtStack({ ...base, calcMode: 'complete' })
+    expect(r.contributions?.length).toBe(2)
+  })
+
+  it('professional worst case margin', () => {
+    const r = analyzeGdtStack({ ...base, calcMode: 'professional' })
+    expect(r.worstCaseMargin).toBeDefined()
+  })
+})
+
+describe('fit modes', () => {
+  it('simple fit type', () => {
+    const r = analyzeFit(25, 'H7', 'g6', 'simple')
+    expect(r.fitType).toBe('clearance')
+  })
+
+  it('complete mean clearance', () => {
+    const r = analyzeFit(25, 'H7', 'g6', 'complete')
+    expect(r.meanClearance).toBeDefined()
+  })
+
+  it('professional thermal shift', () => {
+    const r = analyzeFit(25, 'H7', 'g6', { calcMode: 'professional', deltaT: 100 })
+    expect(r.thermalShift).toBeDefined()
+  })
+})
+
+describe('material-selection modes', () => {
+  it('simple top 5 limit', () => {
+    const r = scoreMaterials({ calcMode: 'simple', minSigmaAllow: 100, maxCostIndex: 10 })
+    expect(r.recommendations.length).toBeLessThanOrEqual(5)
+  })
+
+  it('professional tradeoff picks', () => {
+    const r = scoreMaterials({ calcMode: 'professional', minSigmaAllow: 100, maxCostIndex: 10 })
+    expect(r.bestStrength).toBeTruthy()
+    expect(r.tradeoffNote).toBeTruthy()
   })
 })

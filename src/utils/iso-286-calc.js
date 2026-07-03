@@ -162,7 +162,12 @@ function buildLimits(nominal, designation, kind, lowerDev, upperDev, IT) {
 }
 
 /** 分析配合 */
-export function analyzeFit(nominalMm, holeCode, shaftCode) {
+export function analyzeFit(nominalMm, holeCode, shaftCode, calcModeOrOpts = 'simple') {
+  const calcMode =
+    typeof calcModeOrOpts === 'object' && calcModeOrOpts !== null
+      ? calcModeOrOpts.calcMode ?? 'simple'
+      : calcModeOrOpts ?? 'simple'
+
   const hole = calcToleranceLimits(nominalMm, holeCode, 'hole')
   if (hole.error) return hole
   const shaft = calcToleranceLimits(nominalMm, shaftCode, 'shaft')
@@ -172,7 +177,8 @@ export function analyzeFit(nominalMm, holeCode, shaftCode) {
   const minClearance = hole.minSize - shaft.maxSize
   const fitType = classifyFit(minClearance, maxClearance)
 
-  return {
+  const result = {
+    calcMode,
     nominal: nominalMm,
     hole,
     shaft,
@@ -181,6 +187,36 @@ export function analyzeFit(nominalMm, holeCode, shaftCode) {
     fitType,
     fitLabel: FIT_TYPE_LABELS[fitType],
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    result.meanClearance = round((maxClearance + minClearance) / 2, 5)
+    result.toleranceSpan = round(maxClearance - minClearance, 5)
+    result.holeIT = hole.tolerance
+    result.shaftIT = shaft.tolerance
+    result.fitQuality = result.toleranceSpan > 0 ? round(result.meanClearance / result.toleranceSpan, 2) : 0
+  }
+
+  if (calcMode === 'professional') {
+    const deltaT = typeof calcModeOrOpts === 'object' ? calcModeOrOpts.deltaT ?? 0 : 0
+    const alphaHole = typeof calcModeOrOpts === 'object' ? calcModeOrOpts.alphaHole ?? 11.5e-6 : 11.5e-6
+    const alphaShaft = typeof calcModeOrOpts === 'object' ? calcModeOrOpts.alphaShaft ?? 11.5e-6 : 11.5e-6
+    const thermalShaft = alphaShaft * nominalMm * deltaT
+    const thermalHole = alphaHole * nominalMm * deltaT
+    const clearanceShift = thermalHole - thermalShaft
+    result.thermalShift = round(clearanceShift, 5)
+    result.minClearanceHot = round(minClearance + clearanceShift, 5)
+    result.maxClearanceHot = round(maxClearance + clearanceShift, 5)
+    result.pass = fitType !== 'interference' || minClearance < 0
+    if (deltaT !== 0 && result.minClearanceHot < 0 && fitType === 'clearance') {
+      result.thermalRisk = '加热后可能干涉'
+      result.pass = false
+    } else {
+      result.thermalRisk = null
+      result.pass = true
+    }
+  }
+
+  return result
 }
 
 function classifyFit(minC, maxC) {

@@ -5,6 +5,22 @@
       公差带极限尺寸、间隙/过盈与配合类型分析
     </p>
 
+    <section class="card-panel mb-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium">计算模型</span>
+        <el-radio-group v-model="calcMode">
+          <el-radio-button label="simple">简化</el-radio-button>
+          <el-radio-button label="complete">完整</el-radio-button>
+          <el-radio-button label="professional">专业</el-radio-button>
+        </el-radio-group>
+        <p class="w-full text-xs text-gray-500">
+          <template v-if="calcMode === 'simple'">极限尺寸与配合类型。</template>
+          <template v-else-if="calcMode === 'complete'">平均间隙、公差带宽与配合品质指数。</template>
+          <template v-else>装配温差对间隙/过盈的影响评估。</template>
+        </p>
+      </div>
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <el-form label-width="100px">
@@ -18,6 +34,12 @@
           <el-form-item label="轴代号">
             <el-input v-model="shaftCode" placeholder="g6" class="w-32" />
           </el-form-item>
+          <template v-if="calcMode === 'professional'">
+            <el-form-item label="装配温差">
+              <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
+              <span class="ml-2 text-xs text-gray-500">°C</span>
+            </el-form-item>
+          </template>
         </el-form>
 
         <p class="mb-2 text-xs font-medium text-gray-500">常用配合预设</p>
@@ -58,6 +80,21 @@
               <dt>轴 {{ result.shaft.designation }}</dt>
               <dd class="font-mono">{{ result.shaft.minSize.toFixed(4) }} ~ {{ result.shaft.maxSize.toFixed(4) }}</dd>
             </div>
+            <div v-if="result.meanClearance != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+              <dt>平均间隙</dt>
+              <dd class="font-mono">{{ (result.meanClearance * 1000).toFixed(1) }} μm</dd>
+            </div>
+            <div v-if="result.fitQuality != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+              <dt>配合品质指数</dt>
+              <dd class="font-mono">{{ result.fitQuality }}</dd>
+            </div>
+            <div v-if="result.thermalShift != null && deltaT !== 0" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+              <dt>温升间隙变化</dt>
+              <dd class="font-mono">{{ (result.thermalShift * 1000).toFixed(1) }} μm</dd>
+            </div>
+            <div v-if="result.thermalRisk" class="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/20">
+              {{ result.thermalRisk }}
+            </div>
           </dl>
           <FitDiagram :fit="result" class="mx-auto mt-4" />
           <FitToleranceBand v-if="bandData && !bandData.error" :band="bandData" class="mx-auto mt-4" />
@@ -96,6 +133,8 @@ import { exportToolReportPdf } from '@/utils/export'
 const nominal = ref(25)
 const holeCode = ref('H7')
 const shaftCode = ref('g6')
+const calcMode = ref('simple')
+const deltaT = ref(80)
 const presetIndex = ref(0)
 const resultRef = ref(null)
 const holeLetters = SUPPORTED_HOLE_LETTERS
@@ -103,7 +142,12 @@ const shaftLetters = SUPPORTED_SHAFT_LETTERS
 
 const preset = computed(() => COMMON_FITS[presetIndex.value])
 
-const result = computed(() => analyzeFit(nominal.value, holeCode.value, shaftCode.value))
+const result = computed(() =>
+  analyzeFit(nominal.value, holeCode.value, shaftCode.value, {
+    calcMode: calcMode.value,
+    deltaT: deltaT.value,
+  }),
+)
 const bandData = computed(() => generateToleranceBandData(nominal.value, holeCode.value, shaftCode.value))
 
 const historySummary = computed(() => {

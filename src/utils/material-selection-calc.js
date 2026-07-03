@@ -57,6 +57,7 @@ function getMaterialProps(m) {
  * weights: { strength, weight, cost, weldability, machinability } 总和自动归一化
  */
 export function scoreMaterials(requirements = {}, weights = {}) {
+  const calcMode = requirements.calcMode ?? 'complete'
   const w = {
     strength: weights.strength ?? 0.35,
     weight: weights.weight ?? 0.2,
@@ -127,14 +128,31 @@ export function scoreMaterials(requirements = {}, weights = {}) {
     s.rank = i + 1
   })
 
-  return {
-    recommendations: filtered,
+  const result = {
+    calcMode,
+    recommendations: calcMode === 'simple' ? filtered.slice(0, 5) : filtered,
     topPick: filtered[0] ?? null,
     weights: w,
     requirements,
     filteredCount: filtered.length,
     totalCount: MATERIALS.length,
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    result.showScoreBreakdown = true
+  }
+
+  if (calcMode === 'professional') {
+    result.bestStrength = [...filtered].sort((a, b) => b.sigmaAllow - a.sigmaAllow)[0] ?? null
+    result.bestWeight = [...filtered].sort((a, b) => a.density - b.density)[0] ?? null
+    result.bestCost = [...filtered].sort((a, b) => a.costIndex - b.costIndex)[0] ?? null
+    result.tradeoffNote =
+      result.bestStrength?.id !== result.topPick?.id
+        ? '强度最优与综合首选不一致，请按工况权衡'
+        : '综合首选与主要指标一致'
+  }
+
+  return result
 }
 
 export { COST_INDEX, WELDABILITY, MACHINABILITY }

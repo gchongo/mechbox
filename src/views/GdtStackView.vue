@@ -5,6 +5,22 @@
       位置度/平面度/同轴度等专用叠加、基准累积与贡献度分析
     </p>
 
+    <section class="card-panel mb-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium">计算模型</span>
+        <el-radio-group v-model="form.calcMode">
+          <el-radio-button label="simple">简化</el-radio-button>
+          <el-radio-button label="complete">完整</el-radio-button>
+          <el-radio-button label="professional">专业</el-radio-button>
+        </el-radio-group>
+        <p class="w-full text-xs text-gray-500">
+          <template v-if="form.calcMode === 'simple'">RSS/极值叠加结果。</template>
+          <template v-else-if="form.calcMode === 'complete'">贡献度与基准累积。</template>
+          <template v-else>极值裕度与收紧建议。</template>
+        </p>
+      </div>
+    </section>
+
     <el-alert
       v-if="fromEditor"
       class="mb-4"
@@ -46,9 +62,9 @@
           </el-form-item>
           <el-form-item label="材料条件">
             <el-radio-group v-model="form.toleranceModifier">
-              <el-radio value="RFS">RFS</el-radio>
-              <el-radio value="MMC">MMC</el-radio>
-              <el-radio value="LMC">LMC</el-radio>
+              <el-radio label="RFS">RFS</el-radio>
+              <el-radio label="MMC">MMC</el-radio>
+              <el-radio label="LMC">LMC</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item v-if="form.toleranceModifier !== 'RFS'" label="奖励公差">
@@ -109,10 +125,16 @@
                 {{ result.effectiveWithDatum?.toFixed(4) }} mm
               </dd>
             </div>
+            <div v-if="result.worstCaseMargin != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+              <dt>极值裕度</dt>
+              <dd class="font-mono" :class="result.worstCaseMargin >= 0 ? 'text-success' : 'text-error'">
+                {{ result.worstCaseMargin?.toFixed(4) }} mm
+              </dd>
+            </div>
           </dl>
 
-          <h3 class="mb-2 mt-4 text-sm font-semibold">贡献度</h3>
-          <el-table :data="result.contributions" size="small" border>
+          <h3 v-if="result.contributions?.length" class="mb-2 mt-4 text-sm font-semibold">贡献度</h3>
+          <el-table v-if="result.contributions?.length" :data="result.contributions" size="small" border>
             <el-table-column prop="name" label="组成环" />
             <el-table-column label="公差 (mm)">
               <template #default="{ row }">{{ row.tolerance?.toFixed(4) }}</template>
@@ -168,6 +190,7 @@ const fromEditor = ref(false)
 const importedTypeName = ref('')
 
 const form = reactive({
+  calcMode: 'complete',
   typeId: 'position',
   method: 'rss',
   closedMax: 0.15,
@@ -184,6 +207,7 @@ const needsDirection = computed(() => {
 
 const result = computed(() =>
   analyzeGdtStack({
+    calcMode: form.calcMode,
     typeId: form.typeId,
     method: form.method,
     closedRing: { min: 0, max: form.closedMax },

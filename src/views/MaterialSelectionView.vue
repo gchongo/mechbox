@@ -5,6 +5,22 @@
       基于强度、重量、成本、可焊性与可加工性的加权综合推荐
     </p>
 
+    <section class="card-panel mb-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium">计算模型</span>
+        <el-radio-group v-model="calcMode">
+          <el-radio-button label="simple">简化</el-radio-button>
+          <el-radio-button label="complete">完整</el-radio-button>
+          <el-radio-button label="professional">专业</el-radio-button>
+        </el-radio-group>
+        <p class="w-full text-xs text-gray-500">
+          <template v-if="calcMode === 'simple'">硬约束过滤 + Top 5。</template>
+          <template v-else-if="calcMode === 'complete'">全库排序与分项得分。</template>
+          <template v-else>强度/重量/成本单项最优与权衡提示。</template>
+        </p>
+      </div>
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">需求与权重</h2>
@@ -53,6 +69,12 @@
           <p class="text-xl font-semibold text-primary">{{ result.topPick.name }}</p>
           <p class="mt-1 text-sm">综合得分 {{ result.topPick.totalScore.toFixed(1) }} · [σ] = {{ result.topPick.sigmaAllow }} MPa</p>
         </div>
+        <div v-if="result.tradeoffNote" class="mb-3 rounded bg-gray-50 p-2 text-xs dark:bg-gray-900">
+          {{ result.tradeoffNote }}
+        </div>
+        <div v-if="calcMode === 'professional' && result.bestStrength" class="mb-3 space-y-1 text-xs text-gray-500">
+          <p>强度最优: {{ result.bestStrength.name }} · 最轻: {{ result.bestWeight?.name }} · 最低成本: {{ result.bestCost?.name }}</p>
+        </div>
         <p class="mb-2 text-xs text-gray-500">符合硬约束 {{ result.filteredCount }} / {{ result.totalCount }} 种</p>
         <el-table :data="result.recommendations" size="small" border max-height="420">
           <el-table-column prop="rank" label="#" width="40" />
@@ -73,8 +95,10 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
 import { scoreMaterials } from '@/utils/material-selection-calc'
+
+const calcMode = ref('complete')
 
 const req = reactive({
   minSigmaAllow: 150,
@@ -92,5 +116,5 @@ const weights = reactive({
   machinability: 0.1,
 })
 
-const result = computed(() => scoreMaterials(req, weights))
+const result = computed(() => scoreMaterials({ ...req, calcMode: calcMode.value }, weights))
 </script>

@@ -21,9 +21,15 @@ function lookupRow(diameter) {
   return ROUGH_TURN.find((r) => diameter <= r.maxD) ?? ROUGH_TURN[ROUGH_TURN.length - 1]
 }
 
+function resolveOperations(calcMode, inputOps) {
+  if (calcMode === 'simple') return ['rough', 'finish']
+  if (inputOps?.length) return inputOps
+  return ['rough', 'semi', 'finish']
+}
+
 /**
  * 工序序列余量叠加
- * operations: ['rough', 'semi', 'finish'] 或自定义
+ * operations: ['rough', 'semi', 'finish'] 或自定义（完整/专业模式）
  */
 export function calcMachiningAllowance(input) {
   const calcMode = input.calcMode ?? 'complete'
@@ -32,7 +38,7 @@ export function calcMachiningAllowance(input) {
   const row = lookupRow(d)
   const grade = TOLERANCE_GRADES[input.toleranceGrade ?? 'medium'] ?? TOLERANCE_GRADES.medium
 
-  const ops = input.operations ?? (calcMode === 'simple' ? ['rough', 'finish'] : ['rough', 'semi', 'finish'])
+  const ops = resolveOperations(calcMode, input.operations)
   const details = []
   let totalRadial = 0
 
@@ -58,9 +64,11 @@ export function calcMachiningAllowance(input) {
     nominalDiameter: d,
     length: L,
     toleranceGrade: grade.label,
+    operations: ops,
     details,
     totalRadialAllowance: totalRadial,
     totalDiameterAllowance: totalDiameter,
+    endFaceAllowance: endFace,
     recommendedStockDiameter: stockDiameter,
     recommendedStockLength: stockLength,
     materialRemovalVolume: (Math.PI / 4) * (stockDiameter ** 2 - d ** 2) * stockLength,
@@ -68,14 +76,17 @@ export function calcMachiningAllowance(input) {
 
   if (calcMode === 'complete' || calcMode === 'professional') {
     const grinding = calcGrindingAllowance(d)
-    result.grindingAllowance = grinding
+    result.grindingAllowance = grinding.radial
+    result.grindingDiameterAllowance = grinding.diameter
     result.minStockDiameter = d + row.finish * 2 * grade.factor
+    result.stockMargin = stockDiameter - result.minStockDiameter
   }
 
   if (calcMode === 'professional') {
     const removalRate = input.removalRate ?? 50 // mm³/min
-    result.estimatedMachiningMinutes = result.materialRemovalVolume / removalRate
     result.removalRate = removalRate
+    result.estimatedMachiningMinutes = result.materialRemovalVolume / removalRate
+    result.totalWithGrinding = stockDiameter + (result.grindingDiameterAllowance ?? 0)
   }
 
   return result
@@ -85,4 +96,10 @@ export function calcMachiningAllowance(input) {
 export function calcGrindingAllowance(diameter) {
   const row = lookupRow(diameter)
   return { radial: row.finish, diameter: row.finish * 2 }
+}
+
+export const MACHINING_MODE_OPS = {
+  simple: ['rough', 'finish'],
+  complete: ['rough', 'semi', 'finish'],
+  professional: ['rough', 'semi', 'finish'],
 }

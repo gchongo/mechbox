@@ -105,6 +105,7 @@ export function calcDatumAccumulation(datums) {
 
 /** 完整 GD&T 栈分析 */
 export function analyzeGdtStack(input) {
+  const calcMode = input.calcMode ?? 'complete'
   const {
     typeId = 'position',
     closedRing = { min: 0, max: 0.1 },
@@ -126,6 +127,25 @@ export function analyzeGdtStack(input) {
     distribution: input.distribution ?? 'normal',
   })
 
+  const result = {
+    calcMode,
+    typeId,
+    mode,
+    method,
+    closedRing,
+    chainResult,
+    pass: chainResult.pass,
+    modifier: {
+      type: toleranceModifier,
+      bonus: bonusTolerance,
+      effective: chainResult.effectiveTolerance ?? chainResult.totalTolerance,
+    },
+  }
+
+  if (calcMode === 'simple') {
+    return result
+  }
+
   const contributions = calcGdtContributions(rings, method, typeId)
   const datumStack = datums.length ? calcDatumAccumulation(datums) : null
 
@@ -140,24 +160,31 @@ export function analyzeGdtStack(input) {
     chainResult.nominal + effectiveWithDatum / 2 <= closedRing.max &&
     chainResult.nominal - effectiveWithDatum / 2 >= closedRing.min
 
-  return {
-    typeId,
-    mode,
-    method,
-    closedRing,
-    chainResult,
+  Object.assign(result, {
     contributions,
     datumStack,
     effectiveWithDatum: round(effectiveWithDatum, 6),
-    pass: chainResult.pass,
     passWithDatum,
     topContributor: contributions[0]?.name ?? null,
-    modifier: {
-      type: toleranceModifier,
-      bonus: bonusTolerance,
-      effective: chainResult.effectiveTolerance ?? chainResult.totalTolerance,
-    },
+  })
+
+  if (calcMode === 'professional') {
+    result.sensitivityRanking = contributions.map((c, i) => ({
+      rank: i + 1,
+      name: c.name,
+      percent: c.percent,
+      tightenTo: round(c.tolerance * 0.8, 4),
+    }))
+    result.worstCase = calculateChainResult(closedRing, rings, 'worst', {
+      typeId,
+      toleranceModifier,
+      bonusTolerance,
+    })
+    result.worstCaseMargin = round(closedRing.max - result.worstCase.totalTolerance, 4)
+    result.pass = result.pass && result.worstCaseMargin >= 0
   }
+
+  return result
 }
 
 export const GDT_STACK_PRESETS = {
