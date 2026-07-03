@@ -91,7 +91,7 @@ export function generateSNCurve(material, points = 40) {
  * loads: [{ stress, cycles }]  stress 为应力幅 (MPa)
  */
 export function calcMinerDamage(material, loads) {
-  if (!loads?.length) return { error: '至少一个载荷级' }
+  if (!loads?.length) return { errorKey: 'need_load_level' }
 
   let damage = 0
   const details = []

@@ -55,7 +55,7 @@ describe('iso-286-calc', () => {
   it('common presets are valid', () => {
     for (let i = 0; i < COMMON_FITS.length; i++) {
       const r = analyzeFit(30, COMMON_FITS[i].hole, COMMON_FITS[i].shaft)
-      expect(r.error).toBeUndefined()
+      expect(r.errorKey).toBeUndefined()
     }
   })
 })

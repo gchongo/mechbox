@@ -1,5 +1,11 @@
 import { useLocale } from '@/composables/useLocale'
 
+function formatError(result, re) {
+  if (!result) return ''
+  if (result.errorKey) return re(result.errorKey, result.errorParams)
+  return result.error ?? ''
+}
+
 export function useResultI18n() {
   const { t, locale } = useLocale()
 
@@ -17,5 +23,10 @@ export function useResultI18n() {
     return val !== path ? val : key
   }
 
-  return { locale, rm, re }
+  function resultError(result) {
+    locale.value
+    return formatError(result, re)
+  }
+
+  return { locale, rm, re, resultError }
 }

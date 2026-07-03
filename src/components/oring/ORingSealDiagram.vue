@@ -203,7 +203,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('oRing')
+const { dt, locale } = useDiagramI18n('oRing')
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },
@@ -279,19 +279,20 @@ const showExtrusion = computed(() => props.calcMode !== 'simple')
 const showPro = computed(() => props.calcMode === 'professional')
 
 const legendItems = computed(() => {
+  locale.value
   const base = [
-    { key: 'cs', name: 'd_cs', desc: 'O 型圈截面直径（线径）', tone: 'base' },
-    { key: 'dg', name: 'd_g', desc: '沟槽底径，密封圈安装后的内径基准', tone: 'base' },
-    { key: 'w', name: 'w', desc: '沟槽轴向宽度，影响填充率', tone: 'base' },
-    { key: 'h', name: 'h', desc: '沟槽径向深度 ≈ d_cs − 压缩量', tone: 'base' },
+    { key: 'cs', name: 'd_cs', desc: dt('legend.cs'), tone: 'base' },
+    { key: 'dg', name: 'd_g', desc: dt('legend.dg'), tone: 'base' },
+    { key: 'w', name: 'w', desc: dt('legend.w'), tone: 'base' },
+    { key: 'h', name: 'h', desc: dt('legend.h'), tone: 'base' },
   ]
   if (props.calcMode !== 'simple') {
-    base.push({ key: 'gap', name: '挤出间隙', desc: '动压密封时沟槽与对偶面之间的间隙', tone: 'complete' })
+    base.push({ key: 'gap', name: dt('legendName.gap'), desc: dt('legend.gap'), tone: 'complete' })
   }
   if (showPro.value) {
     base.push(
-      { key: 'stretch', name: '安装拉伸', desc: '套装时周向拉伸，一般不超过 5%', tone: 'pro' },
-      { key: 'p', name: 'P', desc: '介质压力，影响压缩率与挤出校核', tone: 'pro' },
+      { key: 'stretch', name: dt('legendName.stretch'), desc: dt('legend.stretch'), tone: 'pro' },
+      { key: 'p', name: 'P', desc: dt('legend.p'), tone: 'pro' },
     )
   }
   return base

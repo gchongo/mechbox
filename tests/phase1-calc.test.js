@@ -15,7 +15,7 @@ describe('interference-fit-calc', () => {
       fitLength: 40,
       friction: 0.12,
     })
-    expect(r.error).toBeUndefined()
+    expect(r.errorKey).toBeUndefined()
     expect(r.pressure).toBeGreaterThan(0)
     expect(r.pressForce).toBeGreaterThan(0)
     expect(r.torqueCapacityNm).toBeGreaterThan(0)
@@ -27,7 +27,7 @@ describe('interference-fit-calc', () => {
       holeDiameter: 50,
       hubOuterDiameter: 90,
     })
-    expect(c.error).toBeTruthy()
+    expect(c.errorKey).toBeTruthy()
   })
 })
 
@@ -40,7 +40,7 @@ describe('beam-calc', () => {
       spanLength: 500,
       load: 2000,
     })
-    expect(r.error).toBeUndefined()
+    expect(r.errorKey).toBeUndefined()
     expect(r.deflection).toBeGreaterThan(0)
     expect(r.stress).toBeGreaterThan(0)
   })
@@ -88,7 +88,7 @@ describe('msa-calc', () => {
       [[10.0, 10.03, 10.02], [10.14, 10.13, 10.15]],
     ]
     const r = analyzeGageRR(measurements)
-    expect(r.error).toBeUndefined()
+    expect(r.errorKey).toBeUndefined()
     expect(r.GRR).toBeGreaterThan(0)
     expect(r.pctGRR).toBeGreaterThan(0)
     expect(r.rating).toBeTruthy()
@@ -103,7 +103,7 @@ describe('spc-calc', () => {
       [10.2, 10.2, 10.3],
     ]
     const r = calcXRChart(subgroups)
-    expect(r.error).toBeUndefined()
+    expect(r.errorKey).toBeUndefined()
     expect(r.xUcl).toBeGreaterThan(r.xBarBar)
     expect(r.xLcl).toBeLessThan(r.xBarBar)
     expect(r.rUcl).toBeGreaterThan(r.rBar)

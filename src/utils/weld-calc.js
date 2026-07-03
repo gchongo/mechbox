@@ -139,7 +139,7 @@ export function analyzeFilletWeldCombined(input) {
   const throat = calcFilletThroat(input.legSize)
   const L = input.weldLength
   const area = throat * L
-  if (!area) return { error: '焊缝几何无效' }
+  if (!area) return { errorKey: 'weld_geometry_invalid' }
 
   const Fx = input.forceX ?? 0
   const Fy = input.forceY ?? 0
@@ -233,7 +233,7 @@ export const WELD_DETAIL_CATEGORIES = {
 /** 焊缝疲劳 — 简化 S-N */
 export function analyzeWeldFatigue(input) {
   const deltaTau = input.stressRange ?? (input.peakStress ?? 0) - (input.minStress ?? 0)
-  if (deltaTau <= 0) return { error: '应力幅须大于 0' }
+  if (deltaTau <= 0) return { errorKey: 'weld_fatigue_stress_zero' }
 
   const detail = WELD_DETAIL_CATEGORIES[input.detailCategory ?? 'medium'] ?? WELD_DETAIL_CATEGORIES.medium
   const endurance = detail.enduranceMPa

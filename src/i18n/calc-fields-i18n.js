@@ -743,6 +743,7 @@ export const fieldsZh = {
         shaftLetters: '轴 (小写)',
       },
       results: {
+        fitType: '配合类型',
         maxClearance: '最大间隙 / 过盈',
         minClearance: '最小间隙 / 过盈',
         holeLimits: '孔',
@@ -1528,6 +1529,7 @@ export const fieldsEn = {
         shaftLetters: 'Shaft (lowercase)',
       },
       results: {
+        fitType: 'Fit type',
         maxClearance: 'Max clearance / interference',
         minClearance: 'Min clearance / interference',
         holeLimits: 'Bore',

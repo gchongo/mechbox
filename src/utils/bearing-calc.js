@@ -173,10 +173,14 @@ export function analyzeBearingLife(input) {
   const minStaticSafety = input.minStaticSafety ?? 1.5
 
   let speedPass = true
-  let speedWarning = null
+  let speedWarningKey = null
+  let speedWarningParams = null
   if (calcMode === 'professional' && input.limitingSpeed) {
     speedPass = input.rpm <= input.limitingSpeed
-    speedWarning = speedPass ? null : `转速 ${input.rpm} 超过极限 ${input.limitingSpeed} rpm`
+    if (!speedPass) {
+      speedWarningKey = 'speed_exceeded'
+      speedWarningParams = { rpm: input.rpm, limit: input.limitingSpeed }
+    }
   }
 
   return {
@@ -195,7 +199,8 @@ export function analyzeBearingLife(input) {
     lifeHours: hours,
     targetHours,
     speedPass,
-    speedWarning,
+    speedWarningKey,
+    speedWarningParams,
     pass:
       hours >= targetHours &&
       (staticSafety == null || staticSafety >= minStaticSafety) &&

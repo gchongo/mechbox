@@ -155,7 +155,7 @@
           </section>
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-            <el-alert v-if="fatigueResult?.error" :title="fatigueResult.error" type="warning" show-icon />
+            <el-alert v-if="fatigueResult?.errorKey" :title="resultError(fatigueResult)" type="warning" show-icon />
             <dl v-else class="space-y-2 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
                 <dt>{{ pr('estimatedLife') }}</dt>
@@ -266,7 +266,7 @@ import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('weld')
 const { optionMap } = useOptionsI18n()
-const { rm } = useResultI18n()
+const { rm, resultError } = useResultI18n()
 
 const weldSteelGrades = computed(() => optionMap(WELD_STEEL_GRADES, 'weldSteelGrades'))
 const weldDetailCategories = computed(() => optionMap(WELD_DETAIL_CATEGORIES, 'weldDetailCategories'))
@@ -334,7 +334,7 @@ const historySummary = computed(() => {
       { label: fc('check'), value: (filletResult.value.allPass ?? filletResult.value.pass) ? fc('pass') : fc('fail') },
     ]
   }
-  if (tab.value === 'fatigue' && !fatigueResult.value?.error) {
+  if (tab.value === 'fatigue' && !fatigueResult.value?.errorKey) {
     return [
       { label: 'Δτ', value: `${fatigue.stressRange} MPa` },
       { label: pr('estimatedLife'), value: fatigueResult.value.estimatedLife?.toLocaleString() },

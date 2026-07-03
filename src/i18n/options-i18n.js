@@ -157,6 +157,15 @@ export const optionsZh = {
     '11': { label: '11 级' },
     '12': { label: '12 级（粗糙）' },
   },
+  commonFits: {
+    H7_g6: { label: 'H7/g6 精密间隙', use: '精密滑动轴承' },
+    H7_h6: { label: 'H7/h6 精密滑配', use: '定位配合' },
+    H7_k6: { label: 'H7/k6 过渡', use: '定位/轻压入' },
+    H7_p6: { label: 'H7/p6 轻过盈', use: '无键连接' },
+    H8_f7: { label: 'H8/f7 一般间隙', use: '一般滑动' },
+    H8_h7: { label: 'H8/h7 一般滑配', use: '可拆卸定位' },
+    H9_d9: { label: 'H9/d9 粗间隙', use: '粗糙配合' },
+  },
 }
 
 export const optionsEn = {
@@ -315,5 +324,14 @@ export const optionsEn = {
     '10': { label: 'Grade 10 (coarse)' },
     '11': { label: 'Grade 11' },
     '12': { label: 'Grade 12 (rough)' },
+  },
+  commonFits: {
+    H7_g6: { label: 'H7/g6 precision clearance', use: 'Precision sliding bearing' },
+    H7_h6: { label: 'H7/h6 precision slide', use: 'Locating fit' },
+    H7_k6: { label: 'H7/k6 transition', use: 'Locating / light press' },
+    H7_p6: { label: 'H7/p6 light interference', use: 'Press fit without key' },
+    H8_f7: { label: 'H8/f7 general clearance', use: 'General sliding' },
+    H8_h7: { label: 'H8/h7 general slide fit', use: 'Removable locating' },
+    H9_d9: { label: 'H9/d9 coarse clearance', use: 'Rough fit' },
   },
 }

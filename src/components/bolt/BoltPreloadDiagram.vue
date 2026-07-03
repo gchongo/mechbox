@@ -164,7 +164,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('boltPreload')
+const { dt, locale } = useDiagramI18n('boltPreload')
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },
@@ -186,32 +186,33 @@ const showTorque = computed(() => props.mode === 'torque2force')
 const headRx = computed(() => Math.min(34, Math.max(18, props.dKm * 1.1)))
 
 const legendItems = computed(() => {
+  locale.value
   const base = [
-    { key: 'd', name: 'd', desc: '螺栓公称直径（M 号）', tone: 'base' },
-    { key: 'P', name: 'P', desc: '螺纹螺距，相邻牙型同侧距离', tone: 'base' },
-    { key: 'F', name: 'F', desc: '沿螺栓轴线方向的预紧拉力', tone: 'base' },
+    { key: 'd', name: 'd', desc: dt('legend.d'), tone: 'base' },
+    { key: 'P', name: 'P', desc: dt('legend.P'), tone: 'base' },
+    { key: 'F', name: 'F', desc: dt('legend.F'), tone: 'base' },
   ]
   if (props.mode === 'torque2force') {
-    base.push({ key: 'T', name: 'T', desc: '拧紧时施加的扭矩', tone: 'base' })
+    base.push({ key: 'T', name: 'T', desc: dt('legend.T'), tone: 'base' })
   }
   if (props.calcMode === 'simple') {
-    base.push({ key: 'mu', name: 'μ', desc: '螺纹+头部综合摩擦系数', tone: 'simple' })
+    base.push({ key: 'mu', name: 'μ', desc: dt('legend.mu'), tone: 'simple' })
   }
   if (showVdi.value) {
     base.push(
-      { key: 'muG', name: 'μ_G', desc: '螺纹副摩擦，影响螺纹段扭矩', tone: 'vdi' },
-      { key: 'muK', name: 'μ_K', desc: '头部支承面摩擦', tone: 'vdi' },
-      { key: 'dkm', name: 'D_km', desc: '头部摩擦圆有效直径', tone: 'vdi' },
+      { key: 'muG', name: 'μ_G', desc: dt('legend.muG'), tone: 'vdi' },
+      { key: 'muK', name: 'μ_K', desc: dt('legend.muK'), tone: 'vdi' },
+      { key: 'dkm', name: 'D_km', desc: dt('legend.dkm'), tone: 'vdi' },
     )
   }
   if (showPro.value) {
     base.push(
-      { key: 'lk', name: 'L_K', desc: '两被夹紧件贴合面之间的夹紧长度', tone: 'pro' },
-      { key: 'dh', name: 'd_h', desc: '螺栓孔直径', tone: 'pro' },
-      { key: 'dw', name: 'd_W', desc: '螺栓头或垫圈支承面外径', tone: 'pro' },
-      { key: 'da', name: 'D_A', desc: '被夹紧件等效替代外径（摩擦锥）', tone: 'pro' },
-      { key: 'fz', name: 'f_Z', desc: '接触面微观嵌入量，导致预紧力松弛', tone: 'pro' },
-      { key: 'dt', name: 'ΔT', desc: '工作温度相对拧紧态的变化', tone: 'pro' },
+      { key: 'lk', name: 'L_K', desc: dt('legend.lk'), tone: 'pro' },
+      { key: 'dh', name: 'd_h', desc: dt('legend.dh'), tone: 'pro' },
+      { key: 'dw', name: 'd_W', desc: dt('legend.dw'), tone: 'pro' },
+      { key: 'da', name: 'D_A', desc: dt('legend.da'), tone: 'pro' },
+      { key: 'fz', name: 'f_Z', desc: dt('legend.fz'), tone: 'pro' },
+      { key: 'dt', name: 'ΔT', desc: dt('legend.dt'), tone: 'pro' },
     )
   }
   return base

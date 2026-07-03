@@ -38,18 +38,18 @@
             :type="presetIndex === i ? 'primary' : 'default'"
             @click="applyPreset(i)"
           >
-            {{ p.hole }}/{{ p.shaft }}
+            {{ ol('commonFits', `${p.hole}_${p.shaft}`, 'label') }}
           </el-button>
         </div>
       </section>
 
       <section ref="resultRef" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-alert v-if="result?.error" :title="result.error" type="warning" show-icon />
+        <el-alert v-if="result?.errorKey" :title="resultError(result)" type="warning" show-icon />
         <template v-else-if="result">
           <div class="mb-4 flex items-center gap-3">
-            <el-tag :type="fitTagType">{{ result.fitLabel }}</el-tag>
-            <span class="text-sm text-gray-500">{{ preset?.use }}</span>
+            <el-tag :type="fitTagType">{{ fitTypeLabel }}</el-tag>
+            <span class="text-sm text-gray-500">{{ presetUse }}</span>
           </div>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
@@ -85,7 +85,7 @@
             </div>
           </dl>
           <FitDiagram :fit="result" class="mx-auto mt-4" />
-          <FitToleranceBand v-if="bandData && !bandData.error" :band="bandData" class="mx-auto mt-4" />
+          <FitToleranceBand v-if="bandData && !bandData.errorKey" :band="bandData" class="mx-auto mt-4" />
         </template>
       </section>
     </div>
@@ -119,8 +119,12 @@ import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { exportToolReportPdf } from '@/utils/export'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useResultI18n } from '@/composables/useResultI18n'
 
-const { pt, ct, pf, pr, fc } = useCalcPage('fit')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('fit')
+const { ol } = useOptionsI18n()
+const { rm, resultError } = useResultI18n()
 
 const nominal = ref(25)
 const holeCode = ref('H7')
@@ -133,6 +137,13 @@ const holeLetters = SUPPORTED_HOLE_LETTERS
 const shaftLetters = SUPPORTED_SHAFT_LETTERS
 
 const preset = computed(() => COMMON_FITS[presetIndex.value])
+const presetKey = computed(() => (preset.value ? `${preset.value.hole}_${preset.value.shaft}` : ''))
+const presetUse = computed(() => ol('commonFits', presetKey.value, 'use'))
+const fitTypeLabel = computed(() => {
+  locale.value
+  const ft = result.value?.fitType
+  return ft ? rm('fit', `type_${ft}`) : ''
+})
 
 const result = computed(() =>
   analyzeFit(nominal.value, holeCode.value, shaftCode.value, {
@@ -144,15 +155,15 @@ const bandData = computed(() => generateToleranceBandData(nominal.value, holeCod
 
 const historySummary = computed(() => {
   const r = result.value
-  if (!r || r.error) return []
+  if (!r || r.errorKey) return []
   return [
-    { label: '配合', value: r.fitLabel },
-    { label: '最大间隙 (μm)', value: (r.maxClearance * 1000).toFixed(1) },
+    { label: pf('fitType'), value: fitTypeLabel.value },
+    { label: pr('maxClearance'), value: (r.maxClearance * 1000).toFixed(1) },
   ]
 })
 
 const fitTagType = computed(() => {
-  if (!result.value || result.value.error) return 'info'
+  if (!result.value || result.value.errorKey) return 'info'
   return { clearance: 'success', interference: 'danger', transition: 'warning' }[result.value.fitType]
 })
 
@@ -165,7 +176,7 @@ function applyPreset(i) {
 
 async function exportPdf() {
   const r = result.value
-  if (!r || r.error) return
+  if (!r || r.errorKey) return
   await exportToolReportPdf({
     title: 'ISO 286 配合分析报告',
     subtitle: `Ø${r.nominal} ${r.hole.designation}/${r.shaft.designation}`,

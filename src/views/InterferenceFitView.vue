@@ -81,7 +81,7 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-alert v-if="result.error" :title="result.error" type="error" show-icon />
+        <el-alert v-if="result.errorKey" :title="resultError(result)" type="error" show-icon />
         <dl v-else class="space-y-3 text-sm">
           <div v-if="result.thermal" class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-950">
             <dt>{{ pr('thermalInterference') }}</dt>
@@ -132,8 +132,10 @@ import { analyzeInterferenceFit } from '@/utils/interference-fit-calc'
 import InterferenceFitDiagram from '@/components/interference/InterferenceFitDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('interference-fit')
+const { resultError } = useResultI18n()
 
 const form = reactive({
   calcMode: 'simple',

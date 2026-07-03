@@ -117,8 +117,8 @@ export function analyzeGdtStack(input) {
   } = input
 
   const mode = getGdtCalcMode(typeId)
-  if (!mode) return { error: `未知 GD&T 类型: ${typeId}` }
-  if (!rings.length) return { error: '至少需要一个组成环' }
+  if (!mode) return { errorKey: 'gdt_unknown_type', errorParams: { typeId } }
+  if (!rings.length) return { errorKey: 'gdt_need_ring' }
 
   const chainResult = calculateChainResult(closedRing, rings, method, {
     typeId,

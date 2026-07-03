@@ -102,7 +102,7 @@
       </section>
 
       <section ref="resultRef" class="card-panel">
-        <el-alert v-if="result?.error" :title="result.error" type="warning" show-icon />
+        <el-alert v-if="result?.errorKey" :title="resultError(result)" type="warning" show-icon />
         <template v-else-if="result">
           <div class="mb-4 flex items-center gap-2">
             <el-tag :type="result.pass ? 'success' : 'danger'">
@@ -183,8 +183,10 @@ import {
 import { exportToolReportPdf } from '@/utils/export'
 import { GDT_STACK_STORAGE_KEY, deserializeGdtStackPayload } from '@/constants/editor-bridge'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import { useResultI18n } from '@/composables/useResultI18n'
 
 const route = useRoute()
+const { resultError } = useResultI18n()
 const resultRef = ref(null)
 const fromEditor = ref(false)
 const importedTypeName = ref('')
@@ -220,7 +222,7 @@ const result = computed(() =>
 
 const historySummary = computed(() => {
   const r = result.value
-  if (!r || r.error) return []
+  if (!r || r.errorKey) return []
   return [
     { label: '类型', value: r.mode.label },
     { label: '公差 (mm)', value: r.chainResult.totalTolerance?.toFixed(4) },

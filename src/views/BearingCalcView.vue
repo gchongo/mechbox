@@ -118,7 +118,7 @@
             <dt class="text-gray-500">温度系数 a₂</dt>
             <dd class="font-mono">{{ result.temperatureFactor?.toFixed(2) }}</dd>
           </div>
-          <el-alert v-if="result.speedWarning" type="warning" :title="result.speedWarning" show-icon class="mb-2" />
+          <el-alert v-if="result.speedWarningKey" type="warning" :title="rm('bearing', result.speedWarningKey, result.speedWarningParams)" show-icon class="mb-2" />
           <div v-if="result.staticSafetyFactor != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <dt class="text-gray-500">{{ pr('staticSafety') }}</dt>
             <dd class="font-mono" :class="result.staticPass ? 'text-success' : 'text-error'">
@@ -148,8 +148,10 @@ import { analyzeBearingLife, listBearingSeries, resolveSeriesFromModel } from '@
 import BearingLoadDiagram from '@/components/bearing/BearingLoadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useResultI18n } from '@/composables/useResultI18n'
 
-const { pt, ct, pf, pr, fc } = useCalcPage('bearing')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('bearing')
+const { rm } = useResultI18n()
 
 const seriesList = listBearingSeries()
 

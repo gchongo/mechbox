@@ -105,7 +105,7 @@ function lookupDeviation(table, letter, nominalMm) {
 
 export function parseToleranceDesignation(code) {
   const m = String(code).trim().match(/^([A-Za-z]+)(\d{1,2})$/)
-  if (!m) return { error: '格式应为如 H7、g6' }
+  if (!m) return { errorKey: 'bad_tolerance_format' }
   const letter = m[1]
   const isHole = letter[0] === letter[0].toUpperCase()
   return { letter, grade: Number(m[2]), isHole }
@@ -114,11 +114,11 @@ export function parseToleranceDesignation(code) {
 /** 计算孔或轴的极限尺寸 (mm) */
 export function calcToleranceLimits(nominalMm, designation, kind) {
   const parsed = typeof designation === 'string' ? parseToleranceDesignation(designation) : designation
-  if (parsed.error) return parsed
+  if (parsed.errorKey) return parsed
 
   const { letter, grade } = parsed
   const IT = calcITTolerance(nominalMm, grade)
-  if (IT == null) return { error: `不支持 IT${grade}` }
+  if (IT == null) return { errorKey: 'unsupported_it', errorParams: { grade } }
 
   const upperLetter = letter.toUpperCase()
   const lowerLetter = letter.toLowerCase()
@@ -131,7 +131,7 @@ export function calcToleranceLimits(nominalMm, designation, kind) {
       return buildLimits(nominalMm, designation, 'hole', EI, ES, IT)
     }
     EI = lookupDeviation(HOLE_EI_TABLE, upperLetter, nominalMm)
-    if (EI == null) return { error: `孔代号 ${letter} 暂未收录` }
+    if (EI == null) return { errorKey: 'hole_code_unknown', errorParams: { letter } }
     const ES = EI + IT
     return buildLimits(nominalMm, designation, 'hole', EI, ES, IT)
   }
@@ -143,7 +143,7 @@ export function calcToleranceLimits(nominalMm, designation, kind) {
     return buildLimits(nominalMm, designation, 'shaft', ei, es, IT)
   }
   es = lookupDeviation(SHAFT_ES_TABLE, lowerLetter, nominalMm)
-  if (es == null) return { error: `轴代号 ${letter} 暂未收录` }
+  if (es == null) return { errorKey: 'shaft_code_unknown', errorParams: { letter } }
   const ei = es - IT
   return buildLimits(nominalMm, designation, 'shaft', ei, es, IT)
 }
@@ -169,9 +169,9 @@ export function analyzeFit(nominalMm, holeCode, shaftCode, calcModeOrOpts = 'sim
       : calcModeOrOpts ?? 'simple'
 
   const hole = calcToleranceLimits(nominalMm, holeCode, 'hole')
-  if (hole.error) return hole
+  if (hole.errorKey) return hole
   const shaft = calcToleranceLimits(nominalMm, shaftCode, 'shaft')
-  if (shaft.error) return shaft
+  if (shaft.errorKey) return shaft
 
   const maxClearance = hole.maxSize - shaft.minSize
   const minClearance = hole.minSize - shaft.maxSize
@@ -185,7 +185,7 @@ export function analyzeFit(nominalMm, holeCode, shaftCode, calcModeOrOpts = 'sim
     maxClearance: round(maxClearance, 5),
     minClearance: round(minClearance, 5),
     fitType,
-    fitLabel: FIT_TYPE_LABELS[fitType],
+    fitLabelKey: fitType,
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
@@ -208,10 +208,10 @@ export function analyzeFit(nominalMm, holeCode, shaftCode, calcModeOrOpts = 'sim
     result.maxClearanceHot = round(maxClearance + clearanceShift, 5)
     result.pass = fitType !== 'interference' || minClearance < 0
     if (deltaT !== 0 && result.minClearanceHot < 0 && fitType === 'clearance') {
-      result.thermalRisk = '加热后可能干涉'
+      result.thermalRiskKey = 'thermal_interference_risk'
       result.pass = false
     } else {
-      result.thermalRisk = null
+      result.thermalRiskKey = null
       result.pass = true
     }
   }
@@ -243,7 +243,7 @@ export const COMMON_FITS = [
 
 export function analyzeFitPreset(nominalMm, presetIndex) {
   const p = COMMON_FITS[presetIndex]
-  if (!p) return { error: '未知预设' }
+  if (!p) return { errorKey: 'unknown_preset' }
   return { ...analyzeFit(nominalMm, p.hole, p.shaft), preset: p }
 }
 
@@ -253,7 +253,7 @@ export const SUPPORTED_SHAFT_LETTERS = Object.keys(SHAFT_ES_TABLE)
 /** 公差带图数据（相对公称尺寸偏移 mm） */
 export function generateToleranceBandData(nominalMm, holeCode, shaftCode) {
   const fit = analyzeFit(nominalMm, holeCode, shaftCode)
-  if (fit.error) return fit
+  if (fit.errorKey) return fit
 
   const scale = 1000
   return {

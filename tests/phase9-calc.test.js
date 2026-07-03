@@ -134,7 +134,7 @@ describe('interference-fit-calc modes', () => {
 
   it('simple mode unchanged for positive interference', () => {
     const r = analyzeInterferenceFit({ ...base, calcMode: 'simple' })
-    expect(r.error).toBeUndefined()
+    expect(r.errorKey).toBeUndefined()
     expect(r.pressure).toBeGreaterThan(0)
     expect(r.hollowShaft).toBeFalsy()
   })

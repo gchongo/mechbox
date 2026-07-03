@@ -32,11 +32,11 @@ export function calcContactPressure({
   shaftDiameter,
 }) {
   const i = interference
-  if (i <= 0) return { error: '过盈量须大于 0（轴径 > 孔径）' }
+  if (i <= 0) return { errorKey: 'interference_positive' }
 
   const ri = holeDiameter / 2
   const ro = hubOuterDiameter / 2
-  if (ro <= ri) return { error: '轮毂外径须大于孔径' }
+  if (ro <= ri) return { errorKey: 'hub_outer_gt_bore' }
 
   const deltaR = i / 2
   const lambdaH = hubCompliance(ri, ro, hubE, hubNu)
@@ -49,7 +49,7 @@ export function calcContactPressure({
       : shaftComplianceSolid(shaftE, shaftNu)
 
   const denom = ri * (lambdaH + lambdaS)
-  if (!denom) return { error: '几何或材料参数无效' }
+  if (!denom) return { errorKey: 'invalid_geometry' }
 
   const pressure = deltaR / denom
   const hoopHub = pressure * ((ro * ro + ri * ri) / (ro * ro - ri * ri))
@@ -95,7 +95,7 @@ export function analyzeInterferenceFit(input) {
     interference = thermal.finalInterference
     if (thermal.becomesClearance) {
       return {
-        error: '温升后过盈消失，变为间隙配合',
+        errorKey: 'clearance_after_thermal',
         thermal,
         calcMode,
       }
@@ -113,7 +113,7 @@ export function analyzeInterferenceFit(input) {
     shaftInnerDiameter: calcMode === 'simple' ? 0 : input.shaftInnerDiameter ?? 0,
     shaftDiameter,
   })
-  if (contact.error) return { error: contact.error, thermal, calcMode }
+  if (contact.errorKey) return { errorKey: contact.errorKey, thermal, calcMode }
 
   const L = input.fitLength ?? 30
   const mu = input.friction ?? 0.12

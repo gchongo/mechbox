@@ -93,7 +93,7 @@ describe('weld fatigue/haz', () => {
   })
 
   it('rejects zero stress range', () => {
-    expect(analyzeWeldFatigue({ stressRange: 0 }).error).toBeTruthy()
+    expect(analyzeWeldFatigue({ stressRange: 0 }).errorKey).toBeTruthy()
   })
 
   it('analyzes HAZ', () => {
