@@ -34,6 +34,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { normalPdf } from '@/utils/distribution-pdf'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useLocale } from '@/composables/useLocale'
+import { useDarkMode, applyPlotlyTheme } from '@/composables/useDarkMode'
 
 const props = defineProps({
   mean: { type: Number, required: true },
@@ -44,6 +45,7 @@ const props = defineProps({
 
 const { pt } = useCalcPage('editor')
 const { locale } = useLocale()
+const { isDark } = useDarkMode()
 
 const chartRef = ref(null)
 const sigmaTab = ref(5)
@@ -164,20 +166,7 @@ async function render() {
     },
   ]
 
-  await plotly.newPlot(
-    chartRef.value,
-    [
-      {
-        x,
-        y,
-        type: 'scatter',
-        mode: 'lines',
-        fill: 'tozeroy',
-        name: pt('chart.distLegend', { n: sigmaTab.value }),
-        line: { color: '#3498db', width: 2 },
-        fillcolor: 'rgba(52, 152, 219, 0.12)',
-      },
-    ],
+  const layout = applyPlotlyTheme(
     {
       margin: { t: 28, r: 12, b: 48, l: 48 },
       xaxis: { title: pt('chart.xAxis'), zeroline: false, automargin: true },
@@ -204,15 +193,31 @@ async function render() {
         },
       ],
       showlegend: false,
-      paper_bgcolor: 'transparent',
-      plot_bgcolor: 'transparent',
     },
+    isDark.value,
+  )
+
+  await plotly.newPlot(
+    chartRef.value,
+    [
+      {
+        x,
+        y,
+        type: 'scatter',
+        mode: 'lines',
+        fill: 'tozeroy',
+        name: pt('chart.distLegend', { n: sigmaTab.value }),
+        line: { color: '#3498db', width: 2 },
+        fillcolor: 'rgba(52, 152, 219, 0.12)',
+      },
+    ],
+    layout,
     { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 
 watch(
-  () => [props.mean, props.processSigma, props.specMin, props.specMax, sigmaTab.value, locale.value],
+  () => [props.mean, props.processSigma, props.specMin, props.specMax, sigmaTab.value, locale.value, isDark.value],
   render,
 )
 onMounted(render)

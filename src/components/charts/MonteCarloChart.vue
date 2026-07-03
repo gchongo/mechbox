@@ -5,6 +5,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useChartI18n } from '@/composables/useChartI18n'
+import { useDarkMode, applyPlotlyTheme } from '@/composables/useDarkMode'
 
 const props = defineProps({
   results: { type: Array, default: () => [] },
@@ -16,6 +17,7 @@ const props = defineProps({
 const chartRef = ref(null)
 let plotly = null
 const { ch, locale } = useChartI18n()
+const { isDark } = useDarkMode()
 
 function chartTitle() {
   if (props.chartType === 'cdf') return ch('mcCdf')
@@ -92,23 +94,26 @@ async function render() {
   await plotly.newPlot(
     chartRef.value,
     traces,
-    {
-      title: chartTitle(),
-      margin: { t: 48, r: 24, b: 48, l: 56 },
-      shapes,
-      xaxis: { title: xAxisTitle() },
-      yaxis: {
-        title:
-          props.chartType === 'box' || props.chartType === 'scatter'
-            ? ch('mcClosedValue')
-            : ch('mcFreqProb'),
+    applyPlotlyTheme(
+      {
+        title: chartTitle(),
+        margin: { t: 48, r: 24, b: 48, l: 56 },
+        shapes,
+        xaxis: { title: xAxisTitle() },
+        yaxis: {
+          title:
+            props.chartType === 'box' || props.chartType === 'scatter'
+              ? ch('mcClosedValue')
+              : ch('mcFreqProb'),
+        },
       },
-    },
+      isDark.value,
+    ),
     { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 
-watch(() => [props.results, props.min, props.max, props.chartType, locale.value], render, { deep: true })
+watch(() => [props.results, props.min, props.max, props.chartType, locale.value, isDark.value], render, { deep: true })
 onMounted(render)
 onBeforeUnmount(() => {
   if (chartRef.value && plotly) plotly.purge(chartRef.value)

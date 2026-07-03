@@ -62,9 +62,30 @@
     background-color: rgb(17 24 39);
   }
 
+  .dark .el-table__empty-block,
+  .dark .el-table__body-wrapper,
+  .dark .el-table__footer-wrapper,
+  .dark .el-table__header-wrapper {
+    background-color: transparent;
+  }
+
+  .dark .el-table th.el-table__cell,
+  .dark .el-table td.el-table__cell {
+    background-color: inherit;
+  }
+
   .dark .el-input-number .el-input__wrapper,
-  .dark .el-input__wrapper {
+  .dark .el-input__wrapper,
+  .dark .el-textarea__inner,
+  .dark .el-select__wrapper {
     background-color: rgb(31 41 55);
+  }
+
+  /* Plotly 图表容器在暗色下不露白边 */
+  .dark .js-plotly-plot,
+  .dark .plotly,
+  .dark .plot-container {
+    background: transparent !important;
   }
 
   @media (max-width: 768px) {

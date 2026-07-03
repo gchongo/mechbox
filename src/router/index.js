@@ -233,6 +233,16 @@ const routes = [
     component: () => import('@/views/FaqView.vue'),
   },
   {
+    path: '/help',
+    name: 'help',
+    component: () => import('@/views/ToolHelpView.vue'),
+  },
+  {
+    path: '/help/:id',
+    name: 'help-tool',
+    component: () => import('@/views/ToolHelpView.vue'),
+  },
+  {
     path: '/design/powertrain',
     name: 'design-powertrain',
     component: () => import('@/views/design/PowertrainChainView.vue'),

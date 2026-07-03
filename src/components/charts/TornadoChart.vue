@@ -5,6 +5,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useChartI18n } from '@/composables/useChartI18n'
+import { useDarkMode, applyPlotlyTheme } from '@/composables/useDarkMode'
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -15,6 +16,7 @@ const props = defineProps({
 const chartRef = ref(null)
 let plotly = null
 const { ch, locale } = useChartI18n()
+const { isDark } = useDarkMode()
 
 async function render() {
   if (!chartRef.value || !props.items.length) return
@@ -69,22 +71,25 @@ async function render() {
     },
   ]
 
-  const layout = {
-    barmode: 'overlay',
-    title: { text: ch('tornadoTitle'), font: { size: 14 } },
-    xaxis: { title: ch('tornadoX'), zeroline: true, zerolinecolor: '#999' },
-    yaxis: { automargin: true },
-    shapes,
-    margin: { l: 100, r: 30, t: 40, b: 50 },
-    height: Math.max(280, names.length * 36 + 80),
-    showlegend: true,
-    legend: { orientation: 'h', y: 1.12 },
-  }
+  const layout = applyPlotlyTheme(
+    {
+      barmode: 'overlay',
+      title: { text: ch('tornadoTitle'), font: { size: 14 } },
+      xaxis: { title: ch('tornadoX'), zeroline: true },
+      yaxis: { automargin: true },
+      shapes,
+      margin: { l: 100, r: 30, t: 40, b: 50 },
+      height: Math.max(280, names.length * 36 + 80),
+      showlegend: true,
+      legend: { orientation: 'h', y: 1.12 },
+    },
+    isDark.value,
+  )
 
   await plotly.react(chartRef.value, traces, layout, { responsive: true, displayModeBar: false })
 }
 
-watch(() => [props.items, props.closedMin, props.closedMax, locale.value], render, { deep: true })
+watch(() => [props.items, props.closedMin, props.closedMax, locale.value, isDark.value], render, { deep: true })
 
 onMounted(render)
 onBeforeUnmount(() => {

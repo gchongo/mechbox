@@ -175,6 +175,7 @@ const allTools = computed(() => [
 
 const moreItems = computed(() => [
   { path: '/tools', label: t('tools.tool-map', locale.value) },
+  { path: '/help', label: t('nav.help', locale.value) },
   { path: '/tutorial', label: t('nav.tutorial', locale.value) },
   { path: '/glossary', label: t('nav.glossary', locale.value) },
   { path: '/faq', label: t('nav.faq', locale.value) },
@@ -189,7 +190,7 @@ const allToolPaths = computed(() => [
   ...toolGroups.value.material,
 ].map((item) => item.path))
 
-const morePaths = ['/tools', '/tutorial', '/glossary', '/faq', '/quiz', '/history']
+const morePaths = ['/tools', '/help', '/tutorial', '/glossary', '/faq', '/quiz', '/history']
 
 const toolsActive = computed(() => allToolPaths.value.some((p) => route.path.startsWith(p)))
 const moreActive = computed(() => morePaths.some((p) => route.path.startsWith(p)))

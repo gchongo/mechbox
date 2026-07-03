@@ -14,11 +14,13 @@
         class="!w-56"
       />
       <span class="text-xs text-gray-500">±{{ deltaPct }}%</span>
-      <el-button size="small" type="primary" :disabled="!analysis" @click="run">{{ dt('runAnalysis') }}</el-button>
+      <el-button size="small" type="primary" :disabled="!canRun" :loading="running" @click="run">
+        {{ dt('runAnalysis') }}
+      </el-button>
     </div>
 
     <div v-if="!analysis" class="rounded bg-gray-50 p-4 text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-      {{ dt('emptySensitivity') }}
+      {{ canRun ? dt('emptySensitivity', { pct: deltaPct }) : dt('noSensitivityParams') }}
     </div>
 
     <template v-else>
@@ -74,17 +76,31 @@ const { dt } = useDecisionI18n()
 const deltaPct = ref(10)
 const selectedMetric = ref(props.metrics[0])
 const analysis = ref(null)
+const running = ref(false)
 
 const metricOptions = computed(() => props.metrics)
+const canRun = computed(
+  () =>
+    Array.isArray(props.parameters) &&
+    props.parameters.length > 0 &&
+    props.baseInputs != null &&
+    typeof props.evaluate === 'function',
+)
 
 function run() {
-  analysis.value = runSensitivityAnalysis({
-    baseInputs: props.baseInputs,
-    parameters: props.parameters,
-    metrics: props.metrics,
-    evaluate: props.evaluate,
-    defaultDelta: deltaPct.value / 100,
-  })
+  if (!canRun.value) return
+  running.value = true
+  try {
+    analysis.value = runSensitivityAnalysis({
+      baseInputs: props.baseInputs,
+      parameters: props.parameters,
+      metrics: props.metrics,
+      evaluate: props.evaluate,
+      defaultDelta: deltaPct.value / 100,
+    })
+  } finally {
+    running.value = false
+  }
 }
 
 watch(() => props.metrics, () => {

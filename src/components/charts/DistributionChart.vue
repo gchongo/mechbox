@@ -7,6 +7,7 @@ import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { buildDistributionCurve } from '@/utils/distribution-pdf'
 import { useChartI18n } from '@/composables/useChartI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useDarkMode, applyPlotlyTheme } from '@/composables/useDarkMode'
 
 const props = defineProps({
   distribution: { type: String, default: 'normal' },
@@ -17,6 +18,7 @@ const chartRef = ref(null)
 let plotly = null
 const { ch, locale } = useChartI18n()
 const { ol } = useOptionsI18n()
+const { isDark } = useDarkMode()
 
 async function render() {
   if (!chartRef.value) return
@@ -39,14 +41,15 @@ async function render() {
         fillcolor: 'rgba(52, 152, 219, 0.15)',
       },
     ],
-    {
-      title: { text: ch('distributionPdfTitle', { dist: distLabel }), font: { size: 14 } },
-      margin: { t: 48, r: 24, b: 48, l: 56 },
-      xaxis: { title: ch('deviationX'), zeroline: true },
-      yaxis: { title: 'f(x)', rangemode: 'tozero' },
-      paper_bgcolor: '#fafafa',
-      plot_bgcolor: '#ffffff',
-    },
+    applyPlotlyTheme(
+      {
+        title: { text: ch('distributionPdfTitle', { dist: distLabel }), font: { size: 14 } },
+        margin: { t: 48, r: 24, b: 48, l: 56 },
+        xaxis: { title: ch('deviationX'), zeroline: true },
+        yaxis: { title: 'f(x)', rangemode: 'tozero' },
+      },
+      isDark.value,
+    ),
     { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
@@ -60,7 +63,7 @@ async function exportPng(filename) {
   link.click()
 }
 
-watch(() => [props.distribution, props.tolerance, locale.value], render)
+watch(() => [props.distribution, props.tolerance, locale.value, isDark.value], render)
 onMounted(render)
 onBeforeUnmount(() => {
   if (chartRef.value && plotly) plotly.purge(chartRef.value)

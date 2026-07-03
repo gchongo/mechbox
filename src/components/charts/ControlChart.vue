@@ -6,6 +6,7 @@
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { calcControlLimits } from '@/utils/monte-carlo'
 import { useChartI18n } from '@/composables/useChartI18n'
+import { useDarkMode, applyPlotlyTheme } from '@/composables/useDarkMode'
 
 const props = defineProps({
   values: { type: Array, default: () => [] },
@@ -15,6 +16,7 @@ const props = defineProps({
 const chartRef = ref(null)
 let plotly = null
 const { ch, locale } = useChartI18n()
+const { isDark } = useDarkMode()
 
 async function render() {
   if (!chartRef.value || !props.values.length) return
@@ -70,18 +72,21 @@ async function render() {
   await plotly.newPlot(
     chartRef.value,
     traces,
-    {
-      title: ch('controlTitle'),
-      margin: { t: 48, r: 24, b: 48, l: 56 },
-      xaxis: { title: ch('sampleIndex') },
-      yaxis: { title: ch('measuredValue') },
-      legend: { orientation: 'h', y: -0.2 },
-    },
+    applyPlotlyTheme(
+      {
+        title: ch('controlTitle'),
+        margin: { t: 48, r: 24, b: 48, l: 56 },
+        xaxis: { title: ch('sampleIndex') },
+        yaxis: { title: ch('measuredValue') },
+        legend: { orientation: 'h', y: -0.2 },
+      },
+      isDark.value,
+    ),
     { responsive: true, displaylogo: false, displayModeBar: false },
   )
 }
 
-watch(() => [props.values, props.target, locale.value], render, { deep: true })
+watch(() => [props.values, props.target, locale.value, isDark.value], render, { deep: true })
 onMounted(render)
 onBeforeUnmount(() => {
   if (chartRef.value && plotly) plotly.purge(chartRef.value)

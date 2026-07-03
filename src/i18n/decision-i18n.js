@@ -34,7 +34,8 @@ export const decisionZh = {
   status: '状态',
   pick: '选用',
 
-  emptySensitivity: '点击“运行分析”开始扰动 ±10%',
+  emptySensitivity: '点击“运行分析”开始扰动 ±{pct}%',
+  noSensitivityParams: '当前工具未配置可扰动参数，无法做敏感度分析',
   runAnalysis: '运行分析',
   trackMetric: '追踪指标',
   parameter: '参数',
@@ -99,7 +100,8 @@ export const decisionEn = {
   status: 'Status',
   pick: 'Pick',
 
-  emptySensitivity: 'Click "Run analysis" to perturb ±10%',
+  emptySensitivity: 'Click "Run analysis" to perturb ±{pct}%',
+  noSensitivityParams: 'No perturbable parameters configured for this tool',
   runAnalysis: 'Run analysis',
   trackMetric: 'Track metric',
   parameter: 'Parameter',

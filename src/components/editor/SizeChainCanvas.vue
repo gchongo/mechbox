@@ -44,8 +44,11 @@ import { unitLabel } from '@/utils/unit'
 import { getGdtCalcMode } from '@/utils/size-chain'
 import { calcNominalClosed } from '@/utils/ring-tolerance'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useDarkMode, canvasPalette } from '@/composables/useDarkMode'
 
 const { pt, locale } = useCalcPage('editor')
+const { isDark } = useDarkMode()
+const palette = computed(() => canvasPalette(isDark.value))
 
 const props = defineProps({
   closedRing: { type: Object, required: true },
@@ -106,7 +109,7 @@ function drawArrow(ctx, x1, y1, x2, y2, color, lineWidth = 2, dashed = false) {
 }
 
 function drawConnector(ctx, x1, y, x2) {
-  ctx.strokeStyle = '#d5dbe1'
+  ctx.strokeStyle = palette.value.connector
   ctx.lineWidth = 1
   ctx.setLineDash([4, 3])
   ctx.beginPath()
@@ -141,12 +144,13 @@ function drawVectorChain(ctx, height, unitStr) {
   const availH = baselineY - topPad
   const scale = (availH * 0.82) / maxAbs
 
-  // 绘图区浅底
-  ctx.fillStyle = '#fafbfc'
+  const colors = palette.value
+  // 绘图区底色（跟随主题）
+  ctx.fillStyle = colors.panel
   ctx.fillRect(padX - 28, topPad - 16, width - padX * 2 + 56, baselineY - topPad + 36)
 
   // 基准面
-  ctx.strokeStyle = '#34495e'
+  ctx.strokeStyle = colors.baseline
   ctx.lineWidth = 2.5
   ctx.setLineDash([])
   ctx.beginPath()
@@ -154,7 +158,7 @@ function drawVectorChain(ctx, height, unitStr) {
   ctx.lineTo(width - padX + 28, baselineY)
   ctx.stroke()
 
-  ctx.fillStyle = '#7f8c8d'
+  ctx.fillStyle = colors.muted
   ctx.font = '11px sans-serif'
   ctx.textAlign = 'left'
   ctx.fillText(pt('canvas.datumPlane'), padX - 26, baselineY + 14)
@@ -175,7 +179,7 @@ function drawVectorChain(ctx, height, unitStr) {
 
     const label = ring.name?.trim() || `A${i + 1}`
     const tipY = Math.min(yStart, yEnd)
-    ctx.fillStyle = '#2c3e50'
+    ctx.fillStyle = colors.label
     ctx.font = 'bold 13px sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText(`${label} = ${ring.size ?? 0}`, cx, tipY - 10)
@@ -199,7 +203,7 @@ function drawVectorChain(ctx, height, unitStr) {
   const a0TipY = Math.min(yHead, baselineY)
   ctx.fillText(`${a0Label} = ${a0 != null ? a0.toFixed(2) : '?'}`, closeCx, a0TipY - 10)
 
-  ctx.fillStyle = '#555'
+  ctx.fillStyle = colors.target
   ctx.font = '12px sans-serif'
   ctx.textAlign = 'right'
   ctx.fillText(
@@ -214,11 +218,15 @@ function drawVectorChain(ctx, height, unitStr) {
 }
 
 function draw2dPosition(ctx, height, unitStr) {
+  const colors = palette.value
   const cx = width / 2
   const cy = height / 2 - 20
   const r = 55
 
-  ctx.strokeStyle = '#bdc3c7'
+  ctx.fillStyle = colors.panel
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.strokeStyle = colors.grid
   ctx.lineWidth = 1
   ctx.setLineDash([4, 4])
   ctx.strokeRect(cx - 90, cy - 70, 180, 140)
@@ -240,7 +248,7 @@ function draw2dPosition(ctx, height, unitStr) {
   drawArrow(ctx, cx - 70, cy + 80, cx + 70, cy + 80, '#3498db')
   drawArrow(ctx, cx + 100, cy - 50, cx + 100, cy + 50, '#2ecc71')
 
-  ctx.fillStyle = '#555'
+  ctx.fillStyle = colors.target
   ctx.font = '11px sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText(pt('canvas.posX'), cx, cy + 96)
@@ -256,10 +264,14 @@ function draw2dPosition(ctx, height, unitStr) {
 }
 
 function drawRadial(ctx, height, unitStr) {
+  const colors = palette.value
   const cx = width / 2
   const cy = height / 2 - 10
 
-  ctx.strokeStyle = '#bdc3c7'
+  ctx.fillStyle = colors.panel
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.strokeStyle = colors.grid
   ctx.lineWidth = 2
   ctx.beginPath()
   ctx.moveTo(cx - 120, cy)
@@ -297,10 +309,11 @@ function draw() {
   const unitStr = unit.value
   const list = rings.value
 
+  const colors = palette.value
   if (!list.length) {
-    ctx.fillStyle = '#fafbfc'
+    ctx.fillStyle = colors.panel
     ctx.fillRect(40, 40, width - 80, height - 80)
-    ctx.fillStyle = '#999'
+    ctx.fillStyle = colors.emptyText
     ctx.font = '14px sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText(pt('canvas.emptyHint1'), width / 2, height / 2 - 8)
@@ -315,7 +328,7 @@ function draw() {
     drawRadial(ctx, height, unitStr)
   } else if (gdtMode.value) {
     drawVectorChain(ctx, height, unitStr)
-    ctx.fillStyle = '#7f8c8d'
+    ctx.fillStyle = colors.muted
     ctx.font = '11px sans-serif'
     ctx.textAlign = 'right'
     ctx.fillText(pt('canvas.modeLabel', { label: gdtMode.value.label }), width - 12, 18)
@@ -325,7 +338,7 @@ function draw() {
 }
 
 watch(
-  () => [props.closedRing, props.componentRings, props.rssTolerance, props.analysisTypeId, locale.value],
+  () => [props.closedRing, props.componentRings, props.rssTolerance, props.analysisTypeId, locale.value, isDark.value],
   draw,
   { deep: true },
 )

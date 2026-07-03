@@ -47,6 +47,8 @@ export const seoRoutesZh = {
   fit: 'ISO 286 轴孔配合查询，公差带与间隙/过盈计算。',
   'gdt-stack': 'GD&T 形位公差栈分析，多特征 RSS/极值叠加与贡献度。',
   faq: '尺寸链、RSS、GD&T 与 MechBox 使用常见问题解答。',
+  help: '各计算工具的详细使用步骤、原理、公式与注意点，适合入门用户与学生。',
+  'help-tool': '单个工具的操作说明、原理与公式参考。',
 }
 
 export const seoRoutesEn = {
@@ -96,4 +98,6 @@ export const seoRoutesEn = {
   fit: 'ISO 286 shaft/hole fit lookup with clearance and interference limits.',
   'gdt-stack': 'GD&T tolerance stack-up with RSS/worst-case and contribution analysis.',
   faq: 'FAQ on tolerance stacks, RSS, GD&T, and using MechBox.',
+  help: 'Step-by-step guides, principles, formulas, and tips for every tool — for beginners and students.',
+  'help-tool': 'How-to, principles, and formulas for a specific tool.',
 }

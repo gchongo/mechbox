@@ -74,6 +74,7 @@ export const TOOL_GROUPS = [
     id: 'reference',
     label: '参考与文档',
     tools: [
+      { path: '/help', label: '工具帮助', desc: '步骤 · 原理 · 公式 · 注意点', icon: 'Reading', keywords: ['帮助', '文档', '入门', '学生', '教程'] },
       { path: '/manual', label: '公式手册', desc: '常用公式速查', icon: 'Notebook', keywords: ['公式', '手册'] },
       { path: '/glossary', label: '术语表', desc: '机械术语解释', icon: 'Collection', keywords: ['术语', 'glossary'] },
       { path: '/cases', label: '案例库', desc: '尺寸链示例', icon: 'FolderOpened', keywords: ['案例'] },
