@@ -37,6 +37,9 @@ export const toolDescsZh = {
   tutorial: '使用指南',
   faq: 'FAQ',
   history: '分析历史',
+  'design/projects': '多链归档 · 方案管理',
+  'design/powertrain': '轴 → 轴承 → 键 联动 + 链级报告',
+  'design/bolt-joint': '预紧 → 螺栓组 → 焊缝 联动',
 }
 
 export const toolDescsEn = {
@@ -76,4 +79,7 @@ export const toolDescsEn = {
   tutorial: 'Getting started guide',
   faq: 'FAQ',
   history: 'Analysis history',
+  'design/projects': 'Multi-chain archive · schemes',
+  'design/powertrain': 'Shaft → bearing → key + chain report',
+  'design/bolt-joint': 'Preload → bolt group → weld',
 }

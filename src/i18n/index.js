@@ -93,6 +93,7 @@ const zh = {
   },
   content: contentZh,
   toolGroups: {
+    'design-chain': '设计链（联动分析）',
     chain: '尺寸链与强度',
     drive: '传动与结构',
     material: '材料与工艺',
@@ -144,6 +145,9 @@ const zh = {
     cases: '案例库',
     tutorial: '教程',
     faq: '常见问题',
+    'design/projects': '设计项目',
+    'design/powertrain': '轴系设计链',
+    'design/bolt-joint': '螺栓连接设计链',
   },
   toolDescs: toolDescsZh,
   statTools: {
@@ -306,6 +310,7 @@ const en = {
   },
   content: contentEn,
   toolGroups: {
+    'design-chain': 'Design chains (linked analysis)',
     chain: 'Tolerance stack & strength',
     drive: 'Drives & structures',
     material: 'Materials & process',
@@ -357,6 +362,9 @@ const en = {
     cases: 'Case library',
     tutorial: 'Tutorials',
     faq: 'FAQ',
+    'design/projects': 'Design projects',
+    'design/powertrain': 'Powertrain design chain',
+    'design/bolt-joint': 'Bolt-joint design chain',
   },
   toolDescs: toolDescsEn,
   statTools: {
@@ -472,9 +480,12 @@ export function t(key, locale = 'zh', params) {
   return text
 }
 
-export function localizedToolLabel(path, locale = 'zh') {
+export function localizedToolLabel(path, locale = 'zh', fallback) {
   const key = toolKeyFromPath(path)
-  return t(`tools.${key}`, locale) || path
+  const labelKey = `tools.${key}`
+  const label = t(labelKey, locale)
+  if (label !== labelKey) return label
+  return fallback ?? path
 }
 
 /** Localize label + desc for a catalog tool (path-based or stat query tool). */
@@ -484,12 +495,13 @@ export function localizedTool(tool, locale = 'zh') {
   if (statNode) {
     return localizedStatTool(tool, locale)
   }
-  const label = localizedToolLabel(tool.path, locale)
-  const desc = t(`toolDescs.${key}`, locale)
+  const label = localizedToolLabel(tool.path, locale, tool.label)
+  const descKey = `toolDescs.${key}`
+  const desc = t(descKey, locale)
   return {
     ...tool,
     label,
-    desc: desc !== `toolDescs.${key}` ? desc : tool.desc,
+    desc: desc !== descKey ? desc : tool.desc,
   }
 }
 
