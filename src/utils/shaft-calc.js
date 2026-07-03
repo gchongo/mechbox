@@ -53,7 +53,7 @@ export function analyzeShaftTorsion(input) {
     allow = mat.tauAllow
   }
   if (allow == null && calcMode !== 'simple' && input.yieldStrength) {
-    allow = 0.577 * input.yieldStrength
+    allow = 0.5 * input.yieldStrength
   }
   if (allow == null && calcMode === 'simple') {
     return { errorKey: 'material_required', calcMode }

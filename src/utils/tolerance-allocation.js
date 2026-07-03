@@ -3,19 +3,16 @@ import { normalizeFactors, verifyAllocation } from './tolerance-allocation-helpe
 
 export { normalizeFactors, verifyAllocation } from './tolerance-allocation-helpers'
 
-/** 等贡献 RSS：各环 (Tᵢ/fᵢ)² 相等 */
+/** 等贡献 RSS：各环 (Tᵢ·fᵢ)² 相等 → Tᵢ = T / (fᵢ·√n) */
 export function equalEffectAllocation(targetTolerance, rings) {
   const items = normalizeFactors(rings)
-  const denom = Math.sqrt(items.reduce((s, r) => s + r.factor ** 2, 0))
-  if (!denom) {
-    return items.map((r) => ({ name: r.name, tolerance: 0, factor: r.factor, cost: r.cost }))
-  }
-  const k = targetTolerance / denom
+  const n = items.length || 1
+  const scale = targetTolerance / Math.sqrt(n)
   return items.map((r) => ({
     name: r.name,
     factor: r.factor,
     cost: r.cost,
-    tolerance: k * r.factor,
+    tolerance: scale / Math.max(r.factor, 1e-9),
   }))
 }
 
@@ -103,7 +100,7 @@ export const ALLOCATION_METHODS = {
   'equal-effect': {
     id: 'equal-effect',
     label: '等贡献 RSS',
-    desc: '各环方差贡献相等，Tᵢ = T·fᵢ/√(Σf²)',
+    desc: '各环 RSS 贡献 Tᵢ·fᵢ 相等，Tᵢ = T/(fᵢ·√n)',
     allocate: equalEffectAllocation,
   },
   'equal-tol': {

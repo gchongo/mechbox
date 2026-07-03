@@ -89,7 +89,7 @@ export function calcPlateBucklingStress(input) {
   return result
 }
 
-/** 圆筒壳外压屈曲（简化） */
+/** 圆筒壳外压屈曲（Donnell 长筒简化） */
 export function calcCylinderExternalPressure(input) {
   const E = input.elasticModulus ?? 210000
   const nu = input.poisson ?? 0.3
@@ -97,8 +97,9 @@ export function calcCylinderExternalPressure(input) {
   const R = input.radius ?? 100
   const L = input.length ?? 500
 
-  const sigmaCr = (E / Math.sqrt(3 * (1 - nu ** 2))) * (t / R)
-  const pCr = (sigmaCr * t) / R
+  const denom = Math.sqrt(3 * (1 - nu ** 2)) * R ** 3
+  const pCr = denom > 0 ? (2 * E * t ** 3) / denom : 0
+  const sigmaCr = t > 0 ? (pCr * R) / t : 0
 
   return {
     criticalStress: sigmaCr,
@@ -106,5 +107,6 @@ export function calcCylinderExternalPressure(input) {
     radius: R,
     thickness: t,
     length: L,
+    estimateOnly: true,
   }
 }

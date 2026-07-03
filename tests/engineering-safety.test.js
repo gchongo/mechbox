@@ -7,7 +7,9 @@ import {
   evaluateFitThermal,
   analyzeFit,
 } from '@/utils/iso-286-calc'
-import { calcRodBucklingLoad } from '@/utils/hydraulic-calc'
+import { calcRodBucklingLoad, calcCylinderForce, calcCylinderArea } from '@/utils/hydraulic-calc'
+import { calcKeyCrushStress } from '@/utils/key-calc'
+import { calcToleranceLimits } from '@/utils/iso-286-calc'
 import { analyzeFatigue } from '@/utils/fatigue-calc'
 import { analyzeGearStrength } from '@/utils/gear-calc'
 import { combineStackAdvice, evaluateStackFromRings, assessMcWorstGap } from '@/utils/stack-method-advice'
@@ -48,6 +50,12 @@ describe('buildSigmaSummary integration', () => {
 })
 
 describe('iso-286 fit pass', () => {
+  it('M and N hole deviations differ at same grade', () => {
+    const m = calcToleranceLimits(25, 'M6', 'hole')
+    const n = calcToleranceLimits(25, 'N6', 'hole')
+    expect(m.lowerDeviation).not.toBe(n.lowerDeviation)
+  })
+
   it('complete mode validates geometry', () => {
     const r = analyzeFit(25, 'H7', 'g6', 'complete')
     expect(r.pass).toBe(true)
@@ -67,6 +75,26 @@ describe('iso-286 fit pass', () => {
     const t = evaluateFitThermal('interference', 0.01, 0.02, 100)
     expect(t.pass).toBe(false)
     expect(t.thermalRiskKey).toBe('thermal_clearance_risk')
+  })
+})
+
+describe('hydraulic cylinder force', () => {
+  it('uses p×A (MPa·mm² = N) without spurious /1000', () => {
+    const area = calcCylinderArea(100).bore
+    const f = calcCylinderForce(16, area)
+    expect(f).toBeCloseTo(16 * (Math.PI * 100 ** 2) / 4, 0)
+    expect(f).toBeGreaterThan(100_000)
+  })
+})
+
+describe('key crush stress', () => {
+  it('uses key height in crush area, not width', () => {
+    const force = 10000
+    const hubLength = 40
+    const withHeight = calcKeyCrushStress(force, 7, hubLength)
+    const withWidth = calcKeyCrushStress(force, 8, hubLength)
+    expect(withHeight).not.toBeCloseTo(withWidth)
+    expect(withHeight).toBeCloseTo(force / (7 * hubLength / 2), 6)
   })
 })
 
@@ -224,6 +252,18 @@ describe('tolerance allocation', () => {
     expect(result.verify.pass).toBe(true)
     expect(result.verify.stacked).toBeLessThanOrEqual(0.1 + 1e-9)
   })
+
+  it('equal effect shrinks tolerance when factor > 1', () => {
+    const rings = [
+      { name: 'A', factor: 1, cost: 1 },
+      { name: 'B', factor: 2, cost: 1 },
+    ]
+    const result = runToleranceAllocation('equal-effect', 0.1, rings)
+    expect(result.verify.pass).toBe(true)
+    const tolA = result.allocated.find((a) => a.name === 'A').tolerance
+    const tolB = result.allocated.find((a) => a.name === 'B').tolerance
+    expect(tolA).toBeCloseTo(tolB * 2, 6)
+  })
 })
 
 describe('shaft combined strength', () => {
@@ -247,6 +287,29 @@ describe('shaft combined strength', () => {
       yieldStrength: 235,
     })
     expect(r.allowableStress).toBeCloseTo(235 / Math.sqrt(3), 1)
+  })
+})
+
+describe('bearing life temperature factor', () => {
+  it('applies a2 as exponent in professional mode (ball p=3)', () => {
+    const base = {
+      calcMode: 'professional',
+      dynamicLoad: 30000,
+      radialLoad: 5000,
+      axialLoad: 0,
+      x: 1,
+      y: 0,
+      rpm: 1500,
+      targetHours: 10000,
+      reliability: 90,
+      lifeCondition: 'standard',
+      operatingTemp: 150,
+    }
+    const r = analyzeBearingLife(base)
+    const a2 = 0.9
+    const expectedLnm = r.l10MillionRev * a2 ** 3
+    expect(r.temperatureFactor).toBe(a2)
+    expect(r.modifiedLifeMillionRev).toBeCloseTo(expectedLnm, 6)
   })
 })
 

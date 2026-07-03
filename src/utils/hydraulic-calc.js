@@ -9,7 +9,8 @@ export function calcCylinderArea(diameter, rodDiameter = 0) {
 }
 
 export function calcCylinderForce(pressure, area) {
-  return (pressure * area) / 1000
+  // p (MPa) × A (mm²) = N  (1 MPa = 1 N/mm²)
+  return pressure * area
 }
 
 export function calcFlowRate(area, velocity) {
@@ -88,8 +89,8 @@ export function analyzeHydraulicCylinder(input) {
       result.pass = result.loadPass
     }
     if (load > 0) {
-      result.requiredPressureExtend = (load * 1000) / areas.bore
-      result.requiredPressureRetract = (load * 1000) / areas.annular
+      result.requiredPressureExtend = load / areas.bore
+      result.requiredPressureRetract = load / areas.annular
     }
   }
 

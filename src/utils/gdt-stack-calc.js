@@ -181,7 +181,11 @@ export function analyzeGdtStack(input) {
       toleranceModifier,
       bonusTolerance,
     })
-    result.worstCaseMargin = round(closedRing.max - result.worstCase.totalTolerance, 4)
+    const wc = result.worstCase
+    result.worstCaseMargin = round(
+      Math.min(closedRing.max - wc.upper, wc.lower - closedRing.min),
+      4,
+    )
     result.pass = result.pass && result.worstCaseMargin >= 0
   }
 

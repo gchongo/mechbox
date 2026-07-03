@@ -63,7 +63,7 @@ export function analyzeGearStrength(input) {
   const matKey = input.material ?? 'st-soft'
   const mat = GEAR_MATERIALS[matKey] ?? GEAR_MATERIALS['st-soft']
   const bendingSf = input.bendingSafetyFactor ?? 1.4
-  const contactSf = input.contactSafetyFactor ?? 1.0
+  const contactSf = input.contactSafetyFactor ?? 1.2
   const allowBend = input.allowBending ?? mat.sigmaFlim / bendingSf
   const allowContact = input.allowContact ?? mat.sigmaHlim / contactSf
 

@@ -129,6 +129,22 @@ export function calculateSizeChain(closedRing, componentRings, method = 'rss', o
       options.distribution ?? 'normal',
       options.skewness ?? 0,
     )
+  } else if (method === 'sigma6-rss') {
+    const nominal = componentRings.reduce((sum, ring) => {
+      const sign = ring.type === 'increasing' ? 1 : -1
+      return sum + sign * ring.size * (ring.factor ?? 1)
+    }, 0)
+    const tolerances = componentRings.map((r) => ({
+      tolerance: r.tolerance,
+      factor: r.factor ?? 1,
+    }))
+    const totalTolerance = sigma6RssMethod(tolerances, options.distribution ?? 'normal')
+    limits = {
+      nominal,
+      upper: nominal + totalTolerance / 2,
+      lower: nominal - totalTolerance / 2,
+      totalTolerance,
+    }
   } else {
     limits = calculateRssLimits(componentRings)
   }

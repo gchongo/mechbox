@@ -23,8 +23,8 @@ export function calcKeyShearStress(force, keyWidth, keyLength) {
   return force / area
 }
 
-export function calcKeyCrushStress(force, keyWidth, hubLength) {
-  const area = keyWidth * (hubLength / 2)
+export function calcKeyCrushStress(force, keyHeight, hubLength) {
+  const area = keyHeight * (hubLength / 2)
   if (!area) return 0
   return force / area
 }
@@ -48,7 +48,7 @@ export function analyzeKeyConnection(input) {
   const force = input.tangentialForce ?? calcTangentialForce(input.torque ?? 0, shaftD)
   const forcePerKey = force / keyCount
   const tau = calcKeyShearStress(forcePerKey, keyWidth, keyLength)
-  const sigmaC = calcKeyCrushStress(forcePerKey, keyWidth, hubLength)
+  const sigmaC = calcKeyCrushStress(forcePerKey, keyHeight, hubLength)
 
   const allowTau = input.allowShear ?? 100
   const allowCrush = input.allowCrush ?? 150
@@ -76,7 +76,7 @@ export function analyzeKeyConnection(input) {
     result.shearUtilization = allowTau ? tau / allowTau : 0
     result.crushUtilization = allowCrush ? sigmaC / allowCrush : 0
     result.minKeyLengthShear = allowTau ? forcePerKey / (keyWidth * allowTau) : 0
-    result.minKeyLengthCrush = allowCrush ? (2 * forcePerKey) / (keyWidth * allowCrush) : 0
+    result.minKeyLengthCrush = allowCrush ? (2 * forcePerKey) / (keyHeight * allowCrush) : 0
     result.recommendedLength = Math.max(result.minKeyLengthShear, result.minKeyLengthCrush)
     result.lengthPass = keyLength >= result.recommendedLength
     result.pass = result.shearPass && result.crushPass && result.lengthPass
