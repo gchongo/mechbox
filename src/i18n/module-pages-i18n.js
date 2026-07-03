@@ -321,6 +321,9 @@ export const modulePagesZh = {
       customK: '自定义 K',
       customKHint: '可选，覆盖分布 K',
       iterations: '模拟次数',
+      sizeListPh: '40,15,55.25（增+/减- 见类型）',
+      typeListPh: 'dec,dec,inc（dec=减环,inc=增环）',
+      ringName: '环{n}',
     },
     results: {
       mean: '均值',
@@ -695,6 +698,9 @@ export const modulePagesEn = {
       customK: 'Custom K',
       customKHint: 'Optional — overrides distribution K',
       iterations: 'Iterations',
+      sizeListPh: '40,15,55.25 (inc/dec see types)',
+      typeListPh: 'dec,dec,inc (dec=dec, inc=inc)',
+      ringName: 'Ring {n}',
     },
     results: {
       mean: 'Mean',

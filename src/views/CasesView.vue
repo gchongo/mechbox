@@ -4,7 +4,7 @@
     <p class="mb-6 text-gray-600">{{ ct('cases.subtitle') }}</p>
     <div class="grid gap-4 md:grid-cols-2">
       <div
-        v-for="item in CASE_PRESETS"
+        v-for="item in casePresets"
         :key="item.id"
         class="card-panel cursor-pointer transition-shadow hover:shadow-md"
         @click="loadCase(item)"
@@ -19,11 +19,11 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { CASE_PRESETS, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+import { prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
 import { useContentI18n } from '@/composables/useContentI18n'
 
 const router = useRouter()
-const { ct } = useContentI18n()
+const { ct, casePresets } = useContentI18n()
 
 function loadCase(item) {
   sessionStorage.setItem(CASE_STORAGE_KEY, JSON.stringify(prepareCaseForEditor(item)))

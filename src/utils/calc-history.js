@@ -2,6 +2,7 @@
  * 全局计算历史 — 各工具页结果写入统一历史存储
  */
 import { saveAnalysis } from '@/utils/storage'
+import { t, localizedToolLabel } from '@/i18n'
 
 export const TOOL_META = {
   editor: { label: '尺寸链', route: '/editor' },
@@ -35,11 +36,19 @@ export function getToolRoute(tool) {
   return TOOL_META[tool]?.route ?? null
 }
 
-export function formatHistorySource(record) {
+export function formatHistorySource(record, locale = 'zh') {
   if (record.source === 'tool') {
-    return record.data?.toolLabel ?? TOOL_META[record.tool]?.label ?? '工具'
+    const route = getToolRoute(record.tool)
+    if (route) return localizedToolLabel(route, locale)
+    return record.data?.toolLabel ?? t('content.history.sourceTool', locale)
   }
-  return record.data?.selectedType?.name ? '尺寸链' : '尺寸链'
+  return t('content.history.sourceEditor', locale)
+}
+
+export function formatHistoryStatus(status, locale = 'zh') {
+  if (status === 'pass') return t('content.history.statusPass', locale)
+  if (status === 'fail') return t('content.history.statusFail', locale)
+  return t('content.history.statusDraft', locale)
 }
 
 export function buildSummaryRows(record) {

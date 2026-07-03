@@ -6,6 +6,12 @@ import { FORMULAS } from '@/constants/formulas'
 import { faqEn, manualCategoryZh } from '@/i18n/content-i18n'
 import { glossaryEn } from '@/i18n/glossary-i18n'
 import { manualEnById, manualCategoryEn } from '@/i18n/manual-i18n'
+import { tutorialsEn } from '@/i18n/tutorials-i18n'
+import { quizEn } from '@/i18n/quiz-i18n'
+import { casesEn } from '@/i18n/cases-i18n'
+import { TUTORIALS } from '@/constants/tutorials'
+import { QUIZ_QUESTIONS } from '@/constants/quiz'
+import { CASE_PRESETS } from '@/constants/cases'
 
 export function useContentI18n() {
   const { locale, t } = useLocale()
@@ -77,14 +83,49 @@ export function useContentI18n() {
     )
   }
 
+  const tutorials = computed(() => {
+    if (locale.value !== 'en') return TUTORIALS
+    return TUTORIALS.map((item) => {
+      const en = tutorialsEn[item.id]
+      if (!en) return item
+      return { ...item, ...en, sections: en.sections ?? item.sections }
+    })
+  })
+
+  const quizQuestions = computed(() => {
+    if (locale.value !== 'en') return QUIZ_QUESTIONS
+    return QUIZ_QUESTIONS.map((item) => {
+      const en = quizEn[item.id]
+      if (!en) return item
+      return { ...item, ...en, options: en.options ?? item.options }
+    })
+  })
+
+  const casePresets = computed(() => {
+    if (locale.value !== 'en') return CASE_PRESETS
+    return CASE_PRESETS.map((item) => {
+      const en = casesEn[item.id]
+      if (!en) return item
+      return { ...item, title: en.title, desc: en.desc, type: en.type }
+    })
+  })
+
+  function exportFilename(key, params) {
+    return ct(`export.${key}`, params)
+  }
+
   return {
     locale,
     ct,
     faqItems,
     glossaryTerms,
     formulas,
+    tutorials,
+    quizQuestions,
+    casePresets,
     manualCategoryLabel,
     filterFormulas,
     filterGlossary,
+    exportFilename,
   }
 }

@@ -1,11 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">练习题库</h1>
-    <p class="mb-6 text-gray-600">共 {{ questions.length }} 道尺寸链基础题，提交后自动判题</p>
+    <h1 class="page-title">{{ ct('quiz.title') }}</h1>
+    <p class="mb-6 text-gray-600">{{ ct('quiz.subtitle', { n: questions.length }) }}</p>
 
     <div v-if="submitted" class="card-panel mb-6">
       <p class="text-lg font-semibold">
-        得分：
+        {{ ct('quiz.score') }}
         <span :class="scorePercent >= 80 ? 'text-success' : scorePercent >= 60 ? 'text-warning' : 'text-error'">
           {{ correctCount }} / {{ questions.length }}（{{ scorePercent }}%）
         </span>
@@ -30,7 +30,7 @@
         </el-radio-group>
         <div v-if="submitted" class="mt-3 rounded bg-gray-50 p-3 text-sm">
           <p :class="isCorrect(q) ? 'text-success' : 'text-error'">
-            {{ isCorrect(q) ? '✓ 正确' : '✗ 正确答案：' }}<MathContent v-if="!isCorrect(q)" :text="q.answerLabel" />
+            {{ isCorrect(q) ? ct('quiz.correct') : ct('quiz.wrongPrefix') }}<MathContent v-if="!isCorrect(q)" :text="q.answerLabel" />
           </p>
           <MathContent :text="q.explain" class="mt-1 text-gray-600" />
         </div>
@@ -39,12 +39,12 @@
 
     <div class="mt-6 flex gap-3">
       <el-button type="primary" :disabled="submitted" @click="submit">
-        {{ submitted ? '已提交' : '提交判题' }}
+        {{ submitted ? ct('quiz.submitted') : ct('quiz.submit') }}
       </el-button>
-      <el-button v-if="submitted" @click="reset">重新练习</el-button>
+      <el-button v-if="submitted" @click="reset">{{ ct('quiz.reset') }}</el-button>
     </div>
     <p v-if="!submitted && unansweredCount > 0" class="mt-2 text-sm text-warning">
-      还有 {{ unansweredCount }} 题未作答
+      {{ ct('quiz.unanswered', { n: unansweredCount }) }}
     </p>
   </div>
 </template>
@@ -52,30 +52,31 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { QUIZ_QUESTIONS } from '@/constants/quiz'
+import { useContentI18n } from '@/composables/useContentI18n'
 
-const questions = QUIZ_QUESTIONS
+const { ct, quizQuestions } = useContentI18n()
+const questions = quizQuestions
 const submitted = ref(false)
 const answers = reactive({})
 
 const unansweredCount = computed(
-  () => questions.filter((q) => !answers[q.id]).length,
+  () => questions.value.filter((q) => !answers[q.id]).length,
 )
 
 const correctCount = computed(
-  () => questions.filter((q) => answers[q.id] === q.answer).length,
+  () => questions.value.filter((q) => answers[q.id] === q.answer).length,
 )
 
 const scorePercent = computed(() =>
-  Math.round((correctCount.value / questions.length) * 100),
+  Math.round((correctCount.value / questions.value.length) * 100),
 )
 
 const scoreMessage = computed(() => {
   const p = scorePercent.value
-  if (p === 100) return '满分！尺寸链基础掌握扎实。'
-  if (p >= 80) return '良好，建议复习错题解析。'
-  if (p >= 60) return '及格，建议结合教程和案例再练习。'
-  return '需加强学习，请查看教程和公式手册。'
+  if (p === 100) return ct('quiz.scorePerfect')
+  if (p >= 80) return ct('quiz.scoreGood')
+  if (p >= 60) return ct('quiz.scorePass')
+  return ct('quiz.scoreLow')
 })
 
 function isCorrect(q) {
@@ -84,16 +85,16 @@ function isCorrect(q) {
 
 function submit() {
   if (unansweredCount.value > 0) {
-    ElMessage.warning(`还有 ${unansweredCount.value} 题未作答`)
+    ElMessage.warning(ct('quiz.unanswered', { n: unansweredCount.value }))
     return
   }
   submitted.value = true
-  ElMessage.success(`判题完成：${correctCount.value}/${questions.length}`)
+  ElMessage.success(ct('quiz.submitDone', { correct: correctCount.value, total: questions.value.length }))
 }
 
 function reset() {
   submitted.value = false
-  questions.forEach((q) => {
+  questions.value.forEach((q) => {
     delete answers[q.id]
   })
 }

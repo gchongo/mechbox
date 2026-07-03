@@ -182,11 +182,13 @@ import { exportToolReportPdf } from '@/utils/export'
 import { GDT_STACK_STORAGE_KEY, deserializeGdtStackPayload } from '@/constants/editor-bridge'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useContentI18n } from '@/composables/useContentI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const route = useRoute()
 const { pt, pf, pr, fc, ct, locale } = useCalcPage('gdt-stack')
+const { exportFilename } = useContentI18n()
 const { resultError } = useResultI18n()
 const { ol, optionMap } = useOptionsI18n()
 const resultRef = ref(null)
@@ -312,7 +314,7 @@ async function exportPdf() {
       { heading: pt('pdfDetail'), text: buildGdtStackReportText(r, locale.value) },
     ],
     element: resultRef.value,
-    filename: `GD&T栈_${form.typeId}_${Date.now()}.pdf`,
+    filename: exportFilename('gdtStackPdf', { typeId: form.typeId, ts: Date.now() }),
   })
 }
 </script>

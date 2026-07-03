@@ -102,9 +102,11 @@ import { ElMessage } from 'element-plus'
 import { parseBatchCsv, batchValidate } from '@/utils/batch-analysis'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useContentI18n } from '@/composables/useContentI18n'
 
-const { pt, pf, pr, fc } = useCalcPage('batch')
+const { pt, pf, pr, locale } = useCalcPage('batch')
 const { resultError } = useResultI18n()
+const { exportFilename } = useContentI18n()
 
 const targetMin = ref(0)
 const targetMax = ref(0.25)
@@ -141,11 +143,14 @@ function runBatch() {
 }
 
 function loadSample() {
-  csvInput.value = `方案A,0.06,0.05,0.04
-方案B,0.08,0.06,0.05
-方案C,0.05,0.04,0.03
-方案D,0.10,0.08,0.07
-方案E,0.04,0.03,0.02`
+  const names = locale.value === 'en'
+    ? ['Scheme A', 'Scheme B', 'Scheme C', 'Scheme D', 'Scheme E']
+    : ['方案A', '方案B', '方案C', '方案D', '方案E']
+  csvInput.value = `${names[0]},0.06,0.05,0.04
+${names[1]},0.08,0.06,0.05
+${names[2]},0.05,0.04,0.03
+${names[3]},0.10,0.08,0.07
+${names[4]},0.04,0.03,0.02`
   targetMin.value = 0
   targetMax.value = 0.25
 }
@@ -165,7 +170,7 @@ function exportResults() {
   const blob = new Blob(['\ufeff' + header + lines.join('\n')], { type: 'text/csv;charset=utf-8' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = `批量验证_${new Date().toISOString().slice(0, 10)}.csv`
+  link.download = exportFilename('batchCsv', { date: new Date().toISOString().slice(0, 10) })
   link.click()
   URL.revokeObjectURL(link.href)
 }

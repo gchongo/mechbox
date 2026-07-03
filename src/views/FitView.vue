@@ -100,7 +100,7 @@
       <el-button type="primary" plain @click="exportPdf">{{ fc('exportPdfReport') }}</el-button>
       <SaveHistoryButton
         tool="fit"
-        :title="`配合 ${holeCode}/${shaftCode} Ø${nominal}`"
+        :title="historyTitle"
         :status="result?.fitType === 'interference' ? 'fail' : 'pass'"
         :summary="historySummary"
         :input="{ nominal: nominal, holeCode, shaftCode }"
@@ -121,8 +121,10 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useContentI18n } from '@/composables/useContentI18n'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('fit')
+const { exportFilename } = useContentI18n()
 const { ol } = useOptionsI18n()
 const { rm, resultError } = useResultI18n()
 
@@ -162,6 +164,11 @@ const historySummary = computed(() => {
   ]
 })
 
+const historyTitle = computed(() => {
+  const key = locale.value === 'en' ? 'fitHistoryTitleEn' : 'fitHistoryTitle'
+  return exportFilename(key, { hole: holeCode.value, shaft: shaftCode.value, nominal: nominal.value })
+})
+
 const fitTagType = computed(() => {
   if (!result.value || result.value.errorKey) return 'info'
   return { clearance: 'success', interference: 'danger', transition: 'warning' }[result.value.fitType]
@@ -193,7 +200,7 @@ async function exportPdf() {
       },
     ],
     element: resultRef.value,
-    filename: `ISO286配合_${r.nominal}mm_${Date.now()}.pdf`,
+    filename: exportFilename('fitPdf', { nominal: r.nominal, ts: Date.now() }),
   })
 }
 </script>

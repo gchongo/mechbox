@@ -1,12 +1,12 @@
 <template>
   <div>
-    <h1 class="page-title">教程</h1>
+    <h1 class="page-title">{{ ct('tutorial.title') }}</h1>
     <p class="mb-6 text-gray-600 dark:text-gray-400">
-      5 个尺寸链教程，含 Bilibili 视频、演示模式与图文详解
+      {{ ct('tutorial.subtitle') }}
     </p>
 
     <div class="space-y-4">
-      <div v-for="t in TUTORIALS" :key="t.id" class="card-panel">
+      <div v-for="t in tutorials" :key="t.id" class="card-panel">
         <div
           class="flex cursor-pointer items-start justify-between gap-4"
           @click="toggle(t.id)"
@@ -29,7 +29,6 @@
         </div>
 
         <div v-show="expanded[t.id]" class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
-          <!-- 视频 -->
           <div v-if="t.videoEmbed" class="mb-4">
             <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -43,7 +42,7 @@
                 class="text-sm text-primary hover:underline"
                 @click.stop
               >
-                在 Bilibili 打开 ↗
+                {{ ct('tutorial.openBilibili') }}
               </a>
             </div>
             <div class="aspect-video overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
@@ -65,7 +64,7 @@
             <MathContent :text="sec.body" class="text-sm leading-relaxed text-gray-600 dark:text-gray-300" />
           </div>
           <el-button v-if="t.caseId" type="primary" plain size="small" @click="openCase(t.caseId)">
-            打开关联案例 →
+            {{ ct('tutorial.openCase') }}
           </el-button>
         </div>
       </div>
@@ -76,11 +75,13 @@
 <script setup>
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { VideoPlay, ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import TutorialDemo from '@/components/tutorial/TutorialDemo.vue'
-import { TUTORIALS } from '@/constants/tutorials'
 import { findCasePreset, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+import { useContentI18n } from '@/composables/useContentI18n'
 
 const router = useRouter()
+const { ct, tutorials } = useContentI18n()
 const expanded = reactive({ 1: true })
 
 function toggle(id) {

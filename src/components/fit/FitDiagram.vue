@@ -47,10 +47,10 @@
 
     <!-- 尺寸标注 -->
     <text x="160" y="175" text-anchor="middle" font-size="11">
-      孔 {{ holeCode }}: Ø{{ holeMid.toFixed(3) }} (+{{ holeUpper }}/{{ holeLower }})
+      {{ holeDimText }}
     </text>
     <text x="160" y="190" text-anchor="middle" font-size="11">
-      轴 {{ shaftCode }}: Ø{{ shaftMid.toFixed(3) }} (+{{ shaftUpper }}/{{ shaftLower }})
+      {{ shaftDimText }}
     </text>
 
     <defs>
@@ -65,7 +65,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('fit')
+const { dt, locale } = useDiagramI18n('fit')
 
 const props = defineProps({
   fit: { type: Object, required: true },
@@ -85,10 +85,36 @@ const holeLower = computed(() => (props.fit.hole.lowerDeviation * 1000).toFixed(
 const shaftUpper = computed(() => (props.fit.shaft.upperDeviation * 1000).toFixed(0))
 const shaftLower = computed(() => (props.fit.shaft.lowerDeviation * 1000).toFixed(0))
 
+const holeDimText = computed(() => {
+  locale.value
+  return dt('holeDim', {
+    code: holeCode.value,
+    mid: holeMid.value.toFixed(3),
+    upper: holeUpper.value,
+    lower: holeLower.value,
+  })
+})
+
+const shaftDimText = computed(() => {
+  locale.value
+  return dt('shaftDim', {
+    code: shaftCode.value,
+    mid: shaftMid.value.toFixed(3),
+    upper: shaftUpper.value,
+    lower: shaftLower.value,
+  })
+})
+
 const gapLabel = computed(() => {
+  locale.value
   const c = props.fit.maxClearance
-  if (props.fit.fitType === 'interference') return `过盈 ${Math.abs(props.fit.minClearance * 1000).toFixed(0)}~${Math.abs(props.fit.maxClearance * 1000).toFixed(0)} μm`
-  if (props.fit.fitType === 'transition') return '过渡'
+  if (props.fit.fitType === 'interference') {
+    return dt('fitInterference', {
+      min: Math.abs(props.fit.minClearance * 1000).toFixed(0),
+      max: Math.abs(c * 1000).toFixed(0),
+    })
+  }
+  if (props.fit.fitType === 'transition') return dt('fitTransition')
   return `${(c * 1000).toFixed(0)} μm`
 })
 </script>

@@ -28,11 +28,11 @@
             <el-input v-model="toleranceList" placeholder="0.06,0.05,0.04" />
           </el-form-item>
           <el-form-item :label="pf('sizeList')">
-            <el-input v-model="sizeList" placeholder="40,15,55.25（增+/减- 见类型）" />
+            <el-input v-model="sizeList" :placeholder="pf('sizeListPh')" />
           </el-form-item>
           <el-form-item :label="pf('typeList')">
-            <el-input v-model="typeList" placeholder="dec,dec,inc（dec=减环,inc=增环）" />
-          </el-form-item>
+            <el-input v-model="typeList" :placeholder="pf('typeListPh')" />
+          </el-form-item>>
           <el-form-item :label="pf('distribution')">
             <el-select v-model="distribution" class="w-full">
               <el-option
@@ -219,7 +219,7 @@ function buildRings() {
     throw new Error(RING_MISMATCH)
   }
   return sizes.map((size, i) => ({
-    name: `环${i + 1}`,
+    name: pf('ringName', { n: i + 1 }),
     size,
     tolerance: tolerances[i],
     factor: 1,

@@ -1,20 +1,20 @@
 <template>
   <div>
-    <h1 class="page-title">工具地图</h1>
+    <h1 class="page-title">{{ ct('toolMap.title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      全部 {{ totalCount }} 个计算器与参考入口，支持关键词搜索
+      {{ ct('toolMap.subtitle', { n: totalCount }) }}
     </p>
 
     <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
       <el-input
         v-model="query"
         clearable
-        placeholder="搜索工具名称、描述或关键词…"
+        :placeholder="ct('toolMap.searchPlaceholder')"
         class="max-w-md"
         prefix-icon="Search"
       />
       <span class="text-sm text-gray-500">
-        找到 {{ filteredTools.length }} 项
+        {{ ct('toolMap.found', { n: filteredTools.length }) }}
       </span>
     </div>
 
@@ -33,8 +33,8 @@
     </template>
 
     <template v-else>
-      <section v-for="group in TOOL_GROUPS" :key="group.id" class="card-panel mb-4">
-        <h2 class="mb-3 text-base font-semibold text-primary">{{ group.label }}</h2>
+      <section v-for="group in localizedGroups" :key="group.id" class="card-panel mb-4">
+        <h2 class="mb-3 text-base font-semibold text-primary">{{ t(`toolGroups.${group.id}`) }}</h2>
         <div class="home-grid">
           <router-link
             v-for="tool in group.tools"
@@ -48,10 +48,10 @@
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-3 text-base font-semibold text-primary">统计工具</h2>
+        <h2 class="mb-3 text-base font-semibold text-primary">{{ ct('toolMap.statTools') }}</h2>
         <div class="home-grid">
           <button
-            v-for="tool in STAT_TOOLS"
+            v-for="tool in localizedStatTools"
             :key="tool.query || tool.path"
             type="button"
             class="home-card"
@@ -68,14 +68,55 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { STAT_TOOLS, TOOL_GROUPS, searchTools, getAllToolsFlat } from '@/constants/tool-catalog'
+import { STAT_TOOLS, TOOL_GROUPS, getAllToolsFlat } from '@/constants/tool-catalog'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
+import { useContentI18n } from '@/composables/useContentI18n'
+import { useLocale } from '@/composables/useLocale'
+import { localizedToolLabel } from '@/i18n'
 
 const router = useRouter()
 const query = ref('')
+const { ct, locale } = useContentI18n()
+const { t } = useLocale()
 
-const totalCount = computed(() => getAllToolsFlat().length)
-const filteredTools = computed(() => searchTools(query.value))
+const localizedGroups = computed(() =>
+  TOOL_GROUPS.filter((g) => g.id !== 'reference').map((g) => ({
+    ...g,
+    tools: g.tools.map((tool) => ({
+      ...tool,
+      label: localizedToolLabel(tool.path, locale.value),
+    })),
+  })),
+)
+
+const localizedStatTools = computed(() =>
+  STAT_TOOLS.map((tool) => ({
+    ...tool,
+    label: tool.path ? localizedToolLabel(tool.path, locale.value) : tool.label,
+  })),
+)
+
+const localizedFlatTools = computed(() =>
+  getAllToolsFlat().map((tool) => ({
+    ...tool,
+    label: tool.path ? localizedToolLabel(tool.path, locale.value) : tool.label,
+    category:
+      tool.path || tool.query
+        ? tool.category
+        : ct('toolMap.statCategory'),
+  })),
+)
+
+const totalCount = computed(() => localizedFlatTools.value.length)
+
+const filteredTools = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  if (!q) return localizedFlatTools.value
+  return localizedFlatTools.value.filter((tool) => {
+    const hay = [tool.label, tool.desc, tool.category, ...(tool.keywords ?? [])].join(' ').toLowerCase()
+    return hay.includes(q)
+  })
+})
 
 function goStatTool(tool) {
   if (tool.path) {
