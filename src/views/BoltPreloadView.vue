@@ -13,7 +13,7 @@
         <el-radio-group v-model="form.calcMode" class="bolt-mode-group">
           <el-radio-button value="simple">简化</el-radio-button>
           <el-radio-button value="vdi2230">完整</el-radio-button>
-          <el-radio-button value="professional">专业版</el-radio-button>
+          <el-radio-button value="professional">专业</el-radio-button>
         </el-radio-group>
         <p class="w-full text-xs leading-relaxed text-gray-500 dark:text-gray-400">
           <template v-if="form.calcMode === 'simple'">
@@ -250,7 +250,7 @@
 
       <el-tab-pane label="VDI 2230 分步校核" name="wizard">
         <p class="mb-4 text-xs text-gray-500">
-          基于专业版模型，按 R0–R13 逐步输出校核结论（工程简化版，非完整标准复现）。
+          基于专业模型，按 R0–R13 逐步输出校核结论（工程简化，非完整标准复现）。
         </p>
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">

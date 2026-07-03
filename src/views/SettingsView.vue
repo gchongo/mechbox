@@ -1,8 +1,6 @@
 <template>
   <div class="mx-auto flex max-w-2xl flex-col items-center">
-    <h1 class="page-title w-full text-center">设置</h1>
-    <p class="mb-6 w-full text-center text-gray-600 dark:text-gray-400">偏好设置保存在本地浏览器</p>
-
+    <h1 class="page-title mb-6 w-full text-center">设置</h1>
     <section class="card-panel w-full max-w-xl">
       <el-form label-width="140px">
         <el-form-item label="界面主题">

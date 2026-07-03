@@ -899,7 +899,7 @@ function saveResult() {
       },
     },
   })
-  ElMessage.success('已保存到本地')
+  ElMessage.success('已保存')
   router.replace({ name: 'editor-detail', params: { id: entry.id } })
   savedId.value = entry.id
 }

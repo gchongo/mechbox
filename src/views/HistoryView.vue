@@ -1,10 +1,6 @@
 <template>
   <div>
-    <h1 class="page-title">历史记录</h1>
-    <p class="mb-6 text-gray-600 dark:text-gray-400">
-      尺寸链与各工具计算结果，本地最多 50 条
-    </p>
-
+    <h1 class="page-title mb-6">历史记录</h1>
     <div class="mb-4 flex flex-wrap items-center gap-2 tool-action-bar">
       <el-button type="primary" :disabled="!selectedIds.length" @click="exportMergedPdf">
         合并导出 PDF ({{ selectedIds.length }})

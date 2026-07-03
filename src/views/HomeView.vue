@@ -3,7 +3,6 @@
     <section class="home-quick">
       <div class="home-quick__main">
         <p class="home-quick__desc">尺寸链叠加 · 概率统计 · 机械强度计算</p>
-        <p class="home-quick__hint">本地计算，支持 RSS / 极值 / GD&amp;T</p>
       </div>
       <div class="home-quick__actions">
         <el-button type="primary" size="large" class="home-quick__btn" @click="startNewAnalysis">
@@ -127,10 +126,6 @@ function goStatTool(tool) {
 
 .home-quick__desc {
   @apply text-sm font-medium leading-relaxed text-gray-800 dark:text-gray-100 sm:text-base;
-}
-
-.home-quick__hint {
-  @apply mt-1 text-xs text-gray-500 dark:text-gray-400;
 }
 
 .home-quick__actions {

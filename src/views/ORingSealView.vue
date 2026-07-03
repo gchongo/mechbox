@@ -2,7 +2,7 @@
   <div>
     <h1 class="page-title">O 型圈密封设计</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      沟槽尺寸、压缩率与填充率校核（Parker / ISO 3601 简化）
+      沟槽尺寸、压缩率与填充率校核，支持静/动密封、挤出间隙与极限压力分析（Parker / ISO 3601 参考）
     </p>
 
     <section class="card-panel mb-6">
@@ -26,9 +26,29 @@
         <h2 class="mb-4 font-semibold">输入参数</h2>
         <el-form label-width="148px">
           <el-form-item label="截面直径">
-            <el-select v-model="form.crossSection" class="w-full">
-              <el-option v-for="s in ORING_SECTIONS" :key="s.id" :label="s.label" :value="s.cs" />
-            </el-select>
+            <div class="flex w-full flex-wrap items-center gap-2">
+              <el-input-number
+                v-model="form.crossSection"
+                :min="0.5"
+                :max="20"
+                :precision="2"
+                :step="0.01"
+              />
+              <span class="text-sm text-gray-500">mm</span>
+            </div>
+            <div class="mt-2 flex flex-wrap items-center gap-1">
+              <span class="text-xs text-gray-500">AS568：</span>
+              <el-button
+                v-for="s in ORING_SECTIONS"
+                :key="s.id"
+                link
+                type="primary"
+                size="small"
+                @click="form.crossSection = s.cs"
+              >
+                {{ s.cs }}
+              </el-button>
+            </div>
           </el-form-item>
           <el-form-item label="沟槽底径">
             <el-input-number v-model="form.grooveDiameter" :min="1" :precision="2" />

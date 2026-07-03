@@ -3,7 +3,7 @@
     <div class="app-footer__inner">
       <div class="app-footer__brand">
         <div class="mb-1.5 flex items-center gap-2">
-          <AppLogo :size="20" />
+          <AppLogo :size="28" />
           <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">机械工具箱</h3>
         </div>
         <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">

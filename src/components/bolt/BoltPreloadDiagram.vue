@@ -24,7 +24,7 @@
       <rect x="140" y="118" width="240" height="22" rx="2" class="plate" />
       <rect x="140" y="168" width="240" height="22" rx="2" class="plate" />
 
-      <!-- 摩擦锥 D_A（专业版） -->
+      <!-- 摩擦锥 D_A（专业） -->
       <path
         v-if="showPro"
         d="M 152 140 L 118 118 L 118 190 L 152 168 Z"
@@ -141,7 +141,7 @@
         <ellipse cx="260" cy="88" rx="28" ry="7" class="friction friction--simple" />
       </template>
 
-      <!-- ΔT 专业版 -->
+      <!-- ΔT 专业 -->
       <template v-if="showPro && deltaT">
         <text x="24" y="148" class="label label--pro">ΔT 温差</text>
         <text x="24" y="162" class="label-sub">{{ deltaT > 0 ? '+' : '' }}{{ deltaT }} °C</text>

@@ -1,8 +1,6 @@
 <template>
   <div>
-    <h1 class="page-title">GD&T 术语词典</h1>
-    <p class="mb-6 text-gray-600">尺寸链与几何公差常用术语，支持搜索</p>
-
+    <h1 class="page-title mb-6">GD&T 术语词典</h1>
     <div class="card-panel mb-6">
       <el-input
         v-model="query"

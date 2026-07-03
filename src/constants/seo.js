@@ -30,6 +30,6 @@ export const SEO_KEYWORDS = [
 ].join(', ')
 
 export const SEO_DESCRIPTION =
-  '机械工具箱 — 在线尺寸链叠加分析、概率统计与常用机械强度计算。支持 RSS/极值/GD&T、Monte Carlo 模拟、齿轮/轴承/螺栓等工程计算，数据本地保存。'
+  '机械工具箱 — 在线尺寸链叠加分析、概率统计与常用机械强度计算。支持 RSS/极值/GD&T、Monte Carlo 模拟、齿轮/轴承/螺栓等工程计算。'
 
 export const SITE_URL = 'https://mechbox.cax.do'

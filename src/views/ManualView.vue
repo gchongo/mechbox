@@ -2,7 +2,7 @@
   <div>
     <h1 class="page-title">公式手册</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      尺寸链、概率统计、齿轮与轴承常用公式，支持搜索与 LaTeX 渲染
+      尺寸链、概率统计、齿轮与轴承常用公式
     </p>
 
     <div class="mb-4 flex flex-wrap gap-2">
@@ -37,7 +37,9 @@
         <div class="my-3 rounded-lg bg-gray-50 py-3 dark:bg-gray-900">
           <MathTex :expr="item.latex" block />
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">{{ item.desc }}</p>
+        <p class="formula-desc text-sm text-gray-600 dark:text-gray-400">
+          <MathContent :text="item.desc" />
+        </p>
         <div class="mt-3 flex flex-wrap gap-1">
           <el-tag v-for="tag in item.tags" :key="tag" size="small" type="info">{{ tag }}</el-tag>
         </div>
@@ -83,3 +85,9 @@ const filtered = computed(() => {
   )
 })
 </script>
+
+<style scoped>
+.formula-desc :deep(.math-content) {
+  line-height: 1.65;
+}
+</style>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="page-title">常见问题</h1>
-    <p class="mb-6 text-gray-600">尺寸链分析与 MechBox 使用 FAQ</p>
+    <p class="mb-6 text-gray-600">尺寸链分析常见问题</p>
 
     <el-collapse v-model="activeNames" accordion>
       <el-collapse-item

@@ -1,10 +1,6 @@
 <template>
   <div class="mx-auto flex max-w-2xl flex-col items-center">
-    <h1 class="page-title w-full text-center">账号</h1>
-    <p class="mb-6 w-full text-center text-gray-600 dark:text-gray-400">
-      本地账号（数据保存在浏览器，可备份同步到其他设备）
-    </p>
-
+    <h1 class="page-title mb-6 w-full text-center">账号</h1>
     <!-- 已登录 -->
     <section v-if="user" class="card-panel w-full max-w-md">
       <div class="mb-4 flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">

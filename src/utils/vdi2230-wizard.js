@@ -30,7 +30,7 @@ export function runVdi2230Wizard(input) {
   })
 
   const joint = preloadResult.joint
-  if (!joint) return { error: '需要专业版参数以运行 VDI 2230 向导' }
+  if (!joint) return { error: '需要专业模型参数以运行 VDI 2230 向导' }
   const FM = preloadResult.preloadResidual
   const FV = preloadResult.preloadTightening
   const FZ = joint.embedmentLoss

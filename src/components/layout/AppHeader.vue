@@ -5,8 +5,7 @@
         to="/"
         class="flex min-w-0 shrink items-center gap-2 font-bold text-gray-900 dark:text-gray-100"
       >
-        <AppLogo :size="26" class="shrink-0 sm:hidden" />
-        <AppLogo :size="28" class="hidden shrink-0 sm:block" />
+        <AppLogo :size="36" class="shrink-0" />
         <span class="truncate whitespace-nowrap text-base sm:text-xl">{{ t('appName', locale) }}</span>
       </router-link>
 
