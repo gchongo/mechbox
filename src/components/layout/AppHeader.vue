@@ -29,7 +29,13 @@
           {{ item.label }}
         </router-link>
 
-        <el-dropdown trigger="click" :hide-on-click="true" @command="goTool">
+        <el-dropdown
+          trigger="click"
+          :hide-on-click="true"
+          teleported
+          popper-class="app-header-tools-popper"
+          @command="goTool"
+        >
           <button
             type="button"
             class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:py-2"
@@ -39,7 +45,7 @@
             <el-icon class="ml-0.5 align-middle"><ArrowDown /></el-icon>
           </button>
           <template #dropdown>
-            <el-dropdown-menu class="app-header-menu">
+            <el-dropdown-menu>
               <el-dropdown-item
                 v-for="tool in allTools"
                 :key="tool.path"
@@ -209,23 +215,11 @@ function isActive(path) {
   return route.path.startsWith(path)
 }
 
-function scrollPageTop() {
-  window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-  document.documentElement.scrollTop = 0
-  document.body.scrollTop = 0
-}
-
 function goTool(path) {
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur()
   }
-  router.push(path).then(() => {
-    scrollPageTop()
-    requestAnimationFrame(scrollPageTop)
-    setTimeout(scrollPageTop, 0)
-    setTimeout(scrollPageTop, 50)
-    setTimeout(scrollPageTop, 150)
-  })
+  router.push(path)
 }
 </script>
 
@@ -244,9 +238,26 @@ function goTool(path) {
   color: var(--el-color-primary);
   font-weight: 600;
 }
+</style>
 
-:deep(.app-header-menu) {
-  max-height: 70vh;
+<!-- popper 挂载到 body，需非 scoped 样式 -->
+<style>
+.app-header-tools-popper.el-popper {
+  overflow: hidden;
+}
+
+.app-header-tools-popper .el-dropdown-menu {
+  max-height: min(420px, 65vh);
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.app-header-tools-popper .el-dropdown-menu::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 </style>

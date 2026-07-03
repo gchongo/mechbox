@@ -7,7 +7,7 @@
 
     <svg
       class="oring-diagram__svg"
-      viewBox="0 0 540 300"
+      viewBox="0 0 560 360"
       role="img"
       aria-label="O 型圈沟槽参数示意图"
     >
@@ -21,161 +21,169 @@
       </defs>
 
       <!-- 壳体 -->
-      <rect x="32" y="36" width="340" height="220" rx="4" class="housing" />
-      <text x="44" y="58" class="txt-muted" font-size="16">壳体 / 孔壁</text>
+      <rect :x="layout.hx" :y="layout.hy" :width="layout.hw" :height="layout.hh" rx="4" class="housing" />
+      <text :x="layout.hx + 12" :y="layout.hy + 22" class="txt-muted" font-size="15">壳体 / 孔壁</text>
 
       <!-- 沟槽 -->
       <rect
-        :x="grooveLeft"
-        :y="grooveTop"
-        :width="grooveWpx"
-        :height="grooveHpx"
+        :x="layout.gl"
+        :y="layout.gt"
+        :width="layout.gw"
+        :height="layout.gh"
         rx="2"
         class="groove-cavity"
       />
       <line
-        :x1="grooveLeft"
-        :y1="grooveTop + grooveHpx"
-        :x2="grooveLeft + grooveWpx"
-        :y2="grooveTop + grooveHpx"
+        :x1="layout.gl"
+        :y1="layout.gt + layout.gh"
+        :x2="layout.gl + layout.gw"
+        :y2="layout.gt + layout.gh"
         class="groove-floor"
       />
 
       <!-- O 型圈 -->
-      <ellipse :cx="oringCx" :cy="oringCy" :rx="oringRx" :ry="oringRy" class="oring" />
+      <ellipse :cx="layout.ocx" :cy="layout.ocy" :rx="layout.orx" :ry="layout.ory" class="oring" />
 
-      <!-- 挤出间隙 -->
-      <template v-if="showExtrusion && extrusionGapPx > 2">
-        <line
-          :x1="grooveLeft + grooveWpx"
-          :y1="oringCy"
-          :x2="grooveLeft + grooveWpx + extrusionGapPx"
-          :y2="oringCy"
-          class="gap-line"
-        />
-        <text
-          :x="grooveLeft + grooveWpx + extrusionGapPx + 6"
-          :y="oringCy + 6"
-          class="txt-pro"
-          font-size="17"
-        >
-          挤出间隙
-        </text>
-      </template>
-
-      <!-- 压力 -->
-      <template v-if="pressure > 0">
-        <line x1="16" y1="140" x2="36" y2="140" marker-end="url(#oring-arrow-blue)" class="pressure-arrow" />
-        <text x="8" y="132" class="txt-primary" font-size="20" font-weight="700">P</text>
-      </template>
-
-      <!-- d_cs -->
+      <!-- w 沟槽宽 — 顶部独立区域 -->
       <line
-        :x1="oringCx - oringRx"
-        :y1="oringCy - oringRy - 12"
-        :x2="oringCx + oringRx"
-        :y2="oringCy - oringRy - 12"
+        :x1="layout.gl"
+        :y1="layout.wLineY"
+        :x2="layout.gl + layout.gw"
+        :y2="layout.wLineY"
         marker-start="url(#oring-arrow)"
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="oringCx - 42" :y="oringCy - oringRy - 18" class="txt" font-size="19" font-weight="600">
-        d_cs = {{ crossSection }} mm
-      </text>
-
-      <!-- w 沟槽宽 -->
-      <line
-        :x1="grooveLeft"
-        :y1="grooveTop - 16"
-        :x2="grooveLeft + grooveWpx"
-        :y2="grooveTop - 16"
-        marker-start="url(#oring-arrow)"
-        marker-end="url(#oring-arrow)"
-        class="dim-line"
-      />
-      <text :x="grooveLeft + grooveWpx / 2 - 48" :y="grooveTop - 22" class="txt" font-size="19" font-weight="600">
+      <text :x="layout.gl + layout.gw / 2" :y="layout.wTextY" class="txt" font-size="17" font-weight="600" text-anchor="middle">
         w = {{ grooveWidth }} mm
       </text>
 
-      <!-- h 沟槽深 -->
+      <!-- h 沟槽深 — 左侧 -->
       <line
-        :x1="grooveLeft - 16"
-        :y1="grooveTop"
-        :x2="grooveLeft - 16"
-        :y2="grooveTop + grooveHpx"
+        :x1="layout.hLineX"
+        :y1="layout.gt"
+        :x2="layout.hLineX"
+        :y2="layout.gt + layout.gh"
         marker-start="url(#oring-arrow)"
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="grooveLeft - 72" :y="grooveTop + grooveHpx / 2 - 4" class="txt" font-size="19" font-weight="600">h</text>
-      <text :x="grooveLeft - 88" :y="grooveTop + grooveHpx / 2 + 16" class="txt-sub" font-size="17">
+      <text :x="layout.hTextX" :y="layout.gt + layout.gh / 2 - 6" class="txt" font-size="17" font-weight="600" text-anchor="end">h</text>
+      <text :x="layout.hTextX" :y="layout.gt + layout.gh / 2 + 14" class="txt-sub" font-size="15" text-anchor="end">
         {{ grooveDepthLabel }} mm
       </text>
 
-      <!-- 压缩 -->
+      <!-- d_cs — 右侧竖向标注，不与 w 重叠 -->
+      <line
+        :x1="layout.csLineX"
+        :y1="layout.ocy - layout.ory"
+        :x2="layout.csLineX"
+        :y2="layout.ocy + layout.ory"
+        marker-start="url(#oring-arrow)"
+        marker-end="url(#oring-arrow)"
+        class="dim-line"
+      />
+      <text :x="layout.csTextX" :y="layout.ocy - 4" class="txt" font-size="16" font-weight="600">
+        d_cs
+      </text>
+      <text :x="layout.csTextX" :y="layout.ocy + 14" class="txt-sub" font-size="15">
+        {{ crossSection }} mm
+      </text>
+
+      <!-- 压缩 — O 型圈正下方，不与 w / d_cs 重叠 -->
       <template v-if="compression > 0">
-        <line
-          :x1="oringCx + oringRx + 10"
-          :y1="oringCy - oringRy"
-          :x2="oringCx + oringRx + 10"
-          :y2="oringCy - oringRy + compressPx"
-          class="compress-line"
-        />
         <text
-          :x="oringCx + oringRx + 14"
-          :y="oringCy - oringRy + compressPx / 2 + 6"
+          :x="layout.ocx"
+          :y="layout.ocy + layout.ory + 20"
           class="txt-primary"
-          font-size="18"
+          font-size="15"
           font-weight="600"
+          text-anchor="middle"
         >
           压缩 {{ compressionPercent?.toFixed(0) }}%
         </text>
       </template>
 
-      <!-- d_g -->
+      <!-- d_g — 底部 -->
       <line
-        :x1="grooveLeft + grooveWpx / 2"
-        :y1="grooveTop + grooveHpx + 10"
-        :x2="grooveLeft + grooveWpx / 2"
-        y2="268"
+        :x1="layout.gl + layout.gw / 2"
+        :y1="layout.gt + layout.gh + 12"
+        :x2="layout.gl + layout.gw / 2"
+        :y2="layout.dgLineEndY"
         class="dim-line dim-line--dg"
       />
       <text
-        :x="grooveLeft + grooveWpx / 2 - 58"
-        y="284"
+        :x="layout.gl + layout.gw / 2"
+        :y="layout.dgTextY"
         class="txt-primary"
-        font-size="19"
+        font-size="17"
         font-weight="700"
+        text-anchor="middle"
       >
         d_g = {{ grooveDiameter }} mm
       </text>
-      <text :x="grooveLeft + grooveWpx / 2 - 36" y="298" class="txt-sub" font-size="16">沟槽底径</text>
+
+      <!-- 挤出间隙 -->
+      <template v-if="showExtrusion && layout.gapW > 2">
+        <line
+          :x1="layout.gl + layout.gw"
+          :y1="layout.ocy"
+          :x2="layout.gl + layout.gw + layout.gapW"
+          :y2="layout.ocy"
+          class="gap-line"
+        />
+        <text
+          :x="layout.gl + layout.gw + layout.gapW + 6"
+          :y="layout.ocy + 5"
+          class="txt-pro"
+          font-size="14"
+        >
+          间隙
+        </text>
+      </template>
+
+      <!-- 压力 -->
+      <template v-if="pressure > 0">
+        <line :x1="20" :y1="layout.ocy" :x2="42" :y2="layout.ocy" marker-end="url(#oring-arrow-blue)" class="pressure-arrow" />
+        <text x="10" :y="layout.ocy - 8" class="txt-primary" font-size="18" font-weight="700">P</text>
+      </template>
 
       <!-- 孔径 -->
       <template v-if="boreDiameter">
-        <line x1="388" y1="36" x2="388" y2="256" class="bore-line" />
-        <text x="396" y="150" class="txt-muted" font-size="17">孔径 Ø{{ boreDiameter }}</text>
+        <line :x1="layout.boreX" :y1="layout.hy" :x2="layout.boreX" :y2="layout.hy + layout.hh" class="bore-line" />
+        <text :x="layout.boreX + 8" :y="layout.hy + layout.hh / 2" class="txt-muted" font-size="15">孔径 Ø{{ boreDiameter }}</text>
       </template>
 
-      <!-- 自由截面放大 -->
-      <g transform="translate(388, 168)">
-        <rect x="0" y="0" width="132" height="96" rx="6" class="inset-box" />
-        <text x="10" y="22" class="txt-muted" font-size="16">自由截面</text>
-        <circle cx="48" cy="54" :r="insetR" class="oring-inset" />
+      <!-- 自由截面放大（独立区域，右下角） -->
+      <g :transform="`translate(${layout.insetX}, ${layout.insetY})`">
+        <rect x="0" y="0" :width="layout.insetW" :height="layout.insetH" rx="6" class="inset-box" />
+        <text x="10" y="20" class="txt-muted" font-size="14">自由截面</text>
+        <circle :cx="layout.insetW / 2" :cy="layout.insetH / 2 + 6" :r="layout.insetR" class="oring-inset" />
         <line
-          :x1="48 - insetR"
-          y1="76"
-          :x2="48 + insetR"
-          y2="76"
+          :x1="layout.insetW / 2 - layout.insetR"
+          :y1="layout.insetH - 14"
+          :x2="layout.insetW / 2 + layout.insetR"
+          :y2="layout.insetH - 14"
           marker-start="url(#oring-arrow)"
           marker-end="url(#oring-arrow)"
           class="dim-line"
         />
-        <text x="14" y="92" class="txt" font-size="17" font-weight="600">d_cs {{ crossSection }} mm</text>
+        <text
+          :x="layout.insetW / 2"
+          :y="layout.insetH - 2"
+          class="txt"
+          font-size="14"
+          font-weight="600"
+          text-anchor="middle"
+        >
+          d_cs {{ crossSection }} mm
+        </text>
       </g>
 
       <template v-if="showPro && stretchPercent > 0">
-        <text x="36" y="292" class="txt-pro" font-size="17">安装拉伸 {{ stretchPercent?.toFixed(1) }}%</text>
+        <text :x="layout.hx + 8" :y="layout.hy + layout.hh + 18" class="txt-pro" font-size="14">
+          安装拉伸 {{ stretchPercent?.toFixed(1) }}%
+        </text>
       </template>
     </svg>
 
@@ -208,26 +216,62 @@ const props = defineProps({
   boreDiameter: { type: Number, default: 0 },
 })
 
-const PX_PER_MM = 8
+const PX = 7
 
-const grooveWpx = computed(() => Math.min(140, Math.max(48, props.grooveWidth * PX_PER_MM)))
-const grooveHpx = computed(() => Math.min(90, Math.max(32, props.grooveDepth * PX_PER_MM)))
-const oringRx = computed(() => Math.max(14, (props.crossSection * PX_PER_MM) / 2))
-const oringRy = computed(() => {
+const layout = computed(() => {
+  const hx = 36
+  const hy = 72
+  const hw = 300
+  const hh = 210
+
+  const gw = Math.min(120, Math.max(44, props.grooveWidth * PX))
+  const gh = Math.min(72, Math.max(28, props.grooveDepth * PX))
+  const gl = hx + 72
+  const gt = hy + 58
+
+  const orx = Math.max(12, (props.crossSection * PX) / 2)
   const compressRatio = 1 - (props.compressionPercent ?? 20) / 200
-  return Math.max(10, oringRx.value * compressRatio)
+  const ory = Math.max(9, orx * compressRatio)
+  const ocx = gl + gw * 0.42
+  const ocy = gt + gh - ory - 3
+  const compressH = orx - ory
+
+  const wLineY = gt - 26
+  const wTextY = gt - 32
+  const hLineX = gl - 22
+  const hTextX = gl - 28
+
+  const csLineX = ocx + orx + 22
+  const csTextX = csLineX + 8
+
+  const dgLineEndY = hy + hh - 8
+  const dgTextY = dgLineEndY + 18
+
+  const gapW = (props.extrusionGap ?? 0.15) * PX * 2
+  const boreX = hx + hw - 4
+
+  const insetW = 118
+  const insetH = 88
+  const insetX = hx + hw + 24
+  const insetY = hy + hh - insetH - 8
+  const insetR = Math.min(20, Math.max(11, props.crossSection * PX * 0.36))
+
+  return {
+    hx, hy, hw, hh,
+    gl, gt, gw, gh,
+    ocx, ocy, orx, ory,
+    wLineY, wTextY,
+    hLineX, hTextX,
+    csLineX, csTextX,
+    compressH,
+    dgLineEndY, dgTextY,
+    gapW,
+    boreX,
+    insetX, insetY, insetW, insetH, insetR,
+  }
 })
-const compressPx = computed(() => oringRx.value - oringRy.value)
-const extrusionGapPx = computed(() => (props.extrusionGap ?? 0.15) * PX_PER_MM * 2)
 
-const grooveLeft = computed(() => 168)
-const grooveTop = computed(() => 108)
-const oringCx = computed(() => grooveLeft.value + grooveWpx.value * 0.42)
-const oringCy = computed(() => grooveTop.value + grooveHpx.value - oringRy.value - 2)
-
-const insetR = computed(() => Math.min(22, Math.max(12, props.crossSection * PX_PER_MM * 0.38)))
 const grooveDepthLabel = computed(() => props.grooveDepth?.toFixed(2) ?? '—')
-
 const showExtrusion = computed(() => props.calcMode !== 'simple')
 const showPro = computed(() => props.calcMode === 'professional')
 
@@ -239,9 +283,7 @@ const legendItems = computed(() => {
     { key: 'h', name: 'h', desc: '沟槽径向深度 ≈ d_cs − 压缩量', tone: 'base' },
   ]
   if (props.calcMode !== 'simple') {
-    base.push(
-      { key: 'gap', name: '挤出间隙', desc: '动压密封时沟槽与对偶面之间的间隙', tone: 'complete' },
-    )
+    base.push({ key: 'gap', name: '挤出间隙', desc: '动压密封时沟槽与对偶面之间的间隙', tone: 'complete' })
   }
   if (showPro.value) {
     base.push(
