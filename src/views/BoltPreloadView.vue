@@ -117,6 +117,19 @@
             <span class="ml-2 text-sm text-gray-500">N</span>
           </el-form-item>
         </el-form>
+
+        <BoltPreloadDiagram
+          :calc-mode="form.calcMode"
+          :mode="form.mode"
+          :diameter="form.diameter"
+          :pitch="form.pitch"
+          :grip-length="form.gripLength"
+          :hole-diameter="form.holeDiameter"
+          :head-contact-diameter="form.headContactDiameter"
+          :outer-diameter="form.outerDiameter"
+          :d-km="form.dKm"
+          :delta-t="form.deltaT"
+        />
       </section>
 
       <section class="card-panel">
@@ -236,6 +249,7 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import BoltPreloadDiagram from '@/components/bolt/BoltPreloadDiagram.vue'
 import {
   analyzeBoltPreload,
   THREAD_GRADES,
