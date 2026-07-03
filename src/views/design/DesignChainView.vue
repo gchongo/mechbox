@@ -126,27 +126,57 @@ const stepSnapshots = computed(() => {
   return buildChainSnapshots(props.chainType, activeChain.value.sharedInputs)
 })
 
+/**
+ * 仅在共享输入变化时落盘快照。
+ * 旧实现 watch(stepSnapshots, { deep }) + refreshCurrent 会因每次
+ * adapter 返回新对象引用而无限重入，导致页面卡死。
+ */
 watch(
-  stepSnapshots,
-  (snaps) => {
-    if (!activeId.value) return
-    for (const key of Object.keys(snaps)) {
-      saveStep(activeId.value, key, { snapshot: snaps[key] })
-    }
-    refreshCurrent()
+  () => {
+    const c = activeChain.value
+    if (!c) return null
+    return JSON.stringify({ id: c.id, ...c.sharedInputs })
   },
-  { deep: true },
+  (key) => {
+    if (!key || !activeId.value || !activeChain.value) return
+    const snaps = buildChainSnapshots(props.chainType, activeChain.value.sharedInputs)
+    const chain = chains.value.find((c) => c.id === activeId.value)
+    for (const stepKey of Object.keys(snaps)) {
+      saveStep(activeId.value, stepKey, { snapshot: snaps[stepKey] })
+      const step = chain?.steps.find((s) => s.key === stepKey)
+      if (step) step.snapshot = snaps[stepKey]
+    }
+  },
 )
 
 function refreshCurrent() {
   const cur = getChain(activeId.value)
   if (cur) {
     const idx = chains.value.findIndex((c) => c.id === cur.id)
-    if (idx >= 0) chains.value[idx] = cur
+    if (idx >= 0) {
+      // 保留当前 sharedInputs 引用，避免无谓触发共享输入 watch
+      const prev = chains.value[idx]
+      chains.value[idx] = {
+        ...cur,
+        sharedInputs: prev.sharedInputs,
+      }
+    }
   }
 }
 
-const currentSummary = computed(() => chainSummary(activeChain.value))
+const currentSummary = computed(() => {
+  const snaps = stepSnapshots.value
+  const keys = Object.keys(snaps)
+  if (!keys.length) return chainSummary(activeChain.value)
+  const passCount = keys.filter((k) => snaps[k]?.pass).length
+  const failCount = keys.length - passCount
+  return {
+    status: failCount === 0 ? 'pass' : 'fail',
+    passCount,
+    total: keys.length,
+    failCount,
+  }
+})
 const overallLabel = computed(() => {
   const s = currentSummary.value.status
   if (s === 'pass') return t('calc.decision.overallPass')
@@ -199,8 +229,10 @@ function removeCurrent() {
 
 function updateShared(key, value) {
   if (!activeChain.value) return
-  updateSharedInputs(activeId.value, { [key]: Number(value) })
-  refreshCurrent()
+  const num = Number(value)
+  updateSharedInputs(activeId.value, { [key]: num })
+  // 就地写入，触发共享输入 watch；勿整体替换 chain（会丢引用或重入）
+  activeChain.value.sharedInputs[key] = num
 }
 
 function onApplyShared({ field, value }) {
@@ -240,7 +272,15 @@ function openTool(stepKey, toolId) {
 
 async function exportChain() {
   if (!activeChain.value) return
-  const report = buildChainReport(activeChain.value)
+  const snaps = stepSnapshots.value
+  const chainForReport = {
+    ...activeChain.value,
+    steps: activeChain.value.steps.map((s) => ({
+      ...s,
+      snapshot: snaps[s.key] ?? s.snapshot,
+    })),
+  }
+  const report = buildChainReport(chainForReport)
   await exportToolReportPdf({
     title: report.title,
     subtitle: report.subtitle,
