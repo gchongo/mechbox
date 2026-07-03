@@ -79,9 +79,18 @@ function stressAtN(N) {
   return Math.max(props.sf * N ** props.b, props.enduranceLimit)
 }
 
+const opN = computed(() => {
+  if (props.stressAmplitude <= props.enduranceLimit) return props.cycleLimit
+  if (props.life != null && props.life !== Infinity && props.life > 0) return props.life
+  return null
+})
+
 const sMax = computed(() => {
   const peak = props.sf * N_MIN ** props.b
-  return Math.max(peak * 1.05, props.stressAmplitude * 1.08, props.enduranceLimit * 1.15, 1)
+  const atLife = opN.value != null && props.stressAmplitude > props.enduranceLimit
+    ? stressAtN(opN.value)
+    : 0
+  return Math.max(peak * 1.05, props.stressAmplitude * 1.08, atLife * 1.05, props.enduranceLimit * 1.15, 1)
 })
 
 function sToY(S) {
@@ -104,16 +113,16 @@ const snPoints = computed(() => {
 
 const showOperatingPoint = computed(() => props.stressAmplitude > 0)
 
-const opX = computed(() => {
-  if (props.stressAmplitude <= props.enduranceLimit) {
-    return nToX(props.cycleLimit)
-  }
-  const N = props.life != null && props.life !== Infinity ? props.life : null
-  if (N != null && N > 0) return nToX(N)
-  return nToX(props.cycleLimit)
-})
+const opX = computed(() => nToX(opN.value ?? props.cycleLimit))
 
-const opY = computed(() => sToY(props.stressAmplitude))
+/** Y 坐标：有限寿命区取曲线上该 N 对应应力，保证红点落在 S-N 线上 */
+const opY = computed(() => {
+  if (props.stressAmplitude <= props.enduranceLimit) {
+    return sToY(props.stressAmplitude)
+  }
+  if (opN.value != null) return sToY(stressAtN(opN.value))
+  return sToY(props.stressAmplitude)
+})
 </script>
 
 <style scoped>

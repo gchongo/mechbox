@@ -32,7 +32,7 @@
         </el-form>
 
         <FatigueDiagram
-          :stress-amplitude="stressAmplitude"
+          :stress-amplitude="result.effectiveAmplitude ?? stressAmplitude"
           :endurance-limit="result.enduranceLimit"
           :life="result.life"
           :sf="currentMaterial.sf"
