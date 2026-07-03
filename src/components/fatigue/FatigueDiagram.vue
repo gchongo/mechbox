@@ -29,8 +29,8 @@
 
       <!-- 工作点 -->
       <circle :cx="stressX" :cy="stressY" r="6" class="stress-point" />
-      <line :x1="70" :y1="stressY" x2="stressX" y2="stressY" class="dim" stroke-dasharray="3 3" />
-      <line :x1="stressX" :y1="stressY" x2="stressX" y2="210" class="dim" stroke-dasharray="3 3" />
+      <line :x1="70" :y1="stressY" :x2="stressX" :y2="stressY" class="dim" stroke-dasharray="3 3" />
+      <line :x1="stressX" :y1="stressY" :x2="stressX" y2="210" class="dim" stroke-dasharray="3 3" />
 
       <text :x="78" :y="stressY + 4" class="txt-primary" font-size="12">S_a</text>
       <text :x="78" :y="stressY + 16" class="txt-sub" font-size="10">{{ stressAmplitude }} MPa</text>
