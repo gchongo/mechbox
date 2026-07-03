@@ -28,6 +28,7 @@ import {
   chainSummary,
   CHAIN_TYPES,
 } from '@/utils/design-context'
+import { buildChainSnapshots } from '@/utils/chain-snapshots'
 import { buildChainReport } from '@/utils/chain-report'
 import { adaptShaftTorsion, adaptBearing, adaptKeyConnection } from '@/utils/calc-adapters'
 
@@ -117,6 +118,26 @@ describe('design-context', () => {
     createChain({ type: 'powertrain' })
     createChain({ type: 'powertrain' })
     expect(listChains('powertrain')).toHaveLength(2)
+  })
+})
+
+describe('bolt-joint chain', () => {
+  beforeEach(resetStorage)
+
+  it('createChain seeds bolt-joint defaults', () => {
+    const c = createChain({ type: 'bolt-joint', name: 'joint1' })
+    expect(c.steps).toHaveLength(3)
+    expect(c.sharedInputs.preload).toBe(25000)
+    expect(c.sharedInputs.boltCount).toBe(8)
+  })
+
+  it('buildChainSnapshots evaluates all bolt-joint steps', () => {
+    const c = createChain({ type: 'bolt-joint' })
+    const snaps = buildChainSnapshots('bolt-joint', c.sharedInputs)
+    expect(snaps['bolt-preload']).toBeDefined()
+    expect(snaps['bolt-group']).toBeDefined()
+    expect(snaps.weld).toBeDefined()
+    expect(snaps['bolt-preload'].toolId).toBe('bolt-preload')
   })
 })
 

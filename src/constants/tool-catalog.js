@@ -18,6 +18,7 @@ export const TOOL_GROUPS = [
     label: '设计链（联动分析）',
     tools: [
       { path: '/design/powertrain', label: '轴系设计链', desc: '轴 → 轴承 → 键 联动 + 链级报告', icon: 'Connection', keywords: ['设计链', '轴系', '联动', 'powertrain'] },
+      { path: '/design/bolt-joint', label: '螺栓连接设计链', desc: '预紧 → 螺栓组 → 焊缝 联动', icon: 'Grid', keywords: ['设计链', '螺栓', '焊缝', 'bolt'] },
     ],
   },
   {

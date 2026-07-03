@@ -46,6 +46,13 @@ export const decisionZh = {
   overallPass: '通过',
   overallFail: '不通过',
   overallIncomplete: '未完成',
+
+  quickInverse: '一键反算',
+  openTool: '打开工具',
+  notesPlaceholder: '笔记（可选）',
+  notEvaluated: '未评估',
+  stepPass: '通过 ✓',
+  stepFail: '不通过 ✗',
 }
 
 export const decisionEn = {
@@ -96,4 +103,11 @@ export const decisionEn = {
   overallPass: 'Pass',
   overallFail: 'Fail',
   overallIncomplete: 'Incomplete',
+
+  quickInverse: 'Quick inverse',
+  openTool: 'Open tool',
+  notesPlaceholder: 'Notes (optional)',
+  notEvaluated: 'Not evaluated',
+  stepPass: 'Pass ✓',
+  stepFail: 'Fail ✗',
 }

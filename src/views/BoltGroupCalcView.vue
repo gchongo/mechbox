@@ -115,6 +115,13 @@
         </template>
       </section>
     </div>
+
+    <DecisionToolsPanel
+      :preset="decisionPreset"
+      :snapshot="snapshot"
+      :base-inputs="baseInputs"
+      @apply="onApplyInverse"
+    />
   </div>
 </template>
 
@@ -123,6 +130,9 @@ import { reactive, computed } from 'vue'
 import { analyzeBoltGroup } from '@/utils/bolt-group-calc'
 import BoltGroupDiagram from '@/components/bolt/BoltGroupDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptBoltGroup } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 
 const { pt, ct, pf, pr } = useCalcPage('bolt-group')
@@ -143,4 +153,14 @@ const form = reactive({
 })
 
 const result = computed(() => analyzeBoltGroup(form))
+
+const decisionPreset = DECISION_PRESETS['bolt-group']
+const baseInputs = computed(() => ({ ...form }))
+const snapshot = computed(() => adaptBoltGroup(form))
+
+function onApplyInverse({ variable, value }) {
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Math.round(value)
+  }
+}
 </script>

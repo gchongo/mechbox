@@ -11,6 +11,8 @@ import {
   adaptBeam,
   adaptSpring,
   adaptFilletWeld,
+  adaptBoltGroup,
+  adaptSizeChain,
 } from '@/utils/calc-adapters'
 import { buildEnhancedReport } from '@/utils/enhanced-report'
 import { DECISION_PRESETS, runPresetInverse } from '@/utils/decision-presets'
@@ -273,6 +275,32 @@ describe('extra adapters', () => {
     expect(keys).toContain('shearStress')
     expect(keys).toContain('throat')
   })
+
+  it('adaptBoltGroup returns max bolt force metric', () => {
+    const r = adaptBoltGroup({
+      calcMode: 'complete',
+      boltCount: 8,
+      boltCircleRadius: 60,
+      shearX: 5000,
+      shearY: 2000,
+      moment: 120000,
+      allowPerBolt: 8000,
+    })
+    expect(r.keyMetrics.find((m) => m.key === 'maxBoltForce')).toBeDefined()
+  })
+
+  it('adaptSizeChain returns tolerance metrics when configured', () => {
+    const r = adaptSizeChain({
+      closedRing: { min: -0.1, max: 0.1, unit: 'mm' },
+      componentRings: [
+        { name: 'A1', size: 10, tolerance: 0.05, factor: 1, type: 'increasing' },
+        { name: 'A2', size: 20, tolerance: 0.05, factor: 1, type: 'decreasing' },
+      ],
+      method: 'rss',
+    })
+    expect(r.keyMetrics.map((m) => m.key)).toContain('totalTolerance')
+    expect(r.keyMetrics.map((m) => m.key)).toContain('worstMargin')
+  })
 })
 
 describe('extra inverse presets', () => {
@@ -337,6 +365,39 @@ describe('extra inverse presets', () => {
     expect(r.candidates.length).toBeGreaterThan(0)
     expect(r.solution).toBeTruthy()
     expect(r.solutionRow).toHaveProperty('C')
+  })
+
+  it('bolt-group: reverse solves min bolt count', () => {
+    const preset = DECISION_PRESETS['bolt-group']
+    const r = runPresetInverse(preset, 'min-bolt-count', {
+      calcMode: 'simple',
+      boltCount: 4,
+      boltCircleRadius: 60,
+      shearX: 6000,
+      shearY: 2000,
+      moment: 100000,
+      allowPerBolt: 8000,
+    })
+    expect(r.converged).toBe(true)
+    expect(r.solution).toBeGreaterThanOrEqual(4)
+  })
+
+  it('editor: reverse finds max critical ring tolerance', () => {
+    const preset = DECISION_PRESETS.editor
+    const rings = [
+      { name: 'A1', size: 10, tolerance: 0.05, es: 0.025, ei: -0.025, factor: 1, type: 'increasing' },
+      { name: 'A2', size: 20, tolerance: 0.05, es: 0.025, ei: -0.025, factor: 1, type: 'decreasing' },
+    ]
+    const base = {
+      closedRing: { min: -10.2, max: -9.8, unit: 'mm' },
+      componentRings: rings,
+      method: 'rss',
+      criticalRingIndex: 0,
+    }
+    expect(adaptSizeChain(base).pass).toBe(true)
+    const r = runPresetInverse(preset, 'relax-critical-tolerance', base)
+    expect(r.converged).toBe(true)
+    expect(r.solution).toBeGreaterThan(0.05)
   })
 })
 

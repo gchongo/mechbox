@@ -351,6 +351,15 @@
         <el-button type="success" @click="goToMonteCarlo">{{ pt('monteCarlo') }}</el-button>
         <el-button v-if="gdtModeInfo" type="success" plain @click="goToGdtStack">{{ pt('gdtStack') }}</el-button>
       </div>
+
+      <DecisionToolsPanel
+        v-if="componentRings.length && closedRing.min != null"
+        class="mt-6"
+        :preset="decisionPreset"
+        :snapshot="editorSnapshot"
+        :base-inputs="editorBaseInputs"
+        @apply="onEditorInverse"
+      />
     </section>
   </div>
 </template>
@@ -395,6 +404,9 @@ import {
 import { isFavorite, toggleFavorite } from '@/utils/favorites'
 import { closedRingAsDesign, ensureRingEsEi } from '@/utils/ring-tolerance'
 import { useCalcPage } from '@/composables/useCalcPage'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptSizeChain } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { casesEn, localizeEditorRingNames, translateRingName, translateClosedRingName } from '@/i18n/cases-i18n'
@@ -990,6 +1002,29 @@ function handleExportPng() {
 async function handleCopy() {
   await copyResultText(buildResultText(buildExportPayload(), locale.value))
   ElMessage.success(pt('msgCopied'))
+}
+
+const decisionPreset = DECISION_PRESETS.editor
+const editorBaseInputs = computed(() => ({
+  closedRing: { ...closedRing.value, unit: unit.value },
+  componentRings: componentRings.value,
+  method: method.value,
+  chainOptions: chainOpts.value,
+  criticalRingIndex: 0,
+}))
+const editorSnapshot = computed(() => adaptSizeChain(editorBaseInputs.value))
+
+function onEditorInverse({ variable, value }) {
+  if (variable === 'criticalTolerance' && componentRings.value.length) {
+    const idx = 0
+    const ring = componentRings.value[idx]
+    ring.tolerance = Number(value.toFixed(4))
+    ring.es = ring.tolerance / 2
+    ring.ei = -ring.tolerance / 2
+    ElMessage.success(pt('msgInverseApplied') !== 'calc.pages.editor.msgInverseApplied'
+      ? pt('msgInverseApplied')
+      : '已应用反算公差')
+  }
 }
 </script>
 

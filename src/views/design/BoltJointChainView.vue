@@ -1,5 +1,5 @@
 <template>
-  <DesignChainView chain-type="powertrain" />
+  <DesignChainView chain-type="bolt-joint" />
 </template>
 <script setup>
 import DesignChainView from '@/views/design/DesignChainView.vue'

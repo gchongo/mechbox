@@ -31,45 +31,104 @@
       </div>
     </template>
 
+    <div class="mt-3 flex flex-wrap gap-2">
+      <el-button
+        v-if="meta?.quickInverse"
+        size="small"
+        type="primary"
+        plain
+        :loading="solving"
+        @click="runQuickInverse"
+      >
+        {{ dt('quickInverse') }}
+      </el-button>
+      <el-button size="small" plain @click="$emit('open-tool', meta?.toolId)">
+        {{ dt('openTool') }} →
+      </el-button>
+    </div>
+
+    <div v-if="inverseHint" class="mt-2 rounded bg-primary/5 px-2 py-1 text-xs text-primary">
+      {{ inverseHint }}
+    </div>
+
     <div class="mt-3">
       <el-input
         :model-value="step.notes"
         type="textarea"
         :rows="2"
         size="small"
-        :placeholder="'笔记（可选）'"
+        :placeholder="dt('notesPlaceholder')"
         @update:model-value="$emit('update-notes', $event)"
       />
     </div>
-
-    <el-button class="mt-3 w-full" size="small" plain @click="$emit('open-tool', meta?.toolId)">
-      打开完整工具页 →
-    </el-button>
   </section>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { DECISION_PRESETS, runPresetInverse } from '@/utils/decision-presets'
+import { buildStepInputs, CHAIN_INVERSE_APPLY } from '@/utils/chain-snapshots'
+import { useDecisionI18n } from '@/composables/useDecisionI18n'
 
 const props = defineProps({
   step: { type: Object, required: true },
   snapshot: { type: Object, default: null },
   meta: { type: Object, default: null },
+  chainType: { type: String, default: '' },
+  sharedInputs: { type: Object, default: () => ({}) },
 })
 
-defineEmits(['open-tool', 'update-notes'])
+const emit = defineEmits(['open-tool', 'update-notes', 'apply-shared'])
+const { dt } = useDecisionI18n()
+const solving = ref(false)
+const inverseHint = ref('')
 
 const topMetrics = computed(() => (props.snapshot?.keyMetrics ?? []).slice(0, 4))
 
 const statusLabel = computed(() => {
-  if (!props.snapshot) return '未评估'
-  return props.snapshot.pass ? '通过 ✓' : '不通过 ✗'
+  if (!props.snapshot) return dt('notEvaluated')
+  return props.snapshot.pass ? dt('stepPass') : dt('stepFail')
 })
 
 const statusType = computed(() => {
   if (!props.snapshot) return 'info'
   return props.snapshot.pass ? 'success' : 'danger'
 })
+
+async function runQuickInverse() {
+  const invId = props.meta?.quickInverse
+  const toolId = props.meta?.toolId
+  if (!invId || !toolId) return
+  const preset = DECISION_PRESETS[toolId]
+  if (!preset) return
+
+  solving.value = true
+  inverseHint.value = ''
+  try {
+    const baseInputs = buildStepInputs(props.chainType, props.step.key, props.sharedInputs)
+    const result = runPresetInverse(preset, invId, baseInputs)
+    if (!result.converged) {
+      ElMessage.warning(dt('noSolutionTitle'))
+      return
+    }
+
+    const applyField = CHAIN_INVERSE_APPLY[props.chainType]?.[props.step.key]?.[invId]
+    const shown = result.strategy === 'catalog'
+      ? `${result.solution} (C=${result.solutionRow?.C})`
+      : formatValue(result.solution)
+
+    if (applyField && result.solution != null && result.strategy !== 'catalog') {
+      emit('apply-shared', { field: applyField, value: Number(result.solution) })
+      inverseHint.value = `${dt('applied')}: ${applyField} = ${shown}`
+    } else {
+      inverseHint.value = `${dt('solution')}: ${shown}`
+      ElMessage.info(inverseHint.value)
+    }
+  } finally {
+    solving.value = false
+  }
+}
 
 function formatValue(v) {
   if (v == null) return '-'

@@ -17,6 +17,8 @@ import {
   adaptBeam,
   adaptSpring,
   adaptFilletWeld,
+  adaptBoltGroup,
+  adaptSizeChain,
 } from '@/utils/calc-adapters'
 import { filterBearings } from '@/utils/bearing-catalog'
 
@@ -298,14 +300,77 @@ export const WELD_PRESET = {
   ],
 }
 
+/** ---------------- Bolt group ---------------- */
+export const BOLT_GROUP_PRESET = {
+  toolId: 'bolt-group',
+  primaryMetric: 'maxBoltForce',
+  sensitivity: {
+    parameters: [
+      { key: 'boltCount', label: '螺栓数 n', delta: 0.1, min: 2 },
+      { key: 'boltCircleRadius', label: '分布圆 R', delta: 0.1, min: 10 },
+      { key: 'shearX', label: 'Fx', delta: 0.1, min: 0 },
+      { key: 'shearY', label: 'Fy', delta: 0.1, min: 0 },
+      { key: 'moment', label: '弯矩 M', delta: 0.1, min: 0 },
+      { key: 'clampForcePerBolt', label: '夹紧力/栓', delta: 0.1, min: 0 },
+    ],
+    metrics: ['maxBoltForce', 'slipCapacity'],
+  },
+  inverse: [
+    {
+      id: 'min-bolt-count',
+      label: '反推最少螺栓数（满足许用）',
+      variable: 'boltCount',
+      strategy: 'grid',
+      values: [4, 6, 8, 10, 12, 16, 20, 24],
+      buildEvaluator: (baseInputs) => (n) => {
+        const r = adaptBoltGroup({ ...baseInputs, calcMode: 'simple', boltCount: n })
+        return { pass: r.pass, metric: r.outputs.maxBoltForce }
+      },
+    },
+  ],
+}
+
+/** ---------------- Size chain editor ---------------- */
+export const EDITOR_PRESET = {
+  toolId: 'editor',
+  primaryMetric: 'worstMargin',
+  sensitivity: {
+    parameters: [],
+    metrics: ['worstMargin', 'totalTolerance'],
+  },
+  inverse: [
+    {
+      id: 'relax-critical-tolerance',
+      label: '反推关键环最大公差（满足闭环）',
+      variable: 'criticalTolerance',
+      strategy: 'bisect',
+      bounds: { lo: 0.001, hi: 1.5 },
+      options: { direction: 'descending' },
+      buildEvaluator: (baseInputs) => (tol) => {
+        const idx = baseInputs.criticalRingIndex ?? 0
+        const rings = baseInputs.componentRings.map((r, i) =>
+          i === idx ? { ...r, tolerance: tol, es: tol / 2, ei: -tol / 2 } : r,
+        )
+        const r = adaptSizeChain({
+          ...baseInputs,
+          componentRings: rings,
+        })
+        return { pass: r.pass, metric: tol }
+      },
+    },
+  ],
+}
+
 export const DECISION_PRESETS = {
   bearing: BEARING_PRESET,
   shaft: SHAFT_PRESET,
   'bolt-preload': BOLT_PRELOAD_PRESET,
+  'bolt-group': BOLT_GROUP_PRESET,
   key: KEY_PRESET,
   beam: BEAM_PRESET,
   spring: SPRING_PRESET,
   weld: WELD_PRESET,
+  editor: EDITOR_PRESET,
 }
 
 /** 通用求解入口（View 使用） */

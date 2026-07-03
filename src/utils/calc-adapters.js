@@ -14,6 +14,8 @@ import { analyzeKeyConnection } from '@/utils/key-calc'
 import { analyzeBeam } from '@/utils/beam-calc'
 import { analyzeSpring } from '@/utils/spring-calc'
 import { analyzeFilletWeld } from '@/utils/weld-calc'
+import { analyzeBoltGroup } from '@/utils/bolt-group-calc'
+import { calculateChainResult } from '@/utils/gdt-chain'
 
 /** ---------------- Bearing ---------------- */
 export function adaptBearing(input) {
@@ -447,14 +449,136 @@ export function adaptFilletWeld(input) {
   })
 }
 
+/** ---------------- Bolt group ---------------- */
+export function adaptBoltGroup(input) {
+  const r = analyzeBoltGroup(input)
+  if (r.errorKey) {
+    return buildCalcResult({
+      toolId: 'bolt-group',
+      toolLabel: '螺栓组',
+      calcMode: input.calcMode,
+      inputs: input,
+      outputs: r,
+      pass: false,
+      warnings: [{ key: r.errorKey, level: 'critical' }],
+    })
+  }
+  const allow = r.allowPerBolt ?? input.allowPerBolt ?? 8000
+  const util = allow ? r.maxBoltForce / allow : null
+  const keyMetrics = [
+    metric('maxBoltForce', '最大栓载 |F|', r.maxBoltForce, 'N', {
+      status: r.pass ? 'pass' : 'fail',
+      utilization: util,
+    }),
+    metric('maxShearForce', '最大剪切', r.maxShearForce ?? r.maxBoltForce, 'N'),
+    metric('directPerBolt', '直接分量', r.directPerBolt, 'N'),
+    metric('torsionPerBolt', '扭转分量', r.torsionPerBolt, 'N'),
+  ]
+  if (r.friction) {
+    keyMetrics.push(
+      metric('slipCapacity', '摩擦抗滑', r.friction.slipCapacity, 'N', {
+        status: r.slipPass ? 'pass' : 'fail',
+        direction: 'higher-better',
+      }),
+    )
+  }
+  if (r.prying?.totalTension) {
+    keyMetrics.push(metric('pryingTension', '撬力附加拉力', r.prying.totalTension, 'N'))
+  }
+  const suggestions = []
+  if (!r.pass) {
+    if (!r.shearPass) suggestions.push('剪切超限：增加螺栓数或加大分布圆半径')
+    if (!r.slipPass) suggestions.push('摩擦抗滑不足：提高预紧力或摩擦系数')
+    if (!r.interactionPass) suggestions.push('剪拉组合交互不通过：降低偏心弯矩或加大许用')
+  }
+  return buildCalcResult({
+    toolId: 'bolt-group',
+    toolLabel: '螺栓组',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    standards: r.calcMode !== 'simple' ? ['VDI 2230 偏心简化', '剪拉交互'] : [],
+    assumptions: r.calcMode === 'simple' ? ['均布简化，未含撬力/摩擦'] : [],
+    suggestions,
+  })
+}
+
+/** ---------------- Size chain editor ---------------- */
+export function adaptSizeChain(input) {
+  const { closedRing, componentRings, method = 'rss', chainOptions = {} } = input
+  if (
+    closedRing?.min == null ||
+    closedRing?.max == null ||
+    !componentRings?.length
+  ) {
+    return buildCalcResult({
+      toolId: 'editor',
+      toolLabel: '尺寸链',
+      calcMode: method,
+      inputs: input,
+      outputs: {},
+      pass: false,
+      warnings: [{ key: 'incomplete_chain', level: 'warn', message: '闭环或组成环未配置' }],
+    })
+  }
+  const spec = { min: closedRing.min, max: closedRing.max }
+  const r = calculateChainResult(spec, componentRings, method, chainOptions)
+  const marginLower = r.lower - closedRing.min
+  const marginUpper = closedRing.max - r.upper
+  const worstMargin = Math.min(marginUpper, marginLower)
+
+  const keyMetrics = [
+    metric('totalTolerance', '总公差 T', r.totalTolerance, closedRing.unit ?? 'mm'),
+    metric('upper', '上偏差', r.upper, closedRing.unit ?? 'mm'),
+    metric('lower', '下偏差', r.lower, closedRing.unit ?? 'mm'),
+    metric('worstMargin', '最小裕量', worstMargin, closedRing.unit ?? 'mm', {
+      status: r.pass ? 'pass' : 'fail',
+      direction: 'higher-better',
+    }),
+  ]
+
+  const suggestions = []
+  if (!r.pass) {
+    if (marginLower < 0) suggestions.push(`下偏差超出 ${Math.abs(marginLower).toFixed(3)}，收紧负向环或放宽下限`)
+    if (marginUpper < 0) suggestions.push(`上偏差超出 ${Math.abs(marginUpper).toFixed(3)}，收紧正向环或放宽上限`)
+  }
+
+  return buildCalcResult({
+    toolId: 'editor',
+    toolLabel: '尺寸链',
+    calcMode: method,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    standards: [methodLabel(method)],
+    assumptions: ['1D 线性叠加；GD&T 模式需选对应分析类型'],
+    suggestions,
+  })
+}
+
+function methodLabel(m) {
+  const map = {
+    worst: '极值法',
+    rss: 'RSS 法',
+    'modified-rss': '修正 RSS',
+    'sigma6-rss': '6σ RSS',
+  }
+  return map[m] ?? m
+}
+
 /** 工具 id → adapter 映射（用于通用调用） */
 export const CALC_ADAPTERS = {
   bearing: adaptBearing,
   shaft: adaptShaftTorsion,
   'shaft-combined': adaptShaftCombined,
   'bolt-preload': adaptBoltPreload,
+  'bolt-group': adaptBoltGroup,
   key: adaptKeyConnection,
   beam: adaptBeam,
   spring: adaptSpring,
   weld: adaptFilletWeld,
+  editor: adaptSizeChain,
 }
