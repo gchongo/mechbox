@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">热膨胀补偿</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      线膨胀与配合尺寸随温度变化估算，适用于高温装配与过盈/间隙设计
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="calcMode === 'simple'">单材料线膨胀 ΔL。</template>
-          <template v-else-if="calcMode === 'complete'">双材料配合过盈随温度变化。</template>
-          <template v-else>装配/服役两阶段温度链与过盈裕度。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcMode" page-key="thermal-expansion" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -43,6 +29,16 @@
             <span class="ml-2 text-xs text-gray-500">×10⁻⁶ /°C（输入值即 ×10⁻⁶）</span>
           </el-form-item>
         </el-form>
+
+        <ThermalExpansionDiagram
+          :length="form.length"
+          :delta-t="form.deltaT"
+          :alpha="form.alpha"
+          :shaft-diameter="form.shaftDiameter"
+          :hole-diameter="form.holeDiameter"
+          :show-fit="calcMode !== 'simple'"
+        />
+
         <div class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
           <dt class="text-gray-500">线膨胀 ΔL₁</dt>
           <dd class="mt-1 font-mono text-lg">{{ linearResult.linearExpansion?.toFixed(4) }} mm</dd>
@@ -118,6 +114,11 @@
 <script setup>
 import { reactive, computed, ref } from 'vue'
 import { analyzeThermalExpansion, THERMAL_MATERIALS } from '@/utils/thermal-expansion-calc'
+import ThermalExpansionDiagram from '@/components/thermal/ThermalExpansionDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('thermal-expansion')
 
 const calcMode = ref('simple')
 const mat1 = ref('steel')

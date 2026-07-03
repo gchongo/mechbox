@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">疲劳寿命分析</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      S-N 曲线估算与 Miner 线性累积损伤法则
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="calcMode === 'simple'">单级应力幅 → 寿命。</template>
-          <template v-else-if="calcMode === 'complete'">S-N 曲线 + Miner 载荷谱。</template>
-          <template v-else>Goodman 平均应力修正、表面/尺寸系数。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcMode" page-key="fatigue" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -44,6 +30,12 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <FatigueDiagram
+          :stress-amplitude="stressAmplitude"
+          :endurance-limit="result.enduranceLimit"
+        />
+
         <div v-if="stressAmplitude > 0" class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
           <dt class="text-gray-500">估算寿命 N</dt>
           <dd class="mt-1 font-mono text-lg">{{ lifeDisplay }}</dd>
@@ -106,6 +98,11 @@ import {
   analyzeFatigue,
   parseLoadSpectrum,
 } from '@/utils/fatigue-calc'
+import FatigueDiagram from '@/components/fatigue/FatigueDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('fatigue')
 
 const calcMode = ref('complete')
 const material = ref('steel_45')

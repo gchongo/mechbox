@@ -1,35 +1,15 @@
 <template>
   <div>
-    <h1 class="page-title">螺纹强度计算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      公制螺纹有效截面积、拉/剪应力与拧紧扭矩（ISO 898 / GB/T 3098）
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-          <template v-if="form.calcMode === 'simple'">
-            统一剪切面积与 <MathTex expr="T=\mu dF" /> 简化扭矩。
-          </template>
-          <template v-else-if="form.calcMode === 'complete'">
-            内外螺纹剪切面积分开计算，校核最小旋合长度 m_eff。
-          </template>
-          <template v-else>
-            完整模型 + VDI 2230 扭矩分解（μ_G、μ_K、D_km），与螺栓预紧力页一致。
-          </template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="thread" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
           <el-form-item label="公称直径 d">
             <el-input-number v-model="form.diameter" :min="3" :max="48" :step="1" @change="onDiameterChange" />
@@ -81,10 +61,16 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <ThreadDiagram
+          :diameter="form.diameter"
+          :pitch="form.pitch"
+          :engaged-length="form.engagedLength"
+        />
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">计算结果</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <dt class="text-gray-500">有效面积 <MathTex expr="A_s" /></dt>
@@ -169,6 +155,11 @@ import {
   THREAD_GRADES,
   suggestPitch,
 } from '@/utils/thread-calc'
+import ThreadDiagram from '@/components/thread/ThreadDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('thread')
 
 const grades = THREAD_GRADES
 

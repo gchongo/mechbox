@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">齿轮强度计算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      Lewis 简化 + ISO 6336 / AGMA 2101 完整校核（接触 + 弯曲安全系数）
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="calcMode === 'simple'">Lewis 弯曲 + 接触应力估算。</template>
-          <template v-else-if="calcMode === 'complete'">ISO 6336 全系数校核。</template>
-          <template v-else>ISO / AGMA 双标准对照。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcMode" page-key="gear" />
 
     <el-tabs v-model="mode" class="mb-6">
       <el-tab-pane label="ISO 6336" name="iso6336" />
@@ -30,7 +16,7 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
           <el-form-item label="模数 m (mm)">
             <el-input-number v-model="form.module" :min="0.5" :precision="2" :step="0.5" />
@@ -107,10 +93,17 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <GearPairDiagram
+          :module="form.module"
+          :pinion-teeth="form.pinionTeeth"
+          :gear-teeth="form.gearTeeth"
+          :face-width="form.faceWidth"
+        />
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">计算结果</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <template v-if="mode === 'agma'">
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -252,6 +245,11 @@ import { analyzeGearStrength } from '@/utils/gear-calc'
 import { analyzeGearISO6336, GEAR_MATERIALS } from '@/utils/gear-iso6336'
 import { analyzeGearAGMA, compareGearStandards } from '@/utils/gear-agma'
 import { ISO1328_GRADES, ISO1328_GRADE_LABELS } from '@/utils/iso-1328'
+import GearPairDiagram from '@/components/gear/GearPairDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('gear')
 
 const calcMode = ref('complete')
 const mode = ref('iso6336')

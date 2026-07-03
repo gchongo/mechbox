@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">热处理硬度预测</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      碳当量、Jominy 端淬曲线、截面淬透性与回火硬度工程估算
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="calcMode === 'simple'">碳当量 CE 与焊接性。</template>
-          <template v-else-if="calcMode === 'complete'">Jominy 淬透性与截面硬度。</template>
-          <template v-else>Hollomon-Jaffe 回火与截面硬度分布。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcMode" page-key="heat-treatment" />
 
     <el-tabs v-model="tab">
       <el-tab-pane label="成分与淬透性" name="hardenability">
@@ -44,6 +30,13 @@
                 <span class="ml-2 text-xs text-gray-500">mm</span>
               </el-form-item>
             </el-form>
+
+            <HeatTreatmentDiagram
+              :part-diameter="partDiameter"
+              :carbon-equivalent="parseFloat(result.carbonEquivalent) || 0"
+              :surface-hrc="parseFloat(result.hardenability?.surfaceHRC) || 55"
+              :core-hrc="parseFloat(result.hardenability?.estimatedCoreHRC) || 35"
+            />
           </section>
 
           <section class="card-panel">
@@ -142,6 +135,11 @@ import {
   analyzeHeatTreatment,
   calcTemperedHardness,
 } from '@/utils/heat-treatment-calc'
+import HeatTreatmentDiagram from '@/components/heat/HeatTreatmentDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('heat-treatment')
 
 const tab = ref('hardenability')
 const calcMode = ref('complete')

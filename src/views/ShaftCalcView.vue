@@ -1,22 +1,9 @@
 <template>
   <div>
-    <h1 class="page-title">轴强度计算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500 dark:text-gray-400">
-          <template v-if="form.calcMode === 'simple'">实心圆轴，固定许用应力。</template>
-          <template v-else-if="form.calcMode === 'complete'">空心轴、屈服推算许用、稳定性校核。</template>
-          <template v-else>应力集中系数 K_t、疲劳幅值初筛。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="shaft" />
 
     <el-tabs v-model="mode" class="mb-6">
       <el-tab-pane label="扭转" name="torsion" />
@@ -59,6 +46,13 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <ShaftDiagram
+          :diameter="form.diameter"
+          :inner-diameter="form.innerDiameter"
+          :mode="mode"
+          :length="form.length"
+        />
       </section>
       <section class="card-panel">
         <dl v-if="mode === 'torsion'" class="space-y-3 text-sm">
@@ -87,6 +81,11 @@ import { reactive, computed, ref } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import { analyzeShaftTorsion } from '@/utils/shaft-calc'
 import { analyzeShaftCombined } from '@/utils/shaft-combined'
+import ShaftDiagram from '@/components/shaft/ShaftDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('shaft')
 const mode = ref('torsion')
 const form = reactive({
   calcMode: 'simple',

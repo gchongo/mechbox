@@ -1,32 +1,15 @@
 <template>
   <div>
-    <h1 class="page-title">螺栓组受力</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      剪力与弯矩作用下螺栓组载荷分配（简化均分 / 矢量分解 / 逐栓校核）
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500 dark:text-gray-400">
-          <template v-if="form.calcMode === 'simple'">
-            均分剪力 + 极惯性矩近似扭剪叠加。
-          </template>
-          <template v-else>
-            各螺栓坐标矢量合成 F_i = F/n + M×r/I_p，专业模式输出逐栓表格与许用校核。
-          </template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="bolt-group" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
           <el-form-item label="螺栓数量 n">
             <el-input-number v-model="form.boltCount" :min="2" :max="24" />
@@ -48,10 +31,19 @@
             <el-input-number v-model="form.allowPerBolt" :min="100" :step="500" />
           </el-form-item>
         </el-form>
+
+        <BoltGroupDiagram
+          :bolt-count="form.boltCount"
+          :bolt-circle-radius="form.boltCircleRadius"
+          :shear-x="form.shearX"
+          :shear-y="form.shearY"
+          :moment="form.moment"
+          :critical-index="result.criticalBoltIndex ?? 0"
+        />
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">计算结果</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <dt>单栓直接剪力</dt>
@@ -96,6 +88,11 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import { analyzeBoltGroup } from '@/utils/bolt-group-calc'
+import BoltGroupDiagram from '@/components/bolt/BoltGroupDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('bolt-group')
 
 const form = reactive({
   calcMode: 'simple',

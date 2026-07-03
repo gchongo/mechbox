@@ -1,35 +1,15 @@
 <template>
   <div>
-    <h1 class="page-title">过盈配合计算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      DIN 7190 弹性理论：接触压力、压装力与摩擦传递扭矩
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500 dark:text-gray-400">
-          <template v-if="form.calcMode === 'simple'">
-            实心轴 + 厚壁轮毂 Lame 简化。
-          </template>
-          <template v-else-if="form.calcMode === 'complete'">
-            空心轴柔度、轮毂/轴切向应力校核。
-          </template>
-          <template v-else>
-            完整 Lame + 温差修正有效过盈量（装配/服役温度变化）。
-          </template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="interference-fit" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
           <el-form-item label="轴径 d">
             <el-input-number v-model="form.shaftDiameter" :min="5" :max="200" :precision="2" />
@@ -88,10 +68,19 @@
         </el-form>
         <el-alert v-if="result.thinWallWarning" type="warning" show-icon :closable="false" class="mt-2"
           title="轮毂壁厚较薄，结果仅供估算，建议校核或采用厚壁公式" />
+
+        <InterferenceFitDiagram
+          :shaft-diameter="form.shaftDiameter"
+          :hole-diameter="form.holeDiameter"
+          :hub-outer-diameter="form.hubOuterDiameter"
+          :fit-length="form.fitLength"
+          :interference="interference"
+          :shaft-inner-diameter="form.shaftInnerDiameter"
+        />
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">计算结果</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <el-alert v-if="result.error" :title="result.error" type="error" show-icon />
         <dl v-else class="space-y-3 text-sm">
           <div v-if="result.thermal" class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-950">
@@ -140,6 +129,11 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import { analyzeInterferenceFit } from '@/utils/interference-fit-calc'
+import InterferenceFitDiagram from '@/components/interference/InterferenceFitDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('interference-fit')
 
 const form = reactive({
   calcMode: 'simple',

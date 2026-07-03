@@ -1,23 +1,14 @@
 <template>
   <div>
-    <h1 class="page-title">结构/流体估算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      管路压降、薄板屈曲与固有频率/共振裕度前置验算
+      {{ pt('subtitle') }}
     </p>
 
     <el-tabs v-model="tab">
       <!-- 管路压降 -->
       <el-tab-pane label="管路压降" name="pipe">
-        <section class="card-panel mb-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm font-medium">计算模型</span>
-            <el-radio-group v-model="pipe.calcMode">
-              <el-radio-button value="simple">简化</el-radio-button>
-              <el-radio-button value="complete">完整</el-radio-button>
-              <el-radio-button value="professional">专业</el-radio-button>
-            </el-radio-group>
-          </div>
-        </section>
+        <CalcModePanel v-model="pipe.calcMode" page-key="structural" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -52,6 +43,12 @@
                 </el-form-item>
               </template>
             </el-form>
+
+            <StructuralDiagram
+              variant="pipe"
+              :diameter="pipe.diameter"
+              :length="pipe.length"
+            />
           </section>
           <section class="card-panel">
             <dl class="space-y-3 text-sm">
@@ -80,16 +77,7 @@
 
       <!-- 薄板屈曲 -->
       <el-tab-pane label="薄板屈曲" name="plate">
-        <section class="card-panel mb-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm font-medium">计算模型</span>
-            <el-radio-group v-model="plate.calcMode">
-              <el-radio-button value="simple">简化</el-radio-button>
-              <el-radio-button value="complete">完整</el-radio-button>
-              <el-radio-button value="professional">专业</el-radio-button>
-            </el-radio-group>
-          </div>
-        </section>
+        <CalcModePanel v-model="plate.calcMode" page-key="structural" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -110,6 +98,12 @@
                 <el-form-item label="面内剪应力"><el-input-number v-model="plate.appliedShear" :min="0" /></el-form-item>
               </template>
             </el-form>
+
+            <StructuralDiagram
+              variant="plate"
+              :plate-length="plate.length"
+              :plate-thickness="plate.thickness"
+            />
           </section>
           <section class="card-panel">
             <dl class="space-y-3 text-sm">
@@ -138,16 +132,7 @@
 
       <!-- 模态/共振 -->
       <el-tab-pane label="固有频率" name="modal">
-        <section class="card-panel mb-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm font-medium">计算模型</span>
-            <el-radio-group v-model="modal.calcMode">
-              <el-radio-button value="simple">简化</el-radio-button>
-              <el-radio-button value="complete">完整</el-radio-button>
-              <el-radio-button value="professional">专业</el-radio-button>
-            </el-radio-group>
-          </div>
-        </section>
+        <CalcModePanel v-model="modal.calcMode" page-key="structural" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -176,6 +161,11 @@
                 <span class="ml-2 text-xs text-gray-500">Hz（可选）</span>
               </el-form-item>
             </el-form>
+
+            <StructuralDiagram
+              variant="modal"
+              :excitation-freq="modal.excitationFreq"
+            />
           </section>
           <section class="card-panel">
             <div class="rounded bg-primary/5 p-4 text-center">
@@ -208,6 +198,11 @@ import { reactive, ref, computed } from 'vue'
 import { analyzePipeFlow, FLUID_PRESETS } from '@/utils/pipe-flow-calc'
 import { calcPlateBucklingStress, PLATE_EDGE_CONDITIONS } from '@/utils/plate-buckling-calc'
 import { analyzeModal, MODAL_CASES } from '@/utils/modal-calc'
+import StructuralDiagram from '@/components/structural/StructuralDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('structural')
 
 const tab = ref('pipe')
 const fluid = ref('water')

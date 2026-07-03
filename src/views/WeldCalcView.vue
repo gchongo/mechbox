@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">焊缝强度</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">角焊缝/对接焊、三标准对照、疲劳与热影响区 (HAZ)</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
     <el-tabs v-model="tab">
       <el-tab-pane label="角焊缝" name="fillet">
-        <section class="card-panel mb-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm font-medium">计算模型</span>
-            <el-radio-group v-model="form.calcMode">
-              <el-radio-button value="simple">简化</el-radio-button>
-              <el-radio-button value="complete">完整</el-radio-button>
-              <el-radio-button value="professional">专业</el-radio-button>
-            </el-radio-group>
-            <p class="w-full text-xs text-gray-500">
-              <template v-if="form.calcMode === 'simple'">GB/T 单标准剪应力校核。</template>
-              <template v-else-if="form.calcMode === 'complete'">GB / Eurocode / AWS 三标准对照。</template>
-              <template v-else>偏心合成应力 + HAZ + 疲劳链式校核。</template>
-            </p>
-          </div>
-        </section>
+        <CalcModePanel v-model="form.calcMode" page-key="weld" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -54,6 +40,12 @@
                 </el-select>
               </el-form-item>
             </el-form>
+
+            <FilletWeldDiagram
+              :leg-size="form.legSize"
+              :weld-length="form.weldLength"
+              :throat="filletResult.throat ?? form.legSize * 0.7"
+            />
           </section>
           <section class="card-panel">
             <dl class="space-y-3 text-sm">
@@ -99,16 +91,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="对接焊" name="butt">
-        <section class="card-panel mb-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm font-medium">计算模型</span>
-            <el-radio-group v-model="butt.calcMode">
-              <el-radio-button value="simple">简化</el-radio-button>
-              <el-radio-button value="complete">完整</el-radio-button>
-              <el-radio-button value="professional">专业</el-radio-button>
-            </el-radio-group>
-          </div>
-        </section>
+        <CalcModePanel v-model="butt.calcMode" page-key="weld" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -267,6 +250,11 @@ import {
   WELD_DETAIL_CATEGORIES,
 } from '@/utils/weld-calc'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import FilletWeldDiagram from '@/components/weld/FilletWeldDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('weld')
 
 const tab = ref('fillet')
 const form = reactive({

@@ -1,23 +1,9 @@
 <template>
   <div>
-    <h1 class="page-title">链传动计算</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">滚子链节距、链长、传动比与链张力</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">链长、链速、张力。</template>
-          <template v-else-if="form.calcMode === 'complete'">工况系数、链速/张力许用校核。</template>
-          <template v-else>润滑系数、多排链、寿命估算。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="chain" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -37,6 +23,14 @@
             <el-form-item label="排数"><el-input-number v-model="form.strands" :min="1" :max="4" /></el-form-item>
           </template>
         </el-form>
+
+        <DriveLayoutDiagram
+          variant="chain"
+          :driver-teeth="form.driverTeeth"
+          :driven-teeth="form.drivenTeeth"
+          :pitch="form.pitch"
+          :center-distance="form.centerDistance"
+        />
       </section>
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
@@ -54,6 +48,11 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import { analyzeChainDrive } from '@/utils/chain-calc'
+import DriveLayoutDiagram from '@/components/drive/DriveLayoutDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('chain')
 const form = reactive({
   calcMode: 'simple',
   pitch: 15.875,

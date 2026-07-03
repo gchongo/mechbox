@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">材料选型辅助</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      基于强度、重量、成本、可焊性与可加工性的加权综合推荐
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="calcMode">
-          <el-radio-button label="simple">简化</el-radio-button>
-          <el-radio-button label="complete">完整</el-radio-button>
-          <el-radio-button label="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="calcMode === 'simple'">硬约束过滤 + Top 5。</template>
-          <template v-else-if="calcMode === 'complete'">全库排序与分项得分。</template>
-          <template v-else>强度/重量/成本单项最优与权衡提示。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcMode" page-key="material-selection" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -97,6 +83,10 @@
 <script setup>
 import { reactive, computed, ref } from 'vue'
 import { scoreMaterials } from '@/utils/material-selection-calc'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('material-selection')
 
 const calcMode = ref('complete')
 

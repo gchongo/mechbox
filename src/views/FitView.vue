@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">ISO 286 轴孔配合</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      公差带极限尺寸、间隙/过盈与配合类型分析
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="calcMode">
-          <el-radio-button label="simple">简化</el-radio-button>
-          <el-radio-button label="complete">完整</el-radio-button>
-          <el-radio-button label="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="calcMode === 'simple'">极限尺寸与配合类型。</template>
-          <template v-else-if="calcMode === 'complete'">平均间隙、公差带宽与配合品质指数。</template>
-          <template v-else>装配温差对间隙/过盈的影响评估。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcMode" page-key="fit" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -129,6 +115,10 @@ import FitDiagram from '@/components/fit/FitDiagram.vue'
 import FitToleranceBand from '@/components/fit/FitToleranceBand.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { exportToolReportPdf } from '@/utils/export'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('fit')
 
 const nominal = ref(25)
 const holeCode = ref('H7')

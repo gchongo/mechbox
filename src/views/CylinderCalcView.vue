@@ -1,23 +1,9 @@
 <template>
   <div>
-    <h1 class="page-title">液压 / 气缸计算</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">缸径、压力、推力/拉力、速度、流量</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">力、速度、流量换算。</template>
-          <template v-else-if="form.calcMode === 'complete'">外载校核、活塞杆屈曲。</template>
-          <template v-else>动态载荷、行程时间、缓冲压力。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="cylinder" />
 
     <el-tabs v-model="mode" class="mb-6">
       <el-tab-pane label="液压缸" name="hydraulic" />
@@ -44,6 +30,13 @@
             <el-form-item label="加速度 (m/s²)"><el-input-number v-model="form.acceleration" :min="0" :precision="2" /></el-form-item>
           </template>
         </el-form>
+
+        <CylinderDiagram
+          :variant="mode"
+          :bore-diameter="form.boreDiameter"
+          :rod-diameter="form.rodDiameter"
+          :stroke-length="form.strokeLength"
+        />
       </section>
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
@@ -67,6 +60,11 @@
 import { reactive, computed, ref } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import { analyzeHydraulicCylinder, analyzePneumaticCylinder } from '@/utils/hydraulic-calc'
+import CylinderDiagram from '@/components/cylinder/CylinderDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('cylinder')
 const mode = ref('hydraulic')
 const form = reactive({
   calcMode: 'simple',

@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">钣金展开计算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      折弯扣除与 K 因子法，估算展开下料长度
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="calcMode === 'simple'">单段 K 因子展开。</template>
-          <template v-else-if="calcMode === 'complete'">多段折弯与最小法兰校核。</template>
-          <template v-else>回弹补偿与最小内径规则。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcMode" page-key="sheet-metal" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -77,6 +63,13 @@
           </div>
         </div>
         <el-button class="mt-2" size="small" @click="addSeg">+ 添加段</el-button>
+
+        <SheetMetalBendDiagram
+          :thickness="form.thickness"
+          :bend-radius="form.bendRadius"
+          :k-factor="form.kFactor"
+          :bend-angle="firstBendAngle"
+        />
       </section>
 
       <section class="card-panel">
@@ -128,6 +121,11 @@
 <script setup>
 import { reactive, ref, computed } from 'vue'
 import { analyzeSheetMetalUnfold, K_FACTOR_PRESETS } from '@/utils/sheet-metal-calc'
+import SheetMetalBendDiagram from '@/components/sheet-metal/SheetMetalBendDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('sheet-metal')
 
 const calcMode = ref('simple')
 
@@ -161,6 +159,11 @@ function addSeg() {
 function removeSeg(i) {
   segments.value.splice(i, 1)
 }
+
+const firstBendAngle = computed(() => {
+  const bend = segments.value.find((s) => s.type === 'bend')
+  return bend?.angle ?? 90
+})
 
 const result = computed(() =>
   analyzeSheetMetalUnfold({

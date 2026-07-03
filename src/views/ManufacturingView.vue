@@ -1,25 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">制造工艺估算</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">机加工余量与铸造拔模斜度快速估算</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
     <el-tabs v-model="tab">
       <el-tab-pane label="机加工余量" name="machining">
-        <section class="card-panel mb-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm font-medium">计算模型</span>
-            <el-radio-group v-model="mach.calcMode">
-              <el-radio-button label="simple">简化</el-radio-button>
-              <el-radio-button label="complete">完整</el-radio-button>
-              <el-radio-button label="professional">专业</el-radio-button>
-            </el-radio-group>
-            <p class="w-full text-xs text-gray-500">
-              <template v-if="mach.calcMode === 'simple'">粗+精两工序，端面余量 1 mm。</template>
-              <template v-else-if="mach.calcMode === 'complete'">三工序叠加 + 磨削余量与最小毛坯校核。</template>
-              <template v-else>含材料去除率与估算加工工时。</template>
-            </p>
-          </div>
-        </section>
+        <CalcModePanel v-model="mach.calcMode" page-key="manufacturing" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -50,6 +36,13 @@
                 <span class="ml-2 text-xs text-gray-500">mm³/min</span>
               </el-form-item>
             </el-form>
+
+            <MachiningAllowanceDiagram
+              :nominal-diameter="mach.nominalDiameter"
+              :length="mach.length"
+              :stock-diameter="machResult.recommendedStockDiameter ?? mach.nominalDiameter"
+              :radial-allowance="machResult.totalRadialAllowance ?? 0"
+            />
           </section>
           <section class="card-panel">
             <el-tag class="mb-3" size="small">{{ machResult.calcMode }} · {{ machResult.operations?.join(' + ') }}</el-tag>
@@ -90,16 +83,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="铸造拔模斜度" name="casting">
-        <section class="card-panel mb-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm font-medium">计算模型</span>
-            <el-radio-group v-model="cast.calcMode">
-              <el-radio-button label="simple">简化</el-radio-button>
-              <el-radio-button label="complete">完整</el-radio-button>
-              <el-radio-button label="professional">专业</el-radio-button>
-            </el-radio-group>
-          </div>
-        </section>
+        <CalcModePanel v-model="cast.calcMode" page-key="manufacturing-cast" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -125,6 +109,12 @@
                 <span class="ml-2 text-xs text-gray-500">°（可选校核）</span>
               </el-form-item>
             </el-form>
+
+            <CastingDraftDiagram
+              :depth="cast.depth"
+              :draft-angle="castResult.draftAngleDeg ?? 0"
+              :linear-increase="castResult.linearIncreasePerSide ?? 0"
+            />
           </section>
           <section class="card-panel">
             <div class="rounded bg-primary/5 p-4 text-center">
@@ -154,6 +144,12 @@
 import { reactive, ref, computed, watch } from 'vue'
 import { calcMachiningAllowance, TOLERANCE_GRADES, MACHINING_MODE_OPS } from '@/utils/machining-calc'
 import { calcDraftAngle, verifyDraftAngle, CAST_MATERIALS, SURFACE_TYPES } from '@/utils/casting-calc'
+import MachiningAllowanceDiagram from '@/components/manufacturing/MachiningAllowanceDiagram.vue'
+import CastingDraftDiagram from '@/components/manufacturing/CastingDraftDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('manufacturing')
 
 const tab = ref('machining')
 

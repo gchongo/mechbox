@@ -1,23 +1,9 @@
 <template>
   <div>
-    <h1 class="page-title">离合器扭矩计算</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">摩擦离合器传递扭矩与压紧力</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">T = μFRn。</template>
-          <template v-else-if="form.calcMode === 'complete'">内外径有效摩擦半径、接触比压。</template>
-          <template v-else>离心减载、热衰减、设计扭矩校核。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="clutch" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -38,6 +24,14 @@
             <el-form-item label="热衰减系数"><el-input-number v-model="form.thermalFade" :min="0.5" :max="1" :step="0.05" :precision="2" /></el-form-item>
           </template>
         </el-form>
+
+        <ClutchDiagram
+          :inner-diameter="clutchInnerD"
+          :outer-diameter="clutchOuterD"
+          :effective-radius="result.effectiveRadius ?? form.radius"
+          :friction-coeff="form.frictionCoeff"
+          :surfaces="form.surfaces"
+        />
       </section>
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
@@ -59,6 +53,11 @@
 import { reactive, computed } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import { analyzeClutch } from '@/utils/clutch-calc'
+import ClutchDiagram from '@/components/clutch/ClutchDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('clutch')
 
 const form = reactive({
   calcMode: 'simple',
@@ -74,4 +73,11 @@ const form = reactive({
 })
 
 const result = computed(() => analyzeClutch(form))
+
+const clutchInnerD = computed(() =>
+  form.calcMode === 'simple' ? form.radius * 2 - 20 : form.innerDiameter,
+)
+const clutchOuterD = computed(() =>
+  form.calcMode === 'simple' ? form.radius * 2 + 20 : form.outerDiameter,
+)
 </script>

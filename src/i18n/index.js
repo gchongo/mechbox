@@ -1,5 +1,7 @@
 /** @typedef {'zh'|'en'} Locale */
 
+import { calcZh, calcEn } from './calc-i18n'
+
 const zh = {
   appName: '机械工具箱',
   nav: {
@@ -183,6 +185,10 @@ const zh = {
       fit: 'ISO 286 轴孔配合查询，公差带与间隙/过盈计算。',
       'gdt-stack': 'GD&T 形位公差栈分析，多特征 RSS/极值叠加与贡献度。',
     },
+  },
+  calc: {
+    common: calcZh.common,
+    pages: calcZh.pages,
   },
 }
 
@@ -369,6 +375,10 @@ const en = {
       fit: 'ISO 286 shaft/hole fit lookup with clearance and interference limits.',
       'gdt-stack': 'GD&T tolerance stack-up with RSS/worst-case and contribution analysis.',
     },
+  },
+  calc: {
+    common: calcEn.common,
+    pages: calcEn.pages,
   },
 }
 

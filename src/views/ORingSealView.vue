@@ -1,29 +1,15 @@
 <template>
   <div>
-    <h1 class="page-title">O 型圈密封设计</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      沟槽尺寸、压缩率与填充率校核，支持静/动密封、挤出间隙与极限压力分析（Parker / ISO 3601 参考）
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">静密封压缩率 / 填充率。</template>
-          <template v-else-if="form.calcMode === 'complete'">动压密封、挤出间隙、材料/温度。</template>
-          <template v-else>往复速度、极限压力、热膨胀修正。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="o-ring" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
           <el-form-item label="截面直径">
             <div class="flex w-full flex-wrap items-center gap-2">
@@ -157,6 +143,10 @@
 import { reactive, computed, ref } from 'vue'
 import { analyzeORingSeal, recommendGroove, ORING_SECTIONS, ORING_MATERIALS } from '@/utils/o-ring-calc'
 import ORingSealDiagram from '@/components/oring/ORingSealDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('o-ring')
 
 const materials = ORING_MATERIALS
 const form = reactive({

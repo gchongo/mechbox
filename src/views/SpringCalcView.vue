@@ -1,23 +1,9 @@
 <template>
   <div>
-    <h1 class="page-title">弹簧设计计算</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">圆柱螺旋压缩弹簧刚度、变形与切应力</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">刚度、Wahl 系数、切应力校核。</template>
-          <template v-else-if="form.calcMode === 'complete'">旋绕比、稳定性、压并高度余量。</template>
-          <template v-else>变载荷疲劳寿命（S-N）。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="spring" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -56,6 +42,13 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <SpringDiagram
+          :wire-diameter="form.wireDiameter"
+          :mean-diameter="form.meanDiameter"
+          :active-coils="form.activeCoils"
+          :free-length="form.calcMode !== 'simple' ? form.freeLength : 0"
+        />
       </section>
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
@@ -84,6 +77,11 @@
 import { reactive, computed, watch } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import { analyzeSpring, SPRING_MATERIALS } from '@/utils/spring-calc'
+import SpringDiagram from '@/components/spring/SpringDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('spring')
 
 const materials = SPRING_MATERIALS
 const form = reactive({

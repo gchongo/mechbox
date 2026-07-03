@@ -1,29 +1,15 @@
 <template>
   <div>
-    <h1 class="page-title">梁挠度与应力估算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      FEA 前置快速验算：简支梁 / 悬臂梁常用载荷下的最大挠度与弯曲应力
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">解析解应力与挠度校核。</template>
-          <template v-else-if="form.calcMode === 'complete'">最小截面需求、利用率、长细比预警。</template>
-          <template v-else>动载系数、应力集中、疲劳应力幅。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="beam" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
           <el-form-item label="梁型">
             <el-select v-model="form.caseId" class="w-full">
@@ -70,10 +56,12 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <BeamDiagram :case-id="form.caseId" :span-length="form.spanLength" />
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">计算结果</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <el-alert v-if="result.error" :title="result.error" type="error" show-icon />
         <template v-else>
           <dl class="space-y-3 text-sm">
@@ -125,6 +113,11 @@
 <script setup>
 import { reactive, computed, watch } from 'vue'
 import { analyzeBeam, BEAM_CASES, SECTION_TYPES } from '@/utils/beam-calc'
+import BeamDiagram from '@/components/beam/BeamDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('beam')
 
 const form = reactive({
   calcMode: 'simple',

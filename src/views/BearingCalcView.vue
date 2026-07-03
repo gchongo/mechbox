@@ -1,29 +1,15 @@
 <template>
   <div>
-    <h1 class="page-title">轴承寿命计算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      ISO 281 额定寿命 + X/Y 系数自动查表（深沟球/角接触/滚子/推力）
+      {{ pt('subtitle') }}
     </p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">仅 L₁₀，P = X·Fr + Y·Fa。</template>
-          <template v-else-if="form.calcMode === 'complete'">a₁ 可靠度、aISO 工况、静载 S₀。</template>
-          <template v-else>增加温度系数 a₂、极限转速校核。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="bearing" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="150px">
           <el-form-item v-if="form.calcMode !== 'simple'" label="X/Y 查表">
             <el-switch v-model="form.autoLookup" active-text="自动" inactive-text="手动" />
@@ -93,10 +79,16 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <BearingLoadDiagram
+          :radial-load="form.radialLoad"
+          :axial-load="form.axialLoad"
+          :bearing-type="form.bearingType"
+        />
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">计算结果</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <el-alert
           v-if="result.xyInfo"
           class="mb-4"
@@ -153,6 +145,11 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import { analyzeBearingLife, listBearingSeries, resolveSeriesFromModel } from '@/utils/bearing-calc'
+import BearingLoadDiagram from '@/components/bearing/BearingLoadDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('bearing')
 
 const seriesList = listBearingSeries()
 

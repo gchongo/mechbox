@@ -1,23 +1,9 @@
 <template>
   <div>
-    <h1 class="page-title">平键连接计算</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">GB/T 1096 平键剪切与挤压强度</p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="complete">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">扭矩→圆周力，剪/挤双校核。</template>
-          <template v-else-if="form.calcMode === 'complete'">标准键尺寸、最小键长反算。</template>
-          <template v-else>双键、交变扭矩疲劳与安全系数。</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="key" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
@@ -42,6 +28,13 @@
             </el-form-item>
           </template>
         </el-form>
+
+        <KeyConnectionDiagram
+          :shaft-diameter="form.shaftDiameter"
+          :key-width="form.keyWidth"
+          :key-length="form.keyLength"
+          :key-height="stdKey.height"
+        />
       </section>
       <section class="card-panel">
         <dl class="space-y-3 text-sm">
@@ -59,6 +52,11 @@
 import { reactive, computed } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import { analyzeKeyConnection, lookupKeySize } from '@/utils/key-calc'
+import KeyConnectionDiagram from '@/components/key/KeyConnectionDiagram.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('key')
 
 const form = reactive({
   calcMode: 'simple',

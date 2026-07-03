@@ -1,38 +1,17 @@
 <template>
   <div>
-    <h1 class="page-title">螺栓预紧力计算</h1>
+    <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      拧紧扭矩与预紧力换算、VDI 2230 分步校核与拉应力校核
+      {{ pt('subtitle') }}
     </p>
 
     <el-tabs v-model="pageTab">
       <el-tab-pane label="扭矩/预紧力" name="calc">
-    <section class="card-panel mb-6">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">计算模型</span>
-        <el-radio-group v-model="form.calcMode" class="bolt-mode-group">
-          <el-radio-button value="simple">简化</el-radio-button>
-          <el-radio-button value="vdi2230">完整</el-radio-button>
-          <el-radio-button value="professional">专业</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-          <template v-if="form.calcMode === 'simple'">
-            综合摩擦系数 μ，<MathTex expr="T = \mu d F / 1000" />，快速估算。
-          </template>
-          <template v-else-if="form.calcMode === 'vdi2230'">
-            VDI 2230 扭矩分解（μ_G、μ_K、D_km），不含嵌入与刚度。
-          </template>
-          <template v-else>
-            在 VDI 2230 基础上增加夹紧长度、螺栓/板柔度、嵌入损失与温差修正，用于估算
-            <strong>拧紧预紧力 ↔ 嵌入后残余预紧力</strong>。
-          </template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="calcModePanel" page-key="bolt-preload" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">输入参数</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
           <el-form-item label="换算方向">
             <el-radio-group v-model="form.mode">
@@ -135,7 +114,7 @@
       </section>
 
       <section ref="resultPanelRef" class="card-panel">
-        <h2 class="mb-4 font-semibold">计算结果</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <dt class="text-gray-500">有效面积 <MathTex expr="A_s" /></dt>
@@ -323,6 +302,17 @@ import {
 } from '@/utils/bolt-preload-calc'
 import { runVdi2230Wizard, TIGHTENING_METHODS, buildWizardReportText } from '@/utils/vdi2230-wizard'
 import { exportToolReportPdf } from '@/utils/export'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, ct } = useCalcPage('bolt-preload')
+
+const calcModePanel = computed({
+  get: () => (form.calcMode === 'vdi2230' ? 'complete' : form.calcMode),
+  set: (v) => {
+    form.calcMode = v === 'complete' ? 'vdi2230' : v
+  },
+})
 
 const pageTab = ref('calc')
 const resultPanelRef = ref(null)
