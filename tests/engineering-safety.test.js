@@ -10,7 +10,8 @@ import {
 import { calcRodBucklingLoad } from '@/utils/hydraulic-calc'
 import { analyzeFatigue } from '@/utils/fatigue-calc'
 import { analyzeGearStrength } from '@/utils/gear-calc'
-import { combineStackAdvice } from '@/utils/stack-method-advice'
+import { combineStackAdvice, evaluateStackFromRings, assessMcWorstGap } from '@/utils/stack-method-advice'
+import { analyzeBeam } from '@/utils/beam-calc'
 import { batchValidate } from '@/utils/batch-analysis'
 import { runMonteCarloSimulation, createSeededRandom } from '@/utils/monte-carlo'
 import { runToleranceAllocation } from '@/utils/tolerance-allocation'
@@ -129,6 +130,50 @@ describe('stack method advice', () => {
   it('warns when worst tolerance is 2x rss', () => {
     const advice = combineStackAdvice(false, false, 0.2, 0.08)
     expect(advice.level).toBe('warn')
+  })
+
+  it('evaluateStackFromRings compares pass status', () => {
+    const rings = [
+      { size: 40, tolerance: 0.06, type: 'decreasing', factor: 1 },
+      { size: 15, tolerance: 0.05, type: 'decreasing', factor: 1 },
+      { size: 55.25, tolerance: 0.04, type: 'increasing', factor: 1 },
+    ]
+    const ev = evaluateStackFromRings({ min: 0.1, max: 0.35 }, rings)
+    expect(ev.worst.totalTolerance).toBeGreaterThan(ev.rss.totalTolerance)
+    expect(ev.advice).toBeDefined()
+  })
+
+  it('flags mc pass with worst fail', () => {
+    const gap = assessMcWorstGap(false, 0.995)
+    expect(gap.warningKey).toBe('mc_pass_worst_fail')
+  })
+})
+
+describe('beam material binding', () => {
+  it('simple mode requires material when allowable unset', () => {
+    const r = analyzeBeam({
+      calcMode: 'simple',
+      caseId: 'simply_center',
+      sectionType: 'solid_round',
+      diameter: 30,
+      spanLength: 500,
+      load: 2000,
+    })
+    expect(r.errorKey).toBe('material_required')
+  })
+
+  it('binds allowable from material library', () => {
+    const r = analyzeBeam({
+      calcMode: 'simple',
+      materialId: 'q235',
+      caseId: 'simply_center',
+      sectionType: 'solid_round',
+      diameter: 30,
+      spanLength: 500,
+      load: 2000,
+    })
+    expect(r.allowableStress).toBe(157)
+    expect(r.materialName).toContain('Q235')
   })
 })
 

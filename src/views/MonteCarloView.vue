@@ -32,7 +32,7 @@
           </el-form-item>
           <el-form-item :label="pf('typeList')">
             <el-input v-model="typeList" :placeholder="pf('typeListPh')" />
-          </el-form-item>>
+          </el-form-item>
           <el-form-item :label="pf('distribution')">
             <el-select v-model="distribution" class="w-full">
               <el-option
@@ -60,6 +60,45 @@
       <!-- 结果统计 -->
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionResults') }}</h2>
+
+        <el-alert
+          v-if="stackEval?.advice.warningKey"
+          class="mb-4"
+          :type="stackEval.advice.level === 'critical' ? 'error' : 'warning'"
+          :closable="false"
+          show-icon
+          :title="stackWarningTitle"
+        >
+          <p v-if="stackEval.advice.divergence.ratio" class="text-sm">
+            {{ pt('methodRatio', { ratio: stackEval.advice.divergence.ratio.toFixed(2) }) }}
+          </p>
+        </el-alert>
+        <el-alert
+          v-if="mcWorstGap.warningKey"
+          class="mb-4"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="stackWarningTitleMc"
+        />
+
+        <div v-if="stackEval" class="mb-4 grid grid-cols-2 gap-2 text-xs">
+          <div class="rounded border border-gray-200 p-2 dark:border-gray-700">
+            <p class="text-gray-500">{{ pt('worstMethod') }}</p>
+            <p class="font-mono">{{ stackEval.worst.totalTolerance.toFixed(4) }}</p>
+            <el-tag size="small" :type="stackEval.worstPass ? 'success' : 'danger'">
+              {{ stackEval.worstPass ? pt('pass') : pt('fail') }}
+            </el-tag>
+          </div>
+          <div class="rounded border border-gray-200 p-2 dark:border-gray-700">
+            <p class="text-gray-500">{{ pt('rssMethod') }}</p>
+            <p class="font-mono">{{ stackEval.rss.totalTolerance.toFixed(4) }}</p>
+            <el-tag size="small" :type="stackEval.rssPass ? 'success' : 'danger'">
+              {{ stackEval.rssPass ? pt('pass') : pt('fail') }}
+            </el-tag>
+          </div>
+        </div>
+
         <div v-if="simResult" class="grid grid-cols-2 gap-3 text-sm">
           <div class="rounded bg-gray-50 p-3">
             <dt class="text-gray-500">{{ pr('mean') }}</dt>
@@ -165,6 +204,8 @@ import MonteCarloChart from '@/components/charts/MonteCarloChart.vue'
 import TornadoChart from '@/components/charts/TornadoChart.vue'
 import { DISTRIBUTIONS } from '@/utils/size-chain'
 import { runMonteCarloSimulation, runSensitivityTornado } from '@/utils/monte-carlo'
+import { evaluateStackFromRings, assessMcWorstGap } from '@/utils/stack-method-advice'
+import { editorPagesZh, editorPagesEn } from '@/i18n/editor-i18n'
 import {
   MC_STORAGE_KEY,
   deserializeMonteCarloPayload,
@@ -172,8 +213,10 @@ import {
 import { getSettings } from '@/utils/settings'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useLocale } from '@/composables/useLocale'
 
 const route = useRoute()
+const { locale } = useLocale()
 const { pt, pf, pr } = useCalcPage('monte-carlo')
 const { optionMap } = useOptionsI18n()
 
@@ -194,6 +237,35 @@ const chartComponentRef = ref(null)
 const sourceTypeName = ref('')
 const sensitivityRunning = ref(false)
 const sensitivityResult = ref(null)
+const stackEval = ref(null)
+
+const editorI18n = computed(() => (locale.value === 'en' ? editorPagesEn : editorPagesZh))
+
+function stackMsg(key) {
+  return editorI18n.value.editor?.dashboard?.[key] ?? key
+}
+
+const stackWarningTitle = computed(() =>
+  stackEval.value?.advice.warningKey ? stackMsg(stackEval.value.advice.warningKey) : '',
+)
+const mcWorstGap = computed(() => {
+  if (!simResult.value || !stackEval.value) return { level: 'none', warningKey: null }
+  return assessMcWorstGap(stackEval.value.worstPass, simResult.value.passRate)
+})
+const stackWarningTitleMc = computed(() =>
+  mcWorstGap.value.warningKey ? stackMsg(mcWorstGap.value.warningKey) : '',
+)
+
+function refreshStackEval(rings) {
+  try {
+    stackEval.value = evaluateStackFromRings(
+      { min: closedMin.value, max: closedMax.value },
+      rings,
+    )
+  } catch {
+    stackEval.value = null
+  }
+}
 
 const RING_MISMATCH = 'RING_MISMATCH'
 
@@ -238,6 +310,7 @@ function runSimulation() {
   setTimeout(() => {
     try {
       const rings = buildRings()
+      refreshStackEval(rings)
       simResult.value = runMonteCarloSimulation({
         closedRing: { min: closedMin.value, max: closedMax.value },
         componentRings: rings,

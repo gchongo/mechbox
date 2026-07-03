@@ -1,5 +1,7 @@
 /** 实心/空心圆轴扭转应力与变形 */
 
+import { findMaterial } from '@/constants/materials'
+
 export function calcPolarMoment(diameter, innerDiameter = 0) {
   const d = diameter
   const di = innerDiameter ?? 0
@@ -43,11 +45,18 @@ export function analyzeShaftTorsion(input) {
   const calcMode = input.calcMode ?? 'simple'
   const d = input.diameter
   const di = calcMode === 'simple' ? 0 : input.innerDiameter ?? 0
-  const G = input.shearModulus ?? 79000
-  let allow = input.allowableShear ?? 40
+  const mat = input.materialId ? findMaterial(input.materialId) : null
+  const G = input.shearModulus ?? mat?.G ?? 79000
+  let allow = input.allowableShear
 
-  if (calcMode !== 'simple' && input.yieldStrength) {
-    allow = input.allowableShear ?? 0.577 * input.yieldStrength
+  if (allow == null && mat) {
+    allow = mat.tauAllow
+  }
+  if (allow == null && calcMode !== 'simple' && input.yieldStrength) {
+    allow = 0.577 * input.yieldStrength
+  }
+  if (allow == null && calcMode === 'simple') {
+    return { errorKey: 'material_required', calcMode }
   }
 
   let tau = calcTorsionStress(input.torque, d, di)
@@ -56,6 +65,8 @@ export function analyzeShaftTorsion(input) {
 
   const result = {
     calcMode,
+    materialId: input.materialId ?? null,
+    materialName: mat?.name ?? null,
     shearStress: tau,
     twistAngle: theta,
     polarMoment: calcPolarMoment(d, di),

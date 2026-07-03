@@ -162,7 +162,7 @@ describe('interference-fit-calc modes', () => {
 
 describe('shaft-calc modes', () => {
   it('simple torsion matches solid shaft', () => {
-    const r = analyzeShaftTorsion({ diameter: 30, torque: 200, calcMode: 'simple' })
+    const r = analyzeShaftTorsion({ diameter: 30, torque: 200, calcMode: 'simple', materialId: 'q235' })
     expect(r.calcMode).toBe('simple')
     expect(r.shearStress).toBeGreaterThan(0)
     expect(r.hollowShaft).toBeFalsy()
@@ -289,6 +289,7 @@ describe('weld-calc modes', () => {
 describe('beam-calc modes', () => {
   it('simple mode passes moderate load', () => {
     const r = analyzeBeam({
+      materialId: 'q235',
       caseId: 'simply_center',
       sectionType: 'solid_round',
       diameter: 30,

@@ -130,7 +130,7 @@
           <el-button class="mt-2" size="small" @click="loadFmeaSample">{{ pt('loadSample') }}</el-button>
         </section>
         <template v-if="fmeaResult && !fmeaResult.errorKey">
-          <p class="mb-3 text-sm">{{ pt('fmeaSummary', { count: fmeaResult.count, high: fmeaResult.highRiskCount }) }}</p>
+          <p class="mb-3 text-sm">{{ pt('fmeaSummary', { count: fmeaResult.count, highAp: fmeaResult.highApCount, mediumAp: fmeaResult.mediumApCount, high: fmeaResult.highRiskCount }) }}</p>
           <el-table :data="fmeaResult.rows" border size="small">
             <el-table-column prop="component" :label="pt('table.component')" width="90" />
             <el-table-column prop="failureMode" :label="pt('table.failureMode')" />
@@ -142,7 +142,16 @@
                 <span :class="row.rpn >= 100 ? 'text-error font-bold' : ''">{{ row.rpn }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="actionPriority" :label="pt('table.ap')" width="50" />
+            <el-table-column :label="pt('table.ap')" width="56">
+              <template #default="{ row }">
+                <el-tag
+                  size="small"
+                  :type="row.actionPriority === 'H' ? 'danger' : row.actionPriority === 'M' ? 'warning' : 'info'"
+                >
+                  {{ row.actionPriority }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="recommendedAction" :label="pt('table.action')" min-width="120" />
           </el-table>
         </template>

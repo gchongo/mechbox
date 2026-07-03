@@ -5,7 +5,7 @@ import { analyzeMainEffects, ORTHOGONAL_ARRAYS } from '@/utils/doe-calc'
 import { calcPipePressureDrop } from '@/utils/pipe-flow-calc'
 import { calcPlateBucklingStress } from '@/utils/plate-buckling-calc'
 import { analyzeModal, calcResonanceMargin } from '@/utils/modal-calc'
-import { analyzeFMEA, calcRPN } from '@/utils/fmea-calc'
+import { analyzeFMEA, calcRPN, calcActionPriority } from '@/utils/fmea-calc'
 import { designAQLPlan, getSampleSizeCode } from '@/utils/aql-calc'
 
 describe('iso-1328', () => {
@@ -81,12 +81,19 @@ describe('fmea-calc', () => {
     expect(calcRPN(8, 4, 3)).toBe(96)
   })
 
-  it('analyze sorts by RPN', () => {
+  it('AP 2019 lookup (AIAG-VDA table)', () => {
+    expect(calcActionPriority(9, 5, 3)).toBe('H')
+    expect(calcActionPriority(10, 1, 1)).toBe('L')
+    expect(calcRPN(10, 1, 1)).toBe(10)
+  })
+
+  it('analyze sorts by AP then severity', () => {
     const r = analyzeFMEA([
-      { severity: 5, occurrence: 5, detection: 5 },
+      { severity: 3, occurrence: 2, detection: 2 },
       { severity: 9, occurrence: 5, detection: 3 },
     ])
-    expect(r.rows[0].rpn).toBeGreaterThanOrEqual(r.rows[1].rpn)
+    expect(r.rows[0].actionPriority).toBe('H')
+    expect(r.highApCount).toBe(1)
   })
 })
 

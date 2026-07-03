@@ -2,6 +2,8 @@
  * 梁挠度与弯曲应力前置估算 (Euler-Bernoulli 梁，解析解)
  */
 
+import { findMaterial } from '@/constants/materials'
+
 export const BEAM_CASES = {
   simply_center: {
     id: 'simply_center',
@@ -90,11 +92,19 @@ export function analyzeBeam(input) {
   if (section.errorKey) return { errorKey: section.errorKey, calcMode }
 
   const L = input.spanLength
-  const E = input.elasticModulus ?? 210000
+  const mat = input.materialId ? findMaterial(input.materialId) : null
+  const E = input.elasticModulus ?? mat?.E ?? 210000
   const loadFactor = calcMode === 'professional' ? input.dynamicFactor ?? 1 : 1
   const P = (input.load ?? 1000) * loadFactor
-  const allowStress = input.allowableStress ?? 160
+  let allowStress = input.allowableStress
+  if (allowStress == null) {
+    allowStress = mat?.sigmaAllow ?? (calcMode === 'simple' ? null : 160)
+  }
   const allowDeflection = input.allowableDeflection ?? L / 1000
+
+  if (calcMode === 'simple' && allowStress == null) {
+    return { errorKey: 'material_required', calcMode }
+  }
 
   const deflection = beamCase.deflection(P, L, E, section.I)
   const moment = beamCase.maxMoment(P, L)
@@ -113,6 +123,8 @@ export function analyzeBeam(input) {
     load: input.load ?? 1000,
     designLoad: P,
     elasticModulus: E,
+    materialId: input.materialId ?? null,
+    materialName: mat?.name ?? null,
     moment,
     deflection,
     stress,

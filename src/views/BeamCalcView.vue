@@ -11,6 +11,11 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
+          <el-form-item v-if="form.calcMode === 'simple'" :label="fc('material')">
+            <el-select v-model="form.materialId" class="w-full" filterable>
+              <el-option v-for="m in materialOptions" :key="m.id" :label="m.label" :value="m.id" />
+            </el-select>
+          </el-form-item>
           <el-form-item :label="pf('caseId')">
             <el-select v-model="form.caseId" class="w-full">
               <el-option v-for="c in caseOptions" :key="c.id" :label="c.label" :value="c.id" />
@@ -36,7 +41,7 @@
             <span class="ml-2 text-sm text-gray-500">MPa</span>
           </el-form-item>
           <el-form-item :label="pf('allowableStress')">
-            <el-input-number v-model="form.allowableStress" :min="1" />
+            <el-input-number v-model="form.allowableStress" :min="1" :disabled="form.calcMode === 'simple'" />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
           </el-form-item>
           <el-form-item :label="pf('allowableDeflection')">
@@ -113,18 +118,23 @@
 <script setup>
 import { reactive, computed, watch } from 'vue'
 import { analyzeBeam, BEAM_CASES, SECTION_TYPES } from '@/utils/beam-calc'
+import { MATERIALS, findMaterial } from '@/constants/materials'
+import { materialsEn } from '@/i18n/materials-i18n'
 import BeamDiagram from '@/components/beam/BeamDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useLocale } from '@/composables/useLocale'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('beam')
+const { locale } = useLocale()
 const { optionEntries, optionMap, ol } = useOptionsI18n()
 const { re } = useResultI18n()
 
 const form = reactive({
   calcMode: 'simple',
+  materialId: 'q235',
   caseId: 'simply_center',
   sectionType: 'solid_round',
   diameter: 30,
@@ -151,6 +161,28 @@ const sectionParams = computed(() =>
   })),
 )
 const loadLabel = computed(() => ol('beamCases', form.caseId, 'loadLabel') || fc('load'))
+
+const materialOptions = computed(() =>
+  MATERIALS.map((m) => ({
+    id: m.id,
+    label: locale.value === 'en' ? (materialsEn[m.id]?.name ?? m.name) : m.name,
+  })),
+)
+
+function applyBeamMaterial(id) {
+  const mat = findMaterial(id)
+  if (!mat) return
+  form.elasticModulus = mat.E
+  form.allowableStress = mat.sigmaAllow
+}
+
+watch(
+  () => form.materialId,
+  (id) => {
+    if (form.calcMode === 'simple') applyBeamMaterial(id)
+  },
+  { immediate: true },
+)
 
 watch(
   () => form.spanLength,

@@ -7,7 +7,7 @@ const pagesZh = {
     beam: {
       title: '梁挠度与应力估算',
       subtitle: 'FEA 前置快速验算：简支梁 / 悬臂梁常用载荷下的最大挠度与弯曲应力',
-      hintSimple: '解析解应力与挠度校核。',
+      hintSimple: '解析解应力与挠度校核；须选择材料库条目绑定许用应力。',
       hintComplete: '最小截面需求、利用率、长细比预警。',
       hintProfessional: '动载系数、应力集中、疲劳应力幅。',
     },
@@ -68,7 +68,7 @@ const pagesZh = {
     shaft: {
       title: '轴强度计算',
       subtitle: '实心/空心圆轴扭转与弯扭合成强度校核',
-      hintSimple: '实心圆轴，固定许用应力。',
+      hintSimple: '实心圆轴；须选择材料库条目绑定许用应力。',
       hintComplete: '空心轴、屈服推算许用、稳定性校核。',
       hintProfessional: '应力集中系数 K_t、疲劳幅值初筛。',
     },
@@ -211,7 +211,7 @@ const pagesEn = {
     beam: {
       title: 'Beam deflection & stress',
       subtitle: 'Quick checks before FEA: max deflection and bending stress for simply supported and cantilever beams',
-      hintSimple: 'Closed-form stress and deflection checks.',
+      hintSimple: 'Closed-form stress and deflection checks; select a material to bind allowable stress.',
       hintComplete: 'Minimum section sizing, utilization, slenderness warning.',
       hintProfessional: 'Dynamic factor, stress concentration, fatigue amplitude.',
     },
@@ -272,7 +272,7 @@ const pagesEn = {
     shaft: {
       title: 'Shaft strength',
       subtitle: 'Solid/hollow shaft torsion and combined bending-torsion checks',
-      hintSimple: 'Solid circular shaft with fixed allowable stress.',
+      hintSimple: 'Solid circular shaft; material library binds allowable stress.',
       hintComplete: 'Hollow shaft, yield-based allowable, stability check.',
       hintProfessional: 'Stress concentration K_t and fatigue amplitude screening.',
     },

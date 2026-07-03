@@ -34,6 +34,7 @@ describe('interference-fit-calc', () => {
 describe('beam-calc', () => {
   it('simply supported center load', () => {
     const r = analyzeBeam({
+      materialId: 'q235',
       caseId: 'simply_center',
       sectionType: 'solid_round',
       diameter: 30,
@@ -47,6 +48,7 @@ describe('beam-calc', () => {
 
   it('cantilever deflection greater than simply supported', () => {
     const base = {
+      materialId: 'q235',
       sectionType: 'solid_round',
       diameter: 30,
       spanLength: 500,

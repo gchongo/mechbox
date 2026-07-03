@@ -1,5 +1,7 @@
 /** 轴弯扭合成强度 (第三/第四强度理论) */
 
+import { findMaterial } from '@/constants/materials'
+
 export function calcBendingStress(moment, diameter, innerDiameter = 0) {
   const d = diameter
   const di = innerDiameter ?? 0
@@ -23,6 +25,7 @@ export function analyzeShaftCombined(input) {
   const d = input.diameter
   const di = calcMode === 'simple' ? 0 : input.innerDiameter ?? 0
   const theory = input.strengthTheory ?? 'vonMises'
+  const mat = input.materialId ? findMaterial(input.materialId) : null
 
   let torsion = calcTorsionStressLocal(input.torque, d, di)
   let bending = calcBendingStress(input.bendingMoment ?? 0, d, di)
@@ -37,11 +40,17 @@ export function analyzeShaftCombined(input) {
   const equiv = calcCombinedEquivalentStress(bending, torsion, theory)
   let allow = input.allowableStress
 
+  if (allow == null && mat) {
+    allow = mat.sigmaAllow
+  }
   if (allow == null && input.yieldStrength) {
     allow = theory === 'third' ? input.yieldStrength / 2 : input.yieldStrength / Math.sqrt(3)
   }
+  if (allow == null && calcMode === 'simple') {
+    return { errorKey: 'material_required', calcMode, needsMaterialInput: true }
+  }
   if (allow == null) {
-    allow = calcMode === 'simple' ? null : 0.577 * (input.yieldStrength ?? 235)
+    allow = 0.577 * (input.yieldStrength ?? 235)
   }
 
   const componentAllow =
@@ -49,6 +58,8 @@ export function analyzeShaftCombined(input) {
 
   const result = {
     calcMode,
+    materialId: input.materialId ?? null,
+    materialName: mat?.name ?? null,
     torsionStress: torsion,
     bendingStress: bending,
     equivalentStress: equiv,
