@@ -10,6 +10,12 @@ import {
 import { calcRodBucklingLoad } from '@/utils/hydraulic-calc'
 import { analyzeFatigue } from '@/utils/fatigue-calc'
 import { analyzeGearStrength } from '@/utils/gear-calc'
+import { combineStackAdvice } from '@/utils/stack-method-advice'
+import { batchValidate } from '@/utils/batch-analysis'
+import { runMonteCarloSimulation, createSeededRandom } from '@/utils/monte-carlo'
+import { runToleranceAllocation } from '@/utils/tolerance-allocation'
+import { analyzeShaftCombined } from '@/utils/shaft-combined'
+import { analyzeBearingLife } from '@/utils/bearing-calc'
 
 describe('process-capability', () => {
   it('detects off-center process as low yield', () => {
@@ -110,5 +116,106 @@ describe('gear simple mode material', () => {
     })
     expect(r.allowBending).toBeLessThan(200)
     expect(r.materialLabel).toContain('铸铁')
+  })
+})
+
+describe('stack method advice', () => {
+  it('flags rss pass with worst fail as critical', () => {
+    const advice = combineStackAdvice(false, true, 0.15, 0.08)
+    expect(advice.level).toBe('critical')
+    expect(advice.warningKey).toBe('rss_pass_worst_fail')
+  })
+
+  it('warns when worst tolerance is 2x rss', () => {
+    const advice = combineStackAdvice(false, false, 0.2, 0.08)
+    expect(advice.level).toBe('warn')
+  })
+})
+
+describe('batch analysis', () => {
+  it('annotates rows with method advice', () => {
+    const rows = batchValidate(
+      [{ name: 'A', tolerances: '0.06,0.05,0.04' }],
+      0,
+      0.08,
+    )
+    expect(rows[0].adviceLevel).toBeDefined()
+    expect(rows[0].methodRatio).toBeGreaterThan(1)
+  })
+})
+
+describe('monte carlo reproducibility', () => {
+  const rings = [
+    { size: 10, tolerance: 0.05, type: 'increasing' },
+    { size: 10, tolerance: 0.05, type: 'decreasing' },
+  ]
+  const closed = { min: 9.8, max: 10.2 }
+
+  it('seeded runs are deterministic', () => {
+    const a = runMonteCarloSimulation({
+      closedRing: closed,
+      componentRings: rings,
+      iterations: 500,
+      random: createSeededRandom(42),
+    })
+    const b = runMonteCarloSimulation({
+      closedRing: closed,
+      componentRings: rings,
+      iterations: 500,
+      random: createSeededRandom(42),
+    })
+    expect(a.passRate).toBe(b.passRate)
+    expect(a.mean).toBe(b.mean)
+  })
+})
+
+describe('tolerance allocation', () => {
+  it('equal effect allocation satisfies RSS budget', () => {
+    const rings = [
+      { name: 'A', factor: 1, cost: 1 },
+      { name: 'B', factor: 1, cost: 1 },
+    ]
+    const result = runToleranceAllocation('equal-effect', 0.1, rings)
+    expect(result.verify.pass).toBe(true)
+    expect(result.verify.stacked).toBeLessThanOrEqual(0.1 + 1e-9)
+  })
+})
+
+describe('shaft combined strength', () => {
+  it('von Mises check uses user allowable in simple mode', () => {
+    const r = analyzeShaftCombined({
+      calcMode: 'simple',
+      diameter: 30,
+      torque: 200,
+      bendingMoment: 150,
+      allowableStress: 80,
+    })
+    expect(r.pass).toBe(r.equivalentStress <= 80)
+  })
+
+  it('complete mode derives allow from yield', () => {
+    const r = analyzeShaftCombined({
+      calcMode: 'complete',
+      diameter: 40,
+      torque: 300,
+      bendingMoment: 200,
+      yieldStrength: 235,
+    })
+    expect(r.allowableStress).toBeCloseTo(235 / Math.sqrt(3), 1)
+  })
+})
+
+describe('bearing simple static check', () => {
+  it('includes static safety when C0 provided', () => {
+    const r = analyzeBearingLife({
+      calcMode: 'simple',
+      dynamicLoad: 20000,
+      staticLoad: 15000,
+      radialLoad: 5000,
+      rpm: 1500,
+      targetHours: 10000,
+    })
+    expect(r.staticSafetyFactor).toBeGreaterThan(0)
+    expect(r.staticPass).toBeDefined()
   })
 })

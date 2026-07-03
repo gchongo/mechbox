@@ -371,6 +371,7 @@ export const modulePagesZh = {
       rssPass: 'RSS 合格',
       worstPass: '极值合格',
       fail: '不合格',
+      criticalGap: 'RSS过/极值不过',
     },
     table: {
       scheme: '方案',
@@ -379,6 +380,13 @@ export const modulePagesZh = {
       rss: 'RSS',
       worstTol: '极值公差',
       worst: '极值',
+      advice: '方法风险提示',
+    },
+    advice: {
+      rss_pass_worst_fail: 'RSS✓ 极值✗',
+      stack_method_caution: '公差比偏大',
+      stack_method_warn: '公差比≥2',
+      worst_pass_rss_fail: '极值✓ RSS✗',
     },
   },
 }
@@ -754,6 +762,7 @@ export const modulePagesEn = {
       rssPass: 'RSS pass',
       worstPass: 'Worst-case pass',
       fail: 'Fail',
+      criticalGap: 'RSS pass / worst fail',
     },
     table: {
       scheme: 'Scheme',
@@ -762,6 +771,13 @@ export const modulePagesEn = {
       rss: 'RSS',
       worstTol: 'Worst-case tol.',
       worst: 'Worst-case',
+      advice: 'Method risk',
+    },
+    advice: {
+      rss_pass_worst_fail: 'RSS✓ worst✗',
+      stack_method_caution: 'Large tol. ratio',
+      stack_method_warn: 'Ratio ≥2',
+      worst_pass_rss_fail: 'Worst✓ RSS✗',
     },
   },
 }

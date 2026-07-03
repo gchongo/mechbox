@@ -35,29 +35,38 @@ export function analyzeShaftCombined(input) {
   }
 
   const equiv = calcCombinedEquivalentStress(bending, torsion, theory)
-  let allow = input.allowableStress ?? 60
+  let allow = input.allowableStress
 
-  if (calcMode !== 'simple' && input.yieldStrength) {
-    allow = input.allowableStress ?? 0.577 * input.yieldStrength
+  if (allow == null && input.yieldStrength) {
+    allow = theory === 'third' ? input.yieldStrength / 2 : input.yieldStrength / Math.sqrt(3)
   }
+  if (allow == null) {
+    allow = calcMode === 'simple' ? null : 0.577 * (input.yieldStrength ?? 235)
+  }
+
+  const componentAllow =
+    theory === 'third' ? allow : allow / Math.sqrt(3)
 
   const result = {
     calcMode,
     torsionStress: torsion,
     bendingStress: bending,
     equivalentStress: equiv,
-    pass: equiv <= allow,
+    pass: allow != null ? equiv <= allow : false,
     allowableStress: allow,
     strengthTheory: theory,
     hollowShaft: di > 0,
     utilization: allow ? equiv / allow : 0,
+    needsMaterialInput: allow == null,
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
-    result.bendingPass = bending <= allow
-    result.torsionPass = torsion <= allow * 0.577
-    result.combinedPass = equiv <= allow
-    result.pass = result.combinedPass
+    if (allow != null) {
+      result.bendingPass = bending <= allow
+      result.torsionPass = torsion <= componentAllow
+      result.combinedPass = equiv <= allow
+      result.pass = result.combinedPass
+    }
   }
 
   if (calcMode === 'professional') {

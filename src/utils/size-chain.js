@@ -1,3 +1,5 @@
+import { calcProcessCapability } from './process-capability'
+
 /** 分布类型 K 值（标准差系数） */
 export const DISTRIBUTIONS = {
   normal: { k: 6.0, cv: 1.0, coverage: 0.9973, name: '正态分布' },
@@ -38,8 +40,15 @@ export function calculateCpk(upperSpec, lowerSpec, mean, sigma) {
   return Math.min(cpu, cpl)
 }
 
-export function calculatePassRate(sigmaLevel) {
-  return 2 * cdfNormal(sigmaLevel) - 1
+export function calculatePassRate(sigmaLevelOrOptions, mean, sigma, lsl, usl) {
+  if (typeof sigmaLevelOrOptions === 'object' && sigmaLevelOrOptions != null) {
+    const { lsl: lo, usl: hi, mean: mu, sigma: s } = sigmaLevelOrOptions
+    return calcProcessCapability({ lsl: lo, usl: hi, mean: mu, sigma: s }).passRate
+  }
+  if (mean != null && sigma != null && lsl != null && usl != null) {
+    return calcProcessCapability({ lsl, usl, mean, sigma }).passRate
+  }
+  return 2 * cdfNormal(sigmaLevelOrOptions) - 1
 }
 
 export function calculateDPPM(passRate) {

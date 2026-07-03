@@ -104,25 +104,41 @@ export function analyzeBearingLife(input) {
   if (calcMode === 'simple') {
     x = input.x ?? 1
     y = input.y ?? 0
-    if (input.simpleEquivalentLoad != null) {
-      const p = input.simpleEquivalentLoad
-      const l10 = calcL10MillionRevolutions(input.dynamicLoad, p, bearingType)
-      const hours = calcLifeHours(l10, input.rpm)
-      return {
-        calcMode,
-        equivalentLoad: p,
-        x,
-        y,
-        l10MillionRev: l10,
-        modifiedLifeMillionRev: l10,
-        reliabilityFactor: 1,
-        lifeConditionFactor: 1,
-        temperatureFactor: 1,
-        lifeHours: hours,
-        targetHours: input.targetHours ?? 10000,
-        pass: hours >= (input.targetHours ?? 10000),
-        bearingType,
-      }
+    const p =
+      input.simpleEquivalentLoad != null
+        ? input.simpleEquivalentLoad
+        : calcEquivalentLoad({
+            radialLoad: input.radialLoad,
+            axialLoad: input.axialLoad,
+            x,
+            y,
+          })
+    const l10 = calcL10MillionRevolutions(input.dynamicLoad, p, bearingType)
+    const hours = calcLifeHours(l10, input.rpm)
+    const targetHours = input.targetHours ?? 10000
+    const staticSafety = input.staticLoad
+      ? calcStaticSafetyFactor(input.staticLoad, p)
+      : null
+    const minStaticSafety = input.minStaticSafety ?? 1.5
+    const lifePass = hours >= targetHours
+    const staticPass = staticSafety == null ? true : staticSafety >= minStaticSafety
+    return {
+      calcMode,
+      equivalentLoad: p,
+      x,
+      y,
+      l10MillionRev: l10,
+      modifiedLifeMillionRev: l10,
+      reliabilityFactor: 1,
+      lifeConditionFactor: 1,
+      temperatureFactor: 1,
+      lifeHours: hours,
+      targetHours,
+      staticSafetyFactor: staticSafety,
+      staticPass,
+      lifePass,
+      pass: lifePass && staticPass,
+      bearingType,
     }
   }
 
@@ -134,27 +150,6 @@ export function analyzeBearingLife(input) {
   })
 
   const l10 = calcL10MillionRevolutions(input.dynamicLoad, p, bearingType)
-
-  if (calcMode === 'simple') {
-    const hours = calcLifeHours(l10, input.rpm)
-    return {
-      calcMode,
-      equivalentLoad: p,
-      x: x ?? 1,
-      y: y ?? 0,
-      xyInfo,
-      l10MillionRev: l10,
-      modifiedLifeMillionRev: l10,
-      reliabilityFactor: 1,
-      lifeConditionFactor: 1,
-      temperatureFactor: 1,
-      lifeHours: hours,
-      targetHours: input.targetHours ?? 10000,
-      pass: hours >= (input.targetHours ?? 10000),
-      bearingType,
-      seriesId: input.seriesId ?? xyInfo?.series,
-    }
-  }
 
   const a1 = input.reliability
     ? getReliabilityFactor(input.reliability)

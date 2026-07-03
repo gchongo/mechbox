@@ -1,16 +1,30 @@
-import { DISTRIBUTIONS } from './size-chain'
-import { rssMethod } from './size-chain-math'
-function randNormal() {
+/** 可复现伪随机（测试 / 回归验证） */
+export function createSeededRandom(seed = 1) {
+  let state = seed >>> 0
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0
+    return state / 0x100000000
+  }
+}
+
+function randNormalFrom(random) {
   let u = 0
   let v = 0
-  while (u === 0) u = Math.random()
-  while (v === 0) v = Math.random()
+  while (u === 0) u = random()
+  while (v === 0) v = random()
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
 }
 
 /** 按分布采样误差（± 半公差范围内）；customK>0 时覆盖分布默认 K */
-export function sampleToleranceError(tolerance, distribution = 'normal', customK = 0) {
-  const defaultK = DISTRIBUTIONS[distribution]?.k ?? 6
+export function sampleToleranceError(
+  tolerance,
+  distribution = 'normal',
+  customK = 0,
+  random = Math.random,
+) {
+  const defaultK = { normal: 6, uniform: 3.46, rectangular: 3.46, triangular: 4.24, skewed: 5.0 }[
+    distribution
+  ] ?? 6
   const k = customK > 0 ? customK : defaultK
   const half = tolerance / 2
   const spreadScale = defaultK / k
@@ -18,15 +32,15 @@ export function sampleToleranceError(tolerance, distribution = 'normal', customK
   switch (distribution) {
     case 'uniform':
     case 'rectangular':
-      return (Math.random() * 2 - 1) * half * spreadScale
+      return (random() * 2 - 1) * half * spreadScale
     case 'triangular': {
-      const u = Math.random() + Math.random()
+      const u = random() + random()
       return (u - 1) * half * spreadScale
     }
     case 'skewed':
-      return (Math.random() ** 2 - 0.5) * 2 * half * spreadScale
+      return (random() ** 2 - 0.5) * 2 * half * spreadScale
     default:
-      return randNormal() * (tolerance / k)
+      return randNormalFrom(random) * (tolerance / k)
   }
 }
 
@@ -37,7 +51,9 @@ export function runMonteCarloSimulation({
   iterations = 10000,
   distribution = 'normal',
   customK = 0,
+  random,
 }) {
+  const rng = random ?? Math.random
   const nominal = componentRings.reduce((sum, ring) => {
     const sign = ring.type === 'increasing' ? 1 : -1
     return sum + sign * ring.size * (ring.factor ?? 1)
@@ -54,6 +70,7 @@ export function runMonteCarloSimulation({
         ring.tolerance * (ring.factor ?? 1),
         distribution,
         customK,
+        rng,
       )
       value += sign * err
     }
@@ -91,6 +108,7 @@ export function runSensitivityTornado({
   iterations = 5000,
   distribution = 'normal',
   customK = 0,
+  random,
 }) {
   const items = componentRings.map((ring, index) => {
     const isolated = componentRings.map((r, j) => ({
@@ -104,6 +122,7 @@ export function runSensitivityTornado({
       iterations,
       distribution,
       customK,
+      random,
     })
     const spread = sim.p95 - sim.p05
     const varianceShare = sim.std ** 2
@@ -150,3 +169,6 @@ export function calcControlLimits(values) {
     lcl: mean - 3 * sigma,
   }
 }
+
+// Legacy re-export
+export { DISTRIBUTIONS } from './size-chain'

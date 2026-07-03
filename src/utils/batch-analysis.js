@@ -1,4 +1,5 @@
 import { rssMethod, worstCaseMethod, calculateRssLimits, calculateWorstCaseLimits } from './size-chain-math'
+import { combineStackAdvice } from './stack-method-advice'
 
 export function parseToleranceRow(str) {
   return String(str)
@@ -44,6 +45,12 @@ export function batchValidate(rows, targetMin, targetMax) {
     const result = analyzeToleranceRow(tolerances, factors)
     const rssPass = result.rssLower >= targetMin && result.rssUpper <= targetMax
     const worstPass = result.worstLower >= targetMin && result.worstUpper <= targetMax
+    const advice = combineStackAdvice(
+      worstPass,
+      rssPass,
+      result.worstTolerance,
+      result.rssTolerance,
+    )
 
     return {
       index,
@@ -53,6 +60,9 @@ export function batchValidate(rows, targetMin, targetMax) {
       rssTolerance: result.rssTolerance,
       rssPass,
       worstPass,
+      adviceLevel: advice.level,
+      adviceKey: advice.warningKey,
+      methodRatio: advice.divergence.ratio,
     }
   })
 }

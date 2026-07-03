@@ -1,5 +1,17 @@
 <template>
   <div class="space-y-6">
+    <el-alert
+      v-if="stackAdvice.warningKey"
+      :type="stackAdvice.level === 'critical' ? 'error' : 'warning'"
+      :closable="false"
+      show-icon
+      :title="pt(`dashboard.${stackAdvice.warningKey}`)"
+    >
+      <p v-if="stackAdvice.divergence.ratio" class="text-sm">
+        {{ pt('dashboard.methodRatio', { ratio: stackAdvice.divergence.ratio.toFixed(2) }) }}
+      </p>
+    </el-alert>
+
     <!-- 上排：计算结果 + 设计要求 -->
     <div class="grid gap-4 lg:grid-cols-2">
       <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -134,6 +146,7 @@ import { computed } from 'vue'
 import SigmaSummary from '@/components/editor/SigmaSummary.vue'
 import ChainDistributionChart from '@/components/editor/ChainDistributionChart.vue'
 import { closedRingAsDesign, limitsToDeviations, CPK_REFERENCE } from '@/utils/ring-tolerance'
+import { combineStackAdvice } from '@/utils/stack-method-advice'
 import { fmtNum } from '@/utils/format'
 import { useCalcPage } from '@/composables/useCalcPage'
 
@@ -165,6 +178,15 @@ const rss = computed(() => {
   const d = limitsToDeviations(nominal, r.upper, r.lower)
   return { ...d, processSigma, pass: r.pass }
 })
+
+const stackAdvice = computed(() =>
+  combineStackAdvice(
+    props.worstResult.pass,
+    props.rssResult.pass,
+    props.worstResult.totalTolerance,
+    props.rssResult.totalTolerance,
+  ),
+)
 
 function fmt(v) {
   if (v == null || Number.isNaN(v)) return '—'

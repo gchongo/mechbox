@@ -52,6 +52,10 @@
             <dt class="text-gray-500">{{ pr('fail') }}</dt>
             <dd class="mt-1 font-mono text-lg text-error">{{ summary.fail }}</dd>
           </div>
+          <div v-if="summary.criticalGap" class="rounded bg-red-50 p-3 dark:bg-red-950/30">
+            <dt class="text-gray-500">{{ pr('criticalGap') }}</dt>
+            <dd class="mt-1 font-mono text-lg text-error">{{ summary.criticalGap }}</dd>
+          </div>
         </div>
         <el-empty v-else :description="pt('emptyHint')" />
       </section>
@@ -91,6 +95,18 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column :label="pt('table.advice')" min-width="160">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.adviceKey && !row.errorKey"
+              :type="row.adviceLevel === 'critical' ? 'danger' : 'warning'"
+              size="small"
+            >
+              {{ pt(`advice.${row.adviceKey}`) }}
+            </el-tag>
+            <span v-else>—</span>
+          </template>
+        </el-table-column>
       </el-table>
     </section>
   </div>
@@ -125,6 +141,7 @@ const summary = computed(() => {
     rssPass: valid.filter((r) => r.rssPass).length,
     worstPass: valid.filter((r) => r.worstPass).length,
     fail: valid.filter((r) => !r.rssPass && !r.worstPass).length,
+    criticalGap: valid.filter((r) => r.adviceLevel === 'critical').length,
   }
 })
 

@@ -163,6 +163,11 @@ export const editorPagesZh = {
       sigmaLevel: 'σ 水平',
       yieldCol: '良品率%',
       ppmCol: 'PPM 不良',
+      rss_pass_worst_fail: 'RSS 判定通过，但极值法未通过 — 安全相关场合请优先采用极值法或 Monte Carlo 验证',
+      stack_method_caution: '极值法与 RSS 公差差异较大，建议核对过程能力与环间相关性',
+      stack_method_warn: '极值法公差显著大于 RSS（≥2 倍），勿仅依据 RSS 结论放行',
+      worst_pass_rss_fail: '极值法通过而 RSS 未通过 — 过程波动较大，建议收紧公差或复核统计假设',
+      methodRatio: '极值/RSS 公差比 = {ratio}',
     },
     ringTable: {
       title: '组成环参数 & 贡献度',
@@ -435,6 +440,11 @@ export const editorPagesEn = {
       sigmaLevel: 'σ level',
       yieldCol: 'Yield %',
       ppmCol: 'PPM defects',
+      rss_pass_worst_fail: 'RSS passes but worst-case fails — for safety-critical parts, prefer worst-case or Monte Carlo verification',
+      stack_method_caution: 'Large gap between worst-case and RSS tolerance — verify process capability and ring correlation',
+      stack_method_warn: 'Worst-case tolerance is ≥2× RSS — do not release based on RSS alone',
+      worst_pass_rss_fail: 'Worst-case passes but RSS fails — high variation; tighten tolerances or review statistical assumptions',
+      methodRatio: 'Worst-case / RSS tolerance ratio = {ratio}',
     },
     ringTable: {
       title: 'Component rings & contribution',
