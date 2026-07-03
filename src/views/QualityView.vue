@@ -2,7 +2,7 @@
   <div>
     <h1 class="page-title">质量分析工具</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      测量系统分析 (MSA) 与统计过程控制 (SPC) 控制图
+      测量系统分析 (MSA)、SPC 控制图、FMEA 与 AQL 抽样
     </p>
 
     <el-tabs v-model="activeTab" class="quality-tabs">
@@ -117,6 +117,73 @@
         </template>
         <el-alert v-else-if="pResult?.error" :title="pResult.error" type="warning" show-icon />
       </el-tab-pane>
+
+      <!-- FMEA -->
+      <el-tab-pane label="FMEA" name="fmea">
+        <section class="card-panel mb-6">
+          <p class="mb-2 text-xs text-gray-500">每行：组件,失效模式,影响,原因,S,O,D,建议措施（S/O/D 1–10）</p>
+          <el-input v-model="fmeaText" type="textarea" :rows="8" />
+          <el-button class="mt-2" size="small" @click="loadFmeaSample">示例</el-button>
+        </section>
+        <template v-if="fmeaResult && !fmeaResult.error">
+          <p class="mb-3 text-sm">共 {{ fmeaResult.count }} 项 · 高风险 (RPN≥100) {{ fmeaResult.highRiskCount }} 项</p>
+          <el-table :data="fmeaResult.rows" border size="small">
+            <el-table-column prop="component" label="组件" width="90" />
+            <el-table-column prop="failureMode" label="失效模式" />
+            <el-table-column label="S/O/D" width="80">
+              <template #default="{ row }">{{ row.severity }}/{{ row.occurrence }}/{{ row.detection }}</template>
+            </el-table-column>
+            <el-table-column label="RPN" width="70">
+              <template #default="{ row }">
+                <span :class="row.rpn >= 100 ? 'text-error font-bold' : ''">{{ row.rpn }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="actionPriority" label="AP" width="50" />
+            <el-table-column prop="recommendedAction" label="措施" min-width="120" />
+          </el-table>
+        </template>
+      </el-tab-pane>
+
+      <!-- AQL -->
+      <el-tab-pane label="AQL 抽样" name="aql">
+        <div class="grid gap-6 lg:grid-cols-2">
+          <section class="card-panel">
+            <el-form label-width="100px">
+              <el-form-item label="批量 N">
+                <el-input-number v-model="aqlLot" :min="1" :step="100" />
+              </el-form-item>
+              <el-form-item label="AQL (%)">
+                <el-select v-model="aqlLevel" class="w-full">
+                  <el-option v-for="a in AQL_LEVELS" :key="a" :label="String(a)" :value="a" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="实测缺陷">
+                <el-input-number v-model="aqlDefects" :min="0" />
+              </el-form-item>
+            </el-form>
+          </section>
+          <section class="card-panel">
+            <dl class="space-y-3 text-sm">
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <dt>样本字码</dt><dd class="font-mono">{{ aqlPlan.sampleSizeCode }}</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <dt>样本量 n</dt><dd class="font-mono">{{ aqlPlan.sampleSize }}</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <dt>Ac / Re</dt><dd class="font-mono">{{ aqlPlan.acceptNumber }} / {{ aqlPlan.rejectNumber }}</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <dt>判定</dt>
+                <dd :class="aqlPlan.pass ? 'text-success' : 'text-error'">{{ aqlPlan.decision }}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+        <section class="card-panel mt-6">
+          <div ref="ocChartRef" class="min-h-[300px]" />
+        </section>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -126,10 +193,17 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import XRChart from '@/components/charts/XRChart.vue'
 import { parseGageRRText } from '@/utils/msa-calc'
 import { calcXRChart, calcPChart, parseSubgroups } from '@/utils/spc-calc'
+import { analyzeFMEA, parseFMEATable } from '@/utils/fmea-calc'
+import { designAQLPlan, calcOCCurve, AQL_LEVELS } from '@/utils/aql-calc'
 
 const activeTab = ref('msa')
 const msaText = ref('')
 const xrText = ref('')
+const fmeaText = ref('')
+const aqlLot = ref(500)
+const aqlLevel = ref(2.5)
+const aqlDefects = ref(1)
+const ocChartRef = ref(null)
 const pDefects = ref('2,0,3,1,2,0,1')
 const pSamples = ref('100,100,100,100,100,100,100')
 const pChartRef = ref(null)
@@ -169,6 +243,16 @@ const pResult = computed(() => {
   return calcPChart(d, s)
 })
 
+const fmeaResult = computed(() => {
+  const items = parseFMEATable(fmeaText.value)
+  if (!items.length) return null
+  return analyzeFMEA(items)
+})
+
+const aqlPlan = computed(() =>
+  designAQLPlan({ lotSize: aqlLot.value, aql: aqlLevel.value, defectCount: aqlDefects.value }),
+)
+
 async function renderPChart() {
   if (!pChartRef.value || !pResult.value || pResult.value.error) return
   if (!plotly) plotly = await import('plotly.js-dist-min')
@@ -195,6 +279,37 @@ async function renderPChart() {
 
 watch([pResult, activeTab], () => {
   if (activeTab.value === 'p') renderPChart()
+  if (activeTab.value === 'aql') renderOCChart()
+})
+
+async function renderOCChart() {
+  if (!ocChartRef.value || activeTab.value !== 'aql') return
+  if (!plotly) plotly = await import('plotly.js-dist-min')
+  const p = aqlPlan.value
+  const curve = calcOCCurve(aqlLot.value, aqlLevel.value, p.sampleSize, p.acceptNumber)
+  await plotly.react(
+    ocChartRef.value,
+    [{
+      x: curve.map((c) => c.defectRate * 100),
+      y: curve.map((c) => c.acceptProb * 100),
+      type: 'scatter',
+      mode: 'lines',
+      name: 'OC 曲线',
+      line: { color: '#409EFF' },
+    }],
+    {
+      title: `OC 曲线 (AQL=${aqlLevel.value}%, n=${p.sampleSize})`,
+      xaxis: { title: '批不合格率 %' },
+      yaxis: { title: '接收概率 %' },
+      height: 300,
+      margin: { t: 40, l: 56, b: 48, r: 16 },
+    },
+    { responsive: true, displayModeBar: false },
+  )
+}
+
+watch([aqlLot, aqlLevel, aqlDefects], () => {
+  if (activeTab.value === 'aql') renderOCChart()
 })
 
 function loadMsaSample() {
@@ -218,12 +333,20 @@ function loadXrSample() {
 10.3,10.2,10.25`
 }
 
+function loadFmeaSample() {
+  fmeaText.value = `螺栓,断裂,连接失效,预紧力不足,8,4,3,增加扭矩监控
+密封圈,泄漏,污染,压缩率不足,7,5,4,沟槽尺寸管控
+轴承,异响,停机,润滑不良,6,3,5,定期换油`
+}
+
 onMounted(() => {
   loadMsaSample()
   loadXrSample()
+  loadFmeaSample()
 })
 
 onBeforeUnmount(() => {
   if (pChartRef.value && plotly) plotly.purge(pChartRef.value)
+  if (ocChartRef.value && plotly) plotly.purge(ocChartRef.value)
 })
 </script>

@@ -197,6 +197,84 @@ export const GLOSSARY_TERMS = [
       '分布系数 K 用于把公差 T 换算成标准差 σ：σ = T/K。不同分布形状 K 不同——正态常用 K=6（±3σ 覆盖规格），均匀分布 K≈3.46，三角分布 K≈4.24。6σ RSS 法会用各环的 K 把公差还原为 σ 后再做统计叠加，比简单 RSS 更严谨。',
     tags: ['转换', '分布'],
   },
+  {
+    id: 'agma-geometry-i',
+    term: 'AGMA 几何系数 I',
+    symbol: 'I',
+    category: '齿轮',
+    definition:
+      'AGMA 2101 中用于接触应力计算的几何系数，反映齿廓曲率与啮合位置对赫兹接触的影响。与 ISO 6336 的 Z 系数体系不同，I 直接出现在分母中。本工具采用基于齿数比的简化估算，完整计算需查 AGMA 图表。',
+    tags: ['AGMA', '齿轮', '接触'],
+  },
+  {
+    id: 'iso1328-grade',
+    term: 'ISO 1328 精度等级',
+    symbol: '—',
+    category: '齿轮',
+    definition:
+      'ISO 1328 规定齿轮轮齿各偏差项目的公差等级（通常 5–12 级，数字越小精度越高）。包括单齿距偏差 f_pt、齿距累积 F_pt、齿形 f_fα、齿向 F_β 等。精度等级直接影响加工难度与 ISO 6336/AGMA 中的动载系数。',
+    tags: ['ISO 1328', '齿轮', '精度'],
+  },
+  {
+    id: 'gage-rr',
+    term: 'Gage R&R（测量系统重复性与再现性）',
+    symbol: 'GRR',
+    category: '质量',
+    definition:
+      'MSA 核心指标，评估测量仪器与操作员引入的变异占总变异的比例。%GRR < 10% 通常认为测量系统可接受。重复性 EV 反映仪器本身波动，再现性 AV 反映不同操作员之间的差异。',
+    tags: ['MSA', '质量', '测量'],
+  },
+  {
+    id: 'aql',
+    term: 'AQL（可接受质量水平）',
+    symbol: 'AQL',
+    category: '质量',
+    definition:
+      '抽样检验中允许批平均不合格率的上限。配合 GB/T 2828.1 等标准，由批量与检验水平确定样本量 n 及接收数 Ac、拒收数 Re。AQL 越小，抽样越严。',
+    tags: ['AQL', '抽样', '质量'],
+  },
+  {
+    id: 'k-factor-sheet',
+    term: 'K 因子（钣金折弯）',
+    symbol: 'K',
+    category: '制造',
+    definition:
+      '折弯展开计算中中性层位置的系数，BA = (π/180)·θ·(R + K·T)。K≈0.33 适用于空气折弯且 R≈T 的常见情况；压印折弯 K 更大。准确 K 值需通过试验或折弯软件标定。',
+    tags: ['钣金', '折模', 'K因子'],
+  },
+  {
+    id: 'draft-angle',
+    term: '拔模斜度',
+    symbol: 'α',
+    category: '制造',
+    definition:
+      '铸造件上为使模型从砂型或模具中顺利脱出而设计的锥度。外表面、内腔、深型芯所需角度不同；深度越大、表面越粗糙，所需拔模角越大。不足会导致拉伤、粘模或顶裂。',
+    tags: ['铸造', '拔模', '工艺'],
+  },
+  {
+    term: 'Jominy 端淬试验',
+    symbol: '—',
+    category: '材料',
+    definition:
+      '将标准试样一端水淬、沿棒长测量硬度，得到淬透性曲线。距淬火端越远硬度下降越快，表示钢种淬透性越差。常用于对比不同成分与晶粒度的淬硬深度。',
+    tags: ['热处理', 'Jominy', '淬透性'],
+  },
+  {
+    term: '碳当量 (CE)',
+    symbol: 'CE',
+    category: '材料',
+    definition:
+      '由化学成分换算的综合指标，反映钢的淬硬倾向与焊接裂纹敏感性。CE 越高，越容易在淬火中获得高硬度，但焊接时也更需要预热与控冷。',
+    tags: ['碳当量', '焊接', '热处理'],
+  },
+  {
+    term: '响应面法 (RSM)',
+    symbol: '—',
+    category: '统计',
+    definition:
+      '通过 DOE 试验拟合响应与因子之间的数学模型（常为二次多项式），并用等高线图寻找最优工艺窗口。中心复合设计 (CCD) 是二因子 RSM 的常用方案。',
+    tags: ['RSM', 'DOE', '优化'],
+  },
 ]
 
 export function searchGlossary(query) {

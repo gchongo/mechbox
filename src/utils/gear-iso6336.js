@@ -1,5 +1,6 @@
 import { GEAR_MATERIALS, lookupYF, calcYS } from '@/constants/gear-materials'
 import { calcTangentialForce, calcPitchLineVelocity } from './gear-calc'
+import { linkISO1328ToISO6336 } from './iso-1328'
 
 const DEG = Math.PI / 180
 
@@ -136,7 +137,19 @@ export function analyzeGearISO6336(input) {
   })
 
   const KA = input.applicationFactor ?? 1.25
-  const KV = input.dynamicFactor ?? estimateKV({ velocity, accuracyGrade: input.accuracyGrade ?? 6 })
+  const iso1328Link = input.useISO1328 !== false
+    ? linkISO1328ToISO6336({
+        module: m,
+        pinionTeeth: z1,
+        faceWidth: input.faceWidth,
+        iso1328Grade: input.iso1328Grade ?? input.accuracyGrade ?? 6,
+        pitchLineVelocity: velocity,
+      })
+    : null
+  const KV =
+    input.dynamicFactor ??
+    iso1328Link?.dynamicFactorKV ??
+    estimateKV({ velocity, accuracyGrade: input.accuracyGrade ?? 6 })
   const KHbeta = input.faceLoadFactorH ?? 1.1
   const KHalpha = input.transverseLoadFactorH ?? 1.0
   const KFbeta = input.faceLoadFactorF ?? 1.1
@@ -224,6 +237,7 @@ export function analyzeGearISO6336(input) {
     minSafetyContact: SHmin,
     minSafetyBending: SFmin,
     materials: { pinion: matPinion.label, gear: matGear.label },
+    iso1328: iso1328Link,
   }
 }
 

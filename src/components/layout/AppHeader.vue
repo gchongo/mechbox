@@ -116,15 +116,18 @@ const toolGroups = computed(() => ({
   chain: [
     { path: '/batch', label: locale.value === 'en' ? 'Batch verify' : '批量验证' },
     { path: '/allocation', label: locale.value === 'en' ? 'Tolerance allocation' : '公差分配' },
+    { path: '/fatigue', label: locale.value === 'en' ? 'Fatigue life' : '疲劳寿命' },
     { path: '/interference-fit', label: locale.value === 'en' ? 'Interference fit' : '过盈配合' },
     { path: '/thermal-expansion', label: locale.value === 'en' ? 'Thermal expansion' : '热膨胀' },
-    { path: '/gear', label: locale.value === 'en' ? 'Gear ISO 6336' : '齿轮 ISO 6336' },
+    { path: '/gear', label: locale.value === 'en' ? 'Gear ISO/AGMA' : '齿轮 ISO/AGMA' },
     { path: '/thread', label: locale.value === 'en' ? 'Thread strength' : '螺纹强度' },
     { path: '/bolt-preload', label: locale.value === 'en' ? 'Bolt preload' : '螺栓预紧力' },
     { path: '/bearing', label: locale.value === 'en' ? 'Bearing life' : '轴承寿命' },
   ],
   drive: [
     { path: '/beam', label: locale.value === 'en' ? 'Beam deflection' : '梁挠度' },
+    { path: '/sheet-metal', label: locale.value === 'en' ? 'Sheet metal' : '钣金展开' },
+    { path: '/o-ring', label: locale.value === 'en' ? 'O-ring seal' : 'O型圈密封' },
     { path: '/shaft', label: locale.value === 'en' ? 'Shaft strength' : '轴强度' },
     { path: '/key', label: locale.value === 'en' ? 'Key connection' : '平键连接' },
     { path: '/weld', label: locale.value === 'en' ? 'Weld strength' : '焊缝强度' },
@@ -135,9 +138,14 @@ const toolGroups = computed(() => ({
     { path: '/chain', label: locale.value === 'en' ? 'Chain drive' : '链传动' },
   ],
   material: [
+    { path: '/structural', label: locale.value === 'en' ? 'Structural / fluid' : '结构/流体' },
+    { path: '/analytics', label: locale.value === 'en' ? 'Regression / DOE' : '回归/DOE' },
     { path: '/cylinder', label: locale.value === 'en' ? 'Hydraulic / cylinder' : '液压/气缸' },
     { path: '/materials', label: locale.value === 'en' ? 'Materials' : '材料库' },
-    { path: '/quality', label: locale.value === 'en' ? 'MSA / SPC' : 'MSA / SPC' },
+    { path: '/material-selection', label: locale.value === 'en' ? 'Material selection' : '材料选型' },
+    { path: '/heat-treatment', label: locale.value === 'en' ? 'Heat treatment' : '热处理硬度' },
+    { path: '/manufacturing', label: locale.value === 'en' ? 'Manufacturing' : '制造工艺' },
+    { path: '/quality', label: locale.value === 'en' ? 'MSA / SPC / FMEA' : 'MSA / FMEA' },
   ],
 }))
 
@@ -148,6 +156,7 @@ const allTools = computed(() => [
 ])
 
 const moreItems = computed(() => [
+  { path: '/tools', label: locale.value === 'en' ? 'Tool map' : '工具地图' },
   { path: '/tutorial', label: t('nav.tutorial', locale.value) },
   { path: '/glossary', label: t('nav.glossary', locale.value) },
   { path: '/faq', label: t('nav.faq', locale.value) },
@@ -161,7 +170,7 @@ const allToolPaths = computed(() => [
   ...toolGroups.value.material,
 ].map((item) => item.path))
 
-const morePaths = ['/tutorial', '/glossary', '/faq', '/quiz', '/history']
+const morePaths = ['/tools', '/tutorial', '/glossary', '/faq', '/quiz', '/history']
 
 const toolsActive = computed(() => allToolPaths.value.some((p) => route.path.startsWith(p)))
 const moreActive = computed(() => morePaths.some((p) => route.path.startsWith(p)))

@@ -13,6 +13,9 @@
         <router-link to="/history">
           <el-button size="large" plain class="home-quick__btn">历史记录</el-button>
         </router-link>
+        <router-link to="/tools">
+          <el-button size="large" plain class="home-quick__btn">工具地图</el-button>
+        </router-link>
       </div>
     </section>
 
@@ -87,55 +90,13 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { ANALYSIS_GROUPS } from '@/constants/analysis-types'
+import { STAT_TOOLS, TOOL_GROUPS } from '@/constants/tool-catalog'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
 
 const router = useRouter()
 
-const statTools = [
-  { query: 'convert', label: '公差转换', latexDesc: 'T \\leftrightarrow \\sigma', icon: 'Switch' },
-  { query: 'rss', label: 'RSS 计算', desc: '基础 + 加权 + 修正', icon: 'DataAnalysis' },
-  { query: 'sigma', label: '西格玛分析', desc: 'C / Cpk / 合格率', icon: 'TrendCharts' },
-  { query: 'chart', label: '分布曲线', desc: 'Plotly PDF 图', icon: 'PieChart' },
-  { path: '/monte-carlo', label: 'Monte Carlo', desc: '随机模拟', icon: 'Histogram' },
-  { path: '/quality', label: 'MSA / SPC', desc: 'Gage R&R · 控制图', icon: 'DataLine' },
-]
-
-const toolGroups = [
-  {
-    label: '尺寸链与强度',
-    tools: [
-      { path: '/batch', label: '批量验证', desc: 'RSS/极值批量检验', icon: 'List' },
-      { path: '/allocation', label: '公差分配', desc: '等贡献 / 最小成本', icon: 'ScaleToOriginal' },
-      { path: '/interference-fit', label: '过盈配合', desc: 'DIN 7190 压装/扭矩', icon: 'Coin' },
-      { path: '/thermal-expansion', label: '热膨胀', desc: '间隙/过盈温变', icon: 'Sunrise' },
-      { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 校核', icon: 'SetUp' },
-      { path: '/thread', label: '螺纹强度', desc: '拉剪应力 / 扭矩', icon: 'Link' },
-      { path: '/bolt-preload', label: '螺栓预紧力', desc: '扭矩 ↔ 预紧力', icon: 'TurnOff' },
-      { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 ISO 281', icon: 'Help' },
-    ],
-  },
-  {
-    label: '传动与结构',
-    tools: [
-      { path: '/beam', label: '梁挠度', desc: '简支/悬臂 FEA 前置', icon: 'Minus' },
-      { path: '/shaft', label: '轴强度', desc: '扭转 / 弯扭合成', icon: 'Sort' },
-      { path: '/key', label: '平键连接', desc: '挤压 / 剪切', icon: 'Key' },
-      { path: '/weld', label: '焊缝强度', desc: '角焊 / 对接焊', icon: 'Medal' },
-      { path: '/bolt-group', label: '螺栓组', desc: '偏心载荷分配', icon: 'Grid' },
-      { path: '/spring', label: '弹簧设计', desc: '刚度 / 切应力', icon: 'Refresh' },
-      { path: '/clutch', label: '离合器', desc: '摩擦扭矩', icon: 'Connection' },
-      { path: '/belt', label: '皮带传动', desc: '链长 / 张力', icon: 'Minus' },
-      { path: '/chain', label: '链传动', desc: '节距 / 链张力', icon: 'Link' },
-    ],
-  },
-  {
-    label: '流体与材料',
-    tools: [
-      { path: '/cylinder', label: '液压/气缸', desc: '推力 / 流量', icon: 'Odometer' },
-      { path: '/materials', label: '材料库', desc: '常用材料强度', icon: 'Reading' },
-    ],
-  },
-]
+const statTools = STAT_TOOLS
+const toolGroups = TOOL_GROUPS.filter((g) => g.id !== 'reference')
 
 function startNewAnalysis() {
   router.push({ name: 'editor' })
