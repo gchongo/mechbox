@@ -32,20 +32,20 @@
 
       <!-- d -->
       <line :x1="boltX" :y1="cy + boltR + 18" :x2="boltX + boltLen" :y2="cy + boltR + 18" class="dim-primary" marker-start="url(#th-arrow-blue)" marker-end="url(#th-arrow-blue)" />
-      <SvgMathText :x="boltX + boltLen / 2" :y="cy + boltR + 34" :text="labelD" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
+      <SvgMathText :x="boltX + boltLen / 2" :y="cy + boltR + 34" :text="dl('d', diameter)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
 
       <!-- L -->
       <line :x1="nutX + nutW + 14" :y1="cy - engageH / 2" :x2="nutX + nutW + 14" :y2="cy + engageH / 2" class="dim" marker-start="url(#th-arrow)" marker-end="url(#th-arrow)" />
-      <SvgMathText :x="nutX + nutW + 26" :y="cy + 4" text="$L$" class-name="txt" color="#334155" :width="16" :font-size="12" />
+      <SvgMathText :x="nutX + nutW + 26" :y="cy + 4" text="L" class-name="txt" color="#334155" :width="16" :font-size="12" />
       <text :x="nutX + nutW + 26" :y="cy + 18" class="txt-sub" font-size="11">{{ engagedLength }} mm</text>
 
       <!-- F -->
       <line :x1="boltX + boltLen + 30" :y1="cy" :x2="boltX + boltLen + 65" :y2="cy" stroke="#8b5cf6" stroke-width="2" marker-end="url(#th-arrow-purple)" />
-      <SvgMathText :x="boltX + boltLen + 72" :y="cy + 4" text="$F$" color="#8b5cf6" :width="16" :font-size="12" />
+      <SvgMathText :x="boltX + boltLen + 72" :y="cy + 4" text="F" color="#8b5cf6" :width="16" :font-size="12" />
 
       <!-- P -->
       <line x1="72" y1="210" x2="72 + pitchPx" y2="210" class="dim-primary" marker-start="url(#th-arrow-blue)" marker-end="url(#th-arrow-blue)" />
-      <SvgMathText :x="72 + pitchPx / 2" :y="226" text="$P$" anchor="middle" class-name="txt-primary" color="#409eff" :width="16" :font-size="11" />
+      <SvgMathText :x="72 + pitchPx / 2" :y="226" text="P" anchor="middle" class-name="txt-primary" color="#409eff" :width="16" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -54,7 +54,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('thread')
+const { dt, dm, dl } = useDiagramI18n('thread')
 
 const props = defineProps({
   diameter: { type: Number, default: 12 },
@@ -93,8 +93,6 @@ const toothPath = computed(() => {
   const h = 14
   return `M 0 ${h} L ${p / 2} 0 L ${p} ${h} L ${p * 1.5} 0 L ${p * 2} ${h}`
 })
-
-const labelD = computed(() => `$d$ = ${props.diameter} mm`)
 </script>
 
 <style scoped>

@@ -26,15 +26,15 @@
 
       <!-- T -->
       <line :x1="tX1" :y1="tY" :x2="tX2" :y2="tY" class="dim-primary" marker-start="url(#sm-arrow-blue)" marker-end="url(#sm-arrow-blue)" />
-      <SvgMathText :x="(tX1 + tX2) / 2" :y="tY - 6" :text="labelT" anchor="middle" class-name="txt-primary" color="#409eff" :width="100" :font-size="12" />
+      <SvgMathText :x="(tX1 + tX2) / 2" :y="tY - 6" :text="dl('T', thickness)" anchor="middle" class-name="txt-primary" color="#409eff" :width="100" :font-size="12" />
 
       <!-- R -->
       <line :x1="arcCx - arcR" :y1="arcCy + 20" :x2="arcCx" :y2="arcCy + arcR + 8" class="dim" marker-end="url(#sm-arrow)" />
-      <SvgMathText :x="arcCx - arcR - 4" :y="arcCy + arcR + 4" :text="labelR" anchor="end" class-name="txt" color="#334155" :width="100" :font-size="12" />
+      <SvgMathText :x="arcCx - arcR - 4" :y="arcCy + arcR + 4" :text="dl('R', bendRadius)" anchor="end" class-name="txt" color="#334155" :width="100" :font-size="12" />
 
       <!-- θ -->
       <path :d="angleArc" fill="none" stroke="#e6a23c" stroke-width="1.5" />
-      <SvgMathText :x="arcCx + arcR + 14" :y="arcCy + 4" :text="labelTheta" color="#e6a23c" :width="72" :font-size="13" />
+      <SvgMathText :x="arcCx + arcR + 14" :y="arcCy + 4" :text="dl('θ', bendAngle, '°')" color="#e6a23c" :width="72" :font-size="13" />
 
       <!-- BA 标注 -->
       <SvgMathText x="360" y="220" :text="dm(dt('baFormula'))" class-name="txt-muted" color="#94a3b8" :width="110" :font-size="11" />
@@ -46,7 +46,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('sheetMetal')
+const { dt, dm, dl } = useDiagramI18n('sheetMetal')
 
 const props = defineProps({
   thickness: { type: Number, default: 1.5 },
@@ -97,10 +97,6 @@ const angleArc = computed(() => {
 const tX1 = computed(() => leg1.value.x + 20)
 const tX2 = computed(() => tX1.value + 36)
 const tY = computed(() => leg1.value.y - 14)
-
-const labelT = computed(() => `$T$ = ${props.thickness} mm`)
-const labelR = computed(() => `$R$ = ${props.bendRadius} mm`)
-const labelTheta = computed(() => `$\\theta$ = ${props.bendAngle}°`)
 </script>
 
 <style scoped>

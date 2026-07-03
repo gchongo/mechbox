@@ -19,7 +19,7 @@
         <rect x="80" y="110" width="280" height="40" rx="4" class="pipe-wall" />
         <rect x="88" y="118" width="264" height="24" rx="2" class="pipe-flow" />
         <path d="M 380 122 L 420 122 L 410 116 M 420 122 L 410 128" fill="none" stroke="#409eff" stroke-width="2" />
-        <SvgMathText :x="425" :y="126" text="$Q$" class-name="txt-primary" color="#409eff" :width="20" :font-size="12" />
+        <SvgMathText :x="425" :y="126" text="Q" class-name="txt-primary" color="#409eff" :width="20" :font-size="12" />
         <line x1="80" y1="170" x2="360" y2="170" class="dim-primary" marker-start="url(#st-arrow-blue)" marker-end="url(#st-arrow-blue)" />
         <SvgMathText :x="220" :y="186" :text="labelPipe" anchor="middle" class-name="txt-primary" color="#409eff" :width="220" :font-size="12" />
       </template>
@@ -32,7 +32,7 @@
         <line x1="100" y1="90 + plateH + 20" x2="380" y2="90 + plateH + 20" class="dim-primary" marker-start="url(#st-arrow-blue)" marker-end="url(#st-arrow-blue)" />
         <SvgMathText :x="240" :y="90 + plateH + 36" :text="labelA" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
         <line x1="420" y1="90" x2="420" :y2="90 + plateH" class="dim" marker-start="url(#st-arrow)" marker-end="url(#st-arrow)" />
-        <SvgMathText :x="432" :y="90 + plateH / 2 + 4" text="$t$" class-name="txt" color="#334155" :width="16" :font-size="12" />
+        <SvgMathText :x="432" :y="90 + plateH / 2 + 4" text="t" class-name="txt" color="#334155" :width="16" :font-size="12" />
       </template>
 
       <!-- 模态 -->
@@ -41,8 +41,8 @@
         <line x1="240" y1="180" x2="240" y2="100" stroke="#64748b" stroke-width="3" />
         <rect x="210" y="88" width="60" height="24" rx="4" class="mass" />
         <path d="M 240 88 Q 260 60 240 40 Q 220 60 240 88" fill="none" stroke="#409eff" stroke-width="1.5" stroke-dasharray="4 3" />
-        <SvgMathText :x="268" :y="102" text="$m$" class-name="txt-primary" color="#409eff" :width="20" :font-size="12" />
-        <SvgMathText :x="248" :y="56" text="$f_n$" class-name="txt-muted" color="#94a3b8" :width="24" :font-size="11" />
+        <SvgMathText :x="268" :y="102" text="m" class-name="txt-primary" color="#409eff" :width="20" :font-size="12" />
+        <SvgMathText :x="248" :y="56" text="f_n" class-name="txt-muted" color="#94a3b8" :width="24" :font-size="11" />
         <SvgMathText :x="320" :y="130" :text="labelFexc" class-name="txt-muted" color="#94a3b8" :width="120" :font-size="12" />
       </template>
     </svg>
@@ -53,7 +53,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('structural')
+const { dt, dm, dl } = useDiagramI18n('structural')
 
 const props = defineProps({
   variant: { type: String, default: 'pipe' },
@@ -74,9 +74,9 @@ const hint = computed(() =>
   dt(props.variant === 'pipe' ? 'pipeHint' : props.variant === 'plate' ? 'plateHint' : 'modalHint'),
 )
 
-const labelPipe = computed(() => `$D$ = ${props.diameter} mm · $L$ = ${props.length} m`)
-const labelA = computed(() => `$a$ = ${props.plateLength} mm`)
-const labelFexc = computed(() => `f_exc = ${props.excitationFreq} Hz`)
+const labelPipe = computed(() => dm(`D = ${props.diameter} mm · L = ${props.length} m`))
+const labelA = computed(() => dl('a', props.plateLength))
+const labelFexc = computed(() => dm(`f_exc = ${props.excitationFreq} Hz`))
 </script>
 
 <style scoped>

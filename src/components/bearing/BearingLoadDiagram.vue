@@ -29,17 +29,17 @@
 
       <!-- Fr -->
       <line :x1="cx + rOuter + 30" :y1="cy" :x2="cx + rOuter + 70" :y2="cy" stroke="#409eff" stroke-width="2.5" marker-end="url(#br-arrow-blue)" />
-      <SvgMathText :x="cx + rOuter + 78" :y="cy + 4" text="$F_r$" class-name="txt-primary" color="#409eff" :width="24" :font-size="13" />
+      <SvgMathText :x="cx + rOuter + 78" :y="cy + 4" text="F_r" class-name="txt-primary" color="#409eff" :width="24" :font-size="13" />
       <text :x="cx + rOuter + 78" :y="cy + 18" class="txt-sub" font-size="11">{{ radialLoad }} N</text>
 
       <!-- Fa -->
       <line v-if="axialLoad > 0" :x1="cx" :y1="cy - rOuter - 20" :x2="cx" :y2="cy - rOuter - 55" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#br-arrow-purple)" />
-      <SvgMathText v-if="axialLoad > 0" :x="cx + 8" :y="cy - rOuter - 32" text="$F_a$" color="#8b5cf6" :width="24" :font-size="13" />
+      <SvgMathText v-if="axialLoad > 0" :x="cx + 8" :y="cy - rOuter - 32" text="F_a" color="#8b5cf6" :width="24" :font-size="13" />
       <text v-if="axialLoad > 0" :x="cx + 8" :y="cy - rOuter - 18" class="txt-sub" font-size="11">{{ axialLoad }} N</text>
 
       <!-- n -->
       <path :d="`M ${cx - rOuter - 28} ${cy} A 12 12 0 1 1 ${cx - rOuter - 10} ${cy - 16}`" fill="none" stroke="#e6a23c" stroke-width="1.5" marker-end="url(#br-arrow)" />
-      <SvgMathText :x="cx - rOuter - 38" :y="cy + 4" text="$n$" color="#e6a23c" :width="16" :font-size="12" />
+      <SvgMathText :x="cx - rOuter - 38" :y="cy + 4" text="n" color="#e6a23c" :width="16" :font-size="12" />
 
       <text x="24" y="240" class="txt-muted" font-size="11">{{ bearingLabel }}</text>
     </svg>

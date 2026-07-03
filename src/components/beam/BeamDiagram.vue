@@ -32,7 +32,7 @@
       <!-- 集中力 -->
       <template v-if="isPointLoad">
         <line :x1="loadX" :y1="loadYTop" :x2="loadX" :y2="beamY - 4" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#beam-arrow-purple)" />
-        <SvgMathText :x="loadX + 10" :y="loadYTop + 20" text="$F$" color="#8b5cf6" :width="16" :font-size="13" />
+        <SvgMathText :x="loadX + 10" :y="loadYTop + 20" text="F" color="#8b5cf6" :width="16" :font-size="13" />
       </template>
 
       <!-- 均布载荷 -->
@@ -44,7 +44,7 @@
 
       <!-- L -->
       <line :x1="x1" :y1="beamY + 36" :x2="x2" :y2="beamY + 36" class="dim-primary" marker-start="url(#beam-arrow-blue)" marker-end="url(#beam-arrow-blue)" />
-      <SvgMathText :x="(x1 + x2) / 2" :y="beamY + 52" :text="labelL" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
+      <SvgMathText :x="(x1 + x2) / 2" :y="beamY + 52" :text="dl('L', spanLength)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- 挠度示意 -->
       <path :d="deflectPath" fill="none" stroke="#409eff" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7" />
@@ -58,7 +58,7 @@ import { computed } from 'vue'
 import { BEAM_CASES } from '@/utils/beam-calc'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('beam')
+const { dt, dm, dl } = useDiagramI18n('beam')
 
 const props = defineProps({
   caseId: { type: String, default: 'simply_center' },
@@ -93,8 +93,6 @@ const deflectPath = computed(() => {
   }
   return `M ${x1} ${beamY} Q ${x1 + (x2 - x1) * 0.5} ${beamY + 26} ${x2} ${beamY + 30}`
 })
-
-const labelL = computed(() => `$L$ = ${props.spanLength} mm`)
 </script>
 
 <style scoped>

@@ -76,7 +76,7 @@
         fill="none"
         class="torque-arc"
       />
-      <SvgMathText :x="318" :y="72" text="$T$" class-name="label--primary" color="#409eff" :width="24" />
+      <SvgMathText :x="318" :y="72" text="T" class-name="label--primary" color="#409eff" :width="24" />
 
       <!-- 公称直径 d -->
       <line x1="248" y1="108" x2="218" y2="108" marker-end="url(#arrow-gray)" />
@@ -88,7 +88,7 @@
         <line x1="292" y1="118" x2="292" y2="190" class="dim-line" />
         <line x1="286" y1="118" x2="298" y2="118" class="dim-tick" />
         <line x1="286" y1="190" x2="298" y2="190" class="dim-tick" />
-        <SvgMathText :x="300" :y="158" text="$L_K$" class-name="label--pro" color="#8b5cf6" :width="36" />
+        <SvgMathText :x="300" :y="158" text="L_K" class-name="label--pro" color="#8b5cf6" :width="36" />
         <text x="300" y="172" class="label-sub">{{ gripLength }} mm</text>
       </template>
 
@@ -103,7 +103,7 @@
       <template v-if="showPro">
         <line x1="236" y1="68" x2="206" y2="68" marker-end="url(#arrow-gray)" />
         <line x1="284" y1="68" x2="314" y2="68" marker-end="url(#arrow-gray)" />
-        <SvgMathText :x="318" :y="72" text="$d_W$" class-name="label--pro" color="#8b5cf6" :width="36" />
+        <SvgMathText :x="318" :y="72" text="d_W" class-name="label--pro" color="#8b5cf6" :width="36" />
       </template>
 
       <!-- D_km -->

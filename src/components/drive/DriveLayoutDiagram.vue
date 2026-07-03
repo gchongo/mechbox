@@ -30,7 +30,7 @@
 
       <!-- C -->
       <line :x1="x1" :y1="cy + maxR + 24" :x2="x2" :y2="cy + maxR + 24" class="dim-primary" marker-start="url(#drv-arrow)" marker-end="url(#drv-arrow)" />
-      <SvgMathText :x="(x1 + x2) / 2" :y="cy + maxR + 40" :text="labelC" anchor="middle" class-name="txt-primary" color="#409eff" :width="140" :font-size="13" />
+      <SvgMathText :x="(x1 + x2) / 2" :y="cy + maxR + 40" :text="dl('C', centerDistance)" anchor="middle" class-name="txt-primary" color="#409eff" :width="140" :font-size="13" />
 
       <!-- D1 / z1 -->
       <SvgMathText :x="x1" :y="cy - r1 - 10" :text="labelSmall" anchor="middle" class-name="txt" color="#334155" :width="120" :font-size="12" />
@@ -38,7 +38,7 @@
 
       <!-- 旋转 -->
       <path :d="`M ${x1} ${cy - r1 - 22} A 10 10 0 1 1 ${x1 + 14} ${cy - r1 - 18}`" fill="none" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#drv-arrow)" />
-      <SvgMathText :x="x1 - 20" :y="cy - r1 - 14" text="$n$" color="#8b5cf6" :width="16" :font-size="11" />
+      <SvgMathText :x="x1 - 20" :y="cy - r1 - 14" text="n" color="#8b5cf6" :width="16" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -48,7 +48,7 @@ import { computed } from 'vue'
 import { calcWrapAngle } from '@/utils/belt-calc'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('drive')
+const { dt, dm, dl } = useDiagramI18n('drive')
 
 const props = defineProps({
   variant: { type: String, default: 'belt' },
@@ -99,8 +99,7 @@ const labelLarge = computed(() =>
     : `D₂ = ${props.drivenDiameter} mm`,
 )
 
-const labelTheta = computed(() => `$\\theta \\approx ${wrapAngle.value.toFixed(0)}°$`)
-const labelC = computed(() => `$C$ = ${props.centerDistance} mm`)
+const labelTheta = computed(() => dm(`θ ≈ ${wrapAngle.value.toFixed(0)}°`))
 
 const diagramTitle = computed(() =>
   dt(props.variant === 'chain' ? 'titleChain' : 'titleBelt'),

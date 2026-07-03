@@ -41,8 +41,8 @@
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('tangentialForce')" /><dd class="font-mono">{{ result.tangentialForce.toFixed(0) }} N</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress') + ' $\tau$'" /><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('crushStress') + ' $\sigma_c$'" /><dd class="font-mono">{{ result.crushStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress') + ' τ'" /><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('crushStress') + ' σ_c'" /><dd class="font-mono">{{ result.crushStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
           <div v-if="result.recommendedLength" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('recommendedLength')" /><dd class="font-mono">{{ result.recommendedLength.toFixed(1) }} mm</dd></div>
           <div v-if="result.shearAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
         </dl>

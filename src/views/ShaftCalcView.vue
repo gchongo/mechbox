@@ -63,16 +63,16 @@
         <el-alert v-if="torsionResult.errorKey && mode === 'torsion'" :title="re(torsionResult.errorKey)" type="warning" show-icon class="mb-3" />
         <el-alert v-if="combinedResult.errorKey && mode === 'combined'" :title="re(combinedResult.errorKey)" type="warning" show-icon class="mb-3" />
         <dl v-if="mode === 'torsion' && !torsionResult.errorKey" class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress') + ' $\tau$'" /><dd class="font-mono" :class="torsionResult.pass?'text-success':'text-error'">{{ torsionResult.shearStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('twistAngle') + ' $\theta$'" /><dd class="font-mono">{{ torsionResult.twistAngle.toFixed(4) }}°</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress') + ' τ'" /><dd class="font-mono" :class="torsionResult.pass?'text-success':'text-error'">{{ torsionResult.shearStress.toFixed(2) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('twistAngle') + ' θ'" /><dd class="font-mono">{{ torsionResult.twistAngle.toFixed(4) }}°</dd></div>
           <div v-if="form.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('minDiameter')" /><dd class="font-mono">{{ torsionResult.minDiameter?.toFixed(1) }} mm</dd></div>
           <div v-if="form.calcMode === 'professional' && torsionResult.peakShearStress" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('peakShear')" /><dd class="font-mono">{{ torsionResult.peakShearStress.toFixed(2) }} MPa</dd></div>
           <div v-if="torsionResult.fatigueAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueAmp')" /><dd class="font-mono">{{ torsionResult.fatigueAmplitude?.toFixed(1) }} / {{ torsionResult.fatigueEndurance?.toFixed(0) }} MPa</dd></div>
         </dl>
         <dl v-else-if="!combinedResult.errorKey" class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('bendingStress') + ' $\sigma$'" /><dd class="font-mono">{{ combinedResult.bendingStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torsionStress') + ' $\tau$'" /><dd class="font-mono">{{ combinedResult.torsionStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('equivalentStress') + ' $\sigma_{eq}$'" /><dd class="font-mono" :class="combinedResult.pass?'text-success':'text-error'">{{ combinedResult.equivalentStress.toFixed(2) }} MPa {{ combinedResult.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('bendingStress') + ' σ'" /><dd class="font-mono">{{ combinedResult.bendingStress.toFixed(2) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torsionStress') + ' τ'" /><dd class="font-mono">{{ combinedResult.torsionStress.toFixed(2) }} MPa</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('equivalentStress') + ' σ_eq'" /><dd class="font-mono" :class="combinedResult.pass?'text-success':'text-error'">{{ combinedResult.equivalentStress.toFixed(2) }} MPa {{ combinedResult.pass?'✓':'✗' }}</dd></div>
           <div v-if="combinedResult.utilization" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('utilization')" /><dd class="font-mono">{{ (combinedResult.utilization * 100).toFixed(1) }}%</dd></div>
         </dl>
         <div class="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">

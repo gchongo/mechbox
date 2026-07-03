@@ -54,7 +54,7 @@
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <SvgMathText :x="layout.gl + layout.gw / 2" :y="layout.wTextY" :text="labelW" anchor="middle" :width="120" :font-size="17" />
+      <SvgMathText :x="layout.gl + layout.gw / 2" :y="layout.wTextY" :text="dl('w', grooveWidth)" anchor="middle" :width="120" :font-size="17" />
 
       <!-- h 沟槽深 — 左侧 -->
       <line
@@ -66,7 +66,7 @@
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <SvgMathText :x="layout.hTextX" :y="layout.gt + layout.gh / 2 - 6" text="$h$" anchor="end" :width="20" :font-size="17" />
+      <SvgMathText :x="layout.hTextX" :y="layout.gt + layout.gh / 2 - 6" text="h" anchor="end" :width="20" :font-size="17" />
       <text :x="layout.hTextX" :y="layout.gt + layout.gh / 2 + 14" class="txt-sub" font-size="15" text-anchor="end">
         {{ grooveDepthLabel }} mm
       </text>
@@ -81,7 +81,7 @@
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <SvgMathText :x="layout.csTextX" :y="layout.ocy - 4" text="$d_{cs}$" :width="40" :font-size="16" />
+      <SvgMathText :x="layout.csTextX" :y="layout.ocy - 4" text="d_cs" :width="40" :font-size="16" />
       <text :x="layout.csTextX" :y="layout.ocy + 14" class="txt-sub" font-size="15">
         {{ crossSection }} mm
       </text>
@@ -108,7 +108,7 @@
         :y2="layout.dgLineEndY"
         class="dim-line dim-line--dg"
       />
-      <SvgMathText :x="layout.gl + layout.gw / 2" :y="layout.dgTextY" :text="labelDg" anchor="middle" class-name="txt-primary" color="#409eff" :width="140" :font-size="17" />
+      <SvgMathText :x="layout.gl + layout.gw / 2" :y="layout.dgTextY" :text="dl('d_g', grooveDiameter)" anchor="middle" class-name="txt-primary" color="#409eff" :width="140" :font-size="17" />
 
       <!-- 挤出间隙 -->
       <template v-if="showExtrusion && layout.gapW > 2">
@@ -132,7 +132,7 @@
       <!-- 压力 -->
       <template v-if="pressure > 0">
         <line :x1="20" :y1="layout.ocy" :x2="42" :y2="layout.ocy" marker-end="url(#oring-arrow-blue)" class="pressure-arrow" />
-        <SvgMathText x="10" :y="layout.ocy - 8" text="$P$" class-name="txt-primary" color="#409eff" :width="20" :font-size="18" />
+        <SvgMathText x="10" :y="layout.ocy - 8" text="P" class-name="txt-primary" color="#409eff" :width="20" :font-size="18" />
       </template>
 
       <!-- 孔径 -->
@@ -155,7 +155,7 @@
           marker-end="url(#oring-arrow)"
           class="dim-line"
         />
-        <SvgMathText :x="layout.insetW / 2" :y="layout.insetH - 2" :text="labelCsInset" anchor="middle" :width="100" :font-size="14" />
+        <SvgMathText :x="layout.insetW / 2" :y="layout.insetH - 2" :text="dl('d_cs', crossSection)" anchor="middle" :width="100" :font-size="14" />
       </g>
 
       <template v-if="showPro && stretchPercent > 0">
@@ -182,7 +182,7 @@ import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 import { enrichMathText } from '@/utils/math-label'
 
-const { dt, locale, dm } = useDiagramI18n('oRing')
+const { dt, locale, dm, dl } = useDiagramI18n('oRing')
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },
@@ -254,9 +254,6 @@ const layout = computed(() => {
 })
 
 const grooveDepthLabel = computed(() => props.grooveDepth?.toFixed(2) ?? '—')
-const labelW = computed(() => `$w$ = ${props.grooveWidth} mm`)
-const labelDg = computed(() => `$d_g$ = ${props.grooveDiameter} mm`)
-const labelCsInset = computed(() => `$d_{cs}$ ${props.crossSection} mm`)
 
 function enrichedName(name) {
   return enrichMathText(String(name))

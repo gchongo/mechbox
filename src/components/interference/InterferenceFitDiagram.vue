@@ -31,7 +31,7 @@
         marker-start="url(#if-arrow-blue)"
         marker-end="url(#if-arrow-blue)"
       />
-      <SvgMathText :x="cx" :y="cy + rHub + 40" :text="labelD" anchor="middle" class-name="txt-primary" color="#409eff" :width="160" :font-size="14" />
+      <SvgMathText :x="cx" :y="cy + rHub + 40" :text="dl('d', fmt(shaftDiameter))" anchor="middle" class-name="txt-primary" color="#409eff" :width="160" :font-size="14" />
 
       <!-- D -->
       <line
@@ -43,7 +43,7 @@
         marker-start="url(#if-arrow)"
         marker-end="url(#if-arrow)"
       />
-      <SvgMathText :x="cx" :y="cy - rHub - 28" :text="labelBigD" anchor="middle" :width="160" :font-size="14" />
+      <SvgMathText :x="cx" :y="cy - rHub - 28" :text="dl('D', fmt(holeDiameter))" anchor="middle" :width="160" :font-size="14" />
 
       <!-- D_A -->
       <line
@@ -54,12 +54,12 @@
         class="dim-line"
         marker-end="url(#if-arrow)"
       />
-      <SvgMathText :x="cx + rHub + 52" :y="cy + 5" text="$D_A$" :width="32" :font-size="13" />
+      <SvgMathText :x="cx + rHub + 52" :y="cy + 5" text="D_A" :width="32" :font-size="13" />
       <text :x="cx + rHub + 52" :y="cy + 20" class="txt-sub" font-size="12">{{ fmt(hubOuterDiameter) }} mm</text>
 
       <!-- i 过盈 -->
       <line :x1="cx + rHole" :y1="cy" :x2="cx + rShaft" :y2="cy" stroke="#e6a23c" stroke-width="2" marker-end="url(#if-arrow)" />
-      <SvgMathText :x="cx + (rHole + rShaft) / 2" :y="cy - 8" :text="labelI" anchor="middle" color="#e6a23c" :width="80" :font-size="12" />
+      <SvgMathText :x="cx + (rHole + rShaft) / 2" :y="cy - 8" :text="dl('i', fmt(interference), '')" anchor="middle" color="#e6a23c" :width="80" :font-size="12" />
 
       <!-- 轴向长度 L -->
       <text x="320" y="28" class="txt-muted" font-size="13">{{ dt('axialFitSection') }}</text>
@@ -74,7 +74,7 @@
         marker-start="url(#if-arrow-blue)"
         marker-end="url(#if-arrow-blue)"
       />
-      <SvgMathText :x="320 + lenW / 2" :y="172" :text="labelL" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="14" />
+      <SvgMathText :x="320 + lenW / 2" :y="172" :text="dl('L', fmt(fitLength))" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="14" />
       <text x="320" y="88" class="txt-muted" font-size="11">{{ dt('hub') }}</text>
       <text x="320" y="118" class="txt-muted" font-size="11">{{ dt('shaftPart') }}</text>
     </svg>
@@ -85,7 +85,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('interference')
+const { dt, dm, dl } = useDiagramI18n('interference')
 
 const props = defineProps({
   shaftDiameter: { type: Number, default: 50 },
@@ -108,11 +108,6 @@ const rHole = computed(() => (props.holeDiameter / 2) * scale.value)
 const rHub = computed(() => (props.hubOuterDiameter / 2) * scale.value)
 const rShaftInner = computed(() => (props.shaftInnerDiameter / 2) * scale.value)
 const lenW = computed(() => Math.min(160, Math.max(60, props.fitLength * 1.2)))
-
-const labelD = computed(() => `$d$ = ${fmt(props.shaftDiameter)} mm`)
-const labelBigD = computed(() => `$D$ = ${fmt(props.holeDiameter)} mm`)
-const labelI = computed(() => `$i$ = ${fmt(props.interference)}`)
-const labelL = computed(() => `$L$ = ${fmt(props.fitLength)} mm`)
 
 function fmt(v) {
   return Number(v).toFixed(3)

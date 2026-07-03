@@ -44,19 +44,19 @@
 
       <!-- R -->
       <line :x1="cx" :y1="cy" :x2="cx + rCircle" :y2="cy" class="dim-primary" marker-end="url(#bg-arrow-blue)" />
-      <SvgMathText :x="cx + rCircle / 2" :y="cy - 8" :text="labelR" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
+      <SvgMathText :x="cx + rCircle / 2" :y="cy - 8" :text="dl('R', boltCircleRadius)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
 
       <!-- Fx -->
       <line v-if="Math.abs(shearX) > 0" :x1="cx - 70" :y1="cy" :x2="cx - 20" :y2="cy" stroke="#8b5cf6" stroke-width="2" marker-end="url(#bg-arrow-purple)" />
-      <SvgMathText v-if="Math.abs(shearX) > 0" :x="cx - 78" :y="cy + 4" text="$F_x$" anchor="end" color="#8b5cf6" :width="28" :font-size="11" />
+      <SvgMathText v-if="Math.abs(shearX) > 0" :x="cx - 78" :y="cy + 4" text="F_x" anchor="end" color="#8b5cf6" :width="28" :font-size="11" />
 
       <!-- Fy -->
       <line v-if="Math.abs(shearY) > 0" :x1="cx" :y1="cy + 50" :x2="cx" :y2="cy + 90" stroke="#8b5cf6" stroke-width="2" marker-end="url(#bg-arrow-purple)" />
-      <SvgMathText v-if="Math.abs(shearY) > 0" :x="cx + 8" :y="cy + 72" text="$F_y$" color="#8b5cf6" :width="28" :font-size="11" />
+      <SvgMathText v-if="Math.abs(shearY) > 0" :x="cx + 8" :y="cy + 72" text="F_y" color="#8b5cf6" :width="28" :font-size="11" />
 
       <!-- M -->
       <path :d="`M ${cx + rFlange + 12} ${cy} A 18 18 0 1 1 ${cx + rFlange + 8} ${cy - 20}`" fill="none" stroke="#e6a23c" stroke-width="1.5" marker-end="url(#bg-arrow)" />
-      <SvgMathText :x="cx + rFlange + 28" :y="cy + 4" text="$M$" color="#e6a23c" :width="20" :font-size="12" />
+      <SvgMathText :x="cx + rFlange + 28" :y="cy + 4" text="M" color="#e6a23c" :width="20" :font-size="12" />
     </svg>
   </div>
 </template>
@@ -65,7 +65,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('boltGroup')
+const { dt, dm, dl } = useDiagramI18n('boltGroup')
 
 const props = defineProps({
   boltCount: { type: Number, default: 6 },
@@ -95,8 +95,6 @@ const boltPositions = computed(() => {
   }
   return pts
 })
-
-const labelR = computed(() => `$R$ = ${props.boltCircleRadius} mm`)
 </script>
 
 <style scoped>

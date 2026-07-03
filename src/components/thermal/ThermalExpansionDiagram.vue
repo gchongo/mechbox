@@ -20,7 +20,7 @@
 
       <!-- L -->
       <line :x1="barX" :y1="barY + barH + 20" :x2="barX + barW" :y2="barY + barH + 20" class="dim-primary" marker-start="url(#te-arrow-blue)" marker-end="url(#te-arrow-blue)" />
-      <SvgMathText :x="barX + barW / 2" :y="barY + barH + 36" :text="labelL" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
+      <SvgMathText :x="barX + barW / 2" :y="barY + barH + 36" :text="dl('L', length)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
 
       <!-- ΔL -->
       <line :x1="barX + barW" :y1="barY - 14" :x2="barX + barW + expandW" :y2="barY - 14" stroke="#e6a23c" stroke-width="1.5" marker-start="url(#te-arrow)" marker-end="url(#te-arrow)" />
@@ -32,10 +32,10 @@
         <circle :cx="360" :cy="130" :r="rHole" class="hole" />
         <circle :cx="360" :cy="130" :r="rShaft" class="shaft" />
         <line :x1="360 - rShaft" :y1="130 + rHole + 16" :x2="360 + rShaft" :y2="130 + rHole + 16" class="dim-primary" marker-start="url(#te-arrow-blue)" marker-end="url(#te-arrow-blue)" />
-        <SvgMathText :x="360" :y="130 + rHole + 32" text="$d$ / $D$" anchor="middle" class-name="txt-primary" color="#409eff" :width="48" :font-size="11" />
+        <SvgMathText :x="360" :y="130 + rHole + 32" text="d / D" anchor="middle" class-name="txt-primary" color="#409eff" :width="48" :font-size="11" />
       </template>
 
-      <SvgMathText :x="24" :y="240" :text="labelAlpha" class-name="txt-muted" color="#94a3b8" :width="160" :font-size="11" />
+      <SvgMathText :x="24" :y="240" :text="dm(`α = ${alpha} ×10⁻⁶ /°C`)" class-name="txt-muted" color="#94a3b8" :width="160" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -44,7 +44,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('thermal')
+const { dt, dm, dl } = useDiagramI18n('thermal')
 
 const props = defineProps({
   length: { type: Number, default: 100 },
@@ -64,9 +64,6 @@ const expandW = computed(() => Math.max(8, Math.abs(props.deltaT) * 0.15))
 const scale = computed(() => 40 / Math.max(props.holeDiameter / 2, 1))
 const rHole = computed(() => (props.holeDiameter / 2) * scale.value)
 const rShaft = computed(() => (props.shaftDiameter / 2) * scale.value)
-
-const labelL = computed(() => `$L$ = ${props.length} mm`)
-const labelAlpha = computed(() => `$\\alpha$ = ${props.alpha} ×10⁻⁶ /°C`)
 </script>
 
 <style scoped>

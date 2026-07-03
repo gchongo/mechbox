@@ -39,7 +39,7 @@
 
       <!-- 载荷 F -->
       <line x1="200" y1="70" x2="200" y2="110" stroke="#8b5cf6" stroke-width="2" marker-end="url(#weld-arrow-blue)" />
-      <SvgMathText :x="210" :y="92" text="$F$" color="#8b5cf6" :width="16" :font-size="12" />
+      <SvgMathText :x="210" :y="92" text="F" color="#8b5cf6" :width="16" :font-size="12" />
     </svg>
   </div>
 </template>

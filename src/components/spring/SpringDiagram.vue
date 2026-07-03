@@ -23,15 +23,15 @@
 
       <!-- D 中径 -->
       <line :x1="centerX - rMean" :y1="midY + 28" :x2="centerX + rMean" :y2="midY + 28" class="dim-primary" marker-start="url(#spr-arrow-blue)" marker-end="url(#spr-arrow-blue)" />
-      <SvgMathText :x="centerX" :y="midY + 44" :text="labelD" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
+      <SvgMathText :x="centerX" :y="midY + 44" :text="dl('D', meanDiameter)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- d 线径 -->
       <circle :cx="centerX + rMean - 8" :cy="midY" :r="wireR" class="wire-sample" />
       <line :x1="centerX + rMean + 18" :y1="midY" :x2="centerX + rMean + 18 + wireR * 2" :y2="midY" class="dim" marker-start="url(#spr-arrow)" marker-end="url(#spr-arrow)" />
-      <SvgMathText :x="centerX + rMean + 24 + wireR" :y="midY + 4" :text="labelWireD" class-name="txt" color="#334155" :width="100" :font-size="12" />
+      <SvgMathText :x="centerX + rMean + 24 + wireR" :y="midY + 4" :text="dl('d', wireDiameter)" class-name="txt" color="#334155" :width="100" :font-size="12" />
 
       <!-- n 圈数 -->
-      <SvgMathText :x="380" :y="midY" :text="labelN" class-name="txt" color="#334155" :width="72" :font-size="13" />
+      <SvgMathText :x="380" :y="midY" :text="dl('n', activeCoils, '')" class-name="txt" color="#334155" :width="72" :font-size="13" />
 
       <!-- L0 -->
       <line v-if="freeLength" x1="420" :y1="topY" x2="420" y2="200" class="dim-primary" marker-start="url(#spr-arrow-blue)" marker-end="url(#spr-arrow-blue)" />
@@ -40,7 +40,7 @@
 
       <!-- F -->
       <line :x1="centerX" :y1="topY - 24" :x2="centerX" :y2="topY - 4" stroke="#8b5cf6" stroke-width="2" marker-end="url(#spr-arrow-blue)" />
-      <SvgMathText :x="centerX + 8" :y="topY - 14" text="$F$" color="#8b5cf6" :width="16" :font-size="12" />
+      <SvgMathText :x="centerX + 8" :y="topY - 14" text="F" color="#8b5cf6" :width="16" :font-size="12" />
     </svg>
   </div>
 </template>
@@ -49,7 +49,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('spring')
+const { dt, dm, dl } = useDiagramI18n('spring')
 
 const props = defineProps({
   wireDiameter: { type: Number, default: 3 },
@@ -87,10 +87,6 @@ const coilPath = computed(() => {
   }
   return d
 })
-
-const labelD = computed(() => `$D$ = ${props.meanDiameter} mm`)
-const labelWireD = computed(() => `$d$ = ${props.wireDiameter} mm`)
-const labelN = computed(() => `$n$ = ${props.activeCoils}`)
 </script>
 
 <style scoped>

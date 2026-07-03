@@ -23,19 +23,19 @@
 
       <!-- 压力区 -->
       <rect :x="barrelX + 6" :y="barrelY + 10" :width="pistonX - barrelX - 6" :height="barrelH - 20" rx="2" class="pressure-zone" />
-      <SvgMathText :x="barrelX + (pistonX - barrelX) / 2" :y="cy + 4" text="$p$" anchor="middle" class-name="txt-primary" color="#409eff" :width="16" :font-size="13" />
+      <SvgMathText :x="barrelX + (pistonX - barrelX) / 2" :y="cy + 4" text="p" anchor="middle" class-name="txt-primary" color="#409eff" :width="16" :font-size="13" />
 
       <!-- D -->
       <line :x1="barrelX" :y1="barrelY + barrelH + 18" :x2="barrelX + barrelW" :y2="barrelY + barrelH + 18" class="dim-primary" marker-start="url(#cy-arrow-blue)" marker-end="url(#cy-arrow-blue)" />
-      <SvgMathText :x="barrelX + barrelW / 2" :y="barrelY + barrelH + 34" :text="labelD" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
+      <SvgMathText :x="barrelX + barrelW / 2" :y="barrelY + barrelH + 34" :text="dl('D', boreDiameter)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
 
       <!-- d -->
       <line :x1="rodX + rodLen" :y1="cy + rodH / 2 + 14" :x2="rodX + rodLen + rodH + 20" :y2="cy + rodH / 2 + 14" class="dim" marker-start="url(#cy-arrow)" marker-end="url(#cy-arrow)" />
-      <SvgMathText :x="rodX + rodLen + rodH / 2 + 10" :y="cy + rodH / 2 + 30" :text="labelRodD" anchor="middle" class-name="txt" color="#334155" :width="100" :font-size="12" />
+      <SvgMathText :x="rodX + rodLen + rodH / 2 + 10" :y="cy + rodH / 2 + 30" :text="dl('d', rodDiameter)" anchor="middle" class-name="txt" color="#334155" :width="100" :font-size="12" />
 
       <!-- F+ -->
       <line :x1="rodX + rodLen + 30" :y1="cy" :x2="rodX + rodLen + 65" :y2="cy" stroke="#8b5cf6" stroke-width="2" marker-end="url(#cy-arrow-blue)" />
-      <SvgMathText :x="rodX + rodLen + 72" :y="cy + 4" text="$F^+$" color="#8b5cf6" :width="24" :font-size="12" />
+      <SvgMathText :x="rodX + rodLen + 72" :y="cy + 4" text="F^+" color="#8b5cf6" :width="24" :font-size="12" />
 
       <!-- stroke -->
       <line v-if="strokeLength > 0" :x1="pistonX + pistonW / 2" :y1="barrelY - 12" :x2="rodX + rodLen + 20" :y2="barrelY - 12" class="dim" stroke-dasharray="4 3" marker-start="url(#cy-arrow)" marker-end="url(#cy-arrow)" />
@@ -48,7 +48,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('cylinder')
+const { dt, dm, dl } = useDiagramI18n('cylinder')
 
 const props = defineProps({
   variant: { type: String, default: 'hydraulic' },
@@ -69,9 +69,6 @@ const cy = 130
 const pistonW = 12
 const pistonX = computed(() => barrelX + barrelW.value * 0.55)
 const rodX = computed(() => pistonX.value + pistonW)
-
-const labelD = computed(() => `$D$ = ${props.boreDiameter} mm`)
-const labelRodD = computed(() => `$d$ = ${props.rodDiameter} mm`)
 </script>
 
 <style scoped>

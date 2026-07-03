@@ -166,11 +166,11 @@
               <dd class="font-mono">{{ isoResult.geometry.contactRatio.toFixed(3) }}</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('contactStress') + ' $\sigma_H$'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('contactStress') + ' σ_H'" />
               <dd class="font-mono">{{ isoResult.contactStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('bendingStress') + ' $\sigma_F$'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('bendingStress') + ' σ_F'" />
               <dd class="font-mono">{{ isoResult.bendingStress.toFixed(1) }} MPa</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -189,10 +189,10 @@
           <el-collapse class="mt-4">
             <el-collapse-item v-if="isoResult.iso1328" :title="pr('iso1328Title')" name="iso1328">
               <dl class="grid grid-cols-2 gap-2 text-xs">
-                <div><ResultLabel label-class="text-gray-500" text="$f_{pt}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_pt.toFixed(1) }} μm</dd></div>
-                <div><ResultLabel label-class="text-gray-500" text="$F_{pt}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_pt.toFixed(1) }} μm</dd></div>
-                <div><ResultLabel label-class="text-gray-500" text="$f_{f\\alpha}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_falpha.toFixed(1) }} μm</dd></div>
-                <div><ResultLabel label-class="text-gray-500" text="$F_{\\beta}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_beta.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="f_pt" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_pt.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="F_pt" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_pt.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="f_falpha" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_falpha.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="F_beta" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_beta.toFixed(1) }} μm</dd></div>
               </dl>
               <ul class="mt-2 list-inside list-disc text-xs text-gray-500">
                 <li v-for="(n, i) in iso1328Notes" :key="i">{{ n }}</li>
@@ -220,13 +220,13 @@
               <dd class="font-mono">{{ simpleResult.geometry.pitchDiameter.toFixed(2) }} mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('bendingStress') + ' $\sigma_F$'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('bendingStress') + ' σ_F'" />
               <dd class="font-mono" :class="simpleResult.bendingPass ? 'text-success' : 'text-error'">
                 {{ simpleResult.bendingStress.toFixed(1) }} MPa {{ simpleResult.bendingPass ? '✓' : '✗' }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('contactStress') + ' $\sigma_H$'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('contactStress') + ' σ_H'" />
               <dd class="font-mono" :class="simpleResult.contactPass ? 'text-success' : 'text-error'">
                 {{ simpleResult.contactStress.toFixed(1) }} MPa {{ simpleResult.contactPass ? '✓' : '✗' }}
               </dd>

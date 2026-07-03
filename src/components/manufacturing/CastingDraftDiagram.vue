@@ -21,16 +21,16 @@
 
       <!-- h -->
       <line x1="95" :y1="topY" x2="95" y2="200" class="dim-primary" marker-start="url(#cd-arrow-blue)" marker-end="url(#cd-arrow-blue)" />
-      <SvgMathText :x="78" :y="(topY + 200) / 2 + 4" text="$h$" anchor="end" class-name="txt-primary" color="#409eff" :width="16" :font-size="12" />
+      <SvgMathText :x="78" :y="(topY + 200) / 2 + 4" text="h" anchor="end" class-name="txt-primary" color="#409eff" :width="16" :font-size="12" />
       <text x="78" :y="(topY + 200) / 2 + 18" class="txt-sub" font-size="11" text-anchor="end">{{ depth }} mm</text>
 
       <!-- α -->
       <path :d="angleArc" fill="none" stroke="#e6a23c" stroke-width="1.5" />
-      <SvgMathText :x="130" :y="topY + 28" :text="labelAlpha" color="#e6a23c" :width="100" :font-size="13" />
+      <SvgMathText :x="130" :y="topY + 28" :text="dl('α', draftAngle.toFixed(2), '°')" color="#e6a23c" :width="100" :font-size="13" />
 
       <!-- 增量 -->
       <line :x1="200" y1="200" :x2="200 + draftPx" y2="200" stroke="#409eff" stroke-width="2" marker-end="url(#cd-arrow-blue)" />
-      <SvgMathText :x="200 + draftPx / 2" :y="192" text="$\\Delta$" anchor="middle" class-name="txt-primary" color="#409eff" :width="20" :font-size="11" />
+      <SvgMathText :x="200 + draftPx / 2" :y="192" text="Δ" anchor="middle" class-name="txt-primary" color="#409eff" :width="20" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -39,7 +39,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('casting')
+const { dt, dm, dl } = useDiagramI18n('casting')
 
 const props = defineProps({
   depth: { type: Number, default: 80 },
@@ -66,8 +66,6 @@ const angleArc = computed(() => {
   const r = 28
   return `M ${x + r} ${y} A ${r} ${r} 0 0 1 ${x} ${y + r}`
 })
-
-const labelAlpha = computed(() => `$\\alpha$ = ${props.draftAngle.toFixed(2)}°`)
 </script>
 
 <style scoped>

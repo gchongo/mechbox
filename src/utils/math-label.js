@@ -43,6 +43,7 @@ const REPLACEMENTS = [
   ['F_a', '$F_a$'],
   ['F_x', '$F_x$'],
   ['F_y', '$F_y$'],
+  ['F^+', '$F^+$'],
   ['Fx', '$F_x$'],
   ['Fy', '$F_y$'],
   ['D₁', '$D_1$'],
@@ -132,6 +133,7 @@ const REPLACEMENTS = [
   ['β', '$\\beta$'],
   ['ν', '$\\nu$'],
   ['π', '$\\pi$'],
+  ['ρ', '$\\rho$'],
 ]
 
 const GREEK_SUB = {
