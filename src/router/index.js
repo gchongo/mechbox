@@ -232,6 +232,11 @@ const routes = [
     name: 'faq',
     component: () => import('@/views/FaqView.vue'),
   },
+  {
+    path: '/design/powertrain',
+    name: 'design-powertrain',
+    component: () => import('@/views/design/PowertrainChainView.vue'),
+  },
 ]
 
 const ENGINEERING_ROUTE_NAMES = new Set([
@@ -269,6 +274,7 @@ const ENGINEERING_ROUTE_NAMES = new Set([
   'units',
   'fit',
   'gdt-stack',
+  'design-powertrain',
 ])
 
 for (const route of routes) {

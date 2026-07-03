@@ -136,6 +136,13 @@
         </div>
       </section>
     </div>
+
+    <DecisionToolsPanel
+      :preset="decisionPreset"
+      :snapshot="snapshot"
+      :base-inputs="baseInputs"
+      @apply="onApplyInverse"
+    />
   </div>
 </template>
 
@@ -144,6 +151,9 @@ import { reactive, computed } from 'vue'
 import { analyzeBearingLife, listBearingSeries, resolveSeriesFromModel } from '@/utils/bearing-calc'
 import BearingLoadDiagram from '@/components/bearing/BearingLoadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptBearing } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
@@ -208,5 +218,23 @@ function formatHours(h) {
   if (!Number.isFinite(h)) return '∞ h'
   if (h >= 10000) return `${(h / 1000).toFixed(1)}k h`
   return `${Math.round(h)} h`
+}
+
+const decisionPreset = DECISION_PRESETS.bearing
+const baseInputs = computed(() => ({ ...form }))
+const snapshot = computed(() => adaptBearing(form))
+
+function onApplyInverse({ variable, value, row, strategy }) {
+  if (strategy === 'catalog' && row) {
+    form.bearingModel = row.model
+    form.dynamicLoad = row.C
+    if (row.C0) form.staticLoad = row.C0
+    form.autoLookup = true
+    if (row.model) form.seriesId = resolveSeriesFromModel(row.model)
+    return
+  }
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Number(value.toFixed ? value.toFixed(3) : value)
+  }
 }
 </script>

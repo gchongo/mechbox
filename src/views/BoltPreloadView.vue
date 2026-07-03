@@ -251,6 +251,13 @@
         <el-button class="mt-4" type="primary" plain @click="exportCalcPdf">{{ fc('exportPdf') }}</el-button>
       </section>
     </div>
+
+    <DecisionToolsPanel
+      :preset="decisionPreset"
+      :snapshot="snapshot"
+      :base-inputs="baseInputs"
+      @apply="onApplyInverse"
+    />
       </el-tab-pane>
 
       <el-tab-pane :label="pf('tabWizard')" name="wizard">
@@ -329,6 +336,9 @@ import {
 import { runVdi2230Wizard, TIGHTENING_METHODS, buildWizardReportText, localizeVdiWizard } from '@/utils/vdi2230-wizard'
 import { exportToolReportPdf } from '@/utils/export'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptBoltPreload } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -395,6 +405,16 @@ const preloadLabel = computed(() => {
 })
 
 const result = computed(() => analyzeBoltPreload({ ...form }))
+
+const decisionPreset = DECISION_PRESETS['bolt-preload']
+const baseInputs = computed(() => ({ ...form }))
+const snapshot = computed(() => adaptBoltPreload({ ...form }))
+
+function onApplyInverse({ variable, value }) {
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Number(value.toFixed ? value.toFixed(3) : value)
+  }
+}
 
 const wizardResult = computed(() =>
   runVdi2230Wizard({

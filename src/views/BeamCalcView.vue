@@ -106,6 +106,13 @@
         </template>
       </section>
     </div>
+
+    <DecisionToolsPanel
+      :preset="decisionPreset"
+      :snapshot="snapshot"
+      :base-inputs="baseInputs"
+      @apply="onApplyInverse"
+    />
   </div>
 </template>
 
@@ -116,6 +123,9 @@ import { MATERIALS, findMaterial } from '@/constants/materials'
 import { materialsEn } from '@/i18n/materials-i18n'
 import BeamDiagram from '@/components/beam/BeamDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptBeam } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -188,4 +198,14 @@ watch(
 )
 
 const result = computed(() => analyzeBeam(form))
+
+const decisionPreset = DECISION_PRESETS.beam
+const baseInputs = computed(() => ({ ...form }))
+const snapshot = computed(() => adaptBeam(form))
+
+function onApplyInverse({ variable, value }) {
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Number(value.toFixed ? value.toFixed(2) : value)
+  }
+}
 </script>

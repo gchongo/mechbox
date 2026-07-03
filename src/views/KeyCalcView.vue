@@ -48,6 +48,13 @@
         </dl>
       </section>
     </div>
+
+    <DecisionToolsPanel
+      :preset="decisionPreset"
+      :snapshot="snapshot"
+      :base-inputs="baseInputs"
+      @apply="onApplyInverse"
+    />
   </div>
 </template>
 <script setup>
@@ -56,6 +63,9 @@ import MathTex from '@/components/common/MathTex.vue'
 import { analyzeKeyConnection, lookupKeySize } from '@/utils/key-calc'
 import KeyConnectionDiagram from '@/components/key/KeyConnectionDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptKeyConnection } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('key')
@@ -77,5 +87,16 @@ const result = computed(() => analyzeKeyConnection(form))
 function applyStdKey() {
   form.keyWidth = stdKey.value.width
   form.keyLength = Math.round(stdKey.value.width * 3.5)
+}
+
+const decisionPreset = DECISION_PRESETS.key
+const baseInputs = computed(() => ({ ...form }))
+const snapshot = computed(() => adaptKeyConnection(form))
+
+function onApplyInverse({ variable, value }) {
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Number(value.toFixed ? value.toFixed(1) : value)
+    if (variable === 'keyLength') form.hubLength = form.keyLength
+  }
 }
 </script>

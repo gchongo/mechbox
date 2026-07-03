@@ -86,6 +86,13 @@
             </p>
           </section>
         </div>
+
+        <DecisionToolsPanel
+          :preset="decisionPreset"
+          :snapshot="snapshot"
+          :base-inputs="baseInputs"
+          @apply="onApplyInverse"
+        />
       </el-tab-pane>
 
       <el-tab-pane :label="pf('tabButt')" name="butt">
@@ -251,6 +258,9 @@ import {
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import FilletWeldDiagram from '@/components/weld/FilletWeldDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptFilletWeld } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -302,6 +312,16 @@ const haz = reactive({
 })
 
 const filletResult = computed(() => analyzeFilletWeld(form))
+
+const decisionPreset = DECISION_PRESETS.weld
+const baseInputs = computed(() => ({ ...form }))
+const snapshot = computed(() => adaptFilletWeld(form))
+
+function onApplyInverse({ variable, value }) {
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Number(value.toFixed ? value.toFixed(2) : value)
+  }
+}
 const buttResult = computed(() => analyzeButtWeld(butt))
 const fatigueResult = computed(() => analyzeWeldFatigue(fatigue))
 const hazResult = computed(() => analyzeHAZ(haz))

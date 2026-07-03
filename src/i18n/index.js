@@ -9,6 +9,8 @@ import { chartZh, chartEn } from './chart-i18n'
 import { contentZh, contentEn } from './content-i18n'
 import { seoRoutesZh, seoRoutesEn } from './seo-routes-i18n'
 import { toolDescsZh, toolDescsEn } from './tool-catalog-i18n'
+import { decisionZh, decisionEn } from './decision-i18n'
+import { designZh, designEn } from './design-i18n'
 
 const zh = {
   appName: '机械工具箱',
@@ -218,6 +220,8 @@ const zh = {
     options: optionsZh,
     messages: messagesZh,
     charts: chartZh,
+    decision: decisionZh,
+    design: designZh,
   },
 }
 
@@ -429,6 +433,8 @@ const en = {
     options: optionsEn,
     messages: messagesEn,
     charts: chartEn,
+    decision: decisionEn,
+    design: designEn,
   },
 }
 

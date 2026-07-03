@@ -81,6 +81,14 @@
         </div>
       </section>
     </div>
+
+    <DecisionToolsPanel
+      v-if="mode === 'torsion'"
+      :preset="decisionPreset"
+      :snapshot="snapshot"
+      :base-inputs="baseInputs"
+      @apply="onApplyInverse"
+    />
   </div>
 </template>
 <script setup>
@@ -92,6 +100,9 @@ import { MATERIALS, findMaterial } from '@/constants/materials'
 import { materialsEn } from '@/i18n/materials-i18n'
 import ShaftDiagram from '@/components/shaft/ShaftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptShaftTorsion } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useLocale } from '@/composables/useLocale'
@@ -150,4 +161,17 @@ const combinedResult = computed(() =>
     allowableStress: form.calcMode === 'simple' ? form.allowable : undefined,
   }),
 )
+
+const decisionPreset = DECISION_PRESETS.shaft
+const baseInputs = computed(() => ({
+  ...form,
+  allowableShear: form.calcMode === 'simple' ? form.allowable : undefined,
+}))
+const snapshot = computed(() => adaptShaftTorsion(baseInputs.value))
+
+function onApplyInverse({ variable, value }) {
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Number(value.toFixed ? value.toFixed(3) : value)
+  }
+}
 </script>

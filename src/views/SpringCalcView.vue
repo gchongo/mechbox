@@ -73,6 +73,13 @@
         </div>
       </section>
     </div>
+
+    <DecisionToolsPanel
+      :preset="decisionPreset"
+      :snapshot="snapshot"
+      :base-inputs="baseInputs"
+      @apply="onApplyInverse"
+    />
   </div>
 </template>
 <script setup>
@@ -81,6 +88,9 @@ import MathTex from '@/components/common/MathTex.vue'
 import { analyzeSpring, SPRING_MATERIALS } from '@/utils/spring-calc'
 import SpringDiagram from '@/components/spring/SpringDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import { adaptSpring } from '@/utils/calc-adapters'
+import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
@@ -112,4 +122,14 @@ watch(
 )
 
 const result = computed(() => analyzeSpring(form))
+
+const decisionPreset = DECISION_PRESETS.spring
+const baseInputs = computed(() => ({ ...form }))
+const snapshot = computed(() => adaptSpring(form))
+
+function onApplyInverse({ variable, value }) {
+  if (variable in form && Number.isFinite(value)) {
+    form[variable] = Number(value.toFixed ? value.toFixed(2) : value)
+  }
+}
 </script>

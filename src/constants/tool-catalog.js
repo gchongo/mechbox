@@ -14,6 +14,13 @@ export const STAT_TOOLS = [
 
 export const TOOL_GROUPS = [
   {
+    id: 'design-chain',
+    label: '设计链（联动分析）',
+    tools: [
+      { path: '/design/powertrain', label: '轴系设计链', desc: '轴 → 轴承 → 键 联动 + 链级报告', icon: 'Connection', keywords: ['设计链', '轴系', '联动', 'powertrain'] },
+    ],
+  },
+  {
     id: 'chain',
     label: '尺寸链与强度',
     tools: [
