@@ -17,6 +17,9 @@ import { analyzeBeam } from '@/utils/beam-calc'
 import { batchValidate } from '@/utils/batch-analysis'
 import { runMonteCarloSimulation, createSeededRandom } from '@/utils/monte-carlo'
 import { runToleranceAllocation } from '@/utils/tolerance-allocation'
+import { calcSpringEffectiveAmplitude, analyzeSpring } from '@/utils/spring-calc'
+import { calcJointUnderAxialLoad, analyzeBoltPreload } from '@/utils/bolt-preload-calc'
+import { analyzeButtWeld } from '@/utils/weld-calc'
 import { analyzeShaftCombined } from '@/utils/shaft-combined'
 import { analyzeBearingLife } from '@/utils/bearing-calc'
 
@@ -264,6 +267,25 @@ describe('tolerance allocation', () => {
     const tolB = result.allocated.find((a) => a.name === 'B').tolerance
     expect(tolA).toBeCloseTo(tolB * 2, 6)
   })
+
+  it('min-cost allocation satisfies RSS with non-unity factor', () => {
+    const rings = [
+      { name: 'A', factor: 1, cost: 1 },
+      { name: 'B', factor: 2, cost: 4 },
+    ]
+    const result = runToleranceAllocation('min-cost', 0.12, rings)
+    expect(result.verify.pass).toBe(true)
+    expect(result.verify.stacked).toBeLessThanOrEqual(0.12 + 1e-9)
+  })
+
+  it('sensitivity allocation satisfies RSS budget', () => {
+    const rings = [
+      { name: 'A', factor: 1, cost: 1, sensitivity: 2 },
+      { name: 'B', factor: 2, cost: 1, sensitivity: 1 },
+    ]
+    const result = runToleranceAllocation('sensitivity', 0.1, rings)
+    expect(result.verify.pass).toBe(true)
+  })
 })
 
 describe('shaft combined strength', () => {
@@ -287,6 +309,82 @@ describe('shaft combined strength', () => {
       yieldStrength: 235,
     })
     expect(r.allowableStress).toBeCloseTo(235 / Math.sqrt(3), 1)
+  })
+})
+
+describe('spring mean stress fatigue', () => {
+  it('Goodman raises effective amplitude when mean stress is present', () => {
+    const eff = calcSpringEffectiveAmplitude(100, 200, 'goodman')
+    expect(eff).toBeGreaterThan(100)
+  })
+
+  it('professional spring fatigue uses mean stress correction', () => {
+    const lowMean = analyzeSpring({
+      calcMode: 'professional',
+      wireDiameter: 4,
+      meanDiameter: 28,
+      activeCoils: 8,
+      loadMin: 100,
+      loadMax: 500,
+      targetCycles: 1e6,
+    })
+    const highMean = analyzeSpring({
+      calcMode: 'professional',
+      wireDiameter: 4,
+      meanDiameter: 28,
+      activeCoils: 8,
+      loadMin: 400,
+      loadMax: 800,
+      targetCycles: 1e6,
+    })
+    expect(highMean.effectiveShearAmplitude).toBeGreaterThan(lowMean.effectiveShearAmplitude)
+  })
+})
+
+describe('bolt joint under axial load', () => {
+  it('detects separation when axial load exceeds residual clamp capacity', () => {
+    const joint = calcJointUnderAxialLoad(10000, 0.2, 15000)
+    expect(joint.maxBoltForce).toBeCloseTo(10000 + 0.2 * 15000, 0)
+    expect(joint.separationPass).toBe(false)
+  })
+
+  it('professional preload fails when external load causes separation', () => {
+    const base = {
+      calcMode: 'professional',
+      mode: 'force2torque',
+      diameter: 10,
+      pitch: 1.5,
+      grade: '8.8',
+      muG: 0.12,
+      muK: 0.12,
+      dKm: 14.5,
+      gripLength: 20,
+      holeDiameter: 11,
+      headContactDiameter: 15,
+      outerDiameter: 18,
+      embedmentUm: 11,
+      preload: 8000,
+      externalAxialLoad: 0,
+    }
+    const r0 = analyzeBoltPreload(base)
+    const phi = r0.joint.loadFactor
+    const separatingLoad = r0.preloadResidual / Math.max(0.01, 1 - phi) + 500
+    const r = analyzeBoltPreload({ ...base, externalAxialLoad: separatingLoad })
+    expect(r.jointLoad.separationPass).toBe(false)
+    expect(r.pass).toBe(false)
+  })
+})
+
+describe('weld eurocode consistency', () => {
+  it('butt weld EC allow uses betaW and gammaM2 like fillet path', () => {
+    const r = analyzeButtWeld({
+      thickness: 8,
+      weldLength: 100,
+      force: 1000,
+      steelGrade: 'S235',
+      calcMode: 'complete',
+    })
+    expect(r.eurocode.allow).toBeCloseTo(360 / (0.85 * 1.25), 1)
   })
 })
 

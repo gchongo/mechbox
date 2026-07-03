@@ -78,7 +78,9 @@ export function analyzeButtWeld(input) {
   const area = (input.thickness ?? 8) * (input.weldLength ?? 100)
   const sigma = area ? input.force / area : 0
   const allowGB = grade.gbAllow * 1.1
-  const allowEC = grade.fu / (1.25 * 1.0)
+  const betaW = input.correlationFactor ?? 0.85
+  const gammaM2 = input.partialFactor ?? 1.25
+  const allowEC = grade.fu / (betaW * gammaM2)
   const allowAWS = 0.6 * grade.fu
 
   const gb = { allow: round(allowGB, 1), pass: sigma <= allowGB }
@@ -167,9 +169,9 @@ export function analyzeFilletWeldProfessional(input) {
   if (combined.error) return { calcMode: 'professional', error: combined.error }
 
   const cmp = compareWeldStandards(input)
-  const grade = WELD_STEEL_GRADES[input.steelGrade ?? 'Q235'] ?? WELD_STEEL_GRADES['Q235']
-  const allowCombined = grade.gbAllow * 1.15
-  const combinedPass = combined.equivalentStress <= allowCombined
+  const ec = analyzeFilletWeldEurocode(input)
+  const combinedAllow = ec.allowableShear
+  const combinedPass = combined.equivalentStress <= combinedAllow
 
   const haz = analyzeHAZ({
     heatInput: input.heatInput ?? 1.5,
@@ -195,7 +197,7 @@ export function analyzeFilletWeldProfessional(input) {
     calcMode: 'professional',
     ...cmp,
     combined,
-    combinedAllow: allowCombined,
+    combinedAllow,
     combinedPass,
     haz,
     fatigue,

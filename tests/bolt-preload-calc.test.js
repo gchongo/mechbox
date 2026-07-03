@@ -93,4 +93,23 @@ describe('bolt-preload-calc', () => {
     })
     expect(r.preloadResidual).toBeLessThan(r.preloadTightening)
   })
+
+  it('joint load increases max bolt force with load factor', () => {
+    const r = analyzeBoltPreload({
+      calcMode: 'professional',
+      mode: 'force2torque',
+      diameter: 10,
+      pitch: 1.5,
+      grade: '8.8',
+      muG: 0.12,
+      muK: 0.12,
+      dKm: 14.5,
+      gripLength: 20,
+      embedmentUm: 11,
+      preload: 25000,
+      externalAxialLoad: 5000,
+    })
+    expect(r.jointLoad.maxBoltForce).toBeGreaterThan(r.preloadResidual)
+    expect(r.jointLoad.separationPass).toBe(true)
+  })
 })

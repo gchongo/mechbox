@@ -203,6 +203,21 @@ export function calcResidualPreloadFromTightening(tighteningPreload, joint) {
   return tighteningPreload - joint.embedmentLoss + joint.thermalDelta
 }
 
+/** VDI 2230 轴向工作载荷下的夹紧力、螺栓力与分离校核 */
+export function calcJointUnderAxialLoad(preloadResidual, loadFactor, externalAxialLoad = 0) {
+  const F_A = Math.max(externalAxialLoad, 0)
+  const phi = loadFactor ?? 0
+  const clampingForceRemaining = preloadResidual - F_A * (1 - phi)
+  const maxBoltForce = preloadResidual + phi * F_A
+  return {
+    externalAxialLoad: F_A,
+    clampingForceRemaining,
+    maxBoltForce,
+    separationPass: clampingForceRemaining >= 0,
+    requiredClampLoad: F_A * (1 - phi),
+  }
+}
+
 export function analyzeBoltPreload(input) {
   const d = input.diameter
   const P = input.pitch ?? METRIC_THREAD_PITCH[Math.round(d)] ?? 1.5
@@ -255,6 +270,15 @@ export function analyzeBoltPreload(input) {
   const simpleTorque = calcTighteningTorqueSimple(preloadTightening, d, input.frictionCoeff ?? 0.2)
   const vdiTorque = calcTighteningTorqueVDI2230(preloadTightening, vdiParams)
 
+  let jointLoad = null
+  if (isProfessional && joint) {
+    jointLoad = calcJointUnderAxialLoad(
+      preloadResidual,
+      joint.loadFactor,
+      input.externalAxialLoad ?? 0,
+    )
+  }
+
   let compareLabelKey = 'vdi'
   let compareTorque = vdiTorque
   if (calcMode === 'simple') {
@@ -268,6 +292,20 @@ export function analyzeBoltPreload(input) {
     compareTorque = simpleTorque
   }
 
+  const stressUnderLoad = jointLoad
+    ? calcThreadTensileStress(jointLoad.maxBoltForce, As)
+    : null
+
+  let pass = stress <= grade.allowStress
+  let passResidual = stressResidual <= grade.allowStress
+  if (jointLoad?.externalAxialLoad > 0) {
+    pass = pass && jointLoad.separationPass && (stressUnderLoad ?? 0) <= grade.allowStress
+    passResidual =
+      passResidual &&
+      jointLoad.separationPass &&
+      (stressUnderLoad ?? 0) <= grade.allowStress
+  }
+
   return {
     calcMode,
     stressArea: As,
@@ -279,13 +317,15 @@ export function analyzeBoltPreload(input) {
     torque,
     stress,
     stressResidual,
+    stressUnderLoad,
     allowStress: grade.allowStress,
     grade: grade.label,
     maxPreload,
-    pass: stress <= grade.allowStress,
-    passResidual: stressResidual <= grade.allowStress,
+    pass,
+    passResidual,
     breakdown,
     joint,
+    jointLoad,
     compareTorque,
     compareLabelKey,
   }

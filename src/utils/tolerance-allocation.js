@@ -45,12 +45,11 @@ export function proportionalAllocation(targetTolerance, rings) {
   }))
 }
 
-/** 最小成本 RSS：Tᵢ ∝ √(cᵢ) · fᵢ */
+/** 最小成本 RSS：Tᵢ = T·√cᵢ / (fᵢ·√Σcᵢ) */
 export function minimumCostAllocation(targetTolerance, rings) {
   const items = normalizeFactors(rings)
-  const denom = Math.sqrt(
-    items.reduce((s, r) => s + r.cost * r.factor ** 2, 0),
-  )
+  const sumCost = items.reduce((s, r) => s + r.cost, 0)
+  const denom = Math.sqrt(sumCost)
   if (!denom) {
     return equalToleranceAllocation(targetTolerance, rings)
   }
@@ -59,15 +58,15 @@ export function minimumCostAllocation(targetTolerance, rings) {
     name: r.name,
     factor: r.factor,
     cost: r.cost,
-    tolerance: k * Math.sqrt(r.cost) * r.factor,
+    tolerance: (k * Math.sqrt(r.cost)) / Math.max(r.factor, 1e-9),
   }))
 }
 
-/** 灵敏度加权 RSS：Tᵢ ∝ sᵢ · fᵢ */
+/** 灵敏度加权 RSS：Tᵢ·fᵢ ∝ sᵢ → Tᵢ = T·sᵢ / (fᵢ·√Σsᵢ²) */
 export function sensitivityAllocation(targetTolerance, rings) {
   const items = normalizeFactors(rings)
-  const weights = items.map((r) => Math.abs(r.factor) * Math.max(r.sensitivity ?? 1, 0.001))
-  const denom = Math.sqrt(weights.reduce((s, w) => s + w ** 2, 0))
+  const sensitivities = items.map((r) => Math.max(r.sensitivity ?? 1, 0.001))
+  const denom = Math.sqrt(sensitivities.reduce((s, w) => s + w ** 2, 0))
   if (!denom) return equalEffectAllocation(targetTolerance, rings)
   const k = targetTolerance / denom
   return items.map((r, i) => ({
@@ -75,7 +74,7 @@ export function sensitivityAllocation(targetTolerance, rings) {
     factor: r.factor,
     cost: r.cost,
     sensitivity: r.sensitivity ?? 1,
-    tolerance: k * weights[i],
+    tolerance: (k * sensitivities[i]) / Math.max(Math.abs(r.factor), 1e-9),
   }))
 }
 
@@ -118,13 +117,13 @@ export const ALLOCATION_METHODS = {
   'min-cost': {
     id: 'min-cost',
     label: '最小成本 RSS',
-    desc: '成本系数越大分配越小，Tᵢ ∝ √(cᵢ)·fᵢ',
+    desc: '成本系数越大分配越小，Tᵢ = T·√cᵢ/(fᵢ·√Σcᵢ)',
     allocate: minimumCostAllocation,
   },
   sensitivity: {
     id: 'sensitivity',
     label: '灵敏度 RSS',
-    desc: '按灵敏度系数 sᵢ 加权，Tᵢ ∝ sᵢ·fᵢ',
+    desc: '按灵敏度系数 sᵢ 加权，Tᵢ·fᵢ ∝ sᵢ',
     allocate: sensitivityAllocation,
   },
   'sensitivity-iter': {

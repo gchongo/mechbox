@@ -66,6 +66,8 @@ export function runVdi2230Wizard(input) {
   const scatter = method.factorScatter
   const F_Mmin = F_Kerf + (1 - Phi) * FAx + FZ - deltaFVT
   const F_Mmax = F_Mmin * (1 + scatter)
+  const clampingRemaining = FM - FAx * (1 - Phi)
+  const separationPass = clampingRemaining >= 0
 
   const sigmaRed = preloadResult.stressResidual
   const sigmaAllow = grade.allowStress
@@ -172,10 +174,11 @@ export function runVdi2230Wizard(input) {
   )
 
   steps.push(
-    step('R9', FAx > 0 ? 'warn' : 'skip', {
+    step('R9', FAx > 0 ? (separationPass ? 'ok' : 'fail') : 'skip', {
       summaryKey: FAx > 0 ? 'steps.R9.summary_axial' : 'steps.R9.summary_none',
       summaryParams: FAx > 0 ? { fax: FAx.toFixed(0) } : undefined,
       detailKey: 'steps.R9.detail',
+      detailParams: FAx > 0 ? { fkr: clampingRemaining.toFixed(0) } : undefined,
     }),
   )
 

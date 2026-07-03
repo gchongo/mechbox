@@ -1,5 +1,5 @@
 /** 圆柱螺旋压缩弹簧设计 (GB/T 1239 简化) */
-import { calcLifeFromStress } from '@/utils/fatigue-calc'
+import { calcLifeFromStress, SN_MATERIALS } from '@/utils/fatigue-calc'
 
 export const SPRING_MATERIALS = {
   music_wire: { label: '琴钢丝', allowableShear: 900 },
@@ -29,6 +29,16 @@ export function calcSpringShearStress(force, wireDiameter, meanDiameter) {
 
 export function calcSpringIndex(wireDiameter, meanDiameter) {
   return meanDiameter / wireDiameter
+}
+
+/** 弹簧切应力幅值 + 平均应力 → Goodman/Soderberg 等效幅值 */
+export function calcSpringEffectiveAmplitude(tauAmp, tauMean, method = 'goodman') {
+  if (!tauAmp || tauAmp <= 0) return 0
+  const m = SN_MATERIALS.spring_steel
+  const denom = method === 'soderberg' ? m.yieldMin : m.uts
+  if (tauMean <= 0) return tauAmp
+  if (tauMean >= denom) return Infinity
+  return tauAmp / (1 - tauMean / denom)
 }
 
 /** 压缩弹簧稳定性 (简化 slenderness) */
@@ -94,11 +104,15 @@ export function analyzeSpring(input) {
     const tauMax = calcSpringShearStress(fMax, input.wireDiameter, input.meanDiameter)
     const tauAmp = (tauMax - tauMin) / 2
     const tauMean = (tauMax + tauMin) / 2
-    const life = calcLifeFromStress('spring_steel', tauAmp)
+    const meanMethod = input.meanStressMethod ?? 'goodman'
+    const tauEff = calcSpringEffectiveAmplitude(tauAmp, tauMean, meanMethod)
+    const life = calcLifeFromStress('spring_steel', tauEff)
     result.loadMin = fMin
     result.loadMax = fMax
     result.shearAmplitude = tauAmp
     result.shearMean = tauMean
+    result.effectiveShearAmplitude = tauEff
+    result.meanStressMethod = meanMethod
     result.fatigueLife = life
     result.fatiguePass = life >= (input.targetCycles ?? 1e6)
     result.pass = result.pass && result.fatiguePass

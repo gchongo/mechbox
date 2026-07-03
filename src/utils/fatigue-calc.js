@@ -189,7 +189,7 @@ export function analyzeFatigue(input) {
     result.sizeFactor = input.sizeFactor ?? 1
     result.adjustedEndurance = m.enduranceLimit * result.surfaceFactor * result.sizeFactor
     if (input.meanStress != null && input.stressAmplitude > 0) {
-      result.goodmanPass = input.stressAmplitude / result.adjustedEndurance + input.meanStress / m.uts <= 1
+      result.goodmanPass = stressAmplitude <= result.adjustedEndurance
       result.pass = result.pass && result.goodmanPass
     }
   }

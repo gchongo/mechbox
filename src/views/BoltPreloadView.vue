@@ -87,6 +87,10 @@
               <el-input-number v-model="form.deltaT" :min="-200" :max="500" :precision="1" :step="10" />
               <span class="ml-2 text-xs text-gray-500">{{ pf('deltaTHint') }}</span>
             </CalcFormItem>
+            <CalcFormItem :label="pf('externalAxial')">
+              <el-input-number v-model="form.externalAxialLoad" :min="0" :step="500" />
+              <span class="ml-2 text-xs text-gray-500">N</span>
+            </CalcFormItem>
           </template>
 
           <CalcFormItem v-if="form.mode === 'torque2force'" :label="pf('torque')">
@@ -157,6 +161,19 @@
               <ResultLabel label-class="text-gray-500" :text="pr('preloadResidual')" />
               <dd class="font-mono text-primary">{{ result.preloadResidual.toFixed(0) }} N</dd>
             </div>
+            <template v-if="result.jointLoad?.externalAxialLoad > 0">
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel label-class="text-gray-500" :text="pr('clampingForceRemaining')" />
+                <dd class="font-mono" :class="result.jointLoad.separationPass ? 'text-success' : 'text-error'">
+                  {{ result.jointLoad.clampingForceRemaining.toFixed(0) }} N
+                  {{ result.jointLoad.separationPass ? '✓' : '✗' }}
+                </dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel label-class="text-gray-500" :text="pr('maxBoltForce')" />
+                <dd class="font-mono">{{ result.jointLoad.maxBoltForce.toFixed(0) }} N</dd>
+              </div>
+            </template>
           </template>
           <template v-else>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -182,6 +199,15 @@
             <ResultLabel label-class="text-gray-500" :text="pr('stressResidual')" />
             <dd class="font-mono" :class="result.passResidual ? 'text-success' : 'text-error'">
               {{ result.stressResidual.toFixed(1) }} MPa {{ result.passResidual ? '✓' : '✗' }}
+            </dd>
+          </div>
+          <div
+            v-if="form.calcMode === 'professional' && result.stressUnderLoad != null"
+            class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
+          >
+            <ResultLabel label-class="text-gray-500" :text="pr('stressUnderLoad')" />
+            <dd class="font-mono" :class="result.pass ? 'text-success' : 'text-error'">
+              {{ result.stressUnderLoad.toFixed(1) }} MPa
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -343,6 +369,7 @@ const form = reactive({
   embedmentPreset: 'steel_standard',
   embedmentUm: EMBEDMENT_PRESETS.steel_standard.value,
   deltaT: 0,
+  externalAxialLoad: 0,
   torque: 50,
   preload: 25000,
 })
