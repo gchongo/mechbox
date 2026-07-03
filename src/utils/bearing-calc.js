@@ -79,9 +79,89 @@ export function calcStaticSafetyFactor(staticLoad, equivalentLoad) {
   return staticLoad / equivalentLoad
 }
 
+/** 轴承安装方式（配对 / 串联） */
+export const MOUNTING_ARRANGEMENTS = {
+  single: {
+    id: 'single',
+    label: '单列',
+    cFactor: 1,
+    c0Factor: 1,
+    yFactor: 1,
+    stiffnessFactor: 1,
+  },
+  'duplex-db': {
+    id: 'duplex-db',
+    label: '背靠背 DB',
+    cFactor: 1,
+    c0Factor: 1,
+    yFactor: 0.72,
+    stiffnessFactor: 2,
+    note: '角接触配对：Y 折减约 28%',
+  },
+  'duplex-df': {
+    id: 'duplex-df',
+    label: '面对面 DF',
+    cFactor: 1,
+    c0Factor: 1,
+    yFactor: 0.72,
+    stiffnessFactor: 2,
+    note: '角接触配对：Y 折减约 28%',
+  },
+  'duplex-dt': {
+    id: 'duplex-dt',
+    label: '串联 DT',
+    cFactor: 2,
+    c0Factor: 2,
+    yFactor: 1,
+    stiffnessFactor: 1,
+    note: '同向串联：C / C₀ 按 2 颗计',
+  },
+}
+
+export function getMountingFactors(arrangement = 'single') {
+  return MOUNTING_ARRANGEMENTS[arrangement] ?? MOUNTING_ARRANGEMENTS.single
+}
+
+/**
+ * 安装方式 + 轴向预紧对当量载荷的影响
+ * Fa' = |Fa| + F₀；配对时 Y 折减
+ */
+export function applyMountingAndPreload({
+  radialLoad,
+  axialLoad = 0,
+  axialPreload = 0,
+  x = 1,
+  y = 0,
+  arrangement = 'single',
+}) {
+  const mounting = getMountingFactors(arrangement)
+  const Fr = Math.abs(radialLoad)
+  const Fa = Math.abs(axialLoad) + Math.max(0, axialPreload)
+  const yAdj = y * mounting.yFactor
+  const equivalentLoad = x * Fr + yAdj * Fa
+  return {
+    effectiveAxialLoad: Fa,
+    axialPreloadApplied: Math.max(0, axialPreload),
+    x,
+    y: yAdj,
+    equivalentLoad,
+    mounting,
+  }
+}
+
+/** 径向刚度粗估 k_r ≈ 0.15·√(C/1000)·f_s (N/μm) */
+export function estimateRadialStiffness(dynamicLoad, arrangement = 'single') {
+  const m = getMountingFactors(arrangement)
+  if (!dynamicLoad || dynamicLoad <= 0) return null
+  return 0.15 * Math.sqrt(dynamicLoad / 1000) * m.stiffnessFactor
+}
+
 /** 自动查表 X/Y 并计算寿命 */
 export function analyzeBearingLife(input) {
   const calcMode = input.calcMode ?? 'complete'
+  const arrangement = input.mountingArrangement ?? 'single'
+  const axialPreload = input.axialPreload ?? 0
+  const mounting = getMountingFactors(arrangement)
   let x = input.x
   let y = input.y
   let xyInfo = null
@@ -101,23 +181,29 @@ export function analyzeBearingLife(input) {
     bearingType = xyInfo.bearingType
   }
 
+  const dynamicLoad = input.dynamicLoad * mounting.cFactor
+  const staticLoad = input.staticLoad != null ? input.staticLoad * mounting.c0Factor : null
+
   if (calcMode === 'simple') {
     x = input.x ?? 1
     y = input.y ?? 0
+    const mounted = applyMountingAndPreload({
+      radialLoad: input.radialLoad,
+      axialLoad: input.axialLoad,
+      axialPreload,
+      x,
+      y,
+      arrangement,
+    })
     const p =
       input.simpleEquivalentLoad != null
         ? input.simpleEquivalentLoad
-        : calcEquivalentLoad({
-            radialLoad: input.radialLoad,
-            axialLoad: input.axialLoad,
-            x,
-            y,
-          })
-    const l10 = calcL10MillionRevolutions(input.dynamicLoad, p, bearingType)
+        : mounted.equivalentLoad
+    const l10 = calcL10MillionRevolutions(dynamicLoad, p, bearingType)
     const hours = calcLifeHours(l10, input.rpm)
     const targetHours = input.targetHours ?? 10000
-    const staticSafety = input.staticLoad
-      ? calcStaticSafetyFactor(input.staticLoad, p)
+    const staticSafety = staticLoad
+      ? calcStaticSafetyFactor(staticLoad, p)
       : null
     const minStaticSafety = input.minStaticSafety ?? 1.5
     const lifePass = hours >= targetHours
@@ -125,8 +211,14 @@ export function analyzeBearingLife(input) {
     return {
       calcMode,
       equivalentLoad: p,
-      x,
-      y,
+      x: mounted.x,
+      y: mounted.y,
+      effectiveAxialLoad: mounted.effectiveAxialLoad,
+      axialPreloadApplied: mounted.axialPreloadApplied,
+      mountingArrangement: arrangement,
+      mountingLabel: mounting.label,
+      effectiveDynamicLoad: dynamicLoad,
+      effectiveStaticLoad: staticLoad,
       l10MillionRev: l10,
       modifiedLifeMillionRev: l10,
       reliabilityFactor: 1,
@@ -142,14 +234,17 @@ export function analyzeBearingLife(input) {
     }
   }
 
-  const p = calcEquivalentLoad({
+  const mounted = applyMountingAndPreload({
     radialLoad: input.radialLoad,
     axialLoad: input.axialLoad,
+    axialPreload,
     x: x ?? 1,
     y: y ?? 0,
+    arrangement,
   })
+  const p = mounted.equivalentLoad
 
-  const l10 = calcL10MillionRevolutions(input.dynamicLoad, p, bearingType)
+  const l10 = calcL10MillionRevolutions(dynamicLoad, p, bearingType)
 
   const a1 = input.reliability
     ? getReliabilityFactor(input.reliability)
@@ -163,8 +258,8 @@ export function analyzeBearingLife(input) {
   const lnm = calcModifiedLife(l10, a1 * aIso * a2 ** lifeExp)
   const hours = calcLifeHours(lnm, input.rpm)
   const targetHours = input.targetHours ?? 10000
-  const staticSafety = input.staticLoad
-    ? calcStaticSafetyFactor(input.staticLoad, p)
+  const staticSafety = staticLoad
+    ? calcStaticSafetyFactor(staticLoad, p)
     : null
   const minStaticSafety = input.minStaticSafety ?? 1.5
 
@@ -179,11 +274,23 @@ export function analyzeBearingLife(input) {
     }
   }
 
+  const radialStiffness = calcMode === 'professional'
+    ? estimateRadialStiffness(dynamicLoad, arrangement)
+    : null
+
   return {
     calcMode,
     equivalentLoad: p,
-    x: x ?? 1,
-    y: y ?? 0,
+    x: mounted.x,
+    y: mounted.y,
+    effectiveAxialLoad: mounted.effectiveAxialLoad,
+    axialPreloadApplied: mounted.axialPreloadApplied,
+    mountingArrangement: arrangement,
+    mountingLabel: mounting.label,
+    mountingNote: mounting.note ?? null,
+    effectiveDynamicLoad: dynamicLoad,
+    effectiveStaticLoad: staticLoad,
+    radialStiffness,
     xyInfo,
     l10MillionRev: l10,
     modifiedLifeMillionRev: lnm,

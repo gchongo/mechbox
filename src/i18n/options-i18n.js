@@ -257,6 +257,12 @@ export const optionsZh = {
     contaminated: { label: '污染 (0.5)' },
     heavy: { label: '恶劣 (0.3)' },
   },
+  bearingMountings: {
+    single: { label: '单列' },
+    'duplex-db': { label: '背靠背 DB', desc: '角接触配对，Y 折减约 28%' },
+    'duplex-df': { label: '面对面 DF', desc: '角接触配对，Y 折减约 28%' },
+    'duplex-dt': { label: '串联 DT', desc: 'C / C₀ 按 2 颗计' },
+  },
 }
 
 export const optionsEn = {
@@ -515,5 +521,11 @@ export const optionsEn = {
     standard: { label: 'Standard (1.0)' },
     contaminated: { label: 'Contaminated (0.5)' },
     heavy: { label: 'Heavy contamination (0.3)' },
+  },
+  bearingMountings: {
+    single: { label: 'Single row' },
+    'duplex-db': { label: 'Back-to-back DB', desc: 'Angular contact pair, Y reduced ~28%' },
+    'duplex-df': { label: 'Face-to-face DF', desc: 'Angular contact pair, Y reduced ~28%' },
+    'duplex-dt': { label: 'Tandem DT', desc: 'C / C₀ counted for 2 bearings' },
   },
 }

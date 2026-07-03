@@ -118,4 +118,28 @@ describe('gdt-chain', () => {
     expect(r.modifier.bonus).toBeCloseTo(0.04)
     expect(r.modifier.breakdown[0].name).toBe('孔径')
   })
+
+  it('editor FOS rings with es-ei derive auto bonus', () => {
+    const rings = [
+      { name: 'A1', tolerance: 0.05, factor: 1, type: 'increasing', direction: 'right' },
+      {
+        name: '孔',
+        tolerance: 0.02,
+        factor: 1,
+        type: 'increasing',
+        direction: 'right',
+        featureKind: 'hole',
+        es: 0.02,
+        ei: -0.01,
+        sizeTolerance: 0.03,
+      },
+    ]
+    const r = calculateChainResult({ min: 0, max: 0.2 }, rings, 'rss', {
+      typeId: 'position',
+      toleranceModifier: 'MMC',
+      autoBonus: true,
+    })
+    expect(r.bonusSource).toBe('auto')
+    expect(r.bonusApplied).toBeCloseTo(0.03)
+  })
 })

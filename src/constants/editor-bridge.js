@@ -50,6 +50,7 @@ export function serializeEditorForGdtStack({
   method,
   selectedType,
   gdtModifier,
+  gdtAutoBonus,
   bonusTolerance,
 }) {
   return {
@@ -57,6 +58,7 @@ export function serializeEditorForGdtStack({
     closedMax: closedRing?.max ?? 0.1,
     method: method ?? 'rss',
     toleranceModifier: gdtModifier ?? 'RFS',
+    autoBonus: gdtAutoBonus ?? true,
     bonusTolerance: bonusTolerance ?? 0,
     typeName: selectedType?.name,
     rings: (componentRings ?? []).map((r) => ({
@@ -65,6 +67,10 @@ export function serializeEditorForGdtStack({
       factor: r.factor ?? 1,
       direction: r.direction ?? 'right',
       type: r.type ?? 'increasing',
+      featureKind: r.featureKind ?? '',
+      sizeTolerance: r.sizeTolerance ?? 0,
+      es: r.es,
+      ei: r.ei,
     })),
     datums: [],
   }
@@ -77,6 +83,7 @@ export function deserializeGdtStackPayload(payload) {
     closedMax: payload.closedMax ?? 0.1,
     method: payload.method ?? 'rss',
     toleranceModifier: payload.toleranceModifier ?? 'RFS',
+    autoBonus: payload.autoBonus ?? !(payload.bonusTolerance > 0),
     bonusTolerance: payload.bonusTolerance ?? 0,
     rings: (payload.rings ?? []).map((r) => ({ ...r })),
     datums: (payload.datums ?? []).map((d) => ({ ...d })),

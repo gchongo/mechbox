@@ -30,6 +30,7 @@ export const BEARING_PRESET = {
     parameters: [
       { key: 'radialLoad', label: '径向载荷 Fr', delta: 0.1, min: 0 },
       { key: 'axialLoad', label: '轴向载荷 Fa', delta: 0.1, min: 0 },
+      { key: 'axialPreload', label: '轴向预紧 F₀', delta: 0.1, min: 0 },
       { key: 'rpm', label: '转速 n', delta: 0.1, min: 1 },
       { key: 'dynamicLoad', label: '动载荷 C', delta: 0.1, min: 100 },
       { key: 'operatingTemp', label: '工作温度', delta: 0.1, min: 20, max: 250 },

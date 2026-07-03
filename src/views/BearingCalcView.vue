@@ -54,6 +54,21 @@
           <CalcFormItem :label="pf('axialLoad')">
             <el-input-number v-model="form.axialLoad" :min="0" :step="50" />
           </CalcFormItem>
+          <template v-if="form.calcMode !== 'simple'">
+            <CalcFormItem :label="pf('mountingArrangement')">
+              <el-select v-model="form.mountingArrangement" class="w-full">
+                <el-option
+                  v-for="(m, k) in mountingOptions"
+                  :key="k"
+                  :label="m.label"
+                  :value="k"
+                />
+              </el-select>
+            </CalcFormItem>
+            <CalcFormItem :label="pf('axialPreload')">
+              <el-input-number v-model="form.axialPreload" :min="0" :step="50" />
+            </CalcFormItem>
+          </template>
           <CalcFormItem v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorX')">
             <el-input-number v-model="form.x" :min="0" :max="2" :precision="2" :step="0.1" />
           </CalcFormItem>
@@ -104,10 +119,27 @@
           :title="result.xyInfo.series"
           :description="`${result.xyInfo.condition} → X=${result.x}, Y=${result.y}`"
         />
+        <el-alert
+          v-if="form.calcMode !== 'simple' && result.mountingArrangement !== 'single'"
+          class="mb-4"
+          type="info"
+          :closable="false"
+          show-icon
+          :title="result.mountingLabel"
+          :description="result.mountingNote ?? ''"
+        />
         <dl class="space-y-3 text-sm">
+          <div v-if="form.calcMode !== 'simple' && result.axialPreloadApplied > 0" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel label-class="text-gray-500" :text="pr('effectiveAxialLoad')" />
+            <dd class="font-mono">{{ result.effectiveAxialLoad.toFixed(1) }} N</dd>
+          </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('equivalentLoad')" />
             <dd class="font-mono">{{ result.equivalentLoad.toFixed(1) }} N</dd>
+          </div>
+          <div v-if="form.calcMode !== 'simple' && result.effectiveDynamicLoad !== form.dynamicLoad" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel label-class="text-gray-500" :text="pr('effectiveDynamicLoad')" />
+            <dd class="font-mono">{{ result.effectiveDynamicLoad.toFixed(0) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('lifeL10')" />
@@ -123,6 +155,10 @@
           <div v-if="form.calcMode === 'professional' && result.temperatureFactor < 1" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('tempFactorA2')" />
             <dd class="font-mono">{{ result.temperatureFactor?.toFixed(2) }}</dd>
+          </div>
+          <div v-if="form.calcMode === 'professional' && result.radialStiffness" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel label-class="text-gray-500" :text="pr('radialStiffness')" />
+            <dd class="font-mono">{{ result.radialStiffness.toFixed(2) }} N/μm</dd>
           </div>
           <el-alert v-if="result.speedWarningKey" type="warning" :title="rm('bearing', result.speedWarningKey, result.speedWarningParams)" show-icon class="mb-2" />
           <div v-if="result.staticSafetyFactor != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -186,6 +222,13 @@ const lifeConditions = computed(() => optionMap({
   heavy: { id: 'heavy' },
 }, 'bearLifeConditions'))
 
+const mountingOptions = computed(() => optionMap({
+  single: { id: 'single' },
+  'duplex-db': { id: 'duplex-db' },
+  'duplex-df': { id: 'duplex-df' },
+  'duplex-dt': { id: 'duplex-dt' },
+}, 'bearingMountings'))
+
 const seriesList = listBearingSeries()
 
 const form = reactive({
@@ -199,6 +242,8 @@ const form = reactive({
   lifeCondition: 'standard',
   radialLoad: 5000,
   axialLoad: 1000,
+  mountingArrangement: 'single',
+  axialPreload: 0,
   x: 1,
   y: 0,
   rpm: 1500,

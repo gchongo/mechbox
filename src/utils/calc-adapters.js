@@ -66,6 +66,16 @@ function buildBearingAssumptions(r) {
   if (r.calcMode === 'simple') list.push('简化模式：忽略温度/污染修正，X/Y 需用户提供')
   if (r.calcMode !== 'professional') list.push('未启用完整 aISO 计算（污染/粘度）')
   if (r.a2 != null && r.a2 !== 1) list.push('温度系数按 ISO 281 简化查表')
+  if (r.mountingArrangement && r.mountingArrangement !== 'single') {
+    list.push(`安装方式：${r.mountingLabel ?? r.mountingArrangement}`)
+    if (r.mountingNote) list.push(r.mountingNote)
+  }
+  if (r.axialPreloadApplied > 0) {
+    list.push(`轴向预紧 F₀=${r.axialPreloadApplied} N 计入有效轴向载荷`)
+  }
+  if (r.radialStiffness != null) {
+    list.push(`径向刚度粗估 k_r≈${r.radialStiffness.toFixed(2)} N/μm（经验公式）`)
+  }
   return list
 }
 

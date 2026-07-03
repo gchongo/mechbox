@@ -175,6 +175,7 @@
             :unit="unit"
             :show-validation="ringValidation"
             :closed-direction="closedRing.direction"
+            :show-fos="!!gdtModeInfo"
             @add="addRing"
             @remove="removeRing"
             @reorder="reorderRing"
@@ -261,9 +262,20 @@
                 <el-radio value="LMC">{{ pt('gdtModifiers.LMC') }}</el-radio>
               </el-radio-group>
             </CalcFormItem>
-            <CalcFormItem v-if="gdtModifier !== 'RFS'" :label="pf('bonusTolerance')">
+            <CalcFormItem v-if="gdtModifier !== 'RFS'" :label="pf('autoBonus')">
+              <el-switch v-model="gdtAutoBonus" />
+              <span class="ml-2 text-xs text-gray-500">{{ pf('autoBonusHint') }}</span>
+            </CalcFormItem>
+            <CalcFormItem v-if="gdtModifier !== 'RFS' && !gdtAutoBonus" :label="pf('bonusTolerance')">
               <el-input-number v-model="bonusTolerance" :min="0" :precision="4" :step="0.01" />
               <span class="ml-2 text-xs text-gray-500">{{ pf('bonusHint') }}</span>
+            </CalcFormItem>
+            <CalcFormItem
+              v-if="gdtModifier !== 'RFS' && gdtAutoBonus && activeResult?.bonusApplied > 0"
+              :label="pf('bonusTolerance')"
+            >
+              <span class="font-mono text-sm">{{ fmtNum(activeResult.bonusApplied) }} mm</span>
+              <span class="ml-2 text-xs text-gray-500">{{ pf('bonusAutoLabel') }}</span>
             </CalcFormItem>
           </el-form>
         </el-collapse-item>
@@ -445,6 +457,7 @@ const closedRing = ref({
 const componentRings = ref([])
 
 const gdtModifier = ref('RFS')
+const gdtAutoBonus = ref(true)
 const bonusTolerance = ref(0)
 
 const unit = computed(() => unitLabel(closedRing.value.unit))
@@ -493,6 +506,7 @@ const chainOpts = computed(() => ({
   typeId: selectedType.value?.id,
   distribution: rssDistribution.value,
   toleranceModifier: gdtModifier.value,
+  autoBonus: gdtAutoBonus.value,
   bonusTolerance: bonusTolerance.value,
 }))
 
@@ -606,6 +620,7 @@ function goToGdtStack() {
         method: method.value,
         selectedType: selectedType.value,
         gdtModifier: gdtModifier.value,
+        gdtAutoBonus: gdtAutoBonus.value,
         bonusTolerance: bonusTolerance.value,
       }),
     ),
@@ -884,6 +899,8 @@ function addRing() {
     factor: 1,
     direction: defaultDir,
     type: inferRingType(defaultDir, closedRing.value.direction),
+    featureKind: '',
+    sizeTolerance: 0,
   })
   componentRings.value.push(ring)
 }

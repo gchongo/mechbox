@@ -255,6 +255,68 @@ describe('bearing-calc modes', () => {
     expect(hot.temperatureFactor).toBeLessThan(cold.temperatureFactor)
     expect(hot.lifeHours).toBeLessThan(cold.lifeHours)
   })
+
+  it('duplex DT doubles effective C and C0', () => {
+    const single = analyzeBearingLife({ ...base, calcMode: 'complete', autoLookup: false })
+    const tandem = analyzeBearingLife({
+      ...base,
+      calcMode: 'complete',
+      autoLookup: false,
+      mountingArrangement: 'duplex-dt',
+    })
+    expect(tandem.effectiveDynamicLoad).toBe(base.dynamicLoad * 2)
+    expect(tandem.lifeHours).toBeGreaterThan(single.lifeHours)
+  })
+
+  it('duplex DB reduces Y factor', () => {
+    const single = analyzeBearingLife({
+      ...base,
+      calcMode: 'complete',
+      autoLookup: false,
+      y: 1.5,
+      axialLoad: 2000,
+    })
+    const db = analyzeBearingLife({
+      ...base,
+      calcMode: 'complete',
+      autoLookup: false,
+      y: 1.5,
+      axialLoad: 2000,
+      mountingArrangement: 'duplex-db',
+    })
+    expect(db.y).toBeCloseTo(1.5 * 0.72, 4)
+    expect(db.equivalentLoad).toBeLessThan(single.equivalentLoad)
+  })
+
+  it('axial preload increases equivalent load', () => {
+    const noPreload = analyzeBearingLife({ ...base, calcMode: 'complete', autoLookup: false, y: 1 })
+    const preloaded = analyzeBearingLife({
+      ...base,
+      calcMode: 'complete',
+      autoLookup: false,
+      y: 1,
+      axialPreload: 500,
+    })
+    expect(preloaded.effectiveAxialLoad).toBe(base.axialLoad + 500)
+    expect(preloaded.equivalentLoad).toBeGreaterThan(noPreload.equivalentLoad)
+  })
+
+  it('professional mode estimates radial stiffness for duplex', () => {
+    const r = analyzeBearingLife({
+      ...base,
+      calcMode: 'professional',
+      autoLookup: false,
+      mountingArrangement: 'duplex-db',
+    })
+    expect(r.radialStiffness).toBeGreaterThan(0)
+    const single = analyzeBearingLife({
+      ...base,
+      calcMode: 'professional',
+      autoLookup: false,
+      mountingArrangement: 'single',
+    })
+    expect(r.radialStiffness).toBeGreaterThan(single.radialStiffness)
+  })
 })
 
 describe('weld-calc modes', () => {

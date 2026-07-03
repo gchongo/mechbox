@@ -72,6 +72,9 @@ export const editorPagesZh = {
       materialCondition: '材料条件',
       bonusTolerance: '奖励公差',
       bonusHint: 'mm · MMC 全额叠加，LMC 按 50%',
+      autoBonus: '自动奖励',
+      autoBonusHint: '按 FOS 环尺寸公差求和（ASME Y14.5）',
+      bonusAutoLabel: '（自动计算）',
       namePlaceholder: '如：间隙 L0',
     },
     results: {
@@ -187,6 +190,11 @@ export const editorPagesZh = {
       increasing: '+ 增环',
       decreasing: '− 减环',
       addRing: '+ 添加组成环',
+      featureKind: 'FOS',
+      featureNone: '—',
+      featureHole: '孔',
+      featureShaft: '轴',
+      sizeTolerance: '尺寸公差',
     },
     sigma: {
       title: '西格玛分析（质量水平）',
@@ -352,6 +360,9 @@ export const editorPagesEn = {
       materialCondition: 'Material condition',
       bonusTolerance: 'Bonus tolerance',
       bonusHint: 'mm · full bonus at MMC, 50% at LMC',
+      autoBonus: 'Auto bonus',
+      autoBonusHint: 'Sum FOS size tolerances (ASME Y14.5)',
+      bonusAutoLabel: '(auto)',
       namePlaceholder: 'e.g. clearance L0',
     },
     results: {
@@ -467,6 +478,11 @@ export const editorPagesEn = {
       increasing: '+ Increasing',
       decreasing: '− Decreasing',
       addRing: '+ Add component ring',
+      featureKind: 'FOS',
+      featureNone: '—',
+      featureHole: 'Hole',
+      featureShaft: 'Shaft',
+      sizeTolerance: 'Size tol.',
     },
     sigma: {
       title: 'Sigma analysis (quality level)',
