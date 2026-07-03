@@ -51,21 +51,45 @@ export const caseRingNamesEn = {
   '径向尺寸': 'Radial dimension',
 }
 
+export function translateRingName(name, locale = 'zh') {
+  if (!name) return name
+  if (locale === 'en') return caseRingNamesEn[name] ?? name
+  for (const [zh, en] of Object.entries(caseRingNamesEn)) {
+    if (en === name) return zh
+  }
+  return name
+}
+
+export function translateClosedRingName(name, locale = 'zh') {
+  if (!name) return name
+  if (locale === 'en') return caseClosedRingNamesEn[name] ?? name
+  for (const [zh, en] of Object.entries(caseClosedRingNamesEn)) {
+    if (en === name) return zh
+  }
+  return name
+}
+
+export function localizeEditorRingNames(state, locale = 'zh') {
+  if (!state) return state
+  const next = { ...state }
+  if (next.closedRing) {
+    next.closedRing = {
+      ...next.closedRing,
+      name: translateClosedRingName(next.closedRing.name, locale),
+    }
+  }
+  if (next.componentRings) {
+    next.componentRings = next.componentRings.map((ring) => ({
+      ...ring,
+      name: translateRingName(ring.name, locale),
+    }))
+  }
+  return next
+}
+
 export function localizeCasePresetData(data, locale = 'zh') {
   if (locale !== 'en' || !data) return data
-  return {
-    ...data,
-    closedRing: data.closedRing
-      ? {
-          ...data.closedRing,
-          name: caseClosedRingNamesEn[data.closedRing.name] ?? data.closedRing.name,
-        }
-      : data.closedRing,
-    componentRings: data.componentRings?.map((ring) => ({
-      ...ring,
-      name: caseRingNamesEn[ring.name] ?? ring.name,
-    })),
-  }
+  return localizeEditorRingNames(data, locale)
 }
 
 export const casesEn = {

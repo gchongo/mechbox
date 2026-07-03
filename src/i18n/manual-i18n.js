@@ -80,12 +80,16 @@ export const manualEnById = {
   },
   'nominal-chain': {
     name: 'Closed-loop nominal value',
+    formula: 'L₀ = ΣL_inc − ΣL_dec',
+    latex: 'L_0 = \\sum L_{\\text{inc}} - \\sum L_{\\text{dec}}',
     desc: 'Increasing rings align with the closed loop, decreasing rings oppose; weighted by transfer factors.',
     tags: ['Nominal', 'Increasing ring', 'Decreasing ring'],
     category: 'Tolerance stack',
   },
   'sigma-level': {
     name: 'Sigma level',
+    formula: 'σ_level = T_target / (6σ)',
+    latex: '\\sigma_{\\text{level}} = \\frac{T_{\\text{target}}}{6\\sigma}',
     desc: 'Measures how well the process meets the target tolerance; higher sigma level is better.',
     tags: ['Sigma', 'Quality'],
     category: 'Statistics',
@@ -98,6 +102,8 @@ export const manualEnById = {
   },
   'pass-rate': {
     name: 'Yield (normal approximation)',
+    formula: 'P = 2Φ(σ_level) − 1',
+    latex: 'P = 2\\Phi(\\sigma_{\\text{level}}) - 1',
     desc: 'Estimate in-spec proportion using normal CDF Φ.',
     tags: ['Yield', 'Normal'],
     category: 'Statistics',

@@ -39,6 +39,8 @@ export function useContentI18n() {
       return {
         ...f,
         name: en.name ?? f.name,
+        formula: en.formula ?? f.formula,
+        latex: en.latex ?? f.latex,
         desc: en.desc ?? f.desc,
         tags: en.tags ?? f.tags,
         category: en.category ?? manualCategoryEn[f.category] ?? f.category,

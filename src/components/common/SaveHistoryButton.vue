@@ -1,12 +1,13 @@
 <template>
   <el-button plain @click="handleSave">
-    💾 保存到历史
+    {{ t('calc.common.saveToHistory') }}
   </el-button>
 </template>
 
 <script setup>
 import { ElMessage } from 'element-plus'
 import { saveToolHistory } from '@/utils/calc-history'
+import { useLocale } from '@/composables/useLocale'
 
 const props = defineProps({
   tool: { type: String, required: true },
@@ -17,6 +18,8 @@ const props = defineProps({
   result: { type: Object, default: () => ({}) },
 })
 
+const { t } = useLocale()
+
 function handleSave() {
   saveToolHistory({
     tool: props.tool,
@@ -26,6 +29,6 @@ function handleSave() {
     input: props.input,
     result: props.result,
   })
-  ElMessage.success('已保存到历史记录')
+  ElMessage.success(t('calc.common.savedToHistory'))
 }
 </script>

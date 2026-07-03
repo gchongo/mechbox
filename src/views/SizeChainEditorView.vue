@@ -396,7 +396,7 @@ import { closedRingAsDesign, ensureRingEsEi } from '@/utils/ring-tolerance'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
-import { casesEn } from '@/i18n/cases-i18n'
+import { casesEn, localizeEditorRingNames, translateRingName, translateClosedRingName } from '@/i18n/cases-i18n'
 
 const route = useRoute()
 const router = useRouter()
@@ -718,24 +718,41 @@ function loadCasePreset(caseId) {
 }
 
 function applyEditorState(state) {
-  if (state.selectedType) selectedType.value = state.selectedType
-  if (state.activeGroup) activeGroup.value = state.activeGroup
-  if (state.closedRing) {
-    closedRing.value = { ...closedRing.value, ...state.closedRing }
+  const s = localizeEditorRingNames(state, locale.value)
+  if (s.selectedType) selectedType.value = s.selectedType
+  if (s.activeGroup) activeGroup.value = s.activeGroup
+  if (s.closedRing) {
+    closedRing.value = { ...closedRing.value, ...s.closedRing }
     prevUnit.value = closedRing.value.unit
   }
-  if (state.componentRings) {
-    componentRings.value = state.componentRings.map((ring) =>
+  if (s.componentRings) {
+    componentRings.value = s.componentRings.map((ring) =>
       ensureRingEsEi({
         ...ring,
         uid: ring.uid ?? crypto.randomUUID(),
       }),
     )
   }
-  if (state.method) method.value = state.method
-  if (state.rssDistribution) rssDistribution.value = state.rssDistribution
-  if (state.currentStep) currentStep.value = state.currentStep
+  if (s.method) method.value = s.method
+  if (s.rssDistribution) rssDistribution.value = s.rssDistribution
+  if (s.currentStep) currentStep.value = s.currentStep
 }
+
+watch(locale, (loc) => {
+  if (!closedRing.value.name?.trim() && !componentRings.value.length) return
+  if (closedRing.value.name?.trim()) {
+    closedRing.value = {
+      ...closedRing.value,
+      name: translateClosedRingName(closedRing.value.name, loc),
+    }
+  }
+  if (componentRings.value.length) {
+    componentRings.value = componentRings.value.map((ring) => ({
+      ...ring,
+      name: translateRingName(ring.name, loc),
+    }))
+  }
+})
 
 function loadFromHistory(id) {
   const record = getAnalysisById(id)
