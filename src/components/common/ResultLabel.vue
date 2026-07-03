@@ -16,16 +16,22 @@ const enriched = computed(() => enrichMathText(props.text))
 
 <style scoped>
 .result-label {
-  @apply shrink-0 whitespace-nowrap;
+  display: inline-block;
+  width: auto;
+  max-width: fit-content;
+  flex: none;
+  white-space: nowrap;
+  vertical-align: baseline;
 }
 
 :deep(.math-content) {
   display: inline;
+  white-space: inherit;
 }
 
 :deep(.math-inline),
 :deep(.math-inline .katex) {
   display: inline;
-  white-space: nowrap;
+  white-space: inherit;
 }
 </style>

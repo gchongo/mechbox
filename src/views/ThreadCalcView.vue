@@ -73,7 +73,7 @@
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('stressArea') + ' A_s'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('stressArea')" />
             <dd class="font-mono">{{ result.stressArea.toFixed(2) }} mm²</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -83,13 +83,13 @@
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('tensileStress') + ' σ'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('tensileStress')" />
             <dd class="font-mono" :class="result.tensilePass ? 'text-success' : 'text-error'">
               {{ result.tensileStress.toFixed(1) }} MPa {{ result.tensilePass ? '✓' : '✗' }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('shearStress') + ' τ'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('shearStress')" />
             <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
               {{ result.shearStress.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
             </dd>
@@ -111,7 +111,7 @@
             </div>
           </template>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('tighteningTorque') + ' T'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('tighteningTorque')" />
             <dd class="font-mono">
               {{ result.tighteningTorque.toFixed(2) }} N·m
               <span class="text-xs text-gray-500">（{{ result.torqueMethod }}）</span>

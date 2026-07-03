@@ -65,4 +65,10 @@ describe('math-label enrichMathText', () => {
     expect(hint).toContain('$d$')
     expect(hint).toContain('$T$')
   })
+
+  it('binds CJK label to following symbol with nbsp', () => {
+    expect(enrichMathText('有效面积 A_s')).toContain('\u00a0')
+    expect(enrichMathText('有效面积 A_s').match(/\\tau/g)).toBeNull()
+    expect(enrichMathText('螺栓刚度 k_S')).toContain('k_S')
+  })
 })

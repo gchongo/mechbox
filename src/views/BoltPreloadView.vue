@@ -117,60 +117,60 @@
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('stressArea') + ' A_s'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('stressArea')" />
             <dd class="font-mono">{{ result.stressArea.toFixed(2) }} mm²</dd>
           </div>
 
           <template v-if="form.calcMode !== 'simple'">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('pitchDiameter') + ' d_2'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('pitchDiameter')" />
               <dd class="font-mono">{{ result.pitchDiameter.toFixed(3) }} mm</dd>
             </div>
           </template>
 
           <template v-if="form.calcMode === 'professional' && result.joint">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('boltStiffness') + ' k_S'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('boltStiffness')" />
               <dd class="font-mono">{{ result.joint.kS.toFixed(1) }} N/mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('clampStiffness') + ' k_P'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('clampStiffness')" />
               <dd class="font-mono">{{ result.joint.kP.toFixed(1) }} N/mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('loadFactor') + ' Φ'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('loadFactor')" />
               <dd class="font-mono">{{ (result.joint.loadFactor * 100).toFixed(1) }}%</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('embedmentLoss') + ' F_Z'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('embedmentLoss')" />
               <dd class="font-mono text-warning">{{ result.joint.embedmentLoss.toFixed(0) }} N</dd>
             </div>
             <div v-if="form.deltaT" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('thermalDelta') + ' ΔF_VT'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('thermalDelta')" />
               <dd class="font-mono">{{ result.joint.thermalDelta.toFixed(0) }} N</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('preloadTightening') + ' F_V'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('preloadTightening')" />
               <dd class="font-mono">{{ result.preloadTightening.toFixed(0) }} N</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('preloadResidual') + ' F_M'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('preloadResidual')" />
               <dd class="font-mono text-primary">{{ result.preloadResidual.toFixed(0) }} N</dd>
             </div>
           </template>
           <template v-else>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('preload') + ' F'" />
+              <ResultLabel label-class="text-gray-500" :text="pr('preload')" />
               <dd class="font-mono">{{ result.preload.toFixed(0) }} N</dd>
             </div>
           </template>
 
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('torque') + ' T'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('torque')" />
             <dd class="font-mono">{{ result.torque.toFixed(2) }} N·m</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('tensileStress') + ' σ'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('tensileStress')" />
             <dd class="font-mono" :class="result.pass ? 'text-success' : 'text-error'">
               {{ result.stress.toFixed(1) }} MPa {{ result.pass ? '✓' : '✗' }}
             </dd>
@@ -179,7 +179,7 @@
             v-if="form.calcMode === 'professional'"
             class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
           >
-            <ResultLabel label-class="text-gray-500" :text="pr('stressResidual') + ' σ_M'" />
+            <ResultLabel label-class="text-gray-500" :text="pr('stressResidual')" />
             <dd class="font-mono" :class="result.passResidual ? 'text-success' : 'text-error'">
               {{ result.stressResidual.toFixed(1) }} MPa {{ result.passResidual ? '✓' : '✗' }}
             </dd>

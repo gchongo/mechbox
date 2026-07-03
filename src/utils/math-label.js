@@ -222,13 +222,17 @@ function autoEnrichSymbols(text) {
   return out
 }
 
+function bindCjkToSymbol(text) {
+  return text.replace(/([\u4e00-\u9fff])\s+(?=[A-Za-z_$ΔΦΣ])/g, '$1\u00a0')
+}
+
 function enrichPlainSegment(text) {
   let out = autoEnrichSymbols(text)
   for (const [from, to] of REPLACEMENTS) {
     if (to == null) continue
     out = out.split(from).join(to)
   }
-  return out
+  return bindCjkToSymbol(out)
 }
 
 /**
