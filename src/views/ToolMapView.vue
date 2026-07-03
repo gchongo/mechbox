@@ -72,7 +72,7 @@ import { STAT_TOOLS, TOOL_GROUPS, getAllToolsFlat } from '@/constants/tool-catal
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useLocale } from '@/composables/useLocale'
-import { localizedToolLabel, localizedStatTool } from '@/i18n'
+import { localizedTool, localizedStatTool } from '@/i18n'
 
 const router = useRouter()
 const query = ref('')
@@ -82,10 +82,7 @@ const { t } = useLocale()
 const localizedGroups = computed(() =>
   TOOL_GROUPS.filter((g) => g.id !== 'reference').map((g) => ({
     ...g,
-    tools: g.tools.map((tool) => ({
-      ...tool,
-      label: localizedToolLabel(tool.path, locale.value),
-    })),
+    tools: g.tools.map((tool) => localizedTool(tool, locale.value)),
   })),
 )
 
@@ -94,14 +91,16 @@ const localizedStatTools = computed(() =>
 )
 
 const localizedFlatTools = computed(() =>
-  getAllToolsFlat().map((tool) => ({
-    ...tool,
-    label: tool.path ? localizedToolLabel(tool.path, locale.value) : tool.label,
-    category:
-      tool.path || tool.query
-        ? tool.category
-        : ct('toolMap.statCategory'),
-  })),
+  getAllToolsFlat().map((tool) => {
+    const localized = tool.path
+      ? localizedTool(tool, locale.value)
+      : localizedStatTool(tool, locale.value)
+    const category =
+      tool.categoryId === 'stat'
+        ? ct('toolMap.statCategory')
+        : t(`toolGroups.${tool.categoryId}`)
+    return { ...localized, category }
+  }),
 )
 
 const totalCount = computed(() => localizedFlatTools.value.length)

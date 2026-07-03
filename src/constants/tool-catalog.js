@@ -79,10 +79,11 @@ export function getAllToolsFlat() {
   const stats = STAT_TOOLS.map((t) => ({
     ...t,
     category: '统计工具',
+    categoryId: 'stat',
     route: t.path ?? `/statistics?tool=${t.query}`,
   }))
   const mech = TOOL_GROUPS.flatMap((g) =>
-    g.tools.map((t) => ({ ...t, category: g.label, route: t.path })),
+    g.tools.map((t) => ({ ...t, category: g.label, categoryId: g.id, route: t.path })),
   )
   return [...stats, ...mech]
 }

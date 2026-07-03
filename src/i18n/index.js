@@ -8,6 +8,7 @@ import { messagesZh, messagesEn } from './results-i18n'
 import { chartZh, chartEn } from './chart-i18n'
 import { contentZh, contentEn } from './content-i18n'
 import { seoRoutesZh, seoRoutesEn } from './seo-routes-i18n'
+import { toolDescsZh, toolDescsEn } from './tool-catalog-i18n'
 
 const zh = {
   appName: '机械工具箱',
@@ -128,7 +129,13 @@ const zh = {
     editor: '尺寸链编辑器',
     'tool-map': '工具地图',
     history: '历史记录',
+    manual: '公式手册',
+    glossary: '术语表',
+    cases: '案例库',
+    tutorial: '教程',
+    faq: '常见问题',
   },
+  toolDescs: toolDescsZh,
   statTools: {
     convert: { label: '公差转换', desc: 'T ↔ σ' },
     rss: { label: 'RSS 计算', desc: '基础 + 加权 + 修正' },
@@ -324,7 +331,13 @@ const en = {
     editor: 'Stack editor',
     'tool-map': 'Tool map',
     history: 'History',
+    manual: 'Formula manual',
+    glossary: 'Glossary',
+    cases: 'Case library',
+    tutorial: 'Tutorials',
+    faq: 'FAQ',
   },
+  toolDescs: toolDescsEn,
   statTools: {
     convert: { label: 'Tolerance conversion', desc: 'T ↔ σ' },
     rss: { label: 'RSS calculator', desc: 'Basic + weighted + modified' },
@@ -438,6 +451,22 @@ export function t(key, locale = 'zh', params) {
 export function localizedToolLabel(path, locale = 'zh') {
   const key = toolKeyFromPath(path)
   return t(`tools.${key}`, locale) || path
+}
+
+/** Localize label + desc for a catalog tool (path-based or stat query tool). */
+export function localizedTool(tool, locale = 'zh') {
+  const key = tool.path ? toolKeyFromPath(tool.path) : tool.query
+  const statNode = messages[locale]?.statTools?.[key] ?? messages.zh?.statTools?.[key]
+  if (statNode) {
+    return localizedStatTool(tool, locale)
+  }
+  const label = localizedToolLabel(tool.path, locale)
+  const desc = t(`toolDescs.${key}`, locale)
+  return {
+    ...tool,
+    label,
+    desc: desc !== `toolDescs.${key}` ? desc : tool.desc,
+  }
 }
 
 export function localizedStatTool(tool, locale = 'zh') {
