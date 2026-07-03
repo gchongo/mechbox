@@ -167,9 +167,15 @@ export const optionsZh = {
     H9_d9: { label: 'H9/d9 粗间隙', use: '粗糙配合' },
   },
   stackMethods: {
-    rss: { label: 'RSS' },
-    worst: { label: '极值' },
-    'modified-rss': { label: '修正 RSS' },
+    rss: { label: 'RSS 法' },
+    worst: { label: '极值法' },
+    'modified-rss': { label: '修正 RSS 法' },
+    'sigma6-rss': { label: '6σ RSS 法' },
+  },
+  weldStandards: {
+    gb: { label: 'GB/T (简化)' },
+    en1993: { label: 'EN 1993-1-8' },
+    aws: { label: 'AWS D1.1' },
   },
   datumPriorities: {
     primary: { label: '主' },
@@ -411,6 +417,12 @@ export const optionsEn = {
     rss: { label: 'RSS' },
     worst: { label: 'Worst case' },
     'modified-rss': { label: 'Modified RSS' },
+    'sigma6-rss': { label: '6σ RSS' },
+  },
+  weldStandards: {
+    gb: { label: 'GB/T (simplified)' },
+    en1993: { label: 'EN 1993-1-8' },
+    aws: { label: 'AWS D1.1' },
   },
   datumPriorities: {
     primary: { label: 'Primary' },

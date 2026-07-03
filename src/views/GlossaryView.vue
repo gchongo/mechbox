@@ -1,21 +1,21 @@
 <template>
   <div>
-    <h1 class="page-title mb-6">GD&T 术语词典</h1>
+    <h1 class="page-title mb-6">{{ ct('glossary.title') }}</h1>
     <div class="card-panel mb-6">
       <el-input
         v-model="query"
         clearable
-        placeholder="搜索术语、定义或标签…"
+        :placeholder="ct('glossary.searchPlaceholder')"
         prefix-icon="Search"
         class="max-w-md"
       />
-      <p class="mt-2 text-sm text-gray-500">共 {{ filtered.length }} 条</p>
+      <p class="mt-2 text-sm text-gray-500">{{ ct('glossary.count', { n: filtered.length }) }}</p>
     </div>
 
     <div class="grid gap-4 md:grid-cols-2">
       <article
         v-for="item in filtered"
-        :key="item.id"
+        :key="item.id ?? item.term"
         class="card-panel"
       >
         <div class="mb-2 flex flex-wrap items-center gap-2">
@@ -32,14 +32,16 @@
       </article>
     </div>
 
-    <el-empty v-if="!filtered.length" description="未找到匹配术语" />
+    <el-empty v-if="!filtered.length" :description="ct('glossary.empty')" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { searchGlossary } from '@/constants/glossary'
+import { useContentI18n } from '@/composables/useContentI18n'
 
+const { ct, glossaryTerms, filterGlossary } = useContentI18n()
 const query = ref('')
-const filtered = computed(() => searchGlossary(query.value))
+
+const filtered = computed(() => filterGlossary(glossaryTerms.value, query.value))
 </script>

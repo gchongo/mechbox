@@ -237,7 +237,7 @@
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
       <SaveHistoryButton
         tool="weld"
-        :title="`焊缝 ${tab}`"
+        :title="`${pt('title')} – ${tabLabels[tab]}`"
         :status="saveStatus"
         :summary="historySummary"
         :input="{ tab, form, butt, fatigue, haz }"
@@ -265,11 +265,19 @@ import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('weld')
-const { optionMap } = useOptionsI18n()
+const { optionMap, ol } = useOptionsI18n()
 const { rm, resultError } = useResultI18n()
 
 const weldSteelGrades = computed(() => optionMap(WELD_STEEL_GRADES, 'weldSteelGrades'))
 const weldDetailCategories = computed(() => optionMap(WELD_DETAIL_CATEGORIES, 'weldDetailCategories'))
+const weldStandards = computed(() => ol('weldStandards'))
+
+const tabLabels = computed(() => ({
+  fillet: pf('tabFillet'),
+  butt: pf('tabButt'),
+  fatigue: pf('tabFatigue'),
+  haz: pf('tabHaz'),
+}))
 
 const tab = ref('fillet')
 const form = reactive({
@@ -309,13 +317,14 @@ const hazResult = computed(() => analyzeHAZ(haz))
 
 const buttRows = computed(() => {
   const r = buttResult.value
+  const std = weldStandards.value
   if (butt.calcMode === 'simple') {
-    return [{ standard: 'GB/T (简化)', allow: r.gb.allow, pass: r.gb.pass }]
+    return [{ standard: std.gb?.label, allow: r.gb.allow, pass: r.gb.pass }]
   }
   return [
-    { standard: 'GB/T (简化)', allow: r.gb.allow, pass: r.gb.pass },
-    { standard: 'EN 1993-1-8', allow: r.eurocode.allow, pass: r.eurocode.pass },
-    { standard: 'AWS D1.1', allow: r.aws.allow, pass: r.aws.pass },
+    { standard: std.gb?.label, allow: r.gb.allow, pass: r.gb.pass },
+    { standard: std.en1993?.label, allow: r.eurocode.allow, pass: r.eurocode.pass },
+    { standard: std.aws?.label, allow: r.aws.allow, pass: r.aws.pass },
   ]
 })
 
@@ -329,14 +338,14 @@ const saveStatus = computed(() => {
 const historySummary = computed(() => {
   if (tab.value === 'fillet') {
     return [
-      { label: 'τ (MPa)', value: filletResult.value.shearStress?.toFixed(1) },
-      { label: '模式', value: form.calcMode },
+      { label: `${pr('shearStress')} (MPa)`, value: filletResult.value.shearStress?.toFixed(1) },
+      { label: pf('mode'), value: ct(form.calcMode) },
       { label: fc('check'), value: (filletResult.value.allPass ?? filletResult.value.pass) ? fc('pass') : fc('fail') },
     ]
   }
   if (tab.value === 'fatigue' && !fatigueResult.value?.errorKey) {
     return [
-      { label: 'Δτ', value: `${fatigue.stressRange} MPa` },
+      { label: pf('stressRangeDelta'), value: `${fatigue.stressRange} MPa` },
       { label: pr('estimatedLife'), value: fatigueResult.value.estimatedLife?.toLocaleString() },
     ]
   }
@@ -346,6 +355,6 @@ const historySummary = computed(() => {
       { label: pr('hazAllowShear'), value: `${hazResult.value.hazAllowShear} MPa` },
     ]
   }
-  return [{ label: 'σ', value: `${buttResult.value.normalStress?.toFixed(1)} MPa` }]
+  return [{ label: `${pr('normalStress')} (MPa)`, value: `${buttResult.value.normalStress?.toFixed(1)}` }]
 })
 </script>

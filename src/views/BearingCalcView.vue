@@ -131,7 +131,7 @@
         </dl>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
           <MathTex expr="P = X \cdot F_r + Y \cdot F_a" />
-          <MathTex expr="L_{10} = \left(\frac{C}{P}\right)^{\varepsilon} \quad (\text{百万转})" />
+          <MathTex :expr="l10Formula" />
           <MathTex expr="L_{nm} = a_1 \cdot L_{10},\quad L_h = \frac{L_{nm} \times 10^6}{60 n}" />
         </div>
       </section>
@@ -151,6 +151,12 @@ import { useOptionsI18n } from '@/composables/useOptionsI18n'
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('bearing')
 const { rm } = useResultI18n()
 const { optionMap } = useOptionsI18n()
+
+const l10Formula = computed(() =>
+  locale.value === 'en'
+    ? 'L_{10} = \\left(\\frac{C}{P}\\right)^{\\varepsilon} \\quad (\\text{million rev.})'
+    : 'L_{10} = \\left(\\frac{C}{P}\\right)^{\\varepsilon} \\quad (\\text{百万转})',
+)
 
 const lifeConditions = computed(() => optionMap({
   clean: { id: 'clean' },

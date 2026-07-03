@@ -33,7 +33,7 @@ const props = defineProps({
   summary: { type: Object, required: true },
 })
 
-const { pt } = useCalcPage('editor')
+const { pt, locale } = useCalcPage('editor')
 
 const rows = computed(() => {
   const s = props.summary
@@ -41,6 +41,7 @@ const rows = computed(() => {
   const sigma = parseFloat(s.sigmaLevel)
   const excellent = pt('sigma.excellent')
   const average = pt('sigma.average')
+  const sigmaLatex = locale.value === 'en' ? '\\sigma_{\\text{level}}' : '\\sigma_{\\text{水平}}'
   return [
     {
       latex: 'C = \\frac{T}{6\\sigma}',
@@ -55,7 +56,7 @@ const rows = computed(() => {
       ok: cpk > 1.33,
     },
     {
-      latex: '\\sigma_{\\text{水平}}',
+      latex: sigmaLatex,
       value: `${s.sigmaLevel}σ`,
       status: sigma >= 4 ? pt('sigma.sigma4') : pt('sigma.needsImprove'),
       ok: sigma >= 4,

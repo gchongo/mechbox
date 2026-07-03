@@ -252,6 +252,7 @@ export const GLOSSARY_TERMS = [
     tags: ['铸造', '拔模', '工艺'],
   },
   {
+    id: 'jominy',
     term: 'Jominy 端淬试验',
     symbol: '—',
     category: '材料',
@@ -260,6 +261,7 @@ export const GLOSSARY_TERMS = [
     tags: ['热处理', 'Jominy', '淬透性'],
   },
   {
+    id: 'carbon-equivalent',
     term: '碳当量 (CE)',
     symbol: 'CE',
     category: '材料',
@@ -268,6 +270,7 @@ export const GLOSSARY_TERMS = [
     tags: ['碳当量', '焊接', '热处理'],
   },
   {
+    id: 'rsm',
     term: '响应面法 (RSM)',
     symbol: '—',
     category: '统计',
@@ -276,6 +279,7 @@ export const GLOSSARY_TERMS = [
     tags: ['RSM', 'DOE', '优化'],
   },
   {
+    id: 'iso286',
     term: 'ISO 286 配合',
     symbol: '—',
     category: '公差',
@@ -284,6 +288,7 @@ export const GLOSSARY_TERMS = [
     tags: ['ISO286', '公差', '配合'],
   },
   {
+    id: 'vdi2230',
     term: 'VDI 2230',
     symbol: '—',
     category: '螺栓',
@@ -292,6 +297,7 @@ export const GLOSSARY_TERMS = [
     tags: ['VDI2230', '螺栓', '预紧力'],
   },
   {
+    id: 'drf',
     term: '基准参考系 (DRF)',
     symbol: 'A|B|C',
     category: 'GD&T',

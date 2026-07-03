@@ -6,6 +6,7 @@ import { diagramZh, diagramEn } from './diagram-i18n'
 import { optionsZh, optionsEn } from './options-i18n'
 import { messagesZh, messagesEn } from './results-i18n'
 import { chartZh, chartEn } from './chart-i18n'
+import { contentZh, contentEn } from './content-i18n'
 
 const zh = {
   appName: '机械工具箱',
@@ -78,6 +79,7 @@ const zh = {
     dataDesc: '分析历史可在「历史记录」页导出或删除。',
     openHistory: '打开历史记录 →',
   },
+  content: contentZh,
   toolGroups: {
     chain: '尺寸链与强度',
     drive: '传动与结构',
@@ -273,6 +275,7 @@ const en = {
     dataDesc: 'Analysis history can be exported or deleted on the History page.',
     openHistory: 'Open history →',
   },
+  content: contentEn,
   toolGroups: {
     chain: 'Tolerance stack & strength',
     drive: 'Drives & structures',

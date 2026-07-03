@@ -5,7 +5,7 @@
         <path d="M4 18h4l2-4 3 6 2-4 3 4h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
         <path d="M4 6h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="3 2" />
       </svg>
-      <span class="chain-canvas__title">尺寸链环路模型</span>
+      <span class="chain-canvas__title">{{ pt('canvas.title') }}</span>
     </header>
 
     <div class="chain-canvas__body">
@@ -13,10 +13,10 @@
     </div>
 
     <p v-if="showFormula && rings.length" class="chain-canvas__formula">
-      封闭环尺寸 =
+      {{ pt('canvas.closedFormula') }}
       <MathTex expr="A_0 = \sum L_{\text{增}} - \sum L_{\text{减}}" />
       <span class="chain-canvas__sep">|</span>
-      共 {{ rings.length }} 个组成环
+      {{ pt('canvas.ringCount', { n: rings.length }) }}
       <template v-if="nominalClosed != null">
         <span class="chain-canvas__sep">|</span>
         <MathTex :expr="`${closedLabel} \\approx ${nominalClosed.toFixed(2)}\\,\\mathrm{${unitTex}}`" />
@@ -25,13 +25,13 @@
 
     <div v-if="showLegend && rings.length && !gdtMode" class="chain-canvas__legend">
       <span class="chain-canvas__legend-item">
-        <span class="chain-canvas__swatch chain-canvas__swatch--inc" /> 增环 ↑
+        <span class="chain-canvas__swatch chain-canvas__swatch--inc" /> {{ pt('canvas.legendInc') }}
       </span>
       <span class="chain-canvas__legend-item">
-        <span class="chain-canvas__swatch chain-canvas__swatch--dec" /> 减环 ↓
+        <span class="chain-canvas__swatch chain-canvas__swatch--dec" /> {{ pt('canvas.legendDec') }}
       </span>
       <span class="chain-canvas__legend-item">
-        <span class="chain-canvas__swatch chain-canvas__swatch--closed" /> 封闭环 <MathTex expr="A_0" />
+        <span class="chain-canvas__swatch chain-canvas__swatch--closed" /> {{ pt('canvas.legendClosed') }} <MathTex expr="A_0" />
       </span>
     </div>
   </div>
@@ -43,6 +43,9 @@ import MathTex from '@/components/common/MathTex.vue'
 import { unitLabel } from '@/utils/unit'
 import { getGdtCalcMode } from '@/utils/size-chain'
 import { calcNominalClosed } from '@/utils/ring-tolerance'
+import { useCalcPage } from '@/composables/useCalcPage'
+
+const { pt, locale } = useCalcPage('editor')
 
 const props = defineProps({
   closedRing: { type: Object, required: true },
@@ -152,7 +155,7 @@ function drawVectorChain(ctx, height, unitStr) {
   ctx.fillStyle = '#7f8c8d'
   ctx.font = '11px sans-serif'
   ctx.textAlign = 'left'
-  ctx.fillText('基准面', padX - 26, baselineY + 14)
+  ctx.fillText(pt('canvas.datumPlane'), padX - 26, baselineY + 14)
 
   list.forEach((ring, i) => {
     const cx = padX + slotW * (i + 0.5)
@@ -198,7 +201,11 @@ function drawVectorChain(ctx, height, unitStr) {
   ctx.font = '12px sans-serif'
   ctx.textAlign = 'right'
   ctx.fillText(
-    `目标 ${props.closedRing.min ?? '?'} ~ ${props.closedRing.max ?? '?'} ${unitStr}`,
+    pt('canvas.target', {
+      min: props.closedRing.min ?? '?',
+      max: props.closedRing.max ?? '?',
+      unit: unitStr,
+    }),
     width - padX + 24,
     topPad - 4,
   )
@@ -234,16 +241,16 @@ function draw2dPosition(ctx, height, unitStr) {
   ctx.fillStyle = '#555'
   ctx.font = '11px sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('X 向定位', cx, cy + 96)
+  ctx.fillText(pt('canvas.posX'), cx, cy + 96)
   ctx.save()
   ctx.translate(cx + 118, cy)
   ctx.rotate(-Math.PI / 2)
-  ctx.fillText('Y 向定位', 0, 0)
+  ctx.fillText(pt('canvas.posY'), 0, 0)
   ctx.restore()
 
   ctx.fillStyle = '#e74c3c'
   ctx.font = 'bold 12px sans-serif'
-  ctx.fillText(`位置度公差带 Ø${props.rssTolerance?.toFixed(3) ?? '?'} ${unitStr}`, cx, cy - r - 12)
+  ctx.fillText(pt('canvas.posTol', { tol: props.rssTolerance?.toFixed(3) ?? '?', unit: unitStr }), cx, cy - r - 12)
 }
 
 function drawRadial(ctx, height, unitStr) {
@@ -274,7 +281,7 @@ function drawRadial(ctx, height, unitStr) {
   ctx.fillStyle = '#e74c3c'
   ctx.font = '11px sans-serif'
   ctx.textAlign = 'left'
-  ctx.fillText(`径向 ${props.rssTolerance?.toFixed(3) ?? '?'} ${unitStr}`, cx + 48, cy + 4)
+  ctx.fillText(pt('canvas.radial', { tol: props.rssTolerance?.toFixed(3) ?? '?', unit: unitStr }), cx + 48, cy + 4)
 }
 
 function draw() {
@@ -294,9 +301,9 @@ function draw() {
     ctx.fillStyle = '#999'
     ctx.font = '14px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('添加组成环后，这里会显示首尾相接的尺寸链矢量图', width / 2, height / 2 - 8)
+    ctx.fillText(pt('canvas.emptyHint1'), width / 2, height / 2 - 8)
     ctx.font = '12px sans-serif'
-    ctx.fillText('各环依次叠加，封闭环回到基准面', width / 2, height / 2 + 16)
+    ctx.fillText(pt('canvas.emptyHint2'), width / 2, height / 2 + 16)
     return
   }
 
@@ -309,14 +316,14 @@ function draw() {
     ctx.fillStyle = '#7f8c8d'
     ctx.font = '11px sans-serif'
     ctx.textAlign = 'right'
-    ctx.fillText(`模式：${gdtMode.value.label}`, width - 12, 18)
+    ctx.fillText(pt('canvas.modeLabel', { label: gdtMode.value.label }), width - 12, 18)
   } else {
     drawVectorChain(ctx, height, unitStr)
   }
 }
 
 watch(
-  () => [props.closedRing, props.componentRings, props.rssTolerance, props.analysisTypeId],
+  () => [props.closedRing, props.componentRings, props.rssTolerance, props.analysisTypeId, locale.value],
   draw,
   { deep: true },
 )

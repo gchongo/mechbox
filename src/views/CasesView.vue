@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h1 class="page-title">案例库</h1>
-    <p class="mb-6 text-gray-600">12 个预设案例（含 2D/GD&T），点击加载完整数据到编辑器</p>
+    <h1 class="page-title">{{ ct('cases.title') }}</h1>
+    <p class="mb-6 text-gray-600">{{ ct('cases.subtitle') }}</p>
     <div class="grid gap-4 md:grid-cols-2">
       <div
         v-for="item in CASE_PRESETS"
@@ -20,8 +20,10 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { CASE_PRESETS, prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+import { useContentI18n } from '@/composables/useContentI18n'
 
 const router = useRouter()
+const { ct } = useContentI18n()
 
 function loadCase(item) {
   sessionStorage.setItem(CASE_STORAGE_KEY, JSON.stringify(prepareCaseForEditor(item)))

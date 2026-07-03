@@ -1,11 +1,11 @@
 <template>
   <div>
-    <h1 class="page-title">常见问题</h1>
-    <p class="mb-6 text-gray-600">尺寸链分析常见问题</p>
+    <h1 class="page-title">{{ ct('faq.title') }}</h1>
+    <p class="mb-6 text-gray-600">{{ ct('faq.subtitle') }}</p>
 
     <el-collapse v-model="activeNames" accordion>
       <el-collapse-item
-        v-for="item in FAQ_ITEMS"
+        v-for="item in faqItems"
         :key="item.id"
         :title="item.q"
         :name="item.id"
@@ -18,7 +18,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import { FAQ_ITEMS } from '@/constants/faq'
+import { useContentI18n } from '@/composables/useContentI18n'
 
+const { ct, faqItems } = useContentI18n()
 const activeNames = ref(1)
 </script>

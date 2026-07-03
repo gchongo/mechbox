@@ -23,10 +23,12 @@
         </el-form-item>
         <el-form-item :label="t('settings.defaultMethod')">
           <el-select v-model="form.defaultMethod" class="w-full">
-            <el-option :label="locale === 'en' ? 'RSS' : 'RSS 法'" value="rss" />
-            <el-option :label="locale === 'en' ? 'Worst-case' : '极值法'" value="worst" />
-            <el-option :label="locale === 'en' ? 'Modified RSS' : '修正 RSS 法'" value="modified-rss" />
-            <el-option :label="locale === 'en' ? '6σ RSS' : '6σ RSS 法'" value="sigma6-rss" />
+            <el-option
+              v-for="(opt, key) in stackMethods"
+              :key="key"
+              :label="opt.label"
+              :value="key"
+            />
           </el-select>
         </el-form-item>
         <el-form-item :label="t('settings.mcIterations')">
@@ -69,7 +71,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted, onUnmounted, ref } from 'vue'
+import { reactive, onMounted, onUnmounted, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getSettings,
@@ -78,8 +80,12 @@ import {
 } from '@/utils/settings'
 import { downloadBackup, importFullBackup } from '@/utils/backup'
 import { useLocale } from '@/composables/useLocale'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const { locale, t } = useLocale()
+const { optionMap } = useOptionsI18n()
+const STACK_METHOD_KEYS = { rss: {}, worst: {}, 'modified-rss': {}, 'sigma6-rss': {} }
+const stackMethods = computed(() => optionMap(STACK_METHOD_KEYS, 'stackMethods'))
 const form = reactive({ ...DEFAULT_SETTINGS })
 const fileInput = ref(null)
 

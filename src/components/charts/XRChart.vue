@@ -4,6 +4,9 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useChartI18n } from '@/composables/useChartI18n'
+
+const { ch, locale } = useChartI18n()
 
 const props = defineProps({
   xBars: { type: Array, default: () => [] },
@@ -49,11 +52,11 @@ async function render() {
   ]
 
   const layout = {
-    title: 'X-R 控制图',
+    title: ch('xrTitle'),
     grid: { rows: 2, columns: 1, pattern: 'independent', roworder: 'top to bottom' },
-    xaxis: { title: '子组', domain: [0, 1], anchor: 'y' },
+    xaxis: { title: ch('subgroup'), domain: [0, 1], anchor: 'y' },
     yaxis: { title: 'X̄', domain: [0.55, 1] },
-    xaxis2: { title: '子组', domain: [0, 1], anchor: 'y2' },
+    xaxis2: { title: ch('subgroup'), domain: [0, 1], anchor: 'y2' },
     yaxis2: { title: 'R', domain: [0, 0.45] },
     shapes: [
       { type: 'line', xref: 'x', yref: 'y', x0: x[0], x1: x[x.length - 1], y0: props.xBarBar, y1: props.xBarBar, line: { color: '#2ecc71' } },
@@ -73,7 +76,7 @@ async function render() {
 }
 
 watch(
-  () => [props.xBars, props.ranges, props.xBarBar, props.xUcl, props.xLcl, props.rBar, props.rUcl, props.rLcl],
+  () => [props.xBars, props.ranges, props.xBarBar, props.xUcl, props.xLcl, props.rBar, props.rUcl, props.rLcl, locale.value],
   render,
   { deep: true },
 )

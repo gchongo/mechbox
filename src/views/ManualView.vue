@@ -1,25 +1,25 @@
 <template>
   <div>
-    <h1 class="page-title">公式手册</h1>
+    <h1 class="page-title">{{ ct('manual.title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      尺寸链、概率统计、齿轮与轴承常用公式
+      {{ ct('manual.subtitle') }}
     </p>
 
     <div class="mb-4 flex flex-wrap gap-2">
       <el-button
-        v-for="cat in categories"
+        v-for="cat in categoryKeys"
         :key="cat"
         size="small"
         :type="activeCategory === cat ? 'primary' : 'default'"
         @click="activeCategory = cat"
       >
-        {{ cat }}
+        {{ manualCategoryLabel(cat) }}
       </el-button>
     </div>
 
     <el-input
       v-model="keyword"
-      placeholder="搜索公式名称、标签…"
+      :placeholder="ct('manual.searchPlaceholder')"
       clearable
       class="mb-6 max-w-md"
     >
@@ -43,47 +43,52 @@
         <div class="mt-3 flex flex-wrap gap-1">
           <el-tag v-for="tag in item.tags" :key="tag" size="small" type="info">{{ tag }}</el-tag>
         </div>
-        <div v-if="item.category === '齿轮'" class="mt-3">
-          <router-link to="/gear" class="text-sm text-primary hover:underline">→ 打开齿轮计算器</router-link>
+        <div v-if="item.categoryKey === 'gear'" class="mt-3">
+          <router-link to="/gear" class="text-sm text-primary hover:underline">{{ ct('manual.openGear') }}</router-link>
         </div>
-        <div v-if="item.category === '轴承'" class="mt-3">
-          <router-link to="/bearing" class="text-sm text-primary hover:underline">→ 打开轴承计算器</router-link>
+        <div v-if="item.categoryKey === 'bearing'" class="mt-3">
+          <router-link to="/bearing" class="text-sm text-primary hover:underline">{{ ct('manual.openBearing') }}</router-link>
         </div>
-        <div v-if="item.category === '螺纹'" class="mt-3">
-          <router-link to="/thread" class="text-sm text-primary hover:underline">→ 打开螺纹计算器</router-link>
+        <div v-if="item.categoryKey === 'thread'" class="mt-3">
+          <router-link to="/thread" class="text-sm text-primary hover:underline">{{ ct('manual.openThread') }}</router-link>
         </div>
       </div>
     </div>
-    <el-empty v-if="!filtered.length" description="未找到匹配公式" />
+    <el-empty v-if="!filtered.length" :description="ct('manual.empty')" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { FORMULAS } from '@/constants/formulas'
+import { Search } from '@element-plus/icons-vue'
+import { useContentI18n } from '@/composables/useContentI18n'
+
+const categoryKeys = ['all', 'chain', 'stats', 'gear', 'bearing', 'thread', 'struct', 'drive', 'fluid', 'mfg', 'material', 'quality', 'fatigue', 'tol', 'strength']
 
 const keyword = ref('')
-const activeCategory = ref('全部')
+const activeCategory = ref('all')
 
-const categories = ['全部', '尺寸链', '统计', '齿轮', '轴承', '螺纹', '结构', '传动', '流体']
+const { ct, formulas, manualCategoryLabel, filterFormulas } = useContentI18n()
 
-const filtered = computed(() => {
-  let list = FORMULAS
-  if (activeCategory.value !== '全部') {
-    list = list.filter((f) => f.category === activeCategory.value)
+const categoryKeyByLabel = computed(() => {
+  const out = {}
+  for (const key of categoryKeys) {
+    if (key === 'all') continue
+    out[manualCategoryLabel(key)] = key
   }
-  const k = keyword.value.trim().toLowerCase()
-  if (!k) return list
-  return list.filter(
-    (f) =>
-      f.name.toLowerCase().includes(k) ||
-      f.formula.toLowerCase().includes(k) ||
-      f.latex.toLowerCase().includes(k) ||
-      f.desc.toLowerCase().includes(k) ||
-      (f.category && f.category.toLowerCase().includes(k)) ||
-      f.tags.some((t) => t.toLowerCase().includes(k)),
-  )
+  return out
 })
+
+const localizedFormulas = computed(() =>
+  formulas.value.map((f) => ({
+    ...f,
+    categoryKey: categoryKeyByLabel.value[f.category],
+  })),
+)
+
+const filtered = computed(() =>
+  filterFormulas(localizedFormulas.value, activeCategory.value, keyword.value),
+)
 </script>
 
 <style scoped>
