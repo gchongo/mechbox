@@ -293,9 +293,15 @@ const router = createRouter({
 })
 
 router.afterEach((to) => {
-  requestAnimationFrame(() => {
+  const scrollTop = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-  })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }
+  scrollTop()
+  requestAnimationFrame(scrollTop)
+  setTimeout(scrollTop, 0)
+  setTimeout(scrollTop, 100)
 
   document.title = to.meta.title
     ? `${to.meta.title} - 机械工具箱`

@@ -1,5 +1,5 @@
 <template>
-  <header class="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+  <header class="app-header sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
       <router-link
         to="/"
@@ -29,7 +29,7 @@
           {{ item.label }}
         </router-link>
 
-        <el-dropdown trigger="click" @command="goTool">
+        <el-dropdown trigger="click" :hide-on-click="true" @command="goTool">
           <button
             type="button"
             class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:py-2"
@@ -209,19 +209,37 @@ function isActive(path) {
   return route.path.startsWith(path)
 }
 
+function scrollPageTop() {
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  document.documentElement.scrollTop = 0
+  document.body.scrollTop = 0
+}
+
 function goTool(path) {
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur()
   }
   router.push(path).then(() => {
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-    })
+    scrollPageTop()
+    requestAnimationFrame(scrollPageTop)
+    setTimeout(scrollPageTop, 0)
+    setTimeout(scrollPageTop, 50)
+    setTimeout(scrollPageTop, 150)
   })
 }
 </script>
 
 <style scoped>
+.app-header {
+  /* 半透明 + 模糊，滚动时仍可读 */
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+}
+
+.dark .app-header {
+  background-color: rgba(31, 41, 55, 0.92);
+}
+
 :deep(.el-dropdown-menu__item.is-active) {
   color: var(--el-color-primary);
   font-weight: 600;

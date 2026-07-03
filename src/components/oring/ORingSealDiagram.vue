@@ -7,7 +7,7 @@
 
     <svg
       class="oring-diagram__svg"
-      viewBox="0 0 520 300"
+      viewBox="0 0 720 420"
       role="img"
       aria-label="O 型圈沟槽参数示意图"
     >
@@ -21,8 +21,8 @@
       </defs>
 
       <!-- 缸孔 / 壳体 -->
-      <rect x="48" y="40" width="320" height="220" rx="4" class="housing" />
-      <text x="56" y="58" class="label label--muted">壳体 / 孔壁</text>
+      <rect x="56" y="48" width="420" height="280" rx="4" class="housing" />
+      <text x="68" y="72" class="label label--muted">壳体 / 孔壁</text>
 
       <!-- 沟槽腔 -->
       <rect
@@ -129,33 +129,30 @@
         :x1="grooveLeft + grooveWpx / 2"
         :y1="grooveTop + grooveHpx + 8"
         :x2="grooveLeft + grooveWpx / 2"
-        :y2="260"
+        :y2="360"
         class="dim-line dim-line--dg"
       />
-      <text :x="grooveLeft + grooveWpx / 2 - 42" y="278" class="label label--primary">d_g 沟槽底径</text>
-      <text :x="grooveLeft + grooveWpx / 2 - 22" y="292" class="label-sub">{{ grooveDiameter }} mm</text>
+      <text :x="grooveLeft + grooveWpx / 2 - 52" y="382" class="label label--primary">d_g 沟槽底径</text>
+      <text :x="grooveLeft + grooveWpx / 2 - 28" y="402" class="label-sub">{{ grooveDiameter }} mm</text>
 
       <!-- 孔径示意 -->
       <template v-if="boreDiameter">
-        <path
-          :d="`M 400 40 L 400 260`"
-          class="bore-line"
-        />
-        <text x="408" y="150" class="label label--muted">孔径 Ø{{ boreDiameter }}</text>
+        <path d="M 520 48 L 520 328" class="bore-line" />
+        <text x="528" y="190" class="label label--muted">孔径 Ø{{ boreDiameter }}</text>
       </template>
 
       <!-- 放大：自由截面 -->
-      <g transform="translate(380, 200)">
-        <rect x="0" y="0" width="120" height="72" rx="6" class="inset-box" />
-        <text x="8" y="14" class="label-inset-title">自由截面</text>
-        <circle cx="42" cy="42" :r="insetR" class="oring-inset" />
-        <line x1="42 - insetR" y1="58" x2="42 + insetR" y2="58" marker-start="url(#oring-arrow)" marker-end="url(#oring-arrow)" class="dim-line" />
-        <text x="24" y="68" class="label-inset">d_cs</text>
+      <g transform="translate(520, 260)">
+        <rect x="0" y="0" width="160" height="100" rx="8" class="inset-box" />
+        <text x="12" y="22" class="label-inset-title">自由截面</text>
+        <circle cx="56" cy="58" :r="insetR" class="oring-inset" />
+        <line :x1="56 - insetR" y1="82" :x2="56 + insetR" y2="82" marker-start="url(#oring-arrow)" marker-end="url(#oring-arrow)" class="dim-line" />
+        <text x="32" y="96" class="label-inset">d_cs = {{ crossSection }} mm</text>
       </g>
 
       <!-- 专业：安装拉伸 -->
       <template v-if="showPro && stretchPercent > 0">
-        <text x="48" y="288" class="label label--pro">安装拉伸 {{ stretchPercent?.toFixed(1) }}%</text>
+        <text x="56" y="408" class="label label--pro">安装拉伸 {{ stretchPercent?.toFixed(1) }}%</text>
       </template>
     </svg>
 
@@ -188,24 +185,24 @@ const props = defineProps({
   boreDiameter: { type: Number, default: 0 },
 })
 
-const PX_PER_MM = 5.5
+const PX_PER_MM = 9
 
-const grooveWpx = computed(() => Math.min(120, Math.max(40, props.grooveWidth * PX_PER_MM)))
-const grooveHpx = computed(() => Math.min(80, Math.max(28, props.grooveDepth * PX_PER_MM)))
-const oringRx = computed(() => Math.max(10, (props.crossSection * PX_PER_MM) / 2))
+const grooveWpx = computed(() => Math.min(180, Math.max(56, props.grooveWidth * PX_PER_MM)))
+const grooveHpx = computed(() => Math.min(120, Math.max(40, props.grooveDepth * PX_PER_MM)))
+const oringRx = computed(() => Math.max(16, (props.crossSection * PX_PER_MM) / 2))
 const oringRy = computed(() => {
   const compressRatio = 1 - (props.compressionPercent ?? 20) / 200
-  return Math.max(8, oringRx.value * compressRatio)
+  return Math.max(12, oringRx.value * compressRatio)
 })
 const compressPx = computed(() => oringRx.value - oringRy.value)
-const extrusionGapPx = computed(() => (props.extrusionGap ?? 0.15) * PX_PER_MM * 2)
+const extrusionGapPx = computed(() => (props.extrusionGap ?? 0.15) * PX_PER_MM * 2.5)
 
-const grooveLeft = computed(() => 200)
-const grooveTop = computed(() => 110)
+const grooveLeft = computed(() => 220)
+const grooveTop = computed(() => 130)
 const oringCx = computed(() => grooveLeft.value + grooveWpx.value * 0.45)
 const oringCy = computed(() => grooveTop.value + grooveHpx.value - oringRy.value - 2)
 
-const insetR = computed(() => Math.min(16, Math.max(8, props.crossSection * PX_PER_MM * 0.35)))
+const insetR = computed(() => Math.min(28, Math.max(14, props.crossSection * PX_PER_MM * 0.38)))
 const grooveDepthLabel = computed(() => props.grooveDepth?.toFixed(2) ?? '—')
 
 const showExtrusion = computed(() => props.calcMode !== 'simple')
@@ -236,23 +233,25 @@ const legendItems = computed(() => {
 
 <style scoped>
 .oring-diagram {
-  @apply mt-5 rounded-lg border border-gray-200 bg-gray-50/80 p-3 dark:border-gray-600 dark:bg-gray-900/40;
+  @apply rounded-lg border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-600 dark:bg-gray-900/40;
 }
 
 .oring-diagram__head {
-  @apply mb-2;
+  @apply mb-3;
 }
 
 .oring-diagram__title {
-  @apply text-sm font-semibold text-gray-800 dark:text-gray-100;
+  @apply text-base font-semibold text-gray-800 dark:text-gray-100;
 }
 
 .oring-diagram__hint {
-  @apply mt-0.5 text-xs text-gray-500 dark:text-gray-400;
+  @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
 }
 
 .oring-diagram__svg {
-  @apply mx-auto block w-full max-w-lg;
+  @apply mx-auto block w-full;
+  min-height: 280px;
+  max-height: min(520px, 70vh);
 }
 
 .oring-diagram__svg .housing {
@@ -330,7 +329,7 @@ const legendItems = computed(() => {
 }
 
 .oring-diagram__svg .label {
-  font-size: 11px;
+  font-size: 14px;
   fill: #475569;
   font-family: system-ui, sans-serif;
 }
@@ -346,21 +345,21 @@ const legendItems = computed(() => {
 
 .oring-diagram__svg .label--compress {
   fill: #409eff;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .oring-diagram__svg .label--pro {
   fill: #8b5cf6;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .oring-diagram__svg .label--muted {
   fill: #94a3b8;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .oring-diagram__svg .label-sub {
-  font-size: 9px;
+  font-size: 12px;
   fill: #94a3b8;
 }
 
@@ -375,17 +374,17 @@ const legendItems = computed(() => {
 }
 
 .oring-diagram__svg .label-inset-title {
-  font-size: 9px;
+  font-size: 12px;
   fill: #94a3b8;
 }
 
 .oring-diagram__svg .label-inset {
-  font-size: 10px;
+  font-size: 13px;
   fill: #64748b;
 }
 
 .oring-diagram__legend {
-  @apply mt-3 grid gap-1.5 border-t border-gray-200 pt-3 text-xs dark:border-gray-600 sm:grid-cols-2;
+  @apply mt-4 grid gap-2 border-t border-gray-200 pt-4 text-sm dark:border-gray-600 sm:grid-cols-2 lg:grid-cols-3;
 }
 
 .oring-diagram__legend-item {
