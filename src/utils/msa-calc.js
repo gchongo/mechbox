@@ -117,7 +117,9 @@ export function parseGageRRFromRows(rows) {
     opMap.set(part, trials.map(Number))
   }
   const opKeys = [...byOp.keys()]
-  const partKeys = [...byOp.values()[0].keys()]
+  const firstOp = byOp.get(opKeys[0])
+  if (!firstOp) return []
+  const partKeys = [...firstOp.keys()]
   return opKeys.map((op) => partKeys.map((part) => byOp.get(op).get(part)))
 }
 

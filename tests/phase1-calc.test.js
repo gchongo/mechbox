@@ -92,6 +92,24 @@ describe('msa-calc', () => {
     expect(r.GRR).toBeGreaterThan(0)
     expect(r.pctGRR).toBeGreaterThan(0)
     expect(r.ratingKey).toBeTruthy()
+    expect(r.nOperators).toBe(3)
+    expect(r.nParts).toBe(2)
+    expect(r.nTrials).toBe(3)
+  })
+
+  it('parseGageRRText returns config counts', async () => {
+    const { parseGageRRText } = await import('@/utils/msa-calc')
+    const text = `A,1,10.02,10.05,10.03
+A,2,10.15,10.12,10.14
+B,1,10.04,10.01,10.06
+B,2,10.18,10.16,10.17
+C,1,10.00,10.03,10.02
+C,2,10.14,10.13,10.15`
+    const p = parseGageRRText(text)
+    expect(p.error).toBeUndefined()
+    expect(p.result.nOperators).toBe(3)
+    expect(p.result.nParts).toBe(2)
+    expect(p.result.nTrials).toBe(3)
   })
 })
 

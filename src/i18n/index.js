@@ -204,6 +204,7 @@ const zh = {
   },
   calc: {
     common: calcZh.common,
+    fields: calcZh.fields,
     pages: calcZh.pages,
     diagrams: diagramZh,
     options: optionsZh,
@@ -406,6 +407,7 @@ const en = {
   },
   calc: {
     common: calcEn.common,
+    fields: calcEn.fields,
     pages: calcEn.pages,
     diagrams: diagramEn,
     options: optionsEn,

@@ -22,7 +22,13 @@
             </el-select>
           </el-form-item>
         </el-form>
-        <p class="mb-4 text-xs text-gray-500">{{ currentMethodDesc }}</p>
+        <p class="mb-4 text-xs text-gray-500">
+          <template v-if="currentMethodDescLatex">
+            {{ currentMethodDesc }} —
+            <MathTex :expr="currentMethodDescLatex" inline />
+          </template>
+          <span v-else>{{ currentMethodDesc }}</span>
+        </p>
 
         <h3 class="mb-2 text-sm font-medium">{{ pt('sectionRings') }}</h3>
         <div class="space-y-3">
@@ -154,6 +160,7 @@ import { findAnalysisType } from '@/constants/analysis-types'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useDemoData } from '@/composables/useDemoData'
+import MathTex from '@/components/common/MathTex.vue'
 
 const router = useRouter()
 const { pt, pf, pr, fc, locale } = useCalcPage('allocation')
@@ -181,6 +188,10 @@ function methodLabel(id) {
 }
 
 const currentMethodDesc = computed(() => ol('allocationMethods', methodId.value, 'desc'))
+const currentMethodDescLatex = computed(() => {
+  const latex = ol('allocationMethods', methodId.value, 'descLatex')
+  return latex !== methodId.value && latex.includes('\\') ? latex : ''
+})
 
 const isAdvancedMethod = computed(() => methodId.value === 'genetic' || methodId.value === 'pareto')
 const needsSensitivity = computed(

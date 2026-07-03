@@ -222,7 +222,13 @@ const pChartRef = ref(null)
 let plotly = null
 
 const msaParsed = computed(() => parseGageRRText(msaText.value))
-const msaResult = computed(() => msaParsed.value.result ?? msaParsed.value)
+const msaResult = computed(() => {
+  const p = msaParsed.value
+  if (p?.result && !p.result.errorKey) return p.result
+  if (p?.errorKey) return p
+  if (p?.error) return { errorKey: 'msa_parse_error' }
+  return null
+})
 
 const msaRatingLabel = computed(() => {
   locale.value

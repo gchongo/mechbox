@@ -209,11 +209,23 @@ export const optionsZh = {
     L9: { label: 'L9 (3⁴)' },
   },
   allocationMethods: {
-    'equal-effect': { label: '等贡献 RSS', desc: '各环方差贡献相等，Tᵢ = T·fᵢ/√(Σf²)' },
+    'equal-effect': {
+      label: '等贡献 RSS',
+      desc: '各环方差贡献相等',
+      descLatex: 'T_i = T \\cdot f_i / \\sqrt{\\sum f^2}',
+    },
     'equal-tol': { label: '等公差 RSS', desc: '各环分配相同公差，再验证 RSS 叠加' },
     proportional: { label: '比例分配', desc: '按名义尺寸比例分配总公差（极值法参考）' },
-    'min-cost': { label: '最小成本 RSS', desc: '成本系数越大分配越小，Tᵢ ∝ √(cᵢ)·fᵢ' },
-    sensitivity: { label: '灵敏度 RSS', desc: '按灵敏度系数 sᵢ 加权，Tᵢ ∝ sᵢ·fᵢ' },
+    'min-cost': {
+      label: '最小成本 RSS',
+      desc: '成本系数越大分配越小',
+      descLatex: 'T_i \\propto \\sqrt{c_i} \\cdot f_i',
+    },
+    sensitivity: {
+      label: '灵敏度 RSS',
+      desc: '按灵敏度系数加权',
+      descLatex: 'T_i \\propto s_i \\cdot f_i',
+    },
     'sensitivity-iter': { label: '迭代灵敏度', desc: '多轮调整灵敏度系数直至 RSS 收敛' },
     genetic: { label: '遗传算法（最小成本）', desc: '在 RSS ≤ 目标约束下最小化制造成本指数' },
     pareto: { label: '多目标 Pareto', desc: '成本与 RSS 利用率权衡，展示非支配解集' },
@@ -456,11 +468,23 @@ export const optionsEn = {
     L9: { label: 'L9 (3⁴)' },
   },
   allocationMethods: {
-    'equal-effect': { label: 'Equal RSS contribution', desc: 'Equal variance share: Tᵢ = T·fᵢ/√(Σf²)' },
+    'equal-effect': {
+      label: 'Equal RSS contribution',
+      desc: 'Equal variance share per ring',
+      descLatex: 'T_i = T \\cdot f_i / \\sqrt{\\sum f^2}',
+    },
     'equal-tol': { label: 'Equal tolerance RSS', desc: 'Same tolerance per ring, then RSS check' },
     proportional: { label: 'Proportional', desc: 'Allocate by nominal size ratio (worst-case reference)' },
-    'min-cost': { label: 'Minimum cost RSS', desc: 'Higher cost → smaller allocation, Tᵢ ∝ √(cᵢ)·fᵢ' },
-    sensitivity: { label: 'Sensitivity RSS', desc: 'Weighted by sensitivity sᵢ, Tᵢ ∝ sᵢ·fᵢ' },
+    'min-cost': {
+      label: 'Minimum cost RSS',
+      desc: 'Higher cost index → smaller allocation',
+      descLatex: 'T_i \\propto \\sqrt{c_i} \\cdot f_i',
+    },
+    sensitivity: {
+      label: 'Sensitivity RSS',
+      desc: 'Weighted by sensitivity coefficient',
+      descLatex: 'T_i \\propto s_i \\cdot f_i',
+    },
     'sensitivity-iter': { label: 'Iterative sensitivity', desc: 'Iterate sensitivity until RSS converges' },
     genetic: { label: 'Genetic algorithm (min cost)', desc: 'Minimize cost index under RSS ≤ target' },
     pareto: { label: 'Multi-objective Pareto', desc: 'Cost vs RSS utilization trade-off front' },

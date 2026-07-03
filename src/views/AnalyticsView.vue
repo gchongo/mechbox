@@ -81,7 +81,15 @@
         </div>
         <section v-if="doeRuns.length" class="card-panel mt-6">
           <h3 class="mb-2 font-semibold">{{ pt('sectionTestPlan') }}</h3>
-          <el-table :data="doeRuns" size="small" border />
+          <el-table :data="doeRuns" size="small" border>
+            <el-table-column prop="run" label="#" width="56" />
+            <el-table-column
+              v-for="(f, i) in doeFactors"
+              :key="i"
+              :prop="f.name || `F${i + 1}`"
+              :label="f.name || `F${i + 1}`"
+            />
+          </el-table>
         </section>
       </el-tab-pane>
 
