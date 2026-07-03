@@ -54,12 +54,15 @@ export const ORTHOGONAL_ARRAYS = {
  */
 export function analyzeMainEffects(arrayId, factors, responses) {
   const array = ORTHOGONAL_ARRAYS[arrayId]
-  if (!array) return { error: '未知正交表' }
+  if (!array) return { errorKey: 'doe_unknown_array' }
   if (responses.length !== array.matrix.length) {
-    return { error: `响应值须 ${array.matrix.length} 个（与 ${arrayId} 行数一致）` }
+    return {
+      errorKey: 'doe_response_count',
+      errorParams: { count: array.matrix.length, arrayId },
+    }
   }
   if (factors.length > array.factors) {
-    return { error: `${arrayId} 最多 ${array.factors} 因子` }
+    return { errorKey: 'doe_max_factors', errorParams: { arrayId, max: array.factors } }
   }
 
   const effects = []

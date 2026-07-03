@@ -58,14 +58,14 @@ describe('rsm-calc', () => {
   it('fits quadratic RSM model', () => {
     const responses = [10, 12, 11, 14, 11, 13, 10.5, 12.8, 12, 11.9, 12.1]
     const r = analyzeRSM(f1, f2, responses)
-    expect(r.error).toBeUndefined()
+    expect(r.errorKey).toBeUndefined()
     expect(r.fit.r2).toBeGreaterThan(0)
     expect(r.fit.optimum.predictedY).toBeGreaterThan(0)
   })
 
   it('rejects insufficient responses', () => {
     const r = fitRSM([{ x1: 0, x2: 0, y: 1 }])
-    expect(r.error).toBeTruthy()
+    expect(r.errorKey).toBeTruthy()
   })
 })
 

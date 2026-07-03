@@ -51,7 +51,7 @@ export function analyzeBoltGroupComplete(input) {
 
   const positions = input.boltPositions ?? generateCircleBoltPositions(n, radius)
   const Ip = positions.reduce((s, p) => s + p.x ** 2 + p.y ** 2, 0)
-  if (!Ip) return { error: '螺栓位置无效' }
+  if (!Ip) return { errorKey: 'bolt_group_invalid_positions' }
 
   const bolts = positions.map((p, i) => {
     const fx = Fx / n - (M * p.y) / Ip

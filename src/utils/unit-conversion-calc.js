@@ -142,13 +142,13 @@ export const UNIT_CATEGORIES = {
 /** 线性单位换算（除温度外） */
 export function convertUnit(value, fromUnit, toUnit, categoryId) {
   const cat = UNIT_CATEGORIES[categoryId]
-  if (!cat) return { error: '未知类别' }
+  if (!cat) return { errorKey: 'unit_unknown_category' }
   if (cat.special) return convertTemperature(value, fromUnit, toUnit)
 
   const fromFactor = cat.units[fromUnit]
   const toFactor = cat.units[toUnit]
   if (fromFactor == null || toFactor == null) {
-    return { error: '未知单位' }
+    return { errorKey: 'unit_unknown_unit' }
   }
 
   const baseValue = value * fromFactor
@@ -161,13 +161,13 @@ export function convertTemperature(value, fromUnit, toUnit) {
   if (fromUnit === '°C') celsius = value
   else if (fromUnit === '°F') celsius = ((value - 32) * 5) / 9
   else if (fromUnit === 'K') celsius = value - 273.15
-  else return { error: '未知温度单位' }
+  else return { errorKey: 'unit_unknown_temp' }
 
   let result
   if (toUnit === '°C') result = celsius
   else if (toUnit === '°F') result = (celsius * 9) / 5 + 32
   else if (toUnit === 'K') result = celsius + 273.15
-  else return { error: '未知温度单位' }
+  else return { errorKey: 'unit_unknown_temp' }
 
   return { value: result, category: 'temperature' }
 }
@@ -175,7 +175,7 @@ export function convertTemperature(value, fromUnit, toUnit) {
 /** 批量换算：同一数值转换到该类别所有单位 */
 export function convertToAll(value, fromUnit, categoryId) {
   const cat = UNIT_CATEGORIES[categoryId]
-  if (!cat) return { error: '未知类别' }
+  if (!cat) return { errorKey: 'unit_unknown_category' }
 
   if (cat.special) {
     const rows = ['°C', '°F', 'K'].map((u) => {
@@ -206,7 +206,7 @@ export const QUICK_PAIRS = [
 
 export function quickConvert(pairId, value) {
   const pair = QUICK_PAIRS[pairId]
-  if (!pair) return { error: '无效快捷项' }
+  if (!pair) return { errorKey: 'unit_invalid_quick' }
   const cat = UNIT_CATEGORIES[pair.category]
   if (cat.special) {
     return { ...convertTemperature(value, pair.from, pair.to), from: pair.from, to: pair.to }

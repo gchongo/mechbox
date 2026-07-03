@@ -1,22 +1,20 @@
 <template>
   <div>
-    <h1 class="page-title">GD&T 形位公差栈</h1>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">
-      位置度/平面度/同轴度等专用叠加、基准累积与贡献度分析
-    </p>
+    <h1 class="page-title">{{ pt('title') }}</h1>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
     <section class="card-panel mb-4">
       <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">计算模型</span>
+        <span class="text-sm font-medium">{{ ct('model') }}</span>
         <el-radio-group v-model="form.calcMode">
-          <el-radio-button label="simple">简化</el-radio-button>
-          <el-radio-button label="complete">完整</el-radio-button>
-          <el-radio-button label="professional">专业</el-radio-button>
+          <el-radio-button label="simple">{{ ct('simple') }}</el-radio-button>
+          <el-radio-button label="complete">{{ ct('complete') }}</el-radio-button>
+          <el-radio-button label="professional">{{ ct('professional') }}</el-radio-button>
         </el-radio-group>
         <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">RSS/极值叠加结果。</template>
-          <template v-else-if="form.calcMode === 'complete'">贡献度与基准累积。</template>
-          <template v-else>极值裕度与收紧建议。</template>
+          <template v-if="form.calcMode === 'simple'">{{ pt('hintSimple') }}</template>
+          <template v-else-if="form.calcMode === 'complete'">{{ pt('hintComplete') }}</template>
+          <template v-else>{{ pt('hintProfessional') }}</template>
         </p>
       </div>
     </section>
@@ -27,13 +25,13 @@
       type="success"
       :closable="true"
       show-icon
-      title="已从尺寸链编辑器导入"
-      :description="`类型: ${importedTypeName ?? form.typeId}，${form.rings.length} 个组成环`"
+      :title="pt('importedAlert')"
+      :description="pt('importedDesc', { type: importedTypeName ?? form.typeId, count: form.rings.length })"
     />
 
     <div class="mb-4 flex flex-wrap gap-2">
       <el-button
-        v-for="(p, key) in GDT_STACK_PRESETS"
+        v-for="(p, key) in gdtPresets"
         :key="key"
         size="small"
         @click="loadPreset(key)"
@@ -45,60 +43,60 @@
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <el-form label-width="100px">
-          <el-form-item label="GD&T 类型">
+          <el-form-item :label="pf('gdtType')">
             <el-select v-model="form.typeId" class="w-full">
-              <el-option v-for="(m, k) in GDT_CALC_MODES" :key="k" :label="m.label" :value="k" />
+              <el-option v-for="(m, k) in gdtModes" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
-          <el-form-item label="叠加方法">
+          <el-form-item :label="pf('stackMethod')">
             <el-select v-model="form.method" class="w-full">
-              <el-option value="rss" label="RSS" />
-              <el-option value="worst" label="极值" />
-              <el-option value="modified-rss" label="修正 RSS" />
+              <el-option value="rss" :label="ol('stackMethods', 'rss')" />
+              <el-option value="worst" :label="ol('stackMethods', 'worst')" />
+              <el-option value="modified-rss" :label="ol('stackMethods', 'modified-rss')" />
             </el-select>
           </el-form-item>
-          <el-form-item label="封闭环上限">
+          <el-form-item :label="pf('closedMax')">
             <el-input-number v-model="form.closedMax" :min="0.001" :precision="4" :step="0.01" />
           </el-form-item>
-          <el-form-item label="材料条件">
+          <el-form-item :label="pf('materialCondition')">
             <el-radio-group v-model="form.toleranceModifier">
               <el-radio label="RFS">RFS</el-radio>
               <el-radio label="MMC">MMC</el-radio>
               <el-radio label="LMC">LMC</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item v-if="form.toleranceModifier !== 'RFS'" label="奖励公差">
+          <el-form-item v-if="form.toleranceModifier !== 'RFS'" :label="pf('bonusTolerance')">
             <el-input-number v-model="form.bonusTolerance" :min="0" :precision="4" :step="0.005" />
           </el-form-item>
         </el-form>
 
-        <h3 class="mb-2 text-sm font-semibold">组成环</h3>
+        <h3 class="mb-2 text-sm font-semibold">{{ pt('sectionRings') }}</h3>
         <div v-for="(ring, i) in form.rings" :key="i" class="mb-2 rounded border border-gray-100 p-2 dark:border-gray-700">
           <div class="flex flex-wrap gap-2">
-            <el-input v-model="ring.name" placeholder="名称" class="w-28" size="small" />
+            <el-input v-model="ring.name" :placeholder="pf('ringName')" class="w-28" size="small" />
             <el-input-number v-model="ring.tolerance" :min="0" :precision="4" :step="0.005" size="small" />
             <el-input-number v-model="ring.factor" :min="0" :max="2" :precision="2" :step="0.1" size="small" />
             <el-select v-if="needsDirection" v-model="ring.direction" size="small" class="w-20">
               <el-option value="right" label="X" />
               <el-option value="up" label="Y" />
             </el-select>
-            <el-button size="small" type="danger" text @click="removeRing(i)">删</el-button>
+            <el-button size="small" type="danger" text @click="removeRing(i)">{{ fc('delete') }}</el-button>
           </div>
         </div>
-        <el-button size="small" @click="addRing">+ 添加环</el-button>
+        <el-button size="small" @click="addRing">{{ pt('addRing') }}</el-button>
 
-        <h3 class="mb-2 mt-4 text-sm font-semibold">基准 (可选)</h3>
+        <h3 class="mb-2 mt-4 text-sm font-semibold">{{ pt('sectionDatums') }}</h3>
         <div v-for="(d, i) in form.datums" :key="i" class="mb-2 flex gap-2">
-          <el-input v-model="d.label" size="small" placeholder="基准" class="flex-1" />
+          <el-input v-model="d.label" size="small" :placeholder="pf('datumLabel')" class="flex-1" />
           <el-select v-model="d.priority" size="small" class="w-24">
-            <el-option value="primary" label="主" />
-            <el-option value="secondary" label="次" />
-            <el-option value="tertiary" label="三" />
+            <el-option value="primary" :label="ol('datumPriorities', 'primary')" />
+            <el-option value="secondary" :label="ol('datumPriorities', 'secondary')" />
+            <el-option value="tertiary" :label="ol('datumPriorities', 'tertiary')" />
           </el-select>
           <el-input-number v-model="d.tolerance" :min="0" :precision="4" size="small" />
-          <el-button size="small" type="danger" text @click="form.datums.splice(i, 1)">删</el-button>
+          <el-button size="small" type="danger" text @click="form.datums.splice(i, 1)">{{ fc('delete') }}</el-button>
         </div>
-        <el-button size="small" @click="addDatum">+ 基准</el-button>
+        <el-button size="small" @click="addDatum">{{ pt('addDatum') }}</el-button>
       </section>
 
       <section ref="resultRef" class="card-panel">
@@ -106,40 +104,40 @@
         <template v-else-if="result">
           <div class="mb-4 flex items-center gap-2">
             <el-tag :type="result.pass ? 'success' : 'danger'">
-              {{ result.pass ? '合格' : '不合格' }}
+              {{ result.pass ? pt('passTag') : pt('failTag') }}
             </el-tag>
-            <span class="text-sm text-gray-500">{{ result.mode.label }}</span>
+            <span class="text-sm text-gray-500">{{ modeLabel }}</span>
           </div>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between rounded bg-primary/5 p-3">
-              <dt>叠加公差</dt>
+              <dt>{{ pr('stackedTolerance') }}</dt>
               <dd class="font-mono text-lg text-primary">{{ result.chainResult.totalTolerance?.toFixed(4) }} mm</dd>
             </div>
             <div v-if="result.modifier.effective !== result.chainResult.totalTolerance" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>含 {{ form.toleranceModifier }} 奖励</dt>
+              <dt>{{ pr('withBonus', { modifier: form.toleranceModifier }) }}</dt>
               <dd class="font-mono">{{ result.modifier.effective?.toFixed(4) }} mm</dd>
             </div>
             <div v-if="result.datumStack" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>含基准累积</dt>
+              <dt>{{ pr('withDatumStack') }}</dt>
               <dd class="font-mono" :class="result.passWithDatum ? 'text-success' : 'text-error'">
                 {{ result.effectiveWithDatum?.toFixed(4) }} mm
               </dd>
             </div>
             <div v-if="result.worstCaseMargin != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>极值裕度</dt>
+              <dt>{{ pr('worstMargin') }}</dt>
               <dd class="font-mono" :class="result.worstCaseMargin >= 0 ? 'text-success' : 'text-error'">
                 {{ result.worstCaseMargin?.toFixed(4) }} mm
               </dd>
             </div>
           </dl>
 
-          <h3 v-if="result.contributions?.length" class="mb-2 mt-4 text-sm font-semibold">贡献度</h3>
+          <h3 v-if="result.contributions?.length" class="mb-2 mt-4 text-sm font-semibold">{{ pr('contributions') }}</h3>
           <el-table v-if="result.contributions?.length" :data="result.contributions" size="small" border>
-            <el-table-column prop="name" label="组成环" />
-            <el-table-column label="公差 (mm)">
+            <el-table-column prop="name" :label="pr('ring')" />
+            <el-table-column :label="pr('toleranceMm')">
               <template #default="{ row }">{{ row.tolerance?.toFixed(4) }}</template>
             </el-table-column>
-            <el-table-column label="贡献 (%)">
+            <el-table-column :label="pr('contributionPct')">
               <template #default="{ row }">
                 <div class="flex items-center gap-2">
                   <div class="h-2 flex-1 rounded bg-gray-100 dark:bg-gray-800">
@@ -155,7 +153,7 @@
     </div>
 
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
-      <el-button type="primary" plain @click="exportPdf">导出 PDF</el-button>
+      <el-button type="primary" plain @click="exportPdf">{{ fc('exportPdfReport') }}</el-button>
       <SaveHistoryButton
         tool="gdt-stack"
         :title="`GD&T ${form.typeId}`"
@@ -165,7 +163,7 @@
         :result="result"
       />
       <router-link to="/editor">
-        <el-button plain>打开尺寸链编辑器</el-button>
+        <el-button plain>{{ pt('openEditor') }}</el-button>
       </router-link>
     </div>
   </div>
@@ -183,13 +181,21 @@ import {
 import { exportToolReportPdf } from '@/utils/export'
 import { GDT_STACK_STORAGE_KEY, deserializeGdtStackPayload } from '@/constants/editor-bridge'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const route = useRoute()
+const { pt, pf, pr, fc, ct, locale } = useCalcPage('gdt-stack')
 const { resultError } = useResultI18n()
+const { ol, optionMap } = useOptionsI18n()
 const resultRef = ref(null)
 const fromEditor = ref(false)
 const importedTypeName = ref('')
+
+const gdtModes = computed(() => optionMap(GDT_CALC_MODES, 'gdtCalcModes'))
+const gdtPresets = computed(() => optionMap(GDT_STACK_PRESETS, 'gdtStackPresets'))
+const modeLabel = computed(() => ol('gdtCalcModes', form.typeId))
 
 const form = reactive({
   calcMode: 'complete',
@@ -224,9 +230,9 @@ const historySummary = computed(() => {
   const r = result.value
   if (!r || r.errorKey) return []
   return [
-    { label: '类型', value: r.mode.label },
-    { label: '公差 (mm)', value: r.chainResult.totalTolerance?.toFixed(4) },
-    { label: '合格', value: r.pass ? '是' : '否' },
+    { label: pr('type'), value: modeLabel.value },
+    { label: pr('toleranceMm'), value: r.chainResult.totalTolerance?.toFixed(4) },
+    { label: pr('qualified'), value: r.pass ? fc('yes') : fc('no') },
   ]
 })
 
@@ -268,7 +274,7 @@ function loadPreset(key) {
 
 function addRing() {
   form.rings.push({
-    name: `环${form.rings.length + 1}`,
+    name: `${pr('ring')}${form.rings.length + 1}`,
     tolerance: 0.02,
     factor: 1,
     type: 'increasing',
@@ -281,25 +287,29 @@ function removeRing(i) {
 }
 
 function addDatum() {
-  form.datums.push({ label: `基准 ${String.fromCharCode(65 + form.datums.length)}`, priority: 'primary', tolerance: 0.02 })
+  form.datums.push({
+    label: `${pf('datumLabel')} ${String.fromCharCode(65 + form.datums.length)}`,
+    priority: 'primary',
+    tolerance: 0.02,
+  })
 }
 
 async function exportPdf() {
   const r = result.value
-  if (!r || r.error) return
+  if (!r || r.errorKey) return
   await exportToolReportPdf({
-    title: 'GD&T 形位公差栈报告',
-    subtitle: r.mode.label,
+    title: pt('pdfTitle'),
+    subtitle: modeLabel.value,
     sections: [
       {
-        heading: '结果',
+        heading: pt('pdfResults'),
         rows: [
-          { label: '叠加公差 (mm)', value: r.chainResult.totalTolerance?.toFixed(4) },
-          { label: '合格', value: r.pass ? '是' : '否' },
-          { label: '最大贡献', value: r.topContributor ?? '-' },
+          { label: pr('stackedTolerance') + ' (mm)', value: r.chainResult.totalTolerance?.toFixed(4) },
+          { label: pr('qualified'), value: r.pass ? fc('yes') : fc('no') },
+          { label: pr('topContributor'), value: r.topContributor ?? '-' },
         ],
       },
-      { heading: '明细', text: buildGdtStackReportText(r) },
+      { heading: pt('pdfDetail'), text: buildGdtStackReportText(r, locale.value) },
     ],
     element: resultRef.value,
     filename: `GD&T栈_${form.typeId}_${Date.now()}.pdf`,

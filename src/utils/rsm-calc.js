@@ -72,12 +72,12 @@ export function generateCCD(factor1, factor2) {
 /** 拟合 y = b0 + b1·x1 + b2·x2 + b12·x1·x2 + b11·x1² + b22·x2² */
 export function fitRSM(runs) {
   if (!runs?.length || runs.length < 6) {
-    return { error: '至少需要 6 个试验点（含中心点）' }
+    return { errorKey: 'rsm_min_points' }
   }
 
   const n = runs.length
   const y = runs.map((r) => r.y)
-  if (y.some((v) => Number.isNaN(v))) return { error: '响应值须为有效数字' }
+  if (y.some((v) => Number.isNaN(v))) return { errorKey: 'rsm_invalid_response' }
 
   const X = runs.map((r) => {
     const x1 = r.codedX1 ?? r.x1
@@ -96,7 +96,7 @@ export function fitRSM(runs) {
   }
 
   const coeffs = gaussSolve(XtX, Xty)
-  if (!coeffs) return { error: '设计矩阵奇异，无法拟合' }
+  if (!coeffs) return { errorKey: 'rsm_singular_matrix' }
 
   const [b0, b1, b2, b12, b11, b22] = coeffs
   const yPred = X.map((row) => row.reduce((s, v, j) => s + v * coeffs[j], 0))
@@ -191,7 +191,7 @@ export function parseRSMResponses(text) {
 export function analyzeRSM(factor1, factor2, responses) {
   const design = generateCCD(factor1, factor2)
   if (responses.length !== design.length) {
-    return { error: `响应值须 ${design.length} 个（与 CCD 试验数一致）` }
+    return { errorKey: 'rsm_response_count', errorParams: { count: design.length } }
   }
 
   const runs = design.map((d, i) => ({
@@ -200,7 +200,7 @@ export function analyzeRSM(factor1, factor2, responses) {
   }))
 
   const fit = fitRSM(runs)
-  if (fit.error) return fit
+  if (fit.errorKey) return fit
 
   const contour = generateContourGrid(fit.predict)
 

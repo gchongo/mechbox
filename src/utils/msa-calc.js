@@ -21,16 +21,16 @@ function kFactor(n) {
  */
 export function analyzeGageRR(measurements) {
   const nOp = measurements.length
-  if (nOp < 2) return { error: '至少需要 2 名操作员' }
+  if (nOp < 2) return { errorKey: 'msa_min_operators' }
 
   const nParts = measurements[0]?.length ?? 0
   const nTrials = measurements[0]?.[0]?.length ?? 0
-  if (nParts < 2 || nTrials < 2) return { error: '至少需要 2 个零件、2 次重复测量' }
+  if (nParts < 2 || nTrials < 2) return { errorKey: 'msa_min_parts_trials' }
 
   for (const op of measurements) {
-    if (op.length !== nParts) return { error: '各操作员零件数须一致' }
+    if (op.length !== nParts) return { errorKey: 'msa_parts_mismatch' }
     for (const part of op) {
-      if (part.length !== nTrials) return { error: '各零件重复次数须一致' }
+      if (part.length !== nTrials) return { errorKey: 'msa_trials_mismatch' }
     }
   }
 
@@ -80,9 +80,9 @@ export function analyzeGageRR(measurements) {
   const pctPV = TV > 0 ? (100 * PV) / TV : 0
   const ndc = GRR > 0 ? 1.41 * (PV / GRR) : Infinity
 
-  let rating = '不可接受'
-  if (pctGRR < 10) rating = '可接受'
-  else if (pctGRR < 30) rating = '有条件接受'
+  let ratingKey = 'unacceptable'
+  if (pctGRR < 10) ratingKey = 'acceptable'
+  else if (pctGRR < 30) ratingKey = 'conditional'
 
   return {
     nOperators: nOp,
@@ -98,7 +98,7 @@ export function analyzeGageRR(measurements) {
     pctGRR,
     pctPV,
     ndc,
-    rating,
+    ratingKey,
     rBar,
     xDiff,
     rp,
@@ -128,7 +128,7 @@ export function parseGageRRText(text) {
     .map((l) => l.split(/[,，\t\s]+/).filter(Boolean))
     .filter((l) => l.length >= 4)
 
-  if (!lines.length) return { error: '无有效数据行' }
+  if (!lines.length) return { errorKey: 'msa_no_rows' }
   try {
     const measurements = parseGageRRFromRows(lines)
     return { measurements, result: analyzeGageRR(measurements) }

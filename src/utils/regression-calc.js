@@ -9,7 +9,7 @@ function mean(arr) {
 /** 简单线性回归 y = a + b·x */
 export function linearRegression(x, y) {
   const n = x.length
-  if (n < 2 || n !== y.length) return { error: '至少需要 2 对数据且 x/y 长度一致' }
+  if (n < 2 || n !== y.length) return { errorKey: 'reg_xy_min_pairs' }
 
   const mx = mean(x)
   const my = mean(y)
@@ -19,7 +19,7 @@ export function linearRegression(x, y) {
     num += (x[i] - mx) * (y[i] - my)
     den += (x[i] - mx) ** 2
   }
-  if (!den) return { error: 'x 无方差' }
+  if (!den) return { errorKey: 'reg_x_no_variance' }
 
   const slope = num / den
   const intercept = my - slope * mx
@@ -45,7 +45,7 @@ export function linearRegression(x, y) {
 export function polynomialRegression(x, y, degree = 2) {
   const n = x.length
   if (n < degree + 1 || n !== y.length) {
-    return { error: `至少需要 ${degree + 1} 个数据点` }
+    return { errorKey: 'reg_poly_min_points', errorParams: { count: degree + 1 } }
   }
 
   const m = degree + 1
@@ -67,7 +67,7 @@ export function polynomialRegression(x, y, degree = 2) {
   }
 
   const coeffs = gaussSolve(XtX, Xty)
-  if (!coeffs) return { error: '矩阵奇异，无法拟合' }
+  if (!coeffs) return { errorKey: 'reg_singular_matrix' }
 
   const yPred = x.map((xi) => coeffs.reduce((s, c, d) => s + c * xi ** d, 0))
   const my = mean(y)

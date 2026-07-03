@@ -34,13 +34,13 @@ export function parseSubgroups(text) {
 
 /** X-R 控制图 */
 export function calcXRChart(subgroups) {
-  if (!subgroups.length) return { error: '无子组数据' }
+  if (!subgroups.length) return { errorKey: 'spc_no_subgroups' }
 
   const n = subgroups[0].length
-  if (n < 2 || n > 10) return { error: '子组大小须为 2–10' }
+  if (n < 2 || n > 10) return { errorKey: 'spc_subgroup_size' }
 
   for (const g of subgroups) {
-    if (g.length !== n) return { error: '各子组样本数须一致' }
+    if (g.length !== n) return { errorKey: 'spc_subgroup_count_mismatch' }
   }
 
   const consts = SPC_CONSTANTS[n]
@@ -77,9 +77,9 @@ export function calcXRChart(subgroups) {
 /** P 控制图（不合格率） */
 export function calcPChart(defectCounts, sampleSizes) {
   if (defectCounts.length !== sampleSizes.length) {
-    return { error: '缺陷数与样本量数组长度须一致' }
+    return { errorKey: 'spc_array_length_mismatch' }
   }
-  if (!defectCounts.length) return { error: '无数据' }
+  if (!defectCounts.length) return { errorKey: 'spc_no_data' }
 
   const pValues = defectCounts.map((d, i) => d / sampleSizes[i])
   const totalDefects = defectCounts.reduce((a, b) => a + b, 0)
@@ -108,7 +108,7 @@ export function calcPChart(defectCounts, sampleSizes) {
 
 /** 单值移动极差 MR 图（兼容原 X 图） */
 export function calcIMRChart(values) {
-  if (values.length < 2) return { error: '至少需要 2 个点' }
+  if (values.length < 2) return { errorKey: 'spc_min_points' }
   const mr = values.slice(1).map((v, i) => Math.abs(v - values[i]))
   const xBar = mean(values)
   const mrBar = mean(mr)

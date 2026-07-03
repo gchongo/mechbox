@@ -1,5 +1,6 @@
 /** Shared calculator UI strings (zh) */
 import { fieldsZh, fieldsEn, mergeCalcPageFields } from './calc-fields-i18n'
+import { modulePagesZh, modulePagesEn } from './module-pages-i18n'
 
 const pagesZh = {
     beam: {
@@ -175,6 +176,7 @@ const pagesZh = {
       hintComplete: '多准则加权评分。',
       hintProfessional: '温度、腐蚀与疲劳约束。',
     },
+    ...modulePagesZh,
 }
 
 export const calcZh = {
@@ -369,6 +371,7 @@ const pagesEn = {
       hintComplete: 'Multi-criteria weighted scoring.',
       hintProfessional: 'Temperature, corrosion, and fatigue constraints.',
     },
+    ...modulePagesEn,
 }
 
 export const calcEn = {

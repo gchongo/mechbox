@@ -10,7 +10,7 @@ export function calcRPN(severity, occurrence, detection) {
 }
 
 export function analyzeFMEA(items) {
-  if (!items?.length) return { error: '至少一条失效模式' }
+  if (!items?.length) return { errorKey: 'fmea_min_items' }
 
   const rows = items.map((item, i) => {
     const rpn = calcRPN(item.severity, item.occurrence, item.detection)

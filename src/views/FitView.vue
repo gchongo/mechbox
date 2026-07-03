@@ -184,11 +184,11 @@ async function exportPdf() {
       {
         heading: '配合结果',
         rows: [
-          { label: '配合类型', value: r.fitLabel },
-          { label: '最大间隙/过盈 (μm)', value: (r.maxClearance * 1000).toFixed(1) },
-          { label: '最小间隙/过盈 (μm)', value: (r.minClearance * 1000).toFixed(1) },
-          { label: '孔极限 (mm)', value: `${r.hole.minSize} ~ ${r.hole.maxSize}` },
-          { label: '轴极限 (mm)', value: `${r.shaft.minSize} ~ ${r.shaft.maxSize}` },
+          { label: pf('fitType'), value: fitTypeLabel.value },
+          { label: pr('maxClearance'), value: (r.maxClearance * 1000).toFixed(1) },
+          { label: pr('minClearance'), value: (r.minClearance * 1000).toFixed(1) },
+          { label: pr('holeLimits'), value: `${r.hole.minSize} ~ ${r.hole.maxSize}` },
+          { label: pr('shaftLimits'), value: `${r.shaft.minSize} ~ ${r.shaft.maxSize}` },
         ],
       },
     ],

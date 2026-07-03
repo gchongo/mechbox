@@ -41,7 +41,7 @@ export function parseNumberList(str) {
 /** 单样本 t 检验：H0: μ = mu0 */
 export function oneSampleTTest(values, mu0 = 0) {
   const n = values.length
-  if (n < 2) return { error: '至少需要 2 个数据点' }
+  if (n < 2) return { errorKey: 'stat_min_points' }
   const m = mean(values)
   const s = stdDev(values)
   const t = s ? (m - mu0) / (s / Math.sqrt(n)) : 0
@@ -60,7 +60,7 @@ export function oneSampleTTest(values, mu0 = 0) {
 /** 双样本 t 检验（等方差） */
 export function twoSampleTTest(sample1, sample2) {
   if (sample1.length < 2 || sample2.length < 2) {
-    return { error: '每组至少需要 2 个数据点' }
+    return { errorKey: 'stat_group_min_points' }
   }
   const m1 = mean(sample1)
   const m2 = mean(sample2)
@@ -88,11 +88,11 @@ export function twoSampleTTest(sample1, sample2) {
 /** 卡方拟合优度检验 */
 export function chiSquareTest(observed, expected) {
   if (observed.length !== expected.length || !observed.length) {
-    return { error: '观测值与期望值数量须一致且非空' }
+    return { errorKey: 'stat_chi2_length' }
   }
   let chi2 = 0
   for (let i = 0; i < observed.length; i++) {
-    if (expected[i] <= 0) return { error: '期望值须大于 0' }
+    if (expected[i] <= 0) return { errorKey: 'stat_expected_positive' }
     chi2 += ((observed[i] - expected[i]) ** 2) / expected[i]
   }
   const df = observed.length - 1
@@ -110,7 +110,7 @@ export function chiSquareTest(observed, expected) {
 /** Pearson 相关系数 */
 export function pearsonCorrelation(x, y) {
   if (x.length !== y.length || x.length < 2) {
-    return { error: '两组数据长度须一致且至少 2 点' }
+    return { errorKey: 'stat_pair_length' }
   }
   const mx = mean(x)
   const my = mean(y)
@@ -145,7 +145,7 @@ export function pearsonCorrelation(x, y) {
 /** 单因素 ANOVA */
 export function oneWayAnova(groups) {
   const valid = groups.filter((g) => g.length >= 1)
-  if (valid.length < 2) return { error: '至少需要 2 组数据' }
+  if (valid.length < 2) return { errorKey: 'stat_min_groups' }
   const all = valid.flat()
   const grandMean = mean(all)
   const k = valid.length
@@ -163,7 +163,7 @@ export function oneWayAnova(groups) {
 
   const dfBetween = k - 1
   const dfWithin = n - k
-  if (dfWithin <= 0) return { error: '总样本量不足' }
+  if (dfWithin <= 0) return { errorKey: 'stat_insufficient_df' }
 
   const msBetween = ssBetween / dfBetween
   const msWithin = ssWithin / dfWithin

@@ -91,7 +91,7 @@ describe('msa-calc', () => {
     expect(r.errorKey).toBeUndefined()
     expect(r.GRR).toBeGreaterThan(0)
     expect(r.pctGRR).toBeGreaterThan(0)
-    expect(r.rating).toBeTruthy()
+    expect(r.ratingKey).toBeTruthy()
   })
 })
 

@@ -38,7 +38,7 @@ export function batchValidate(rows, targetMin, targetMax) {
     const tolerances = parseToleranceRow(row.tolerances)
     const factors = row.factors ? parseToleranceRow(row.factors) : []
     if (!tolerances.length) {
-      return { index, name: row.name, error: '无有效公差数据' }
+      return { index, name: row.name, errorKey: 'batch_no_tolerance' }
     }
 
     const result = analyzeToleranceRow(tolerances, factors)

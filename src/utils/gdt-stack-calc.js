@@ -7,6 +7,7 @@ import {
   GDT_CALC_MODES,
 } from '@/utils/gdt-chain'
 import { worstCaseMethod } from '@/utils/size-chain-math'
+import { t } from '@/i18n'
 
 export { GDT_CALC_MODES, getGdtCalcMode }
 
@@ -226,18 +227,26 @@ export const GDT_STACK_PRESETS = {
   },
 }
 
-export function buildGdtStackReportText(result) {
+export function buildGdtStackReportText(result, locale = 'zh') {
+  const msg = (key, params) => t(`calc.messages.gdtStack.${key}`, locale, params)
+  const modeLabel =
+    t(`calc.options.gdtCalcModes.${result.typeId ?? result.mode?.id}.label`, locale) ||
+    result.mode?.label
+  const passLabel = result.pass ? msg('report_pass') : msg('report_fail')
   const lines = [
-    `=== GD&T 栈分析报告 ===`,
-    `类型: ${result.mode.label}`,
-    `方法: ${result.method}`,
-    `封闭环公差: ${result.chainResult.totalTolerance?.toFixed(4)} mm`,
-    `合格: ${result.pass ? '是' : '否'}`,
+    msg('report_title'),
+    `${msg('report_type')}: ${modeLabel}`,
+    `${msg('report_method')}: ${result.method}`,
+    `${msg('report_closed')}: ${result.chainResult.totalTolerance?.toFixed(4)} mm`,
+    `${passLabel}: ${result.pass ? t('calc.fields.common.yes', locale) : t('calc.fields.common.no', locale)}`,
   ]
   if (result.datumStack) {
-    lines.push(`含基准累积: ${result.effectiveWithDatum.toFixed(4)} mm (${result.passWithDatum ? '合格' : '不合格'})`)
+    const datumPass = result.passWithDatum ? msg('report_pass') : msg('report_fail')
+    lines.push(
+      `${msg('report_with_datum')}: ${result.effectiveWithDatum.toFixed(4)} mm (${datumPass})`,
+    )
   }
-  lines.push('', '贡献度:')
+  lines.push('', `${msg('report_contributions')}:`)
   for (const c of result.contributions) {
     lines.push(`  ${c.name}: ${c.percent.toFixed(1)}% (T=${c.tolerance})`)
   }
