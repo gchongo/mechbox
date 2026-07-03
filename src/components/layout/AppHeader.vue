@@ -210,7 +210,14 @@ function isActive(path) {
 }
 
 function goTool(path) {
-  router.push(path)
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur()
+  }
+  router.push(path).then(() => {
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    })
+  })
 }
 </script>
 

@@ -72,6 +72,20 @@
             <el-button class="ml-2" size="small" @click="applyRecommend">应用推荐沟槽</el-button>
           </el-form-item>
         </el-form>
+
+        <ORingSealDiagram
+          :calc-mode="form.calcMode"
+          :cross-section="form.crossSection"
+          :groove-diameter="form.grooveDiameter"
+          :groove-width="form.grooveWidth"
+          :groove-depth="result.grooveDepth ?? 0"
+          :compression="result.compression ?? 0"
+          :compression-percent="result.compressionPercent ?? form.compressionPercent"
+          :extrusion-gap="form.extrusionGap"
+          :stretch-percent="form.stretchPercent"
+          :pressure="form.pressure"
+          :bore-diameter="boreForRec"
+        />
       </section>
 
       <section class="card-panel">
@@ -122,6 +136,7 @@
 <script setup>
 import { reactive, computed, ref } from 'vue'
 import { analyzeORingSeal, recommendGroove, ORING_SECTIONS, ORING_MATERIALS } from '@/utils/o-ring-calc'
+import ORingSealDiagram from '@/components/oring/ORingSealDiagram.vue'
 
 const materials = ORING_MATERIALS
 const form = reactive({

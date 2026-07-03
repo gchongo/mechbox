@@ -282,12 +282,21 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior() {
-    return { top: 0 }
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        resolve({ top: 0, left: 0 })
+      })
+    })
   },
 })
 
 router.afterEach((to) => {
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  })
+
   document.title = to.meta.title
     ? `${to.meta.title} - 机械工具箱`
     : '机械工具箱 — 尺寸链与机械强度计算'
