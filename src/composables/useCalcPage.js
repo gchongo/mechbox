@@ -14,5 +14,24 @@ export function useCalcPage(pageKey) {
     return t(`calc.common.${suffix}`, params)
   }
 
-  return { t, locale, pt, ct, pageKey }
+  /** Page field label, falls back to calc.fields.common */
+  function pf(key, params) {
+    const pageKeyPath = `calc.pages.${pageKey}.fields.${key}`
+    const pageVal = t(pageKeyPath, params)
+    if (pageVal !== pageKeyPath) return pageVal
+    return t(`calc.fields.common.${key}`, params)
+  }
+
+  /** Page result row label */
+  function pr(key, params) {
+    const path = `calc.pages.${pageKey}.results.${key}`
+    const val = t(path, params)
+    return val !== path ? val : key
+  }
+
+  function fc(key, params) {
+    return t(`calc.fields.common.${key}`, params)
+  }
+
+  return { t, locale, pt, ct, pf, pr, fc, pageKey }
 }

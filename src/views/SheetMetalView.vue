@@ -9,38 +9,38 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">参数</h2>
+        <h2 class="mb-4 font-semibold">{{ fc('parameters') }}</h2>
         <el-form label-width="120px">
-          <el-form-item label="计算方法">
+          <el-form-item :label="pf('method')">
             <el-radio-group v-model="form.method">
-              <el-radio value="k_factor">K 因子法</el-radio>
-              <el-radio value="bend_deduction">折弯扣除</el-radio>
+              <el-radio value="k_factor">{{ pf('methodKFactor') }}</el-radio>
+              <el-radio value="bend_deduction">{{ pf('methodBendDeduction') }}</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="板厚 T">
+          <el-form-item :label="pf('thickness')">
             <el-input-number v-model="form.thickness" :min="0.3" :max="20" :precision="2" :step="0.1" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="折弯半径 R">
+          <el-form-item :label="pf('bendRadius')">
             <el-input-number v-model="form.bendRadius" :min="0.1" :max="50" :precision="2" />
           </el-form-item>
-          <el-form-item label="K 因子">
+          <el-form-item :label="pf('kFactor')">
             <el-input-number v-model="form.kFactor" :min="0.2" :max="0.5" :precision="3" :step="0.01" />
-            <el-select v-model="kPreset" class="ml-2 w-36" placeholder="预设" @change="applyK">
+            <el-select v-model="kPreset" class="ml-2 w-36" :placeholder="fc('preset')" @change="applyK">
               <el-option v-for="(p, k) in K_FACTOR_PRESETS" :key="k" :label="p.label" :value="k" />
             </el-select>
           </el-form-item>
-          <el-form-item v-if="form.method === 'bend_deduction'" label="外轮廓总长">
+          <el-form-item v-if="form.method === 'bend_deduction'" :label="pf('outerSum')">
             <el-input-number v-model="form.outerSum" :min="1" :precision="2" />
-            <span class="ml-2 text-xs text-gray-500">mm（直段外尺寸之和）</span>
+            <span class="ml-2 text-xs text-gray-500">{{ pf('outerSumHint') }}</span>
           </el-form-item>
-          <el-form-item v-if="calcMode === 'professional'" label="回弹系数">
+          <el-form-item v-if="calcMode === 'professional'" :label="pf('springbackFactor')">
             <el-input-number v-model="form.springbackFactor" :min="0" :max="3" :precision="1" :step="0.1" />
-            <span class="ml-2 text-xs text-gray-500">°/90° 估算</span>
+            <span class="ml-2 text-xs text-gray-500">{{ pf('springbackHint') }}</span>
           </el-form-item>
         </el-form>
 
-        <h3 class="mb-2 text-sm font-medium">段列表</h3>
+        <h3 class="mb-2 text-sm font-medium">{{ pf('segmentList') }}</h3>
         <div class="space-y-2">
           <div
             v-for="(seg, i) in segments"
@@ -48,21 +48,21 @@
             class="flex flex-wrap items-center gap-2 rounded border border-gray-200 p-2 dark:border-gray-700"
           >
             <el-select v-model="seg.type" class="w-24" size="small">
-              <el-option value="straight" label="直段" />
-              <el-option value="bend" label="折弯" />
+              <el-option value="straight" :label="pf('segStraight')" />
+              <el-option value="bend" :label="pf('segBend')" />
             </el-select>
             <template v-if="seg.type === 'straight'">
-              <span class="text-xs text-gray-500">长度</span>
+              <span class="text-xs text-gray-500">{{ pf('segLength') }}</span>
               <el-input-number v-model="seg.length" :min="0" :precision="1" size="small" />
             </template>
             <template v-else>
-              <span class="text-xs text-gray-500">角度°</span>
+              <span class="text-xs text-gray-500">{{ fc('angle') }}°</span>
               <el-input-number v-model="seg.angle" :min="1" :max="180" size="small" />
             </template>
-            <el-button v-if="segments.length > 1" type="danger" link size="small" @click="removeSeg(i)">删</el-button>
+            <el-button v-if="segments.length > 1" type="danger" link size="small" @click="removeSeg(i)">{{ fc('delete') }}</el-button>
           </div>
         </div>
-        <el-button class="mt-2" size="small" @click="addSeg">+ 添加段</el-button>
+        <el-button class="mt-2" size="small" @click="addSeg">{{ fc('addSegment') }}</el-button>
 
         <SheetMetalBendDiagram
           :thickness="form.thickness"
@@ -73,26 +73,26 @@
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">展开结果</h2>
+        <h2 class="mb-4 font-semibold">{{ pf('unfoldResults') }}</h2>
         <el-alert v-if="result.error" :title="result.error" type="error" show-icon />
         <template v-else>
           <div class="mb-4 rounded-lg bg-primary/5 p-4 text-center">
-            <dt class="text-sm text-gray-500">展开长度</dt>
+            <dt class="text-sm text-gray-500">{{ pf('flatLength') }}</dt>
             <dd class="font-mono text-3xl text-primary">
               {{ (calcMode === 'professional' && result.compensatedFlatLength ? result.compensatedFlatLength : result.flatLength)?.toFixed(2) }} mm
             </dd>
             <p class="mt-1 text-xs text-gray-500">
-              {{ result.bendCount }} 道折弯 · {{ form.method === 'k_factor' ? 'K 因子法' : '折弯扣除' }}
-              <span v-if="calcMode === 'professional' && result.compensatedFlatLength">（含回弹补偿）</span>
+              {{ result.bendCount }} {{ pr('bendCount') }} · {{ form.method === 'k_factor' ? pf('methodKFactor') : pf('methodBendDeduction') }}
+              <span v-if="calcMode === 'professional' && result.compensatedFlatLength">{{ pf('withSpringback') }}</span>
             </p>
           </div>
           <dl v-if="calcMode !== 'simple'" class="mb-4 space-y-2 text-sm">
             <div v-if="result.minFlangeRule" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>最小法兰 (4T)</dt>
+              <dt>{{ pf('minFlange') }}</dt>
               <dd class="font-mono">{{ result.minFlangeRule?.toFixed(1) }} mm</dd>
             </div>
             <div v-if="result.minStraightLength != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>最短直段</dt>
+              <dt>{{ pf('minStraight') }}</dt>
               <dd class="font-mono" :class="result.flangePass ? 'text-success' : 'text-warning'">{{ result.minStraightLength?.toFixed(1) }} mm</dd>
             </div>
           </dl>
@@ -100,17 +100,17 @@
             <el-table-column label="#" width="50">
               <template #default="{ row }">{{ row.index + 1 }}</template>
             </el-table-column>
-            <el-table-column prop="type" label="类型" width="70">
-              <template #default="{ row }">{{ row.type === 'straight' ? '直段' : '折弯' }}</template>
+            <el-table-column prop="type" :label="fc('type')" width="70">
+              <template #default="{ row }">{{ row.type === 'straight' ? pf('segStraight') : pf('segBend') }}</template>
             </el-table-column>
-            <el-table-column label="贡献 (mm)">
+            <el-table-column :label="`${fc('contribution')} (mm)`">
               <template #default="{ row }">
                 <span class="font-mono">{{ row.contribution?.toFixed(3) }}</span>
               </template>
             </el-table-column>
           </el-table>
           <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="result.pass ? 'success' : 'warning'">
-            {{ result.pass ? '工艺可行' : '法兰/半径需调整' }}
+            {{ result.pass ? pf('processOk') : pf('processAdjust') }}
           </el-tag>
         </template>
       </section>
@@ -125,7 +125,7 @@ import SheetMetalBendDiagram from '@/components/sheet-metal/SheetMetalBendDiagra
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('sheet-metal')
+const { pt, ct, pf, pr, fc } = useCalcPage('sheet-metal')
 
 const calcMode = ref('simple')
 

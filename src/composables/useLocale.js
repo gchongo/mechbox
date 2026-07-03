@@ -1,5 +1,5 @@
 import { ref, onMounted, onUnmounted } from 'vue'
-import { getSettings } from '@/utils/settings'
+import { getSettings, setLocale, toggleLocale as toggleLocaleSetting } from '@/utils/settings'
 import { t } from '@/i18n'
 
 export function useLocale() {
@@ -21,5 +21,13 @@ export function useLocale() {
     return t(key, locale.value, params)
   }
 
-  return { locale, t: tt }
+  function switchLocale(next) {
+    setLocale(next)
+  }
+
+  function toggleLocale() {
+    toggleLocaleSetting()
+  }
+
+  return { locale, t: tt, switchLocale, toggleLocale }
 }

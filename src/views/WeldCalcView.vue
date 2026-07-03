@@ -4,37 +4,38 @@
     <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
     <el-tabs v-model="tab">
-      <el-tab-pane label="角焊缝" name="fillet">
+      <el-tab-pane :label="pf('tabFillet')" name="fillet">
         <CalcModePanel v-model="form.calcMode" page-key="weld" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="焊脚 h">
+              <el-form-item :label="pf('legSize')">
                 <el-input-number v-model="form.legSize" :min="3" :step="1" />
                 <span class="ml-2 text-sm text-gray-500">mm</span>
               </el-form-item>
-              <el-form-item label="焊缝长 L">
+              <el-form-item :label="pf('weldLength')">
                 <el-input-number v-model="form.weldLength" :min="10" />
               </el-form-item>
-              <el-form-item label="载荷 F">
+              <el-form-item :label="pf('force')">
                 <el-input-number v-model="form.force" :min="0" :step="100" />
                 <span class="ml-2 text-sm text-gray-500">N</span>
               </el-form-item>
               <template v-if="form.calcMode === 'professional'">
-                <el-form-item label="偏心距 e (mm)">
+                <el-form-item :label="pf('eccentricity')">
                   <el-input-number v-model="form.eccentricity" :min="0" :precision="1" />
                 </el-form-item>
-                <el-form-item label="热输入 (kJ/mm)">
+                <el-form-item :label="pf('heatInput')">
                   <el-input-number v-model="form.heatInput" :min="0.5" :max="5" :precision="2" :step="0.1" />
                 </el-form-item>
-                <el-form-item label="板厚 (mm)">
+                <el-form-item :label="pf('plateThickness')">
                   <el-input-number v-model="form.plateThickness" :min="3" />
                 </el-form-item>
-                <el-form-item label="应力幅 Δτ">
+                <el-form-item :label="pf('stressRangeDelta')">
                   <el-input-number v-model="form.stressRange" :min="0" :precision="1" />
                 </el-form-item>
               </template>
-              <el-form-item label="钢材等级">
+              <el-form-item :label="pf('steelGrade')">
                 <el-select v-model="form.steelGrade" class="w-full">
                   <el-option v-for="(g, k) in WELD_STEEL_GRADES" :key="k" :label="g.label" :value="k" />
                 </el-select>
@@ -48,34 +49,35 @@
             />
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>有效厚度 a</dt>
+                <dt>{{ pr('throat') }}</dt>
                 <dd class="font-mono">{{ filletResult.throat?.toFixed(2) }} mm</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>剪应力 τ</dt>
+                <dt>{{ pr('shearStress') }}</dt>
                 <dd class="font-mono">{{ filletResult.shearStress?.toFixed(1) }} MPa</dd>
               </div>
               <template v-if="filletResult.combined">
                 <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                  <dt>合成应力 σ_eq</dt>
+                  <dt>{{ pr('combinedStress') }}</dt>
                   <dd class="font-mono" :class="filletResult.combinedPass ? 'text-success' : 'text-error'">
                     {{ filletResult.combined.equivalentStress?.toFixed(1) }} MPa
                   </dd>
                 </div>
                 <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                  <dt>HAZ 许用 / 焊缝</dt>
+                  <dt>{{ pr('hazAllowWeld') }}</dt>
                   <dd class="font-mono">{{ filletResult.haz?.hazAllowShear }} / {{ filletResult.haz?.weldStress }} MPa</dd>
                 </div>
               </template>
             </dl>
             <el-table v-if="filletResult.standards?.length" :data="filletResult.standards" size="small" border class="mt-4">
-              <el-table-column prop="standard" label="标准" />
-              <el-table-column label="许用 (MPa)">
+              <el-table-column prop="standard" :label="pr('standard')" />
+              <el-table-column :label="pr('allowable')">
                 <template #default="{ row }">{{ row.allowableShear?.toFixed(1) }}</template>
               </el-table-column>
-              <el-table-column label="利用率">
+              <el-table-column :label="pr('utilization')">
                 <template #default="{ row }">
                   <span :class="row.pass ? 'text-success' : 'text-error'">
                     {{ (row.utilization * 100).toFixed(1) }}% {{ row.pass ? '✓' : '✗' }}
@@ -84,45 +86,47 @@
               </el-table-column>
             </el-table>
             <p v-if="filletResult.strictest" class="mt-2 text-xs text-gray-500">
-              最严标准: {{ filletResult.strictest?.standard }} (许用 {{ filletResult.strictest?.allowableShear?.toFixed(1) }} MPa)
+              {{ pr('strictestStandard') }}: {{ filletResult.strictest?.standard }} ({{ pr('allowable') }} {{ filletResult.strictest?.allowableShear?.toFixed(1) }} MPa)
             </p>
           </section>
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="对接焊" name="butt">
+      <el-tab-pane :label="pf('tabButt')" name="butt">
         <CalcModePanel v-model="butt.calcMode" page-key="weld" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="板厚 t">
+              <el-form-item :label="pf('thickness')">
                 <el-input-number v-model="butt.thickness" :min="3" />
               </el-form-item>
-              <el-form-item label="焊缝长 L">
+              <el-form-item :label="pf('weldLength')">
                 <el-input-number v-model="butt.weldLength" :min="10" />
               </el-form-item>
-              <el-form-item label="拉力 F">
+              <el-form-item :label="pf('tensionForce')">
                 <el-input-number v-model="butt.force" :min="0" :step="500" />
               </el-form-item>
-              <el-form-item v-if="butt.calcMode === 'professional'" label="熔透效率">
+              <el-form-item v-if="butt.calcMode === 'professional'" :label="pf('penetrationEfficiency')">
                 <el-input-number v-model="butt.penetrationEfficiency" :min="0.5" :max="1" :step="0.05" :precision="2" />
               </el-form-item>
-              <el-form-item v-if="butt.calcMode === 'professional'" label="应力集中 Kf">
+              <el-form-item v-if="butt.calcMode === 'professional'" :label="pf('stressConcentrationKf')">
                 <el-input-number v-model="butt.stressConcentration" :min="1" :max="3" :step="0.1" :precision="1" />
               </el-form-item>
             </el-form>
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <p class="mb-2 text-sm">
-              正应力 σ = <span class="font-mono">{{ buttResult.normalStress?.toFixed(1) }}</span> MPa
-              <span v-if="buttResult.effectiveStress"> · 有效 σ = <span class="font-mono">{{ buttResult.effectiveStress?.toFixed(1) }}</span> MPa</span>
+              {{ pr('normalStress') }} = <span class="font-mono">{{ buttResult.normalStress?.toFixed(1) }}</span> MPa
+              <span v-if="buttResult.effectiveStress"> · {{ pr('effectiveStress') }} = <span class="font-mono">{{ buttResult.effectiveStress?.toFixed(1) }}</span> MPa</span>
             </p>
             <el-table :data="buttRows" size="small" border>
-              <el-table-column prop="standard" label="标准" />
-              <el-table-column prop="allow" label="许用 (MPa)" />
-              <el-table-column label="校核">
+              <el-table-column prop="standard" :label="pr('standard')" />
+              <el-table-column prop="allow" :label="pr('allowable')" />
+              <el-table-column :label="fc('check')">
                 <template #default="{ row }">
-                  <el-tag :type="row.pass ? 'success' : 'danger'" size="small">{{ row.pass ? '通过' : '未通过' }}</el-tag>
+                  <el-tag :type="row.pass ? 'success' : 'danger'" size="small">{{ row.pass ? fc('pass') : fc('fail') }}</el-tag>
                 </template>
               </el-table-column>
             </el-table>
@@ -130,18 +134,19 @@
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="焊缝疲劳" name="fatigue">
+      <el-tab-pane :label="pf('tabFatigue')" name="fatigue">
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="应力幅 Δτ">
+              <el-form-item :label="pf('stressRangeDelta')">
                 <el-input-number v-model="fatigue.stressRange" :min="1" :precision="1" />
                 <span class="ml-2 text-xs text-gray-500">MPa</span>
               </el-form-item>
-              <el-form-item label="循环次数 N">
+              <el-form-item :label="pf('cycles')">
                 <el-input-number v-model="fatigue.cycles" :min="1000" :step="10000" />
               </el-form-item>
-              <el-form-item label="细节类别">
+              <el-form-item :label="pf('detailCategory')">
                 <el-select v-model="fatigue.detailCategory" class="w-full">
                   <el-option v-for="(d, k) in WELD_DETAIL_CATEGORIES" :key="k" :label="d.label" :value="k" />
                 </el-select>
@@ -149,72 +154,75 @@
             </el-form>
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <el-alert v-if="fatigueResult?.error" :title="fatigueResult.error" type="warning" show-icon />
             <dl v-else class="space-y-2 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>估算寿命</dt>
-                <dd class="font-mono text-primary">{{ fatigueResult.estimatedLife?.toLocaleString() }} 次</dd>
+                <dt>{{ pr('estimatedLife') }}</dt>
+                <dd class="font-mono text-primary">{{ fatigueResult.estimatedLife?.toLocaleString() }} {{ pr('lifeUnit') }}</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>N 下许用幅</dt>
+                <dt>{{ pr('allowableAtCycles') }}</dt>
                 <dd class="font-mono">{{ fatigueResult.allowableAtCycles }} MPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>疲劳极限</dt>
+                <dt>{{ pr('enduranceLimit') }}</dt>
                 <dd class="font-mono">{{ fatigueResult.enduranceLimit }} MPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>校核</dt>
-                <dd :class="fatigueResult.pass ? 'text-success' : 'text-error'">{{ fatigueResult.pass ? '通过' : '未通过' }}</dd>
+                <dt>{{ fc('check') }}</dt>
+                <dd :class="fatigueResult.pass ? 'text-success' : 'text-error'">{{ fatigueResult.pass ? fc('pass') : fc('fail') }}</dd>
               </div>
             </dl>
           </section>
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="热影响区 HAZ" name="haz">
+      <el-tab-pane :label="pf('tabHaz')" name="haz">
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="热输入 Q">
+              <el-form-item :label="pf('heatInputQ')">
                 <el-input-number v-model="haz.heatInput" :min="0.5" :max="5" :step="0.1" :precision="2" />
                 <span class="ml-2 text-xs text-gray-500">kJ/mm</span>
               </el-form-item>
-              <el-form-item label="板厚 t">
+              <el-form-item :label="pf('plateThickness')">
                 <el-input-number v-model="haz.plateThickness" :min="3" />
               </el-form-item>
-              <el-form-item label="钢材">
+              <el-form-item :label="pf('steelGrade')">
                 <el-select v-model="haz.steelGrade" class="w-full">
                   <el-option v-for="(g, k) in WELD_STEEL_GRADES" :key="k" :label="g.label" :value="k" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="焊脚 h">
+              <el-form-item :label="pf('legSize')">
                 <el-input-number v-model="haz.legSize" :min="3" />
               </el-form-item>
-              <el-form-item label="载荷 F">
+              <el-form-item :label="pf('force')">
                 <el-input-number v-model="haz.force" :min="0" :step="100" />
               </el-form-item>
-              <el-form-item label="焊缝长 L">
+              <el-form-item :label="pf('weldLength')">
                 <el-input-number v-model="haz.weldLength" :min="10" />
               </el-form-item>
             </el-form>
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-2 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>HAZ 宽度 (估算)</dt>
+                <dt>{{ pr('hazWidth') }}</dt>
                 <dd class="font-mono text-primary">{{ hazResult.hazWidthMm }} mm</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>HAZ 许用剪应力</dt>
+                <dt>{{ pr('hazAllowShear') }}</dt>
                 <dd class="font-mono">{{ hazResult.hazAllowShear }} MPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>母材许用</dt>
+                <dt>{{ pr('baseAllowShear') }}</dt>
                 <dd class="font-mono">{{ hazResult.baseAllowShear }} MPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>焊缝应力</dt>
+                <dt>{{ pr('weldStress') }}</dt>
                 <dd class="font-mono" :class="hazResult.pass ? 'text-success' : 'text-error'">
                   {{ hazResult.weldStress }} MPa
                 </dd>
@@ -254,7 +262,7 @@ import FilletWeldDiagram from '@/components/weld/FilletWeldDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('weld')
+const { pt, ct, pf, pr, fc } = useCalcPage('weld')
 
 const tab = ref('fillet')
 const form = reactive({
@@ -316,19 +324,19 @@ const historySummary = computed(() => {
     return [
       { label: 'τ (MPa)', value: filletResult.value.shearStress?.toFixed(1) },
       { label: '模式', value: form.calcMode },
-      { label: '校核', value: (filletResult.value.allPass ?? filletResult.value.pass) ? '通过' : '未通过' },
+      { label: fc('check'), value: (filletResult.value.allPass ?? filletResult.value.pass) ? fc('pass') : fc('fail') },
     ]
   }
   if (tab.value === 'fatigue' && !fatigueResult.value?.error) {
     return [
       { label: 'Δτ', value: `${fatigue.stressRange} MPa` },
-      { label: '寿命', value: fatigueResult.value.estimatedLife?.toLocaleString() },
+      { label: pr('estimatedLife'), value: fatigueResult.value.estimatedLife?.toLocaleString() },
     ]
   }
   if (tab.value === 'haz') {
     return [
-      { label: 'HAZ 宽', value: `${hazResult.value.hazWidthMm} mm` },
-      { label: 'HAZ 许用', value: `${hazResult.value.hazAllowShear} MPa` },
+      { label: pr('hazWidth'), value: `${hazResult.value.hazWidthMm} mm` },
+      { label: pr('hazAllowShear'), value: `${hazResult.value.hazAllowShear} MPa` },
     ]
   }
   return [{ label: 'σ', value: `${buttResult.value.normalStress?.toFixed(1)} MPa` }]

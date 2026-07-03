@@ -28,6 +28,16 @@ export function saveSettings(partial) {
   return next
 }
 
+/** @param {'zh'|'en'} locale */
+export function setLocale(locale) {
+  return saveSettings({ locale })
+}
+
+export function toggleLocale() {
+  const cur = getSettings().locale ?? 'zh'
+  return setLocale(cur === 'en' ? 'zh' : 'en')
+}
+
 export function applyDocumentLocale(locale = 'zh') {
   document.documentElement.lang = locale === 'en' ? 'en' : 'zh-CN'
 }

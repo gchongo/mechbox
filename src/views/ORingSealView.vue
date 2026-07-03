@@ -11,7 +11,7 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
-          <el-form-item label="截面直径">
+          <el-form-item :label="pf('crossSection')">
             <div class="flex w-full flex-wrap items-center gap-2">
               <el-input-number
                 v-model="form.crossSection"
@@ -23,7 +23,7 @@
               <span class="text-sm text-gray-500">mm</span>
             </div>
             <div class="mt-2 flex flex-wrap items-center gap-1">
-              <span class="text-xs text-gray-500">AS568：</span>
+              <span class="text-xs text-gray-500">{{ pf('as568') }}</span>
               <el-button
                 v-for="s in ORING_SECTIONS"
                 :key="s.id"
@@ -36,46 +36,46 @@
               </el-button>
             </div>
           </el-form-item>
-          <el-form-item label="沟槽底径">
+          <el-form-item :label="pf('grooveDiameter')">
             <el-input-number v-model="form.grooveDiameter" :min="1" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="沟槽宽度">
+          <el-form-item :label="pf('grooveWidth')">
             <el-input-number v-model="form.grooveWidth" :min="0.5" :precision="2" />
           </el-form-item>
-          <el-form-item label="压缩率">
+          <el-form-item :label="pf('compressionPercent')">
             <el-input-number v-model="form.compressionPercent" :min="5" :max="35" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">%</span>
           </el-form-item>
-          <el-form-item label="安装拉伸">
+          <el-form-item :label="pf('stretchPercent')">
             <el-input-number v-model="form.stretchPercent" :min="0" :max="8" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">%</span>
           </el-form-item>
-          <el-form-item label="工作压力">
+          <el-form-item :label="pf('workingPressure')">
             <el-input-number v-model="form.pressure" :min="0" :max="50" :precision="1" />
-            <span class="ml-2 text-sm text-gray-500">MPa（0=静密封）</span>
+            <span class="ml-2 text-sm text-gray-500">{{ pf('pressureHint') }}</span>
           </el-form-item>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item label="挤出间隙 (mm)">
+            <el-form-item :label="pf('extrusionGap')">
               <el-input-number v-model="form.extrusionGap" :min="0.05" :max="0.5" :precision="2" :step="0.01" />
             </el-form-item>
-            <el-form-item label="材料">
+            <el-form-item :label="fc('material')">
               <el-select v-model="form.material" class="w-full">
                 <el-option v-for="(m, k) in materials" :key="k" :label="m.label" :value="k" />
               </el-select>
             </el-form-item>
-            <el-form-item label="工作温度 (°C)">
+            <el-form-item :label="pf('operatingTemp')">
               <el-input-number v-model="form.operatingTemp" :min="-40" :max="250" />
             </el-form-item>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item label="往复速度 (m/s)">
+            <el-form-item :label="pf('strokeSpeed')">
               <el-input-number v-model="form.strokeSpeed" :min="0" :max="2" :precision="2" :step="0.1" />
             </el-form-item>
           </template>
-          <el-form-item label="孔径推荐">
+          <el-form-item :label="pf('boreRecommend')">
             <el-input-number v-model="boreForRec" :min="5" />
-            <el-button class="ml-2" size="small" @click="applyRecommend">应用推荐沟槽</el-button>
+            <el-button class="ml-2" size="small" @click="applyRecommend">{{ pf('applyRecommendGroove') }}</el-button>
           </el-form-item>
         </el-form>
 
@@ -95,41 +95,41 @@
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">校核结果</h2>
+        <h2 class="mb-4 font-semibold">{{ fc('checkResults') }}</h2>
         <el-tag class="mb-4" :type="result.pass ? 'success' : 'warning'">
-          {{ result.pass ? '设计合理' : '需调整沟槽或压缩率' }}
+          {{ result.pass ? fc('designOk') : fc('designAdjust') }}
         </el-tag>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>压缩量</dt>
+            <dt>{{ pr('compressionAmount') }}</dt>
             <dd class="font-mono" :class="result.compressionOk ? 'text-success' : 'text-error'">
               {{ result.compression?.toFixed(3) }} mm ({{ result.compressionPercent?.toFixed(1) }}%)
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>沟槽深度（估算）</dt>
+            <dt>{{ pr('grooveDepth') }}</dt>
             <dd class="font-mono">{{ result.grooveDepth?.toFixed(3) }} mm</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>填充率</dt>
+            <dt>{{ pr('fillPercent') }}</dt>
             <dd class="font-mono" :class="result.fillOk ? 'text-success' : 'text-error'">
               {{ result.fillPercent?.toFixed(1) }}% (65–85%)
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>推荐沟槽宽</dt>
+            <dt>{{ pr('recommendedWidth') }}</dt>
             <dd class="font-mono">{{ result.recommendedWidth?.toFixed(2) }} mm</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>宽度校核</dt>
-            <dd>{{ result.widthOk ? '✓ 合理' : '✗ 偏窄/宽' }}</dd>
+            <dt>{{ pr('widthCheck') }}</dt>
+            <dd>{{ result.widthOk ? pr('widthOk') : pr('widthBad') }}</dd>
           </div>
           <div v-if="result.extrusionPass != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>挤出间隙</dt>
+            <dt>{{ pr('extrusionGap') }}</dt>
             <dd>{{ result.extrusionGap }} / {{ result.maxExtrusionGap?.toFixed(2) }} mm {{ result.extrusionPass ? '✓' : '✗' }}</dd>
           </div>
           <div v-if="result.maxAllowPressure" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>极限压力</dt>
+            <dt>{{ pr('maxPressure') }}</dt>
             <dd class="font-mono">{{ result.maxAllowPressure?.toFixed(1) }} MPa</dd>
           </div>
         </dl>
@@ -146,7 +146,7 @@ import ORingSealDiagram from '@/components/oring/ORingSealDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('o-ring')
+const { pt, ct, pf, pr, fc } = useCalcPage('o-ring')
 
 const materials = ORING_MATERIALS
 const form = reactive({

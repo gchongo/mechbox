@@ -84,6 +84,8 @@
           </template>
         </el-dropdown>
 
+        <LocaleToggle />
+
         <router-link
           to="/account"
           class="flex items-center rounded-md p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 sm:px-2 sm:py-2"
@@ -111,6 +113,7 @@ import { getCurrentUser } from '@/utils/auth'
 import { getSettings } from '@/utils/settings'
 import { t, localizedToolLabel } from '@/i18n'
 import AppLogo from '@/components/common/AppLogo.vue'
+import LocaleToggle from '@/components/layout/LocaleToggle.vue'
 
 const route = useRoute()
 const router = useRouter()

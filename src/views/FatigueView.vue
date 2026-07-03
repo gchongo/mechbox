@@ -9,22 +9,22 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">材料与应力</h2>
+        <h2 class="mb-4 font-semibold">{{ pf('materialAndStress') }}</h2>
         <el-form label-width="120px">
-          <el-form-item label="材料">
+          <el-form-item :label="pf('material')">
             <el-select v-model="material" class="w-full">
               <el-option v-for="(m, k) in SN_MATERIALS" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
-          <el-form-item label="应力幅 Sa">
+          <el-form-item :label="pf('stressAmplitude')">
             <el-input-number v-model="stressAmplitude" :min="0" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
           </el-form-item>
           <template v-if="calcMode === 'professional'">
-            <el-form-item label="平均应力 Sm">
+            <el-form-item :label="pf('meanStress')">
               <el-input-number v-model="meanStress" :min="0" :precision="1" />
             </el-form-item>
-            <el-form-item label="表面 / 尺寸系数">
+            <el-form-item :label="pf('surfaceSizeFactor')">
               <el-input-number v-model="surfaceFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="w-28" />
               <el-input-number v-model="sizeFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="ml-2 w-28" />
             </el-form-item>
@@ -37,35 +37,35 @@
         />
 
         <div v-if="stressAmplitude > 0" class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
-          <dt class="text-gray-500">估算寿命 N</dt>
+          <dt class="text-gray-500">{{ pf('estimatedLife') }}</dt>
           <dd class="mt-1 font-mono text-lg">{{ lifeDisplay }}</dd>
-          <p class="mt-1 text-xs text-gray-500">疲劳极限 σ₋₁ = {{ result.enduranceLimit }} MPa</p>
+          <p class="mt-1 text-xs text-gray-500">{{ pf('enduranceLimit') }} = {{ result.enduranceLimit }} MPa</p>
         </div>
 
-        <h3 v-if="calcMode !== 'simple'" class="mb-2 mt-6 text-sm font-semibold">Miner 载荷谱</h3>
-        <p v-if="calcMode !== 'simple'" class="mb-2 text-xs text-gray-500">每行：应力幅(MPa), 循环次数</p>
+        <h3 v-if="calcMode !== 'simple'" class="mb-2 mt-6 text-sm font-semibold">{{ pf('minerSpectrum') }}</h3>
+        <p v-if="calcMode !== 'simple'" class="mb-2 text-xs text-gray-500">{{ pf('minerHint') }}</p>
         <el-input v-if="calcMode !== 'simple'" v-model="loadText" type="textarea" :rows="5" placeholder="300,1e4&#10;250,5e4&#10;200,1e5" />
-        <el-button v-if="calcMode !== 'simple'" class="mt-2" size="small" @click="loadSample">加载示例</el-button>
+        <el-button v-if="calcMode !== 'simple'" class="mt-2" size="small" @click="loadSample">{{ pf('loadSample') }}</el-button>
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ calcMode === 'simple' ? '寿命估算' : 'Miner 累积损伤' }}</h2>
+        <h2 class="mb-4 font-semibold">{{ calcMode === 'simple' ? pr('lifeTitle') : pr('minerTitle') }}</h2>
         <template v-if="calcMode === 'simple'">
           <div class="rounded bg-gray-50 p-4 text-sm dark:bg-gray-900">
-            <p>有效应力幅: <span class="font-mono">{{ result.effectiveAmplitude?.toFixed(1) ?? stressAmplitude }}</span> MPa</p>
-            <p class="mt-2">寿命 N: <span class="font-mono text-lg">{{ lifeDisplay }}</span></p>
+            <p>{{ pr('effectiveAmplitude') }}: <span class="font-mono">{{ result.effectiveAmplitude?.toFixed(1) ?? stressAmplitude }}</span> MPa</p>
+            <p class="mt-2">{{ pf('estimatedLife') }}: <span class="font-mono text-lg">{{ lifeDisplay }}</span></p>
           </div>
         </template>
         <template v-else-if="result.miner && !result.miner.error">
           <div class="mb-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">累积损伤 D</dt>
+              <dt class="text-gray-500">{{ pr('totalDamage') }}</dt>
               <dd class="font-mono text-xl" :class="result.miner.pass ? 'text-success' : 'text-error'">
                 {{ result.miner.totalDamage?.toFixed(4) }}
               </dd>
             </div>
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">状态</dt>
+              <dt class="text-gray-500">{{ pr('status') }}</dt>
               <dd class="mt-1">{{ result.miner.status }}</dd>
             </div>
           </div>
@@ -102,7 +102,7 @@ import FatigueDiagram from '@/components/fatigue/FatigueDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('fatigue')
+const { pt, ct, pf, pr } = useCalcPage('fatigue')
 
 const calcMode = ref('complete')
 const material = ref('steel_45')

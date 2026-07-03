@@ -1,18 +1,7 @@
 /** Shared calculator UI strings (zh) */
-export const calcZh = {
-  common: {
-    model: '计算模型',
-    simple: '简化',
-    complete: '完整',
-    professional: '专业',
-    input: '输入参数',
-    results: '计算结果',
-    parameters: '参数',
-    material: '材料',
-    pass: '通过',
-    fail: '不通过',
-  },
-  pages: {
+import { fieldsZh, fieldsEn, mergeCalcPageFields } from './calc-fields-i18n'
+
+const pagesZh = {
     beam: {
       title: '梁挠度与应力估算',
       subtitle: 'FEA 前置快速验算：简支梁 / 悬臂梁常用载荷下的最大挠度与弯曲应力',
@@ -186,24 +175,27 @@ export const calcZh = {
       hintComplete: '多准则加权评分。',
       hintProfessional: '温度、腐蚀与疲劳约束。',
     },
+}
+
+export const calcZh = {
+  common: {
+    model: '计算模型',
+    simple: '简化',
+    complete: '完整',
+    professional: '专业',
+    input: '输入参数',
+    results: '计算结果',
+    parameters: '参数',
+    material: '材料',
+    pass: '通过',
+    fail: '不通过',
   },
+  fields: fieldsZh,
+  pages: mergeCalcPageFields(pagesZh, fieldsZh.pages),
 }
 
 /** Shared calculator UI strings (en) */
-export const calcEn = {
-  common: {
-    model: 'Calculation model',
-    simple: 'Basic',
-    complete: 'Full',
-    professional: 'Advanced',
-    input: 'Input',
-    results: 'Results',
-    parameters: 'Parameters',
-    material: 'Material',
-    pass: 'Pass',
-    fail: 'Fail',
-  },
-  pages: {
+const pagesEn = {
     beam: {
       title: 'Beam deflection & stress',
       subtitle: 'Quick checks before FEA: max deflection and bending stress for simply supported and cantilever beams',
@@ -377,5 +369,21 @@ export const calcEn = {
       hintComplete: 'Multi-criteria weighted scoring.',
       hintProfessional: 'Temperature, corrosion, and fatigue constraints.',
     },
+}
+
+export const calcEn = {
+  common: {
+    model: 'Calculation model',
+    simple: 'Basic',
+    complete: 'Full',
+    professional: 'Advanced',
+    input: 'Input',
+    results: 'Results',
+    parameters: 'Parameters',
+    material: 'Material',
+    pass: 'Pass',
+    fail: 'Fail',
   },
+  fields: fieldsEn,
+  pages: mergeCalcPageFields(pagesEn, fieldsEn.pages),
 }

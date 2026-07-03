@@ -9,26 +9,27 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="100px">
-          <el-form-item label="公称尺寸">
+          <el-form-item :label="pf('nominalSize')">
             <el-input-number v-model="nominal" :min="1" :max="500" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="孔代号">
+          <el-form-item :label="pf('holeCode')">
             <el-input v-model="holeCode" placeholder="H7" class="w-32" />
           </el-form-item>
-          <el-form-item label="轴代号">
+          <el-form-item :label="pf('shaftCode')">
             <el-input v-model="shaftCode" placeholder="g6" class="w-32" />
           </el-form-item>
           <template v-if="calcMode === 'professional'">
-            <el-form-item label="装配温差">
+            <el-form-item :label="pf('assemblyDeltaT')">
               <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
             </el-form-item>
           </template>
         </el-form>
 
-        <p class="mb-2 text-xs font-medium text-gray-500">常用配合预设</p>
+        <p class="mb-2 text-xs font-medium text-gray-500">{{ pf('commonPresets') }}</p>
         <div class="flex flex-wrap gap-2">
           <el-button
             v-for="(p, i) in COMMON_FITS"
@@ -43,6 +44,7 @@
       </section>
 
       <section ref="resultRef" class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <el-alert v-if="result?.error" :title="result.error" type="warning" show-icon />
         <template v-else-if="result">
           <div class="mb-4 flex items-center gap-3">
@@ -51,31 +53,31 @@
           </div>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>最大间隙 / 过盈</dt>
+              <dt>{{ pr('maxClearance') }}</dt>
               <dd class="font-mono">{{ (result.maxClearance * 1000).toFixed(1) }} μm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>最小间隙 / 过盈</dt>
+              <dt>{{ pr('minClearance') }}</dt>
               <dd class="font-mono">{{ (result.minClearance * 1000).toFixed(1) }} μm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>孔 {{ result.hole.designation }}</dt>
+              <dt>{{ pr('holeLimits') }} {{ result.hole.designation }}</dt>
               <dd class="font-mono">{{ result.hole.minSize.toFixed(4) }} ~ {{ result.hole.maxSize.toFixed(4) }}</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>轴 {{ result.shaft.designation }}</dt>
+              <dt>{{ pr('shaftLimits') }} {{ result.shaft.designation }}</dt>
               <dd class="font-mono">{{ result.shaft.minSize.toFixed(4) }} ~ {{ result.shaft.maxSize.toFixed(4) }}</dd>
             </div>
             <div v-if="result.meanClearance != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>平均间隙</dt>
+              <dt>{{ pr('meanClearance') }}</dt>
               <dd class="font-mono">{{ (result.meanClearance * 1000).toFixed(1) }} μm</dd>
             </div>
             <div v-if="result.fitQuality != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>配合品质指数</dt>
+              <dt>{{ pr('fitQuality') }}</dt>
               <dd class="font-mono">{{ result.fitQuality }}</dd>
             </div>
             <div v-if="result.thermalShift != null && deltaT !== 0" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>温升间隙变化</dt>
+              <dt>{{ pr('thermalShift') }}</dt>
               <dd class="font-mono">{{ (result.thermalShift * 1000).toFixed(1) }} μm</dd>
             </div>
             <div v-if="result.thermalRisk" class="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/20">
@@ -89,13 +91,13 @@
     </div>
 
     <section class="card-panel mt-6">
-      <h2 class="mb-2 text-sm font-semibold">支持的公差代号</h2>
-      <p class="mb-2 text-xs text-gray-500">孔 (大写): {{ holeLetters.join(', ') }}</p>
-      <p class="text-xs text-gray-500">轴 (小写): {{ shaftLetters.join(', ') }}</p>
+      <h2 class="mb-2 text-sm font-semibold">{{ pf('supportedCodes') }}</h2>
+      <p class="mb-2 text-xs text-gray-500">{{ pf('holeLetters') }}: {{ holeLetters.join(', ') }}</p>
+      <p class="text-xs text-gray-500">{{ pf('shaftLetters') }}: {{ shaftLetters.join(', ') }}</p>
     </section>
 
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
-      <el-button type="primary" plain @click="exportPdf">导出 PDF 报告</el-button>
+      <el-button type="primary" plain @click="exportPdf">{{ fc('exportPdfReport') }}</el-button>
       <SaveHistoryButton
         tool="fit"
         :title="`配合 ${holeCode}/${shaftCode} Ø${nominal}`"
@@ -118,7 +120,7 @@ import { exportToolReportPdf } from '@/utils/export'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('fit')
+const { pt, ct, pf, pr, fc } = useCalcPage('fit')
 
 const nominal = ref(25)
 const holeCode = ref('H7')

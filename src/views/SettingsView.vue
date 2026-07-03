@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted, ref } from 'vue'
+import { reactive, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getSettings,
@@ -85,7 +85,16 @@ const fileInput = ref(null)
 
 onMounted(() => {
   Object.assign(form, getSettings())
+  window.addEventListener('mechbox-settings', syncFormFromSettings)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('mechbox-settings', syncFormFromSettings)
+})
+
+function syncFormFromSettings(e) {
+  if (e.detail?.locale != null) form.locale = e.detail.locale
+}
 
 function save() {
   saveSettings({ ...form })

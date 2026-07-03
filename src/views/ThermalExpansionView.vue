@@ -9,24 +9,24 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">线膨胀</h2>
+        <h2 class="mb-4 font-semibold">{{ pf('linearExpansion') }}</h2>
         <el-form label-width="148px">
-          <el-form-item label="材料 1">
+          <el-form-item :label="pf('material1')">
             <el-select v-model="mat1" class="w-full" @change="onMat1">
               <el-option v-for="(m, k) in THERMAL_MATERIALS" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
-          <el-form-item label="长度 L₁">
+          <el-form-item :label="pf('length1')">
             <el-input-number v-model="form.length" :min="1" :max="10000" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="温差 ΔT">
+          <el-form-item :label="pf('deltaT')">
             <el-input-number v-model="form.deltaT" :min="-300" :max="800" :step="10" />
             <span class="ml-2 text-sm text-gray-500">°C</span>
           </el-form-item>
-          <el-form-item label="α₁">
+          <el-form-item :label="pf('alpha1')">
             <el-input-number v-model="form.alpha" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
-            <span class="ml-2 text-xs text-gray-500">×10⁻⁶ /°C（输入值即 ×10⁻⁶）</span>
+            <span class="ml-2 text-xs text-gray-500">{{ pf('alphaHint') }}</span>
           </el-form-item>
         </el-form>
 
@@ -40,35 +40,35 @@
         />
 
         <div class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
-          <dt class="text-gray-500">线膨胀 ΔL₁</dt>
+          <dt class="text-gray-500">{{ pf('deltaL1') }}</dt>
           <dd class="mt-1 font-mono text-lg">{{ linearResult.linearExpansion?.toFixed(4) }} mm</dd>
         </div>
       </section>
 
       <section v-if="calcMode !== 'simple'" class="card-panel">
-        <h2 class="mb-4 font-semibold">配合尺寸变化</h2>
+        <h2 class="mb-4 font-semibold">{{ pf('fitChange') }}</h2>
         <el-form label-width="148px">
-          <el-form-item label="材料 2（孔）">
+          <el-form-item :label="pf('material2')">
             <el-select v-model="mat2" class="w-full" @change="onMat2">
               <el-option v-for="(m, k) in THERMAL_MATERIALS" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
-          <el-form-item label="轴径 d">
+          <el-form-item :label="pf('shaftDiameter')">
             <el-input-number v-model="form.shaftDiameter" :min="1" :max="500" :precision="2" />
           </el-form-item>
-          <el-form-item label="孔径 D">
+          <el-form-item :label="pf('holeDiameter')">
             <el-input-number v-model="form.holeDiameter" :min="1" :max="500" :precision="2" />
           </el-form-item>
-          <el-form-item label="α₂">
+          <el-form-item :label="pf('alpha2')">
             <el-input-number v-model="form.alpha2" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
             <span class="ml-2 text-xs text-gray-500">×10⁻⁶ /°C</span>
           </el-form-item>
           <template v-if="calcMode === 'professional'">
-            <el-form-item label="装配温差">
+            <el-form-item :label="pf('assemblyDeltaT')">
               <el-input-number v-model="form.assemblyDeltaT" :min="-200" :max="400" :step="10" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
             </el-form-item>
-            <el-form-item label="服役温差">
+            <el-form-item :label="pf('serviceDeltaT')">
               <el-input-number v-model="form.serviceDeltaT" :min="-200" :max="800" :step="10" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
             </el-form-item>
@@ -77,15 +77,15 @@
         <template v-if="linearResult.fit">
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>初始过盈</dt>
+              <dt>{{ pr('initialInterference') }}</dt>
               <dd class="font-mono">{{ linearResult.fit.initialInterference?.toFixed(4) }} mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>过盈变化 Δi</dt>
+              <dt>{{ pr('interferenceChange') }}</dt>
               <dd class="font-mono">{{ linearResult.fit.interferenceChange?.toFixed(4) }} mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>最终过盈</dt>
+              <dt>{{ pr('finalInterference') }}</dt>
               <dd class="font-mono" :class="linearResult.fit.becomesClearance ? 'text-warning' : 'text-success'">
                 {{ linearResult.fit.finalInterference?.toFixed(4) }} mm
               </dd>
@@ -118,7 +118,7 @@ import ThermalExpansionDiagram from '@/components/thermal/ThermalExpansionDiagra
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('thermal-expansion')
+const { pt, ct, pf, pr } = useCalcPage('thermal-expansion')
 
 const calcMode = ref('simple')
 const mat1 = ref('steel')

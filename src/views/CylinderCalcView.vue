@@ -6,28 +6,29 @@
     <CalcModePanel v-model="form.calcMode" page-key="cylinder" />
 
     <el-tabs v-model="mode" class="mb-6">
-      <el-tab-pane label="液压缸" name="hydraulic" />
-      <el-tab-pane label="气缸" name="pneumatic" />
+      <el-tab-pane :label="pf('tabHydraulic')" name="hydraulic" />
+      <el-tab-pane :label="pf('tabPneumatic')" name="pneumatic" />
     </el-tabs>
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <el-form-item label="缸径 D (mm)"><el-input-number v-model="form.boreDiameter" :min="10" /></el-form-item>
-          <el-form-item label="活塞杆 d (mm)"><el-input-number v-model="form.rodDiameter" :min="0" /></el-form-item>
-          <el-form-item :label="mode === 'hydraulic' ? '压力 p (MPa)' : '气压 p (MPa)'">
+          <el-form-item :label="pf('boreDiameter')"><el-input-number v-model="form.boreDiameter" :min="10" /></el-form-item>
+          <el-form-item :label="pf('rodDiameter')"><el-input-number v-model="form.rodDiameter" :min="0" /></el-form-item>
+          <el-form-item :label="mode === 'hydraulic' ? pf('pressureHydraulic') : pf('pressurePneumatic')">
             <el-input-number v-model="form.pressure" :min="0.1" :precision="2" :step="0.1" />
           </el-form-item>
-          <el-form-item label="流量 Q (L/min)"><el-input-number v-model="form.flowRate" :min="0" :precision="1" /></el-form-item>
-          <el-form-item v-if="mode === 'pneumatic'" label="效率 η">
+          <el-form-item :label="pf('flowRate')"><el-input-number v-model="form.flowRate" :min="0" :precision="1" /></el-form-item>
+          <el-form-item v-if="mode === 'pneumatic'" :label="pf('efficiency')">
             <el-input-number v-model="form.efficiency" :min="0.5" :max="1" :precision="2" :step="0.05" />
           </el-form-item>
           <template v-if="form.calcMode !== 'simple'">
-            <el-form-item label="外载 F (N)"><el-input-number v-model="form.externalLoad" :min="0" :step="100" /></el-form-item>
-            <el-form-item label="行程 (mm)"><el-input-number v-model="form.strokeLength" :min="0" :step="50" /></el-form-item>
+            <el-form-item :label="pf('externalLoad')"><el-input-number v-model="form.externalLoad" :min="0" :step="100" /></el-form-item>
+            <el-form-item :label="pf('strokeLength')"><el-input-number v-model="form.strokeLength" :min="0" :step="50" /></el-form-item>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item label="负载质量 (kg)"><el-input-number v-model="form.loadMass" :min="0" :precision="1" /></el-form-item>
-            <el-form-item label="加速度 (m/s²)"><el-input-number v-model="form.acceleration" :min="0" :precision="2" /></el-form-item>
+            <el-form-item :label="pf('loadMass')"><el-input-number v-model="form.loadMass" :min="0" :precision="1" /></el-form-item>
+            <el-form-item :label="pf('acceleration')"><el-input-number v-model="form.acceleration" :min="0" :precision="2" /></el-form-item>
           </template>
         </el-form>
 
@@ -39,14 +40,15 @@
         />
       </section>
       <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>伸出推力 F⁺</dt><dd class="font-mono text-lg">{{ result.extendForce.toFixed(0) }} N</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>缩回拉力 F⁻</dt><dd class="font-mono">{{ result.retractForce.toFixed(0) }} N</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>伸出速度 v⁺</dt><dd class="font-mono">{{ result.extendVelocity.toFixed(1) }} mm/s</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>缩回速度 v⁻</dt><dd class="font-mono">{{ result.retractVelocity.toFixed(1) }} mm/s</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>伸出流量</dt><dd class="font-mono">{{ result.extendFlow.toFixed(2) }} L/min</dd></div>
-          <div v-if="result.bucklingLoad" class="flex justify-between rounded bg-gray-50 p-3"><dt>杆屈曲载荷</dt><dd class="font-mono">{{ result.bucklingLoad?.toFixed(0) }} N {{ result.bucklingPass ? '✓' : '✗' }}</dd></div>
-          <div v-if="result.cycleTimeExtend" class="flex justify-between rounded bg-gray-50 p-3"><dt>伸/缩时间</dt><dd class="font-mono">{{ result.cycleTimeExtend?.toFixed(2) }} / {{ result.cycleTimeRetract?.toFixed(2) }} s</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('extendForce') }}</dt><dd class="font-mono text-lg">{{ result.extendForce.toFixed(0) }} N</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('retractForce') }}</dt><dd class="font-mono">{{ result.retractForce.toFixed(0) }} N</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('extendVelocity') }}</dt><dd class="font-mono">{{ result.extendVelocity.toFixed(1) }} mm/s</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('retractVelocity') }}</dt><dd class="font-mono">{{ result.retractVelocity.toFixed(1) }} mm/s</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('extendFlow') }}</dt><dd class="font-mono">{{ result.extendFlow.toFixed(2) }} L/min</dd></div>
+          <div v-if="result.bucklingLoad" class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('bucklingLoad') }}</dt><dd class="font-mono">{{ result.bucklingLoad?.toFixed(0) }} N {{ result.bucklingPass ? '✓' : '✗' }}</dd></div>
+          <div v-if="result.cycleTimeExtend" class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('cycleTime') }}</dt><dd class="font-mono">{{ result.cycleTimeExtend?.toFixed(2) }} / {{ result.cycleTimeRetract?.toFixed(2) }} s</dd></div>
         </dl>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4">
           <MathTex expr="F = p \cdot A / 1000" />
@@ -64,7 +66,7 @@ import CylinderDiagram from '@/components/cylinder/CylinderDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('cylinder')
+const { pt, ct, pf, pr } = useCalcPage('cylinder')
 const mode = ref('hydraulic')
 const form = reactive({
   calcMode: 'simple',

@@ -8,11 +8,12 @@
     <CalcModePanel v-model="calcMode" page-key="heat-treatment" />
 
     <el-tabs v-model="tab">
-      <el-tab-pane label="成分与淬透性" name="hardenability">
+      <el-tab-pane :label="pf('tabHardenability')" name="hardenability">
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="100px">
-              <el-form-item label="钢种预设">
+              <el-form-item :label="pf('steelPreset')">
                 <el-select v-model="preset" class="w-full" @change="applyPreset">
                   <el-option v-for="(p, k) in STEEL_PRESETS" :key="k" :label="p.label" :value="k" />
                 </el-select>
@@ -21,11 +22,11 @@
                 <el-input-number v-model="comp[el.key]" :min="0" :max="5" :step="0.01" :precision="2" />
                 <span class="ml-2 text-xs text-gray-500">%</span>
               </el-form-item>
-              <el-form-item v-if="calcMode !== 'simple'" label="奥氏体晶粒度">
+              <el-form-item v-if="calcMode !== 'simple'" :label="pf('austeniteGrain')">
                 <el-input-number v-model="grainSize" :min="1" :max="8" />
                 <span class="ml-2 text-xs text-gray-500">ASTM</span>
               </el-form-item>
-              <el-form-item v-if="calcMode !== 'simple'" label="零件直径">
+              <el-form-item v-if="calcMode !== 'simple'" :label="pf('partDiameter')">
                 <el-input-number v-model="partDiameter" :min="5" :max="300" />
                 <span class="ml-2 text-xs text-gray-500">mm</span>
               </el-form-item>
@@ -40,84 +41,85 @@
           </section>
 
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>碳当量 CE</dt>
+                <dt>{{ pr('carbonEquivalent') }}</dt>
                 <dd class="font-mono text-lg text-primary">{{ result.carbonEquivalent }}</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>焊接性</dt>
+                <dt>{{ pr('weldability') }}</dt>
                 <dd>{{ result.weldability }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>理想临界直径 D<sub>I</sub></dt>
+                <dt>{{ pr('idealCriticalDiameter') }}</dt>
                 <dd class="font-mono">{{ result.hardenability?.idealCriticalDiameter }} mm</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>表面 HRC（估算）</dt>
+                <dt>{{ pr('surfaceHRC') }}</dt>
                 <dd class="font-mono">{{ result.hardenability?.surfaceHRC }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>心部 HRC（估算）</dt>
+                <dt>{{ pr('coreHRC') }}</dt>
                 <dd class="font-mono">{{ result.hardenability?.estimatedCoreHRC }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>淬透性判定</dt>
+                <dt>{{ pr('hardenabilityVerdict') }}</dt>
                 <dd>{{ result.hardenability?.verdict }}</dd>
               </div>
               <div v-if="calcMode === 'complete' || calcMode === 'professional'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>预热建议</dt>
-                <dd>{{ result.preheatRequired ? `${result.preheatTemp}°C` : '不需要' }}</dd>
+                <dt>{{ pr('preheatAdvice') }}</dt>
+                <dd>{{ result.preheatRequired ? `${result.preheatTemp}°C` : fc('notRequired') }}</dd>
               </div>
               <el-tag v-if="calcMode === 'professional'" class="mt-2" :type="result.pass ? 'success' : 'warning'">
-                {{ result.pass ? '硬度目标可达' : '需调整工艺' }}
+                {{ result.pass ? pr('hardnessTargetOk') : pr('hardnessAdjust') }}
               </el-tag>
             </dl>
           </section>
         </div>
 
         <section v-if="calcMode !== 'simple'" class="card-panel mt-6">
-          <h3 class="mb-2 font-semibold">Jominy 端淬曲线</h3>
+          <h3 class="mb-2 font-semibold">{{ pf('jominyChart') }}</h3>
           <div ref="jominyChartRef" class="min-h-[360px]" />
         </section>
       </el-tab-pane>
 
-      <el-tab-pane v-if="calcMode !== 'simple'" label="回火硬度" name="temper">
+      <el-tab-pane v-if="calcMode !== 'simple'" :label="pf('tabTemper')" name="temper">
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="淬火硬度 HRC">
+              <el-form-item :label="pf('asQuenchedHRC')">
                 <el-input-number v-model="asQuenchedHRC" :min="20" :max="65" :precision="1" />
               </el-form-item>
-              <el-form-item label="回火温度">
+              <el-form-item :label="pf('temperTemp')">
                 <el-input-number v-model="temperTemp" :min="150" :max="700" />
                 <span class="ml-2 text-xs text-gray-500">°C</span>
               </el-form-item>
-              <el-form-item label="保温时间">
+              <el-form-item :label="pf('temperTime')">
                 <el-input-number v-model="temperTime" :min="0.1" :max="24" :step="0.5" :precision="1" />
                 <span class="ml-2 text-xs text-gray-500">h</span>
               </el-form-item>
             </el-form>
-            <p class="text-xs text-gray-500">
-              基于 Hollomon-Jaffe 参数与温度/时间折减的简化模型，适用于调质范围估算。
-            </p>
+            <p class="text-xs text-gray-500">{{ pf('temperHint') }}</p>
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>回火后 HRC</dt>
+                <dt>{{ pr('temperedHRC') }}</dt>
                 <dd class="font-mono text-lg text-primary">{{ temperResult.temperedHRC }}</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>硬度下降</dt>
+                <dt>{{ pr('hardnessDrop') }}</dt>
                 <dd class="font-mono">{{ temperResult.hardnessDrop }} HRC</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>H-J 参数</dt>
+                <dt>{{ pr('hollomonJaffe') }}</dt>
                 <dd class="font-mono">{{ temperResult.hollomonJaffe }}</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>状态</dt>
+                <dt>{{ pr('temperState') }}</dt>
                 <dd>{{ temperResult.temperState }}</dd>
               </div>
             </dl>
@@ -139,7 +141,7 @@ import HeatTreatmentDiagram from '@/components/heat/HeatTreatmentDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('heat-treatment')
+const { pt, ct, pf, pr, fc } = useCalcPage('heat-treatment')
 
 const tab = ref('hardenability')
 const calcMode = ref('complete')
@@ -202,7 +204,7 @@ async function renderJominyChart() {
       },
     ],
     {
-      xaxis: { title: '距淬火端距离 (mm)' },
+      xaxis: { title: pf('jominyX') },
       yaxis: { title: 'HRC' },
       height: 360,
       margin: { t: 24, l: 48, b: 40, r: 16 },

@@ -1,6 +1,7 @@
 /** @typedef {'zh'|'en'} Locale */
 
 import { calcZh, calcEn } from './calc-i18n'
+import { fieldsZh, fieldsEn, mergeCalcPageFields } from './calc-fields-i18n'
 
 const zh = {
   appName: '机械工具箱',
@@ -20,6 +21,7 @@ const zh = {
     analysis: '分析',
     login: '登录',
     settings: '设置',
+    language: '切换语言',
   },
   home: {
     quickDesc: '尺寸链叠加 · 概率统计 · 机械强度计算',
@@ -210,6 +212,7 @@ const en = {
     analysis: 'Analysis',
     login: 'Sign in',
     settings: 'Settings',
+    language: 'Switch language',
   },
   home: {
     quickDesc: 'Tolerance stack · Statistics · Mechanical strength',

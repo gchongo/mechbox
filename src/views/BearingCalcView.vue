@@ -11,30 +11,30 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="150px">
-          <el-form-item v-if="form.calcMode !== 'simple'" label="X/Y 查表">
-            <el-switch v-model="form.autoLookup" active-text="自动" inactive-text="手动" />
+          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('xyLookup')">
+            <el-switch v-model="form.autoLookup" :active-text="fc('auto')" :inactive-text="fc('manual')" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple' && form.autoLookup" label="轴承系列">
+          <el-form-item v-if="form.calcMode !== 'simple' && form.autoLookup" :label="pf('series')">
             <el-select v-model="form.seriesId" class="w-full" filterable>
               <el-option v-for="s in seriesList" :key="s.id" :label="s.label" :value="s.id" />
             </el-select>
           </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple' && form.autoLookup" label="轴承型号">
-            <el-input v-model="form.bearingModel" placeholder="如 6205、NU206（可选）" @change="onModelChange" />
+          <el-form-item v-if="form.calcMode !== 'simple' && form.autoLookup" :label="pf('model')">
+            <el-input v-model="form.bearingModel" :placeholder="pf('modelPlaceholder')" @change="onModelChange" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" label="轴承类型">
+          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('bearingType')">
             <el-select v-model="form.bearingType" class="w-full">
-              <el-option label="球轴承 (ε=3)" value="ball" />
-              <el-option label="滚子轴承 (ε=10/3)" value="roller" />
+              <el-option :label="pf('ballBearing')" value="ball" />
+              <el-option :label="pf('rollerBearing')" value="roller" />
             </el-select>
           </el-form-item>
-          <el-form-item label="额定动载荷 C (N)">
+          <el-form-item :label="pf('dynamicLoad')">
             <el-input-number v-model="form.dynamicLoad" :min="100" :step="1000" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" label="额定静载荷 C₀ (N)">
+          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('staticLoad')">
             <el-input-number v-model="form.staticLoad" :min="0" :step="1000" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" label="工况系数 aISO">
+          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('lifeCondition')">
             <el-select v-model="form.lifeCondition" class="w-full">
               <el-option label="清洁润滑 (1.5)" value="clean" />
               <el-option label="标准 (1.0)" value="standard" />
@@ -42,22 +42,22 @@
               <el-option label="恶劣 (0.3)" value="heavy" />
             </el-select>
           </el-form-item>
-          <el-form-item label="径向载荷 Fr (N)">
+          <el-form-item :label="pf('radialLoad')">
             <el-input-number v-model="form.radialLoad" :min="0" :step="100" />
           </el-form-item>
-          <el-form-item label="轴向载荷 Fa (N)">
+          <el-form-item :label="pf('axialLoad')">
             <el-input-number v-model="form.axialLoad" :min="0" :step="50" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" label="系数 X">
+          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorX')">
             <el-input-number v-model="form.x" :min="0" :max="2" :precision="2" :step="0.1" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" label="系数 Y">
+          <el-form-item v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorY')">
             <el-input-number v-model="form.y" :min="0" :max="4" :precision="2" :step="0.1" />
           </el-form-item>
-          <el-form-item label="转速 n (rpm)">
+          <el-form-item :label="pf('rpm')">
             <el-input-number v-model="form.rpm" :min="1" :step="100" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" label="可靠度 (%)">
+          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('reliability')">
             <el-select v-model="form.reliability" class="w-full">
               <el-option label="90% (L10, a₁=1.0)" :value="90" />
               <el-option label="95% (a₁=0.64)" :value="95" />
@@ -67,14 +67,14 @@
               <el-option label="99% (a₁=0.25)" :value="99" />
             </el-select>
           </el-form-item>
-          <el-form-item label="目标寿命 (h)">
+          <el-form-item :label="pf('targetHours')">
             <el-input-number v-model="form.targetHours" :min="100" :step="1000" />
           </el-form-item>
           <template v-if="form.calcMode === 'professional'">
-            <el-form-item label="工作温度 (°C)">
+            <el-form-item :label="pf('operatingTemp')">
               <el-input-number v-model="form.operatingTemp" :min="80" :max="300" :step="10" />
             </el-form-item>
-            <el-form-item label="极限转速 (rpm)">
+            <el-form-item :label="pf('limitingSpeed')">
               <el-input-number v-model="form.limitingSpeed" :min="0" :step="500" />
             </el-form-item>
           </template>
@@ -100,15 +100,15 @@
         />
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">当量动载荷 P</dt>
+            <dt class="text-gray-500">{{ pr('equivalentLoad') }}</dt>
             <dd class="font-mono">{{ result.equivalentLoad.toFixed(1) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">L10 (百万转)</dt>
+            <dt class="text-gray-500">{{ pr('lifeL10') }}</dt>
             <dd class="font-mono">{{ formatNum(result.l10MillionRev) }}</dd>
           </div>
           <div v-if="form.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">修正寿命 Lnm</dt>
+            <dt class="text-gray-500">{{ pr('modifierProduct') }}</dt>
             <dd class="font-mono">
               {{ formatNum(result.modifiedLifeMillionRev) }}
               (a₁×aISO{{ form.calcMode === 'professional' ? '×a₂' : '' }}={{ modifierProduct }})
@@ -120,13 +120,13 @@
           </div>
           <el-alert v-if="result.speedWarning" type="warning" :title="result.speedWarning" show-icon class="mb-2" />
           <div v-if="result.staticSafetyFactor != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">静载安全系数 S₀</dt>
+            <dt class="text-gray-500">{{ pr('staticSafety') }}</dt>
             <dd class="font-mono" :class="result.staticPass ? 'text-success' : 'text-error'">
               {{ result.staticSafetyFactor.toFixed(2) }} {{ result.staticPass ? '✓' : '✗' }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">额定寿命</dt>
+            <dt class="text-gray-500">{{ pr('lifeHours') }}</dt>
             <dd class="font-mono text-lg" :class="result.pass ? 'text-success' : 'text-error'">
               {{ formatHours(result.lifeHours) }} {{ result.pass ? '✓' : '✗' }}
             </dd>
@@ -149,7 +149,7 @@ import BearingLoadDiagram from '@/components/bearing/BearingLoadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('bearing')
+const { pt, ct, pf, pr, fc } = useCalcPage('bearing')
 
 const seriesList = listBearingSeries()
 

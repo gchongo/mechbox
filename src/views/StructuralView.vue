@@ -6,183 +6,175 @@
     </p>
 
     <el-tabs v-model="tab">
-      <!-- 管路压降 -->
-      <el-tab-pane label="管路压降" name="pipe">
+      <el-tab-pane :label="pf('tabPipe')" name="pipe">
         <CalcModePanel v-model="pipe.calcMode" page-key="structural" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="流体">
+              <el-form-item :label="pf('fluid')">
                 <el-select v-model="fluid" @change="applyFluid">
                   <el-option v-for="(f, k) in FLUID_PRESETS" :key="k" :label="f.label" :value="k" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="内径">
+              <el-form-item :label="pf('innerDiameter')">
                 <el-input-number v-model="pipe.diameter" :min="1" /> mm
               </el-form-item>
-              <el-form-item label="管长">
+              <el-form-item :label="pf('pipeLength')">
                 <el-input-number v-model="pipe.length" :min="0.1" /> m
               </el-form-item>
-              <el-form-item label="流量">
+              <el-form-item :label="pf('flowRate')">
                 <el-input-number v-model="pipe.flowRate" :min="0.1" /> L/min
               </el-form-item>
-              <el-form-item label="粗糙度">
+              <el-form-item :label="pf('roughness')">
                 <el-input-number v-model="pipe.roughness" :min="0.001" :precision="3" /> mm
               </el-form-item>
-              <el-form-item v-if="pipe.calcMode !== 'simple'" label="局部损失 K">
+              <el-form-item v-if="pipe.calcMode !== 'simple'" :label="pf('localLossK')">
                 <el-input-number v-model="pipe.localLossK" :min="0" :precision="1" />
               </el-form-item>
               <template v-if="pipe.calcMode === 'professional'">
-                <el-form-item label="最大流速">
+                <el-form-item :label="pf('maxVelocity')">
                   <el-input-number v-model="pipe.maxVelocity" :min="0.5" :max="10" :precision="1" />
                   <span class="ml-2 text-xs text-gray-500">m/s</span>
                 </el-form-item>
-                <el-form-item label="允许压降">
+                <el-form-item :label="pf('maxPressureDrop')">
                   <el-input-number v-model="pipe.maxPressureDropKPa" :min="1" :max="1000" />
                   <span class="ml-2 text-xs text-gray-500">kPa</span>
                 </el-form-item>
               </template>
             </el-form>
 
-            <StructuralDiagram
-              variant="pipe"
-              :diameter="pipe.diameter"
-              :length="pipe.length"
-            />
+            <StructuralDiagram variant="pipe" :diameter="pipe.diameter" :length="pipe.length" />
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>流速</dt><dd class="font-mono">{{ pipeResult.velocity?.toFixed(3) }} m/s</dd>
+                <dt>{{ pr('velocity') }}</dt><dd class="font-mono">{{ pipeResult.velocity?.toFixed(3) }} m/s</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>Re</dt><dd class="font-mono">{{ pipeResult.reynolds?.toFixed(0) }} ({{ pipeResult.flowRegime }})</dd>
+                <dt>{{ pr('reynolds') }}</dt><dd class="font-mono">{{ pipeResult.reynolds?.toFixed(0) }} ({{ pipeResult.flowRegime }})</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>沿程压降</dt><dd class="font-mono">{{ pipeResult.pressureDropKPa?.toFixed(2) }} kPa</dd>
+                <dt>{{ pr('frictionDrop') }}</dt><dd class="font-mono">{{ pipeResult.pressureDropKPa?.toFixed(2) }} kPa</dd>
               </div>
               <div v-if="pipeResult.methodCompare" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>H-W 对比</dt><dd class="font-mono">{{ pipeResult.methodCompare.hazenKPa?.toFixed(2) }} kPa</dd>
+                <dt>{{ pr('hwCompare') }}</dt><dd class="font-mono">{{ pipeResult.methodCompare.hazenKPa?.toFixed(2) }} kPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>总压降</dt><dd class="font-mono text-lg text-primary">{{ pipeResult.totalPressureDropKPa?.toFixed(2) }} kPa</dd>
+                <dt>{{ pr('totalDrop') }}</dt><dd class="font-mono text-lg text-primary">{{ pipeResult.totalPressureDropKPa?.toFixed(2) }} kPa</dd>
               </div>
               <el-tag v-if="pipe.calcMode === 'professional'" class="mt-3" :type="pipeResult.pass ? 'success' : 'danger'">
-                {{ pipeResult.pass ? '流速/压降合格' : '超限' }} · 冲蚀 {{ pipeResult.erosionRisk }}
+                {{ pipeResult.pass ? pr('pipePass') : pr('pipeFail') }} · {{ pr('erosion') }} {{ pipeResult.erosionRisk }}
               </el-tag>
             </dl>
           </section>
         </div>
       </el-tab-pane>
 
-      <!-- 薄板屈曲 -->
-      <el-tab-pane label="薄板屈曲" name="plate">
+      <el-tab-pane :label="pf('tabPlate')" name="plate">
         <CalcModePanel v-model="plate.calcMode" page-key="structural" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="边界条件">
+              <el-form-item :label="pf('edgeCondition')">
                 <el-select v-model="plate.edgeCondition" class="w-full">
                   <el-option v-for="(e, k) in PLATE_EDGE_CONDITIONS" :key="k" :label="e.label" :value="k" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="板厚 t"><el-input-number v-model="plate.thickness" :min="0.1" /></el-form-item>
-              <el-form-item label="宽度 b"><el-input-number v-model="plate.width" :min="1" /></el-form-item>
-              <el-form-item label="长度 a"><el-input-number v-model="plate.length" :min="1" /></el-form-item>
-              <el-form-item label="工作应力"><el-input-number v-model="plate.appliedStress" :min="0" /></el-form-item>
+              <el-form-item :label="pf('plateThickness')"><el-input-number v-model="plate.thickness" :min="0.1" /></el-form-item>
+              <el-form-item :label="pf('plateWidth')"><el-input-number v-model="plate.width" :min="1" /></el-form-item>
+              <el-form-item :label="pf('plateLength')"><el-input-number v-model="plate.length" :min="1" /></el-form-item>
+              <el-form-item :label="pf('appliedStress')"><el-input-number v-model="plate.appliedStress" :min="0" /></el-form-item>
               <template v-if="plate.calcMode !== 'simple'">
-                <el-form-item label="横向应力"><el-input-number v-model="plate.appliedStressTransverse" :min="0" /></el-form-item>
-                <el-form-item label="缺陷系数"><el-input-number v-model="plate.imperfectionFactor" :min="0.5" :max="1" :step="0.05" :precision="2" /></el-form-item>
+                <el-form-item :label="pf('transverseStress')"><el-input-number v-model="plate.appliedStressTransverse" :min="0" /></el-form-item>
+                <el-form-item :label="pf('imperfectionFactor')"><el-input-number v-model="plate.imperfectionFactor" :min="0.5" :max="1" :step="0.05" :precision="2" /></el-form-item>
               </template>
               <template v-if="plate.calcMode === 'professional'">
-                <el-form-item label="面内剪应力"><el-input-number v-model="plate.appliedShear" :min="0" /></el-form-item>
+                <el-form-item :label="pf('inPlaneShear')"><el-input-number v-model="plate.appliedShear" :min="0" /></el-form-item>
               </template>
             </el-form>
 
-            <StructuralDiagram
-              variant="plate"
-              :plate-length="plate.length"
-              :plate-thickness="plate.thickness"
-            />
+            <StructuralDiagram variant="plate" :plate-length="plate.length" :plate-thickness="plate.thickness" />
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>临界应力 σ_cr</dt><dd class="font-mono">{{ plateResult.criticalStress?.toFixed(1) }} MPa</dd>
+                <dt>{{ pr('criticalStress') }}</dt><dd class="font-mono">{{ plateResult.criticalStress?.toFixed(1) }} MPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>安全系数</dt>
+                <dt>{{ pr('safetyFactor') }}</dt>
                 <dd class="font-mono" :class="plateResult.pass ? 'text-success' : 'text-error'">
                   {{ plateResult.safetyFactor === Infinity ? '—' : plateResult.safetyFactor?.toFixed(2) }}
                 </dd>
               </div>
               <div v-if="plateResult.utilization" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>应力利用率</dt><dd class="font-mono">{{ (plateResult.utilization * 100).toFixed(1) }}%</dd>
+                <dt>{{ pr('utilization') }}</dt><dd class="font-mono">{{ (plateResult.utilization * 100).toFixed(1) }}%</dd>
               </div>
               <div v-if="plateResult.postBucklingReserve" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>后屈曲储备</dt><dd class="font-mono">{{ plateResult.postBucklingReserve?.toFixed(1) }} MPa</dd>
+                <dt>{{ pr('postBuckling') }}</dt><dd class="font-mono">{{ plateResult.postBucklingReserve?.toFixed(1) }} MPa</dd>
               </div>
             </dl>
             <el-tag class="mt-4" :type="plateResult.pass ? 'success' : 'danger'">
-              {{ plateResult.pass ? '屈曲安全' : '可能失稳' }}
+              {{ plateResult.pass ? pr('bucklingSafe') : pr('bucklingUnsafe') }}
             </el-tag>
           </section>
         </div>
       </el-tab-pane>
 
-      <!-- 模态/共振 -->
-      <el-tab-pane label="固有频率" name="modal">
+      <el-tab-pane :label="pf('tabModal')" name="modal">
         <CalcModePanel v-model="modal.calcMode" page-key="structural" />
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <el-form-item label="模型">
+              <el-form-item :label="pf('modelCase')">
                 <el-select v-model="modal.caseId" class="w-full">
                   <el-option v-for="(c, k) in MODAL_CASES" :key="k" :label="c.label" :value="k" />
                 </el-select>
               </el-form-item>
               <template v-if="modal.caseId === 'sdof'">
-                <el-form-item label="刚度 k"><el-input-number v-model="modal.stiffness" :min="1" /></el-form-item>
-                <el-form-item label="质量 m"><el-input-number v-model="modal.mass" :min="0.001" :step="0.1" /></el-form-item>
+                <el-form-item :label="pf('stiffness')"><el-input-number v-model="modal.stiffness" :min="1" /></el-form-item>
+                <el-form-item :label="pf('mass')"><el-input-number v-model="modal.mass" :min="0.001" :step="0.1" /></el-form-item>
               </template>
               <template v-else>
-                <el-form-item label="跨度 L"><el-input-number v-model="modal.spanLength" :min="10" /></el-form-item>
-                <el-form-item label="直径 d"><el-input-number v-model="modal.diameter" :min="1" /></el-form-item>
+                <el-form-item :label="pf('spanLength')"><el-input-number v-model="modal.spanLength" :min="10" /></el-form-item>
+                <el-form-item :label="pf('diameter')"><el-input-number v-model="modal.diameter" :min="1" /></el-form-item>
               </template>
-              <el-form-item v-if="modal.calcMode === 'professional'" label="阻尼比 ζ">
+              <el-form-item v-if="modal.calcMode === 'professional'" :label="pf('dampingRatio')">
                 <el-input-number v-model="modal.dampingRatio" :min="0.001" :max="0.2" :step="0.005" :precision="3" />
               </el-form-item>
-              <el-form-item v-if="modal.calcMode !== 'simple'" label="转速">
+              <el-form-item v-if="modal.calcMode !== 'simple'" :label="fc('rpm')">
                 <el-input-number v-model="modal.rpm" :min="0" :step="100" />
-                <span class="ml-2 text-xs text-gray-500">rpm（可选）</span>
+                <span class="ml-2 text-xs text-gray-500">{{ pf('rpmOptional') }}</span>
               </el-form-item>
-              <el-form-item label="激励频率">
+              <el-form-item :label="pf('excitationFreq')">
                 <el-input-number v-model="modal.excitationFreq" :min="0" :precision="1" />
-                <span class="ml-2 text-xs text-gray-500">Hz（可选）</span>
+                <span class="ml-2 text-xs text-gray-500">{{ pf('hzOptional') }}</span>
               </el-form-item>
             </el-form>
 
-            <StructuralDiagram
-              variant="modal"
-              :excitation-freq="modal.excitationFreq"
-            />
+            <StructuralDiagram variant="modal" :excitation-freq="modal.excitationFreq" />
           </section>
           <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <div class="rounded bg-primary/5 p-4 text-center">
-              <dt class="text-sm text-gray-500">固有频率 fn</dt>
+              <dt class="text-sm text-gray-500">{{ pr('naturalFreq') }}</dt>
               <dd class="font-mono text-3xl text-primary">{{ modalResult.modal?.fn?.toFixed(2) ?? '—' }} Hz</dd>
               <p class="mt-1 text-xs">{{ modalResult.modal?.mode }}</p>
             </div>
             <template v-if="modalResult.resonance && !modalResult.resonance.error">
               <dl class="mt-4 space-y-2 text-sm">
                 <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>共振裕度</dt><dd class="font-mono">{{ modalResult.resonance.marginPercent?.toFixed(1) }}%</dd>
+                  <dt>{{ pr('resonanceMargin') }}</dt><dd class="font-mono">{{ modalResult.resonance.marginPercent?.toFixed(1) }}%</dd>
                 </div>
                 <div v-if="modalResult.amplificationFactor" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>放大因子</dt><dd class="font-mono">{{ modalResult.amplificationFactor?.toFixed(2) }}</dd>
+                  <dt>{{ pr('amplification') }}</dt><dd class="font-mono">{{ modalResult.amplificationFactor?.toFixed(2) }}</dd>
                 </div>
                 <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>评估</dt><dd :class="modalResult.resonance.pass ? 'text-success' : 'text-error'">{{ modalResult.resonance.assessment }}</dd>
+                  <dt>{{ pr('assessment') }}</dt><dd :class="modalResult.resonance.pass ? 'text-success' : 'text-error'">{{ modalResult.resonance.assessment }}</dd>
                 </div>
               </dl>
             </template>
@@ -202,7 +194,7 @@ import StructuralDiagram from '@/components/structural/StructuralDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('structural')
+const { pt, ct, pf, pr, fc } = useCalcPage('structural')
 
 const tab = ref('pipe')
 const fluid = ref('water')

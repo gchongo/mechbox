@@ -11,23 +11,23 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <el-form-item label="螺栓数量 n">
+          <el-form-item :label="pf('boltCount')">
             <el-input-number v-model="form.boltCount" :min="2" :max="24" />
           </el-form-item>
-          <el-form-item label="分布圆半径 R">
+          <el-form-item :label="pf('boltCircleRadius')">
             <el-input-number v-model="form.boltCircleRadius" :min="10" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="剪力 Fx (N)">
+          <el-form-item :label="pf('shearX')">
             <el-input-number v-model="form.shearX" :step="100" />
           </el-form-item>
-          <el-form-item label="剪力 Fy (N)">
+          <el-form-item :label="pf('shearY')">
             <el-input-number v-model="form.shearY" :step="100" />
           </el-form-item>
-          <el-form-item label="弯矩 M (N·mm)">
+          <el-form-item :label="pf('moment')">
             <el-input-number v-model="form.moment" :step="1000" />
           </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" label="单栓许用 (N)">
+          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('allowPerBolt')">
             <el-input-number v-model="form.allowPerBolt" :min="100" :step="500" />
           </el-form-item>
         </el-form>
@@ -46,27 +46,27 @@
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>单栓直接剪力</dt>
+            <dt>{{ pr('directPerBolt') }}</dt>
             <dd class="font-mono">{{ result.directPerBolt?.toFixed(0) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>单栓扭剪分量</dt>
+            <dt>{{ pr('torsionPerBolt') }}</dt>
             <dd class="font-mono">{{ result.torsionPerBolt?.toFixed(0) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>最大螺栓力</dt>
+            <dt>{{ pr('maxBoltForce') }}</dt>
             <dd class="font-mono text-lg" :class="result.pass ? 'text-success' : 'text-error'">
               {{ result.maxBoltForce?.toFixed(0) }} N {{ result.pass ? '✓' : '✗' }}
             </dd>
           </div>
           <div v-if="result.criticalBoltIndex" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>最不利螺栓</dt>
+            <dt>{{ pr('criticalBolt') }}</dt>
             <dd class="font-mono">#{{ result.criticalBoltIndex }}</dd>
           </div>
         </dl>
 
         <template v-if="result.bolts?.length">
-          <h3 class="mb-2 mt-4 text-sm font-semibold">逐栓载荷</h3>
+          <h3 class="mb-2 mt-4 text-sm font-semibold">{{ pr('perBoltLoads') }}</h3>
           <el-table :data="result.bolts" size="small" stripe class="w-full">
             <el-table-column prop="index" label="#" width="48" />
             <el-table-column prop="x" label="x (mm)" />
@@ -92,7 +92,7 @@ import BoltGroupDiagram from '@/components/bolt/BoltGroupDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('bolt-group')
+const { pt, ct, pf, pr } = useCalcPage('bolt-group')
 
 const form = reactive({
   calcMode: 'simple',

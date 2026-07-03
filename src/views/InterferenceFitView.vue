@@ -11,63 +11,63 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
-          <el-form-item label="轴径 d">
+          <el-form-item :label="pf('shaftDiameter')">
             <el-input-number v-model="form.shaftDiameter" :min="5" :max="200" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="孔径 D">
+          <el-form-item :label="pf('holeDiameter')">
             <el-input-number v-model="form.holeDiameter" :min="4" :max="199" :precision="2" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="过盈量 i">
+          <el-form-item :label="pf('interference')">
             <span class="font-mono text-primary">{{ interference.toFixed(3) }} mm</span>
-            <span class="ml-2 text-xs text-gray-500">= d − D</span>
+            <span class="ml-2 text-xs text-gray-500">{{ pf('interferenceFormula') }}</span>
           </el-form-item>
-          <el-form-item v-if="form.calcMode !== 'simple'" label="轴内径 d_i">
+          <el-form-item v-if="form.calcMode !== 'simple'" :label="pf('shaftInner')">
             <el-input-number v-model="form.shaftInnerDiameter" :min="0" :max="199" :precision="2" />
-            <span class="ml-2 text-xs text-gray-500">0 = 实心轴</span>
+            <span class="ml-2 text-xs text-gray-500">{{ pf('shaftInnerHint') }}</span>
           </el-form-item>
-          <el-form-item label="轮毂外径 D_A">
+          <el-form-item :label="pf('hubOuter')">
             <el-input-number v-model="form.hubOuterDiameter" :min="10" :max="400" :precision="1" />
-            <el-button class="ml-1" size="small" link @click="resetOuter">推荐 {{ suggestedOuter }} mm</el-button>
+            <el-button class="ml-1" size="small" link @click="resetOuter">{{ fc('recommend') }} {{ suggestedOuter }} mm</el-button>
           </el-form-item>
-          <el-form-item label="配合长度 L">
+          <el-form-item :label="pf('fitLength')">
             <el-input-number v-model="form.fitLength" :min="1" :max="300" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </el-form-item>
-          <el-form-item label="摩擦系数 μ">
+          <el-form-item :label="pf('friction')">
             <el-input-number v-model="form.friction" :min="0.05" :max="0.4" :precision="2" :step="0.02" />
           </el-form-item>
-          <el-divider content-position="left">材料</el-divider>
-          <el-form-item label="轴 E / ν">
+          <el-divider content-position="left">{{ pf('dividerMaterials') }}</el-divider>
+          <el-form-item :label="pf('shaftEv')">
             <el-input-number v-model="form.shaftE" :min="50000" :step="10000" class="w-28" />
             <el-input-number v-model="form.shaftNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 w-24" />
           </el-form-item>
-          <el-form-item label="孔 E / ν">
+          <el-form-item :label="pf('hubEv')">
             <el-input-number v-model="form.hubE" :min="50000" :step="10000" class="w-28" />
             <el-input-number v-model="form.hubNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 w-24" />
           </el-form-item>
           <template v-if="form.calcMode === 'complete' || form.calcMode === 'professional'">
-            <el-form-item label="许用切向应力">
+            <el-form-item :label="pf('allowHoop')">
               <el-input-number v-model="form.shaftAllowHoop" :min="50" :step="50" class="w-28" />
-              <span class="ml-1 text-xs text-gray-500">轴</span>
+              <span class="ml-1 text-xs text-gray-500">{{ pf('shaftLabel') }}</span>
               <el-input-number v-model="form.hubAllowHoop" :min="50" :step="50" class="ml-2 w-28" />
-              <span class="ml-1 text-xs text-gray-500">孔</span>
+              <span class="ml-1 text-xs text-gray-500">{{ pf('hubLabel') }}</span>
             </el-form-item>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <el-divider content-position="left">温度修正</el-divider>
-            <el-form-item label="温升 ΔT (K)">
+            <el-divider content-position="left">{{ pf('dividerTemp') }}</el-divider>
+            <el-form-item :label="pf('deltaT')">
               <el-input-number v-model="form.deltaT" :min="-300" :max="500" :step="10" />
             </el-form-item>
-            <el-form-item label="轴 α / 孔 α">
+            <el-form-item :label="pf('shaftAlpha')">
               <el-input-number v-model="form.shaftAlpha" :min="1e-6" :max="30e-6" :step="0.5e-6" :precision="7" class="w-32" />
               <el-input-number v-model="form.holeAlpha" :min="1e-6" :max="30e-6" :step="0.5e-6" :precision="7" class="ml-2 w-32" />
             </el-form-item>
           </template>
         </el-form>
         <el-alert v-if="result.thinWallWarning" type="warning" show-icon :closable="false" class="mt-2"
-          title="轮毂壁厚较薄，结果仅供估算，建议校核或采用厚壁公式" />
+          :title="pf('thinWallWarning')" />
 
         <InterferenceFitDiagram
           :shaft-diameter="form.shaftDiameter"
@@ -84,42 +84,42 @@
         <el-alert v-if="result.error" :title="result.error" type="error" show-icon />
         <dl v-else class="space-y-3 text-sm">
           <div v-if="result.thermal" class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-950">
-            <dt>温变后过盈 i'</dt>
+            <dt>{{ pr('thermalInterference') }}</dt>
             <dd class="font-mono">{{ result.interference?.toFixed(4) }} mm (Δi {{ result.thermal.interferenceChange?.toFixed(4) }})</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>接触压力 p</dt>
+            <dt>{{ pr('contactPressure') }}</dt>
             <dd class="font-mono">{{ result.pressure?.toFixed(1) }} MPa</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>轮毂 / 轴切向应力</dt>
+            <dt>{{ pr('hoopStress') }}</dt>
             <dd class="font-mono" :class="result.hoopPass === false ? 'text-error' : ''">
               {{ result.hoopHub?.toFixed(1) }} / {{ result.hoopShaft?.toFixed(1) }} MPa
               <span v-if="form.calcMode !== 'simple'">{{ result.hoopPass ? ' ✓' : ' ✗' }}</span>
             </dd>
           </div>
           <div v-if="result.hollowShaft" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>空心轴模型</dt>
-            <dd class="font-mono">是</dd>
+            <dt>{{ pr('hollowShaft') }}</dt>
+            <dd class="font-mono">{{ fc('yes') }}</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>压装力 F</dt>
+            <dt>{{ pr('pressForce') }}</dt>
             <dd class="font-mono">{{ result.pressForce?.toFixed(0) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>传递扭矩 T</dt>
+            <dt>{{ pr('torqueCapacity') }}</dt>
             <dd class="font-mono">{{ result.torqueCapacityNm?.toFixed(1) }} N·m</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>最小壁厚</dt>
+            <dt>{{ pr('minWall') }}</dt>
             <dd class="font-mono">{{ result.minHubWall?.toFixed(2) }} mm</dd>
           </div>
         </dl>
         <p class="mt-4 text-xs text-gray-500">
-          基于厚壁圆筒 Lame 理论；实际压装力与扭矩受表面粗糙度、润滑及几何偏差影响。
+          {{ pf('footnote') }}
         </p>
         <router-link to="/thermal-expansion" class="mt-3 inline-block text-xs text-primary hover:underline">
-          → 热膨胀对过盈量的影响
+          {{ pf('linkThermal') }}
         </router-link>
       </section>
     </div>
@@ -133,7 +133,7 @@ import InterferenceFitDiagram from '@/components/interference/InterferenceFitDia
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('interference-fit')
+const { pt, ct, pf, pr, fc } = useCalcPage('interference-fit')
 
 const form = reactive({
   calcMode: 'simple',

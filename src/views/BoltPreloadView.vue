@@ -6,70 +6,70 @@
     </p>
 
     <el-tabs v-model="pageTab">
-      <el-tab-pane label="扭矩/预紧力" name="calc">
+      <el-tab-pane :label="pf('tabCalc')" name="calc">
     <CalcModePanel v-model="calcModePanel" page-key="bolt-preload" />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
-          <el-form-item label="换算方向">
+          <el-form-item :label="pf('convertDirection')">
             <el-radio-group v-model="form.mode">
-              <el-radio value="torque2force">已知扭矩 → 预紧力</el-radio>
-              <el-radio value="force2torque">已知预紧力 → 扭矩</el-radio>
+              <el-radio value="torque2force">{{ pf('modeTorque2force') }}</el-radio>
+              <el-radio value="force2torque">{{ pf('modeForce2torque') }}</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="公称直径 d">
+          <el-form-item :label="pf('nominalDiameter')">
             <el-input-number v-model="form.diameter" :min="3" :max="48" :step="1" @change="onDiameterChange" />
             <span class="ml-2 text-sm text-gray-500">M{{ form.diameter }}</span>
           </el-form-item>
-          <el-form-item label="螺距 P">
+          <el-form-item :label="pf('pitch')">
             <el-input-number v-model="form.pitch" :min="0.5" :max="4" :precision="2" :step="0.25" />
             <el-button v-if="suggestedPitch" class="ml-2" size="small" link @click="form.pitch = suggestedPitch">
-              标准 {{ suggestedPitch }}
+              {{ fc('standard') }} {{ suggestedPitch }}
             </el-button>
           </el-form-item>
-          <el-form-item label="性能等级">
+          <el-form-item :label="pf('grade')">
             <el-select v-model="form.grade" class="w-full">
               <el-option v-for="(g, k) in grades" :key="k" :label="g.label" :value="k" />
             </el-select>
           </el-form-item>
 
           <template v-if="form.calcMode === 'simple'">
-            <el-form-item label="摩擦系数 μ">
+            <el-form-item :label="pf('frictionCoeff')">
               <el-input-number v-model="form.frictionCoeff" :min="0.1" :max="0.5" :precision="2" :step="0.05" />
             </el-form-item>
           </template>
           <template v-else>
-            <el-form-item label="螺纹摩擦 μ_G">
+            <el-form-item :label="pf('muG')">
               <el-input-number v-model="form.muG" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
             </el-form-item>
-            <el-form-item label="头部摩擦 μ_K">
+            <el-form-item :label="pf('muK')">
               <el-input-number v-model="form.muK" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
             </el-form-item>
-            <el-form-item label="摩擦直径 D_km">
+            <el-form-item :label="pf('dKm')">
               <el-input-number v-model="form.dKm" :min="5" :max="80" :precision="2" :step="0.5" />
               <el-button class="ml-1" size="small" link @click="resetDKm">{{ estimatedDKm.toFixed(1) }} mm</el-button>
             </el-form-item>
           </template>
 
           <template v-if="form.calcMode === 'professional'">
-            <el-divider content-position="left">夹紧与嵌入</el-divider>
-            <el-form-item label="夹紧长度 L_K">
+            <el-divider content-position="left">{{ pf('dividerGrip') }}</el-divider>
+            <el-form-item :label="pf('gripLength')">
               <el-input-number v-model="form.gripLength" :min="1" :max="500" :precision="1" />
               <el-button class="ml-1" size="small" link @click="resetGrip">{{ estimatedGrip }} mm</el-button>
             </el-form-item>
-            <el-form-item label="孔径 d_h">
+            <el-form-item :label="pf('holeDiameter')">
               <el-input-number v-model="form.holeDiameter" :min="1" :max="60" :precision="1" />
             </el-form-item>
-            <el-form-item label="头部支承 d_W">
+            <el-form-item :label="pf('headContact')">
               <el-input-number v-model="form.headContactDiameter" :min="3" :max="80" :precision="1" />
             </el-form-item>
-            <el-form-item label="替代外径 D_A">
+            <el-form-item :label="pf('outerDiameter')">
               <el-input-number v-model="form.outerDiameter" :min="5" :max="200" :precision="1" />
               <el-button class="ml-1" size="small" link @click="resetOuter">{{ estimatedOuter.toFixed(1) }} mm</el-button>
             </el-form-item>
-            <el-form-item label="嵌入量">
+            <el-form-item :label="pf('embedment')">
               <el-select v-model="form.embedmentPreset" class="w-full" @change="onEmbedmentPreset">
                 <el-option
                   v-for="(p, key) in embedmentPresets"
@@ -79,17 +79,17 @@
                 />
               </el-select>
             </el-form-item>
-            <el-form-item v-if="form.embedmentPreset === 'custom'" label="嵌入 f_Z">
+            <el-form-item v-if="form.embedmentPreset === 'custom'" :label="pf('embedmentFZ')">
               <el-input-number v-model="form.embedmentUm" :min="1" :max="50" :precision="1" />
               <span class="ml-2 text-sm text-gray-500">μm</span>
             </el-form-item>
-            <el-form-item label="温差 ΔT">
+            <el-form-item :label="pf('deltaT')">
               <el-input-number v-model="form.deltaT" :min="-200" :max="500" :precision="1" :step="10" />
-              <span class="ml-2 text-xs text-gray-500">°C（相对拧紧态）</span>
+              <span class="ml-2 text-xs text-gray-500">{{ pf('deltaTHint') }}</span>
             </el-form-item>
           </template>
 
-          <el-form-item v-if="form.mode === 'torque2force'" label="拧紧扭矩 T">
+          <el-form-item v-if="form.mode === 'torque2force'" :label="pf('torque')">
             <el-input-number v-model="form.torque" :min="0" :precision="2" :step="1" />
             <span class="ml-2 text-sm text-gray-500">N·m</span>
           </el-form-item>
@@ -117,60 +117,60 @@
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">有效面积 <MathTex expr="A_s" /></dt>
+            <dt class="text-gray-500">{{ pr('stressArea') }} <MathTex expr="A_s" /></dt>
             <dd class="font-mono">{{ result.stressArea.toFixed(2) }} mm²</dd>
           </div>
 
           <template v-if="form.calcMode !== 'simple'">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">中径 <MathTex expr="d_2" /></dt>
+              <dt class="text-gray-500">{{ pr('pitchDiameter') }} <MathTex expr="d_2" /></dt>
               <dd class="font-mono">{{ result.pitchDiameter.toFixed(3) }} mm</dd>
             </div>
           </template>
 
           <template v-if="form.calcMode === 'professional' && result.joint">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">螺栓刚度 <MathTex expr="k_S" /></dt>
+              <dt class="text-gray-500">{{ pr('boltStiffness') }} <MathTex expr="k_S" /></dt>
               <dd class="font-mono">{{ result.joint.kS.toFixed(1) }} N/mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">被夹紧件 <MathTex expr="k_P" /></dt>
+              <dt class="text-gray-500">{{ pr('clampStiffness') }} <MathTex expr="k_P" /></dt>
               <dd class="font-mono">{{ result.joint.kP.toFixed(1) }} N/mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">载荷系数 <MathTex expr="\Phi" /></dt>
+              <dt class="text-gray-500">{{ pr('loadFactor') }} <MathTex expr="\Phi" /></dt>
               <dd class="font-mono">{{ (result.joint.loadFactor * 100).toFixed(1) }}%</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">嵌入损失 <MathTex expr="F_Z" /></dt>
+              <dt class="text-gray-500">{{ pr('embedmentLoss') }} <MathTex expr="F_Z" /></dt>
               <dd class="font-mono text-warning">{{ result.joint.embedmentLoss.toFixed(0) }} N</dd>
             </div>
             <div v-if="form.deltaT" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">温差修正 <MathTex expr="\Delta F_{VT}" /></dt>
+              <dt class="text-gray-500">{{ pr('thermalDelta') }} <MathTex expr="\Delta F_{VT}" /></dt>
               <dd class="font-mono">{{ result.joint.thermalDelta.toFixed(0) }} N</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">拧紧预紧力 <MathTex expr="F_V" /></dt>
+              <dt class="text-gray-500">{{ pr('preloadTightening') }} <MathTex expr="F_V" /></dt>
               <dd class="font-mono">{{ result.preloadTightening.toFixed(0) }} N</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">残余预紧力 <MathTex expr="F_M" /></dt>
+              <dt class="text-gray-500">{{ pr('preloadResidual') }} <MathTex expr="F_M" /></dt>
               <dd class="font-mono text-primary">{{ result.preloadResidual.toFixed(0) }} N</dd>
             </div>
           </template>
           <template v-else>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt class="text-gray-500">预紧力 <MathTex expr="F" /></dt>
+              <dt class="text-gray-500">{{ pr('preload') }} <MathTex expr="F" /></dt>
               <dd class="font-mono">{{ result.preload.toFixed(0) }} N</dd>
             </div>
           </template>
 
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">拧紧扭矩 <MathTex expr="T" /></dt>
+            <dt class="text-gray-500">{{ pr('torque') }} <MathTex expr="T" /></dt>
             <dd class="font-mono">{{ result.torque.toFixed(2) }} N·m</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">拉应力 <MathTex expr="\sigma" /></dt>
+            <dt class="text-gray-500">{{ pr('tensileStress') }} <MathTex expr="\sigma" /></dt>
             <dd class="font-mono" :class="result.pass ? 'text-success' : 'text-error'">
               {{ result.stress.toFixed(1) }} MPa {{ result.pass ? '✓' : '✗' }}
             </dd>
@@ -179,33 +179,33 @@
             v-if="form.calcMode === 'professional'"
             class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
           >
-            <dt class="text-gray-500">残余应力 <MathTex expr="\sigma_M" /></dt>
+            <dt class="text-gray-500">{{ pr('stressResidual') }} <MathTex expr="\sigma_M" /></dt>
             <dd class="font-mono" :class="result.passResidual ? 'text-success' : 'text-error'">
               {{ result.stressResidual.toFixed(1) }} MPa {{ result.passResidual ? '✓' : '✗' }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt class="text-gray-500">最大允许预紧力</dt>
+            <dt class="text-gray-500">{{ pr('maxPreload') }}</dt>
             <dd class="font-mono">{{ result.maxPreload.toFixed(0) }} N</dd>
           </div>
         </dl>
 
         <div v-if="result.breakdown" class="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
-          <p class="mb-2 font-medium">VDI 2230 扭矩分解（按 F_V）</p>
+          <p class="mb-2 font-medium">{{ pr('torqueBreakdown') }}</p>
           <dl class="space-y-1.5 font-mono text-xs">
             <div class="flex justify-between">
-              <dt class="text-gray-500">螺纹 M_G</dt>
+              <dt class="text-gray-500">{{ pr('threadMoment') }}</dt>
               <dd>{{ result.breakdown.thread.toFixed(3) }} N·m</dd>
             </div>
             <div class="flex justify-between">
-              <dt class="text-gray-500">头部 M_K</dt>
+              <dt class="text-gray-500">{{ pr('headMoment') }}</dt>
               <dd>{{ result.breakdown.head.toFixed(3) }} N·m</dd>
             </div>
           </dl>
         </div>
 
         <p class="mt-3 text-xs text-gray-500">
-          对照 {{ result.compareLabel }} ≈ {{ result.compareTorque.toFixed(2) }} N·m
+          {{ pr('compareTorque') }} {{ result.compareLabel }} ≈ {{ result.compareTorque.toFixed(2) }} N·m
         </p>
 
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
@@ -222,46 +222,46 @@
           </template>
           <MathTex expr="\sigma = F / A_s" block />
         </div>
-        <el-button class="mt-4" type="primary" plain @click="exportCalcPdf">导出 PDF</el-button>
+        <el-button class="mt-4" type="primary" plain @click="exportCalcPdf">{{ fc('exportPdf') }}</el-button>
       </section>
     </div>
       </el-tab-pane>
 
-      <el-tab-pane label="VDI 2230 分步校核" name="wizard">
+      <el-tab-pane :label="pf('tabWizard')" name="wizard">
         <p class="mb-4 text-xs text-gray-500">
-          基于专业模型，按 R0–R13 逐步输出校核结论（工程简化，非完整标准复现）。
+          {{ pf('wizardHint') }}
         </p>
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="140px">
-              <el-form-item label="拧紧方法 (R0)">
+              <el-form-item :label="pf('tighteningR0')">
                 <el-select v-model="wizardForm.tighteningMethod" class="w-full">
                   <el-option v-for="(m, k) in tighteningMethods" :key="k" :label="m.label" :value="k" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="轴向工作载荷">
+              <el-form-item :label="pf('externalAxial')">
                 <el-input-number v-model="wizardForm.externalAxialLoad" :min="0" :step="500" />
                 <span class="ml-2 text-xs text-gray-500">N</span>
               </el-form-item>
-              <el-form-item label="交变载荷">
+              <el-form-item :label="pf('alternatingLoad')">
                 <el-input-number v-model="wizardForm.alternatingLoad" :min="0" :step="100" />
               </el-form-item>
-              <el-form-item label="要求夹紧力">
+              <el-form-item :label="pf('requiredClamp')">
                 <el-input-number v-model="wizardForm.requiredClampLoad" :min="0" :step="500" />
-                <span class="ml-2 text-xs text-gray-500">N（0=自动）</span>
+                <span class="ml-2 text-xs text-gray-500">{{ pf('requiredClampHint') }}</span>
               </el-form-item>
-              <el-form-item label="最大扭矩上限">
+              <el-form-item :label="pf('maxTorque')">
                 <el-input-number v-model="wizardForm.maxTorque" :min="0" :precision="1" />
                 <span class="ml-2 text-xs text-gray-500">N·m</span>
               </el-form-item>
             </el-form>
-            <p class="text-xs text-gray-500">几何与摩擦参数与左侧「扭矩/预紧力」页共用。</p>
+            <p class="text-xs text-gray-500">{{ pf('wizardSharedHint') }}</p>
           </section>
           <section ref="wizardPanelRef" class="card-panel">
             <el-alert v-if="wizardResult?.error" :title="wizardResult.error" type="warning" show-icon />
             <template v-else-if="wizardResult">
               <el-tag class="mb-3" :type="wizardOverallType">
-                总体: {{ wizardOverallLabel }}
+                {{ pr('overall') }}: {{ wizardOverallLabel }}
               </el-tag>
               <el-collapse accordion>
                 <el-collapse-item v-for="s in wizardResult.steps" :key="s.id" :name="s.id">
@@ -278,7 +278,7 @@
             </template>
           </section>
         </div>
-        <el-button class="mt-4" type="primary" plain @click="exportWizardPdf">导出校核 PDF</el-button>
+        <el-button class="mt-4" type="primary" plain @click="exportWizardPdf">{{ pf('exportWizardPdf') }}</el-button>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -305,7 +305,7 @@ import { exportToolReportPdf } from '@/utils/export'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct } = useCalcPage('bolt-preload')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('bolt-preload')
 
 const calcModePanel = computed({
   get: () => (form.calcMode === 'vdi2230' ? 'complete' : form.calcMode),
@@ -358,9 +358,10 @@ const estimatedOuter = computed(() =>
   estimateReplacementOuterDiameter(form.headContactDiameter, form.gripLength),
 )
 
-const preloadLabel = computed(() =>
-  form.calcMode === 'professional' ? '目标残余 F_M（嵌入后）' : '预紧力 F',
-)
+const preloadLabel = computed(() => {
+  locale.value
+  return form.calcMode === 'professional' ? pf('preloadTarget') : pf('preload')
+})
 
 const result = computed(() => analyzeBoltPreload({ ...form }))
 
@@ -379,8 +380,9 @@ const wizardOverallType = computed(() => {
 })
 
 const wizardOverallLabel = computed(() => {
+  locale.value
   const o = wizardResult.value?.overall
-  return { ok: '通过', warn: '需关注', fail: '未通过' }[o] ?? '-'
+  return { ok: fc('overallPass'), warn: fc('overallWarn'), fail: fc('overallFail') }[o] ?? '-'
 })
 
 function stepTagType(s) {
@@ -388,7 +390,7 @@ function stepTagType(s) {
 }
 
 function stepStatusLabel(s) {
-  return { ok: '通过', fail: '未通过', warn: '关注', skip: '跳过' }[s] ?? s
+  return { ok: fc('stepPass'), fail: fc('stepFail'), warn: fc('stepWarn'), skip: fc('stepSkip') }[s] ?? s
 }
 
 async function exportCalcPdf() {
