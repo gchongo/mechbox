@@ -49,6 +49,9 @@ export const diagramZh = {
     axialFitSection: '轴向配合段',
     horizPlate: '水平板',
     vertPlate: '竖板',
+    holeBand: '孔 {code}',
+    shaftBand: '轴 {code}',
+    toleranceBandAria: '公差带位置图',
   },
   spring: {
     title: '压缩弹簧示意',
@@ -251,6 +254,9 @@ export const diagramEn = {
     axialFitSection: 'Axial fit section',
     horizPlate: 'Horizontal plate',
     vertPlate: 'Vertical plate',
+    holeBand: 'Hole {code}',
+    shaftBand: 'Shaft {code}',
+    toleranceBandAria: 'Tolerance band diagram',
   },
   spring: {
     title: 'Compression spring',

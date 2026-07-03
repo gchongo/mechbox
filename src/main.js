@@ -9,6 +9,7 @@ import router from './router'
 import './assets/styles/main.css'
 import 'katex/dist/katex.min.css'
 import { initSettings } from './utils/settings'
+import { applySeoMeta } from './utils/seo-meta'
 import MathTex from './components/common/MathTex.vue'
 import MathContent from './components/common/MathContent.vue'
 
@@ -24,4 +25,7 @@ app.component('MathContent', MathContent)
 app.use(ElementPlus)
 app.use(router)
 initSettings()
-app.mount('#app')
+router.isReady().then(() => {
+  applySeoMeta(router.currentRoute.value)
+  app.mount('#app')
+})

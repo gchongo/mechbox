@@ -1,5 +1,5 @@
 <template>
-  <svg viewBox="0 0 400 180" class="w-full max-w-lg" role="img" aria-label="公差带位置图">
+  <svg viewBox="0 0 400 180" class="w-full max-w-lg" role="img" :aria-label="dt('toleranceBandAria')">
     <!-- 零线（公称尺寸） -->
     <line x1="40" y1="90" x2="380" y2="90" stroke="currentColor" stroke-width="1" opacity="0.3" />
     <text x="20" y="94" font-size="10" fill="currentColor" opacity="0.6">0</text>
@@ -16,7 +16,7 @@
       stroke-width="1.5"
       rx="2"
     />
-    <text x="40" y="28" font-size="11" fill="#409eff">孔 {{ band.hole.code }}</text>
+    <text x="40" y="28" font-size="11" fill="#409eff">{{ dt('holeBand', { code: band.hole.code }) }}</text>
     <text x="40" y="42" font-size="9" fill="#409eff" opacity="0.8">
       {{ band.hole.yMin.toFixed(0) }} ~ {{ band.hole.yMax.toFixed(0) }} μm
     </text>
@@ -33,7 +33,7 @@
       stroke-width="1.5"
       rx="2"
     />
-    <text x="40" y="148" font-size="11" fill="#e6a23c">轴 {{ band.shaft.code }}</text>
+    <text x="40" y="148" font-size="11" fill="#e6a23c">{{ dt('shaftBand', { code: band.shaft.code }) }}</text>
     <text x="40" y="162" font-size="9" fill="#e6a23c" opacity="0.8">
       {{ band.shaft.yMin.toFixed(0) }} ~ {{ band.shaft.yMax.toFixed(0) }} μm
     </text>
@@ -46,6 +46,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('fit')
 
 const props = defineProps({
   band: { type: Object, required: true },

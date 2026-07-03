@@ -170,6 +170,8 @@ export const manualEnById = {
   },
   'bearing-l10': {
     name: 'Bearing rating life L10',
+    formula: 'L10 = (C/P)^ε (million rev)',
+    latex: 'L_{10} = \\left(\\frac{C}{P}\\right)^{\\varepsilon}',
     desc: 'ISO 281 basic rating life; C is basic dynamic load rating (N). Ball bearings ε = 3, roller bearings ε = 10/3.',
     tags: ['Bearings', 'Life'],
     category: 'Bearings',
@@ -356,6 +358,8 @@ export const manualEnById = {
   },
   'it-tolerance': {
     name: 'Standard tolerance IT',
+    formula: 'IT = i × grade factor',
+    latex: 'IT = i \\times \\text{grade factor}',
     desc: 'i = 0.45∛D + 0.001D (μm), D is nominal size (mm).',
     tags: ['ISO286', 'IT', 'Tolerances'],
     category: 'Tolerances',
