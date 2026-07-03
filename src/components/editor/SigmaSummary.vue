@@ -3,17 +3,20 @@
     <h3 class="sigma-summary__title">西格玛分析（质量水平）</h3>
     <div class="sigma-table">
       <div class="sigma-table__head">
-        <span>指标</span>
-        <span>数值</span>
-        <span>评价</span>
+        <span class="sigma-table__col sigma-table__col--metric">指标</span>
+        <span class="sigma-table__col sigma-table__col--value">数值</span>
+        <span class="sigma-table__col sigma-table__col--status">评价</span>
       </div>
       <div v-for="(row, i) in rows" :key="i" class="sigma-table__row">
-        <span class="sigma-table__metric">
+        <span class="sigma-table__col sigma-table__col--metric sigma-table__metric">
           <MathTex v-if="row.latex" :expr="row.latex" />
           <span v-else>{{ row.label }}</span>
         </span>
-        <span class="sigma-table__value">{{ row.value }}</span>
-        <span class="sigma-table__status" :class="row.ok ? 'text-success' : 'text-warning'">
+        <span class="sigma-table__col sigma-table__col--value sigma-table__value">{{ row.value }}</span>
+        <span
+          class="sigma-table__col sigma-table__col--status sigma-table__status"
+          :class="row.ok ? 'text-success' : 'text-warning'"
+        >
           {{ row.status }}
         </span>
       </div>
@@ -80,10 +83,22 @@ const rows = computed(() => {
 .sigma-table__head,
 .sigma-table__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(72px, 0.9fr) minmax(96px, 1fr);
+  grid-template-columns: minmax(0, 1fr) 88px 112px;
   align-items: center;
-  gap: 0.5rem;
+  column-gap: 0.75rem;
   padding: 0.5rem 0.75rem;
+}
+
+.sigma-table__col--metric {
+  @apply text-left;
+}
+
+.sigma-table__col--value {
+  @apply text-right;
+}
+
+.sigma-table__col--status {
+  @apply text-right;
 }
 
 .sigma-table__head {
@@ -103,17 +118,18 @@ const rows = computed(() => {
 }
 
 .sigma-table__value {
-  @apply text-right font-mono text-gray-900 dark:text-gray-100;
+  @apply font-mono text-gray-900 dark:text-gray-100;
 }
 
 .sigma-table__status {
-  @apply text-right text-xs leading-snug;
+  @apply text-xs leading-snug;
 }
 
 @media (max-width: 480px) {
   .sigma-table__head,
   .sigma-table__row {
-    grid-template-columns: minmax(0, 1.2fr) minmax(64px, 0.8fr) minmax(80px, 1fr);
+    grid-template-columns: minmax(0, 1fr) 72px 96px;
+    column-gap: 0.5rem;
     padding: 0.45rem 0.5rem;
     font-size: 12px;
   }
