@@ -59,13 +59,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import { useContentI18n } from '@/composables/useContentI18n'
 
+const route = useRoute()
 const categoryKeys = ['all', 'chain', 'stats', 'gear', 'bearing', 'thread', 'struct', 'drive', 'fluid', 'mfg', 'material', 'quality', 'fatigue', 'tol', 'strength']
 
-const keyword = ref('')
+const keyword = ref(typeof route.query.q === 'string' ? route.query.q : '')
 const activeCategory = ref('all')
 
 const { ct, formulas, manualCategoryLabel, filterFormulas } = useContentI18n()
@@ -88,6 +90,13 @@ const localizedFormulas = computed(() =>
 
 const filtered = computed(() =>
   filterFormulas(localizedFormulas.value, activeCategory.value, keyword.value),
+)
+
+watch(
+  () => route.query.q,
+  (q) => {
+    if (typeof q === 'string') keyword.value = q
+  },
 )
 </script>
 

@@ -209,23 +209,24 @@
         <el-radio value="worst" border class="method-card">
           <span class="method-card__title">{{ pt('methodCards.worstTitle') }}</span>
           <span class="method-card__hint">{{ pt('methodCards.worstHint') }}</span>
+          <span class="method-card__formula"><MathContent :text="pt('methodCards.worstFormula')" /></span>
         </el-radio>
         <el-radio value="rss" border class="method-card">
           <span class="method-card__title">{{ pt('methodCards.rssTitle') }}</span>
           <span class="method-card__hint">{{ pt('methodCards.rssHint') }}</span>
+          <span class="method-card__formula"><MathContent :text="pt('methodCards.rssFormula')" /></span>
         </el-radio>
         <el-radio value="modified-rss" border class="method-card">
           <span class="method-card__title">{{ pt('methodCards.modifiedTitle') }}</span>
           <span class="method-card__hint">{{ pt('methodCards.modifiedHint') }}</span>
+          <span class="method-card__formula"><MathContent :text="pt('methodCards.modifiedFormula')" /></span>
         </el-radio>
         <el-radio value="sigma6-rss" border class="method-card">
           <span class="method-card__title"><MathContent :text="pt('methodCards.sigma6Title')" /></span>
           <span class="method-card__hint">{{ pt('methodCards.sigma6Hint') }}</span>
+          <span class="method-card__formula"><MathContent :text="pt('methodCards.sigma6Formula')" /></span>
         </el-radio>
       </el-radio-group>
-      <p class="mt-2 text-xs text-gray-500">
-        <MathContent :text="pt('step4FormulaHint')" />
-      </p>
       <div v-if="method === 'modified-rss' || method === 'sigma6-rss'" class="mt-4 max-w-md">
         <el-form label-width="100px">
           <CalcFormItem :label="pf('distribution')">
@@ -1014,6 +1015,11 @@ async function handleCopy() {
   margin-right: 0 !important;
   height: auto !important;
   width: 100%;
+  align-items: flex-start;
+}
+
+.method-grid :deep(.el-radio__input) {
+  margin-top: 2px;
 }
 
 .method-grid :deep(.el-radio__label) {
@@ -1031,5 +1037,9 @@ async function handleCopy() {
 
 .method-card__hint {
   @apply mt-1 block text-xs text-gray-500;
+}
+
+.method-card__formula {
+  @apply mt-2 block w-full text-xs text-gray-500;
 }
 </style>

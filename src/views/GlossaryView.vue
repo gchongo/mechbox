@@ -41,12 +41,21 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { enrichMathText } from '@/utils/math-label'
 
+const route = useRoute()
 const { ct, glossaryTerms, filterGlossary } = useContentI18n()
-const query = ref('')
+const query = ref(typeof route.query.q === 'string' ? route.query.q : '')
+
+watch(
+  () => route.query.q,
+  (q) => {
+    if (typeof q === 'string') query.value = q
+  },
+)
 
 function enrichedText(text) {
   return enrichMathText(text)

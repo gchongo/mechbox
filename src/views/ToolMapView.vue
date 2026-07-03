@@ -66,8 +66,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { STAT_TOOLS, TOOL_GROUPS, getAllToolsFlat } from '@/constants/tool-catalog'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
 import { useContentI18n } from '@/composables/useContentI18n'
@@ -75,7 +75,8 @@ import { useLocale } from '@/composables/useLocale'
 import { localizedTool, localizedStatTool } from '@/i18n'
 
 const router = useRouter()
-const query = ref('')
+const route = useRoute()
+const query = ref(typeof route.query.q === 'string' ? route.query.q : '')
 const { ct, locale } = useContentI18n()
 const { t } = useLocale()
 
@@ -121,6 +122,13 @@ function goStatTool(tool) {
     router.push({ path: '/statistics', query: { tool: tool.query } })
   }
 }
+
+watch(
+  () => route.query.q,
+  (q) => {
+    if (typeof q === 'string') query.value = q
+  },
+)
 
 function toolLinkComponent(tool) {
   return tool.path ? 'router-link' : 'button'

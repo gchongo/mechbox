@@ -1,9 +1,7 @@
 <template>
   <div class="home-page">
     <section class="home-quick">
-      <div class="home-quick__main">
-        <p class="home-quick__desc">{{ t('home.quickDesc') }}</p>
-      </div>
+      <HomeSiteSearch class="home-quick__search" />
       <div class="home-quick__actions">
         <el-button type="primary" size="large" class="home-quick__btn" @click="startNewAnalysis">
           <el-icon class="mr-1"><Promotion /></el-icon>
@@ -89,6 +87,7 @@ import { useRouter } from 'vue-router'
 import { ANALYSIS_GROUPS } from '@/constants/analysis-types'
 import { STAT_TOOLS, TOOL_GROUPS } from '@/constants/tool-catalog'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
+import HomeSiteSearch from '@/components/home/HomeSiteSearch.vue'
 import { useLocale } from '@/composables/useLocale'
 import { localizedTool, localizedStatTool, localizedAnalysisType } from '@/i18n'
 
@@ -129,11 +128,11 @@ function goStatTool(tool) {
 
 .home-quick {
   @apply flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4 shadow-sm
-    dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between sm:px-5;
+    dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:gap-4 sm:px-5;
 }
 
-.home-quick__desc {
-  @apply text-sm font-medium leading-relaxed text-gray-800 dark:text-gray-100 sm:text-base;
+.home-quick__search {
+  @apply min-w-0 flex-1;
 }
 
 .home-quick__actions {

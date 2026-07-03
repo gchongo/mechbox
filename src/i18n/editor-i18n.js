@@ -10,8 +10,6 @@ export const editorPagesZh = {
     step3Title: '步骤 3：组成环 & 尺寸链模型',
     step3Desc: '左侧为尺寸链矢量示意，右侧填写各环参数；修改任意数值，图形会实时更新。',
     step4Title: '步骤 4：选择计算方法',
-    step4FormulaHint:
-      '极值法：$T=\\sum T_i$ · RSS：$T=\\sqrt{\\sum T_i^2}$ · 修正 RSS：$T=k\\sqrt{\\sum T_i^2}$ · $6\\sigma$：$T=6\\sqrt{\\sum (T_i/K_i)^2}$',
     step5Title: '步骤 5：查看结果',
     tabCollapseHint: '再次点击「{label}」Tab 可展开类型列表',
     extendedAlertTitle: '2D/3D/GD&T 分析提示',
@@ -98,12 +96,16 @@ export const editorPagesZh = {
     methodCards: {
       worstTitle: '极值法',
       worstHint: '100% 安全 · 最保守',
+      worstFormula: '$T=\\sum T_i$',
       rssTitle: 'RSS 概率法',
       rssHint: '约 95% 合格率',
+      rssFormula: '$T=\\sqrt{\\sum T_i^2}$',
       modifiedTitle: '修正 RSS',
       modifiedHint: '偏态 / 均匀分布',
+      modifiedFormula: '$T=k\\sqrt{\\sum T_i^2}$',
       sigma6Title: '$6\\sigma$ RSS',
       sigma6Hint: '统计公差设计',
+      sigma6Formula: '$T=6\\sqrt{\\sum (T_i/K_i)^2}$',
     },
     gdtModifiers: {
       RFS: 'RFS（无关）',
@@ -288,8 +290,6 @@ export const editorPagesEn = {
     step3Desc:
       'Vector sketch on the left; enter ring parameters on the right. The diagram updates as you edit values.',
     step4Title: 'Step 4: Choose calculation method',
-    step4FormulaHint:
-      'Worst case: $T=\\sum T_i$ · RSS: $T=\\sqrt{\\sum T_i^2}$ · Modified RSS: $T=k\\sqrt{\\sum T_i^2}$ · $6\\sigma$: $T=6\\sqrt{\\sum (T_i/K_i)^2}$',
     step5Title: 'Step 5: View results',
     tabCollapseHint: 'Click the 「{label}」 tab again to expand the type list',
     extendedAlertTitle: '2D/3D/GD&T analysis note',
@@ -376,12 +376,16 @@ export const editorPagesEn = {
     methodCards: {
       worstTitle: 'Worst case',
       worstHint: '100% safe · most conservative',
+      worstFormula: '$T=\\sum T_i$',
       rssTitle: 'RSS probabilistic',
       rssHint: '~95% yield',
+      rssFormula: '$T=\\sqrt{\\sum T_i^2}$',
       modifiedTitle: 'Modified RSS',
       modifiedHint: 'Skewed / uniform distribution',
+      modifiedFormula: '$T=k\\sqrt{\\sum T_i^2}$',
       sigma6Title: '$6\\sigma$ RSS',
       sigma6Hint: 'Statistical tolerance design',
+      sigma6Formula: '$T=6\\sqrt{\\sum (T_i/K_i)^2}$',
     },
     gdtModifiers: {
       RFS: 'RFS (regardless of feature size)',
