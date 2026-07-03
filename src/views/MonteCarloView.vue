@@ -61,27 +61,6 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionResults') }}</h2>
 
-        <el-alert
-          v-if="stackEval?.advice.warningKey"
-          class="mb-4"
-          :type="stackEval.advice.level === 'critical' ? 'error' : 'warning'"
-          :closable="false"
-          show-icon
-          :title="stackWarningTitle"
-        >
-          <p v-if="stackEval.advice.divergence.ratio" class="text-sm">
-            {{ pt('methodRatio', { ratio: stackEval.advice.divergence.ratio.toFixed(2) }) }}
-          </p>
-        </el-alert>
-        <el-alert
-          v-if="mcWorstGap.warningKey"
-          class="mb-4"
-          type="error"
-          :closable="false"
-          show-icon
-          :title="stackWarningTitleMc"
-        />
-
         <div v-if="stackEval" class="mb-4 grid grid-cols-2 gap-2 text-xs">
           <div class="rounded border border-gray-200 p-2 dark:border-gray-700">
             <p class="text-gray-500">{{ pt('worstMethod') }}</p>
@@ -130,7 +109,13 @@
             </dd>
           </div>
         </div>
-        <el-empty v-else :description="pt('emptyRun')" />
+        <div v-if="stackAdviceHint" class="mt-4 rounded-lg px-3 py-2.5 text-xs leading-relaxed" :class="stackAdviceHintClass">
+          {{ stackAdviceHint }}
+        </div>
+        <div v-if="mcAdviceHint" class="mt-3 rounded-lg bg-red-50 px-3 py-2.5 text-xs leading-relaxed text-red-800 dark:bg-red-950/50 dark:text-red-200">
+          {{ mcAdviceHint }}
+        </div>
+        <el-empty v-if="!simResult" :description="pt('emptyRun')" />
       </section>
     </div>
 
@@ -245,16 +230,36 @@ function stackMsg(key) {
   return editorI18n.value.editor?.dashboard?.[key] ?? key
 }
 
-const stackWarningTitle = computed(() =>
-  stackEval.value?.advice.warningKey ? stackMsg(stackEval.value.advice.warningKey) : '',
-)
 const mcWorstGap = computed(() => {
   if (!simResult.value || !stackEval.value) return { level: 'none', warningKey: null }
   return assessMcWorstGap(stackEval.value.worstPass, simResult.value.passRate)
 })
-const stackWarningTitleMc = computed(() =>
-  mcWorstGap.value.warningKey ? stackMsg(mcWorstGap.value.warningKey) : '',
-)
+
+const stackAdviceHint = computed(() => {
+  const advice = stackEval.value?.advice
+  if (!advice?.warningKey) return null
+  const msg = stackMsg(advice.warningKey)
+  if (advice.divergence?.ratio != null) {
+    return `💡 ${msg}，${pt('methodRatio', { ratio: advice.divergence.ratio.toFixed(2) })}`
+  }
+  return `💡 ${msg}`
+})
+
+const stackAdviceHintClass = computed(() => {
+  const level = stackEval.value?.advice?.level
+  if (level === 'critical') {
+    return 'bg-red-50 text-red-800 dark:bg-red-950/50 dark:text-red-200'
+  }
+  if (level === 'warn') {
+    return 'bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200'
+  }
+  return 'bg-primary/5 text-gray-600 dark:text-gray-400'
+})
+
+const mcAdviceHint = computed(() => {
+  if (!mcWorstGap.value.warningKey) return null
+  return `💡 ${stackMsg(mcWorstGap.value.warningKey)}`
+})
 
 function refreshStackEval(rings) {
   try {

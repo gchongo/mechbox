@@ -1,17 +1,5 @@
 <template>
   <div class="space-y-6">
-    <el-alert
-      v-if="stackAdvice.warningKey"
-      :type="stackAdvice.level === 'critical' ? 'error' : 'warning'"
-      :closable="false"
-      show-icon
-      :title="pt(`dashboard.${stackAdvice.warningKey}`)"
-    >
-      <p v-if="stackAdvice.divergence.ratio" class="text-sm">
-        {{ pt('dashboard.methodRatio', { ratio: stackAdvice.divergence.ratio.toFixed(2) }) }}
-      </p>
-    </el-alert>
-
     <!-- 上排：计算结果 + 设计要求 -->
     <div class="grid gap-4 lg:grid-cols-2">
       <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -75,6 +63,13 @@
             </el-tag>
           </div>
         </div>
+        <div
+          v-if="stackAdviceHint"
+          class="mt-4 rounded-lg px-3 py-2.5 text-xs leading-relaxed"
+          :class="stackAdviceHintClass"
+        >
+          {{ stackAdviceHint }}
+        </div>
       </div>
 
       <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -97,13 +92,13 @@
             <dd class="mt-1 font-mono text-error">{{ fmtSigned(design.ei) }}</dd>
           </div>
         </dl>
-        <div class="mt-4 rounded-lg bg-primary/5 p-3 text-sm">
-          <span class="text-gray-600">{{ pt('dashboard.allowedRange') }}</span>
+        <div class="mt-4 rounded-lg bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+          <span class="text-gray-600 dark:text-gray-300">{{ pt('dashboard.allowedRange') }}</span>
           <span class="font-mono font-medium">{{ fmt(closedRing.min) }} ~ {{ fmt(closedRing.max) }} {{ unit }}</span>
         </div>
-        <p class="mt-3 text-xs text-gray-500">
+        <div class="mt-3 rounded-lg bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
           {{ pt('dashboard.designHint') }}
-        </p>
+        </div>
       </div>
     </div>
 
@@ -187,6 +182,27 @@ const stackAdvice = computed(() =>
     props.rssResult.totalTolerance,
   ),
 )
+
+const stackAdviceHint = computed(() => {
+  const { warningKey, divergence } = stackAdvice.value
+  if (!warningKey) return null
+  const msg = pt(`dashboard.${warningKey}`)
+  if (divergence.ratio != null) {
+    return `💡 ${msg}，${pt('dashboard.methodRatio', { ratio: divergence.ratio.toFixed(2) })}`
+  }
+  return `💡 ${msg}`
+})
+
+const stackAdviceHintClass = computed(() => {
+  const level = stackAdvice.value.level
+  if (level === 'critical') {
+    return 'bg-red-50 text-red-800 dark:bg-red-950/50 dark:text-red-200'
+  }
+  if (level === 'warn') {
+    return 'bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200'
+  }
+  return 'bg-primary/5 text-gray-600 dark:text-gray-400'
+})
 
 function fmt(v) {
   if (v == null || Number.isNaN(v)) return '—'

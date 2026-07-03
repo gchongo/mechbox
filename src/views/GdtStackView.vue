@@ -3,21 +3,7 @@
     <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
-    <section class="card-panel mb-4">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium">{{ ct('model') }}</span>
-        <el-radio-group v-model="form.calcMode">
-          <el-radio-button label="simple">{{ ct('simple') }}</el-radio-button>
-          <el-radio-button label="complete">{{ ct('complete') }}</el-radio-button>
-          <el-radio-button label="professional">{{ ct('professional') }}</el-radio-button>
-        </el-radio-group>
-        <p class="w-full text-xs text-gray-500">
-          <template v-if="form.calcMode === 'simple'">{{ pt('hintSimple') }}</template>
-          <template v-else-if="form.calcMode === 'complete'">{{ pt('hintComplete') }}</template>
-          <template v-else>{{ pt('hintProfessional') }}</template>
-        </p>
-      </div>
-    </section>
+    <CalcModePanel v-model="form.calcMode" page-key="gdt-stack" />
 
     <el-alert
       v-if="fromEditor"
@@ -181,13 +167,14 @@ import {
 import { exportToolReportPdf } from '@/utils/export'
 import { GDT_STACK_STORAGE_KEY, deserializeGdtStackPayload } from '@/constants/editor-bridge'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 
 const route = useRoute()
-const { pt, pf, pr, fc, ct, locale } = useCalcPage('gdt-stack')
+const { pt, pf, pr, fc, locale } = useCalcPage('gdt-stack')
 const { exportFilename } = useContentI18n()
 const { resultError } = useResultI18n()
 const { ol, optionMap } = useOptionsI18n()

@@ -1,13 +1,13 @@
 <template>
-  <el-alert
-    class="mb-4"
-    type="warning"
-    :closable="false"
-    show-icon
-    :title="ct('disclaimerTitle')"
+  <aside
+    class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/60"
+    role="note"
   >
-    <p class="text-sm leading-relaxed">{{ ct('disclaimerBody') }}</p>
-  </el-alert>
+    <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+      <span class="font-medium text-gray-600 dark:text-gray-300">{{ ct('disclaimerTitle') }}：</span>
+      {{ ct('disclaimerBody') }}
+    </p>
+  </aside>
 </template>
 
 <script setup>
