@@ -25,18 +25,23 @@ const props = defineProps({
   anchor: { type: String, default: 'start' },
   className: { type: String, default: '' },
   color: { type: String, default: '' },
+  fontSize: { type: Number, default: 11 },
 })
 
 const enriched = computed(() => enrichMathText(props.text))
 
-const foX = computed(() =>
-  props.anchor === 'middle' ? props.x - props.width / 2 : props.x,
-)
+const foX = computed(() => {
+  if (props.anchor === 'middle') return props.x - props.width / 2
+  if (props.anchor === 'end') return props.x - props.width
+  return props.x
+})
 const foY = computed(() => props.y - props.height + 6)
 
 const textStyle = computed(() => ({
   color: props.color || undefined,
-  justifyContent: props.anchor === 'middle' ? 'center' : 'flex-start',
+  fontSize: `${props.fontSize}px`,
+  justifyContent:
+    props.anchor === 'middle' ? 'center' : props.anchor === 'end' ? 'flex-end' : 'flex-start',
 }))
 </script>
 

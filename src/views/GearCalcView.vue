@@ -131,7 +131,7 @@
             <el-collapse-item :title="pr('agmaFactorsTitle')" name="agma-f">
               <dl class="grid grid-cols-2 gap-2 text-xs">
                 <div v-for="(val, key) in agmaResult.factors" :key="key">
-                  <dt class="text-gray-500">{{ key }}</dt>
+                  <ResultLabel label-class="text-gray-500" :text="factorLabel(key)" />
                   <dd class="font-mono">{{ typeof val === 'number' ? val.toFixed(3) : val }}</dd>
                 </div>
               </dl>
@@ -189,10 +189,10 @@
           <el-collapse class="mt-4">
             <el-collapse-item v-if="isoResult.iso1328" :title="pr('iso1328Title')" name="iso1328">
               <dl class="grid grid-cols-2 gap-2 text-xs">
-                <div><dt class="text-gray-500">f_pt</dt><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_pt.toFixed(1) }} μm</dd></div>
-                <div><dt class="text-gray-500">F_pt</dt><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_pt.toFixed(1) }} μm</dd></div>
-                <div><dt class="text-gray-500">f_fα</dt><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_falpha.toFixed(1) }} μm</dd></div>
-                <div><dt class="text-gray-500">F_β</dt><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_beta.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="$f_{pt}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_pt.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="$F_{pt}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_pt.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="$f_{f\\alpha}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_falpha.toFixed(1) }} μm</dd></div>
+                <div><ResultLabel label-class="text-gray-500" text="$F_{\\beta}$" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_beta.toFixed(1) }} μm</dd></div>
               </dl>
               <ul class="mt-2 list-inside list-disc text-xs text-gray-500">
                 <li v-for="(n, i) in iso1328Notes" :key="i">{{ n }}</li>
@@ -201,7 +201,7 @@
             <el-collapse-item :title="pr('iso6336FactorsTitle')" name="factors">
               <dl class="grid grid-cols-2 gap-2 text-xs">
                 <div v-for="(val, key) in isoResult.factors" :key="key">
-                  <dt class="text-gray-500">{{ key }}</dt>
+                  <ResultLabel label-class="text-gray-500" :text="factorLabel(key)" />
                   <dd class="font-mono">{{ typeof val === 'number' ? val.toFixed(3) : val }}</dd>
                 </div>
               </dl>
@@ -250,10 +250,15 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { enrichMathText } from '@/utils/math-label'
 
 const { pt, ct, pf, pr, locale } = useCalcPage('gear')
 const { optionEntries, gradeLabel } = useOptionsI18n()
 const { rm } = useResultI18n()
+
+function factorLabel(key) {
+  return enrichMathText(String(key))
+}
 
 const calcMode = ref('complete')
 const mode = ref('iso6336')

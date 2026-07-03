@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint'))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -25,16 +25,16 @@
       <circle :cx="360" :cy="130" :r="rCore" class="core" />
 
       <!-- HRC 标注 -->
-      <text :x="360 + rPart + 12" y="118" class="txt-primary" font-size="11">HRC_surface</text>
+      <SvgMathText :x="360 + rPart + 12" :y="118" text="HRC_surface" class-name="txt-primary" color="#409eff" :width="88" :font-size="11" />
       <text :x="360 + rPart + 12" y="132" class="txt-sub" font-size="10">{{ surfaceHrc }}</text>
       <text :x="360" :y="130 + 6" class="txt" font-size="10" text-anchor="middle">{{ coreHrc }}</text>
 
       <!-- D -->
       <line :x1="360 - rPart" :y1="130 + rPart + 18" :x2="360 + rPart" :y2="130 + rPart + 18" class="dim-primary" marker-start="url(#ht-arrow-blue)" marker-end="url(#ht-arrow-blue)" />
-      <text :x="360" :y="130 + rPart + 34" class="txt-primary" font-size="12" text-anchor="middle">D = {{ partDiameter }} mm</text>
+      <SvgMathText :x="360" :y="130 + rPart + 34" :text="labelD" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
 
       <!-- CE -->
-      <text x="60" y="200" class="txt-muted" font-size="12">CE = {{ carbonEquivalent }}</text>
+      <SvgMathText :x="60" :y="200" :text="labelCE" class-name="txt-muted" color="#94a3b8" :width="100" :font-size="12" />
     </svg>
   </div>
 </template>
@@ -43,7 +43,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('heat')
+const { dt, dm } = useDiagramI18n('heat')
 
 const props = defineProps({
   partDiameter: { type: Number, default: 50 },
@@ -55,6 +55,9 @@ const props = defineProps({
 const scale = computed(() => 55 / Math.max(props.partDiameter / 2, 1))
 const rPart = computed(() => (props.partDiameter / 2) * scale.value)
 const rCore = computed(() => rPart.value * 0.35)
+
+const labelD = computed(() => `$D$ = ${props.partDiameter} mm`)
+const labelCE = computed(() => `$CE$ = ${props.carbonEquivalent}`)
 </script>
 
 <style scoped>

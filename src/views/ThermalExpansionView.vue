@@ -88,11 +88,11 @@
               </dd>
             </div>
             <div v-if="linearResult.fit.becomesClearance" class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-900/20">
-              <dt>{{ pr('becomesClearance') }}</dt>
+              <ResultLabel :text="pr('becomesClearance')" />
               <dd class="font-mono">{{ linearResult.fit.finalClearance?.toFixed(4) }} mm</dd>
             </div>
             <div v-if="linearResult.assemblyFit" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('assemblyInterference') }}</dt>
+              <ResultLabel :text="pr('assemblyInterference')" />
               <dd class="font-mono">{{ linearResult.assemblyFit.finalInterference?.toFixed(4) }} mm</dd>
             </div>
           </dl>

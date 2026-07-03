@@ -47,8 +47,8 @@
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('extendVelocity')" /><dd class="font-mono">{{ result.extendVelocity.toFixed(1) }} mm/s</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('retractVelocity')" /><dd class="font-mono">{{ result.retractVelocity.toFixed(1) }} mm/s</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('extendFlow')" /><dd class="font-mono">{{ result.extendFlow.toFixed(2) }} L/min</dd></div>
-          <div v-if="result.bucklingLoad" class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('bucklingLoad') }}</dt><dd class="font-mono">{{ result.bucklingLoad?.toFixed(0) }} N {{ result.bucklingPass ? '✓' : '✗' }}</dd></div>
-          <div v-if="result.cycleTimeExtend" class="flex justify-between rounded bg-gray-50 p-3"><dt>{{ pr('cycleTime') }}</dt><dd class="font-mono">{{ result.cycleTimeExtend?.toFixed(2) }} / {{ result.cycleTimeRetract?.toFixed(2) }} s</dd></div>
+          <div v-if="result.bucklingLoad" class="flex justify-between rounded bg-gray-50 p-3"><ResultLabel :text="pr('bucklingLoad')" /><dd class="font-mono">{{ result.bucklingLoad?.toFixed(0) }} N {{ result.bucklingPass ? '✓' : '✗' }}</dd></div>
+          <div v-if="result.cycleTimeExtend" class="flex justify-between rounded bg-gray-50 p-3"><ResultLabel :text="pr('cycleTime')" /><dd class="font-mono">{{ result.cycleTimeExtend?.toFixed(2) }} / {{ result.cycleTimeRetract?.toFixed(2) }} s</dd></div>
         </dl>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4">
           <MathTex expr="F = p \cdot A / 1000" />

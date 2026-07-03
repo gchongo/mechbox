@@ -39,9 +39,9 @@
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torque')" /><dd class="font-mono text-lg">{{ result.torque.toFixed(2) }} N·m</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('power')" /><dd class="font-mono">{{ result.power.toFixed(2) }} kW</dd></div>
-          <div v-if="result.effectiveRadius" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('effectiveRadius') }}</dt><dd class="font-mono">{{ result.effectiveRadius?.toFixed(1) }} mm</dd></div>
-          <div v-if="result.contactPressure" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('contactPressure') }}</dt><dd class="font-mono">{{ result.contactPressure?.toFixed(3) }} MPa</dd></div>
-          <div v-if="result.deratedTorque" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>{{ pr('deratedTorque') }}</dt><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.deratedTorque?.toFixed(2) }} N·m</dd></div>
+          <div v-if="result.effectiveRadius" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('effectiveRadius')" /><dd class="font-mono">{{ result.effectiveRadius?.toFixed(1) }} mm</dd></div>
+          <div v-if="result.contactPressure" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('contactPressure')" /><dd class="font-mono">{{ result.contactPressure?.toFixed(3) }} MPa</dd></div>
+          <div v-if="result.deratedTorque" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deratedTorque')" /><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.deratedTorque?.toFixed(2) }} N·m</dd></div>
         </dl>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
           <MathTex expr="T = \mu F R n / 1000" />

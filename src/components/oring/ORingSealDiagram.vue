@@ -2,7 +2,7 @@
   <div class="oring-diagram">
     <header class="oring-diagram__head">
       <h3 class="oring-diagram__title">{{ dt('title') }}</h3>
-      <p class="oring-diagram__hint">{{ dt('hint') }}</p>
+      <p class="oring-diagram__hint"><MathContent :text="dm(dt('hint'))" /></p>
     </header>
 
     <svg
@@ -54,9 +54,7 @@
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="layout.gl + layout.gw / 2" :y="layout.wTextY" class="txt" font-size="17" font-weight="600" text-anchor="middle">
-        w = {{ grooveWidth }} mm
-      </text>
+      <SvgMathText :x="layout.gl + layout.gw / 2" :y="layout.wTextY" :text="labelW" anchor="middle" :width="120" :font-size="17" />
 
       <!-- h 沟槽深 — 左侧 -->
       <line
@@ -68,7 +66,7 @@
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="layout.hTextX" :y="layout.gt + layout.gh / 2 - 6" class="txt" font-size="17" font-weight="600" text-anchor="end">h</text>
+      <SvgMathText :x="layout.hTextX" :y="layout.gt + layout.gh / 2 - 6" text="$h$" anchor="end" :width="20" :font-size="17" />
       <text :x="layout.hTextX" :y="layout.gt + layout.gh / 2 + 14" class="txt-sub" font-size="15" text-anchor="end">
         {{ grooveDepthLabel }} mm
       </text>
@@ -83,9 +81,7 @@
         marker-end="url(#oring-arrow)"
         class="dim-line"
       />
-      <text :x="layout.csTextX" :y="layout.ocy - 4" class="txt" font-size="16" font-weight="600">
-        d_cs
-      </text>
+      <SvgMathText :x="layout.csTextX" :y="layout.ocy - 4" text="$d_{cs}$" :width="40" :font-size="16" />
       <text :x="layout.csTextX" :y="layout.ocy + 14" class="txt-sub" font-size="15">
         {{ crossSection }} mm
       </text>
@@ -112,16 +108,7 @@
         :y2="layout.dgLineEndY"
         class="dim-line dim-line--dg"
       />
-      <text
-        :x="layout.gl + layout.gw / 2"
-        :y="layout.dgTextY"
-        class="txt-primary"
-        font-size="17"
-        font-weight="700"
-        text-anchor="middle"
-      >
-        d_g = {{ grooveDiameter }} mm
-      </text>
+      <SvgMathText :x="layout.gl + layout.gw / 2" :y="layout.dgTextY" :text="labelDg" anchor="middle" class-name="txt-primary" color="#409eff" :width="140" :font-size="17" />
 
       <!-- 挤出间隙 -->
       <template v-if="showExtrusion && layout.gapW > 2">
@@ -145,7 +132,7 @@
       <!-- 压力 -->
       <template v-if="pressure > 0">
         <line :x1="20" :y1="layout.ocy" :x2="42" :y2="layout.ocy" marker-end="url(#oring-arrow-blue)" class="pressure-arrow" />
-        <text x="10" :y="layout.ocy - 8" class="txt-primary" font-size="18" font-weight="700">P</text>
+        <SvgMathText x="10" :y="layout.ocy - 8" text="$P$" class-name="txt-primary" color="#409eff" :width="20" :font-size="18" />
       </template>
 
       <!-- 孔径 -->
@@ -168,16 +155,7 @@
           marker-end="url(#oring-arrow)"
           class="dim-line"
         />
-        <text
-          :x="layout.insetW / 2"
-          :y="layout.insetH - 2"
-          class="txt"
-          font-size="14"
-          font-weight="600"
-          text-anchor="middle"
-        >
-          d_cs {{ crossSection }} mm
-        </text>
+        <SvgMathText :x="layout.insetW / 2" :y="layout.insetH - 2" :text="labelCsInset" anchor="middle" :width="100" :font-size="14" />
       </g>
 
       <template v-if="showPro && stretchPercent > 0">
@@ -191,8 +169,8 @@
       <li v-for="item in legendItems" :key="item.key" class="oring-diagram__legend-item">
         <span class="oring-diagram__dot" :class="`oring-diagram__dot--${item.tone}`" />
         <span>
-          <strong>{{ item.name }}</strong>
-          <span class="text-gray-500"> — {{ item.desc }}</span>
+          <strong><MathContent :text="enrichedName(item.name)" /></strong>
+          <span class="text-gray-500"> — <MathContent :text="enrichedDesc(item.desc)" /></span>
         </span>
       </li>
     </ul>
@@ -202,8 +180,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
+import { enrichMathText } from '@/utils/math-label'
 
-const { dt, locale } = useDiagramI18n('oRing')
+const { dt, locale, dm } = useDiagramI18n('oRing')
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },
@@ -275,6 +254,16 @@ const layout = computed(() => {
 })
 
 const grooveDepthLabel = computed(() => props.grooveDepth?.toFixed(2) ?? '—')
+const labelW = computed(() => `$w$ = ${props.grooveWidth} mm`)
+const labelDg = computed(() => `$d_g$ = ${props.grooveDiameter} mm`)
+const labelCsInset = computed(() => `$d_{cs}$ ${props.crossSection} mm`)
+
+function enrichedName(name) {
+  return enrichMathText(String(name))
+}
+function enrichedDesc(desc) {
+  return enrichMathText(String(desc))
+}
 const showExtrusion = computed(() => props.calcMode !== 'simple')
 const showPro = computed(() => props.calcMode === 'professional')
 

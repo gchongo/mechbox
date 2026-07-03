@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint', { k: kFactor }) }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint', { k: kFactor }))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -26,18 +26,18 @@
 
       <!-- T -->
       <line :x1="tX1" :y1="tY" :x2="tX2" :y2="tY" class="dim-primary" marker-start="url(#sm-arrow-blue)" marker-end="url(#sm-arrow-blue)" />
-      <text :x="(tX1 + tX2) / 2" :y="tY - 6" class="txt-primary" font-size="12" text-anchor="middle">T = {{ thickness }} mm</text>
+      <SvgMathText :x="(tX1 + tX2) / 2" :y="tY - 6" :text="labelT" anchor="middle" class-name="txt-primary" color="#409eff" :width="100" :font-size="12" />
 
       <!-- R -->
       <line :x1="arcCx - arcR" :y1="arcCy + 20" :x2="arcCx" :y2="arcCy + arcR + 8" class="dim" marker-end="url(#sm-arrow)" />
-      <text :x="arcCx - arcR - 4" :y="arcCy + arcR + 4" class="txt" font-size="12" text-anchor="end">R = {{ bendRadius }} mm</text>
+      <SvgMathText :x="arcCx - arcR - 4" :y="arcCy + arcR + 4" :text="labelR" anchor="end" class-name="txt" color="#334155" :width="100" :font-size="12" />
 
       <!-- θ -->
       <path :d="angleArc" fill="none" stroke="#e6a23c" stroke-width="1.5" />
-      <text :x="arcCx + arcR + 14" :y="arcCy + 4" fill="#e6a23c" font-size="13">θ = {{ bendAngle }}°</text>
+      <SvgMathText :x="arcCx + arcR + 14" :y="arcCy + 4" :text="labelTheta" color="#e6a23c" :width="72" :font-size="13" />
 
       <!-- BA 标注 -->
-      <text x="360" y="220" class="txt-muted" font-size="11">{{ dt('baFormula') }}</text>
+      <SvgMathText x="360" y="220" :text="dm(dt('baFormula'))" class-name="txt-muted" color="#94a3b8" :width="110" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -46,7 +46,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('sheetMetal')
+const { dt, dm } = useDiagramI18n('sheetMetal')
 
 const props = defineProps({
   thickness: { type: Number, default: 1.5 },
@@ -97,6 +97,10 @@ const angleArc = computed(() => {
 const tX1 = computed(() => leg1.value.x + 20)
 const tX2 = computed(() => tX1.value + 36)
 const tY = computed(() => leg1.value.y - 14)
+
+const labelT = computed(() => `$T$ = ${props.thickness} mm`)
+const labelR = computed(() => `$R$ = ${props.bendRadius} mm`)
+const labelTheta = computed(() => `$\\theta$ = ${props.bendAngle}°`)
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint" v-html="dt('hint', { limit: enduranceLimit })" />
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint', { limit: enduranceLimit }))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -14,8 +14,8 @@
       <!-- 坐标轴 -->
       <line :x1="X0" :y1="Y1" :x2="X1" :y2="Y1" class="axis" marker-end="url(#ft-arrow)" />
       <line :x1="X0" :y1="Y1" :x2="X0" :y2="Y0" class="axis" marker-end="url(#ft-arrow)" />
-      <text :x="X1 - 8" :y="Y1 + 16" class="txt-muted" font-size="12">N (log)</text>
-      <text :x="28" :y="Y0 + 8" class="txt-muted" font-size="12">S</text>
+      <SvgMathText :x="X1 - 8" :y="Y1 + 16" text="N (log)" class-name="txt-muted" color="#94a3b8" :width="64" :font-size="12" />
+      <SvgMathText :x="28" :y="Y0 + 8" text="S" class-name="txt-muted" color="#94a3b8" :width="16" :font-size="12" />
 
       <!-- S-N 曲线（Basquin + 水平疲劳极限段） -->
       <polyline :points="snPoints" fill="none" stroke="#409eff" stroke-width="2" />
@@ -30,16 +30,16 @@
         stroke-width="1.5"
         stroke-dasharray="6 4"
       />
-      <text :x="X1 + 2" :y="enduranceY + 4" fill="#e6a23c" font-size="11">σ₋₁</text>
+      <SvgMathText :x="X1 + 2" :y="enduranceY + 4" text="σ₋₁" color="#e6a23c" :width="32" />
 
       <!-- 工作点（应力幅 Sa 与寿命 N 的交点，落在 S-N 曲线上） -->
       <template v-if="showOperatingPoint">
         <circle :cx="opX" :cy="opY" r="6" class="stress-point" />
         <line :x1="X0" :y1="opY" :x2="opX" :y2="opY" class="dim" stroke-dasharray="3 3" />
         <line :x1="opX" :y1="opY" :x2="opX" :y2="Y1" class="dim" stroke-dasharray="3 3" />
-        <text :x="X0 + 8" :y="opY + 4" class="txt-primary" font-size="12">S_a</text>
+        <SvgMathText :x="X0 + 8" :y="opY + 4" text="S_a" color="#409eff" :font-size="12" :width="24" />
         <text :x="X0 + 8" :y="opY + 16" class="txt-sub" font-size="10">{{ stressAmplitude }} MPa</text>
-        <text :x="opX - 12" :y="Y1 + 14" class="txt-sub" font-size="10" text-anchor="middle">N</text>
+        <SvgMathText :x="opX - 12" :y="Y1 + 14" text="N" anchor="middle" class-name="txt-sub" color="#64748b" :width="16" :font-size="10" />
       </template>
     </svg>
   </div>
@@ -49,7 +49,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('fatigue')
+const { dt, dm } = useDiagramI18n('fatigue')
 
 const X0 = 70
 const X1 = 430

@@ -24,7 +24,7 @@
             <div class="flex justify-between"><dt>K</dt><dd class="font-mono">{{ dist.k }}</dd></div>
             <div class="flex justify-between"><dt>cv</dt><dd class="font-mono">{{ dist.cv }}</dd></div>
             <div class="flex justify-between">
-              <dt>{{ pt('coverage') }}</dt>
+              <ResultLabel :text="pt('coverage')" />
               <dd class="font-mono">{{ (dist.coverage * 100).toFixed(1) }}%</dd>
             </div>
           </dl>

@@ -13,11 +13,11 @@
                 <dd class="font-mono">{{ fmt(worst.nominal) }}</dd>
               </div>
               <div class="flex justify-between">
-                <dt class="text-gray-500">ES</dt>
+                <ResultLabel label-class="text-gray-500" text="ES" />
                 <dd class="font-mono text-success">+{{ fmt(worst.es) }}</dd>
               </div>
               <div class="flex justify-between">
-                <dt class="text-gray-500">EI</dt>
+                <ResultLabel label-class="text-gray-500" text="EI" />
                 <dd class="font-mono text-error">{{ fmtSigned(worst.ei) }}</dd>
               </div>
               <div class="flex justify-between border-t border-gray-200 pt-1.5 dark:border-gray-700">
@@ -84,11 +84,11 @@
             <dd class="mt-1 font-mono text-lg">{{ fmt(design.tolerance) }} {{ unit }}</dd>
           </div>
           <div>
-            <dt class="text-gray-500">ES</dt>
+            <ResultLabel label-class="text-gray-500" text="ES" />
             <dd class="mt-1 font-mono text-success">+{{ fmt(design.es) }}</dd>
           </div>
           <div>
-            <dt class="text-gray-500">EI</dt>
+            <ResultLabel label-class="text-gray-500" text="EI" />
             <dd class="mt-1 font-mono text-error">{{ fmtSigned(design.ei) }}</dd>
           </div>
         </dl>

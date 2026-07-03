@@ -2,7 +2,7 @@
   <div class="bolt-diagram">
     <header class="bolt-diagram__head">
       <h3 class="bolt-diagram__title">{{ dt('title') }}</h3>
-      <p class="bolt-diagram__hint">{{ dt('hint') }}</p>
+      <p class="bolt-diagram__hint"><MathContent :text="dm(dt('hint'))" /></p>
     </header>
 
     <svg
@@ -165,7 +165,7 @@ import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 import { enrichMathText } from '@/utils/math-label'
 
-const { dt, locale } = useDiagramI18n('boltPreload')
+const { dt, locale, dm } = useDiagramI18n('boltPreload')
 
 function enrichedName(name) {
   return enrichMathText(name)

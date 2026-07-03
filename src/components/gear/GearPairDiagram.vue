@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint'))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -24,24 +24,24 @@
       <!-- 齿宽 b（侧视示意） -->
       <rect :x="360" :y="cy - 18" :width="48" :height="36" rx="2" class="face-width" />
       <line x1="360" y1="cy + 28" x2="408" y2="cy + 28" class="dim-primary" marker-start="url(#gr-arrow)" marker-end="url(#gr-arrow)" />
-      <text x="384" y="cy + 44" class="txt-primary" font-size="12" text-anchor="middle">b = {{ faceWidth }} mm</text>
+      <SvgMathText :x="384" :y="cy + 44" :text="labelB" anchor="middle" class-name="txt-primary" color="#409eff" :width="100" :font-size="12" />
 
       <!-- d1 -->
       <line :x1="x1 - r1" :y1="cy + r1 + 22" :x2="x1 + r1" :y2="cy + r1 + 22" class="dim-primary" marker-start="url(#gr-arrow)" marker-end="url(#gr-arrow)" />
-      <text :x="x1" :y="cy + r1 + 38" class="txt-primary" font-size="11" text-anchor="middle">d₁ = {{ d1.toFixed(1) }} mm</text>
+      <SvgMathText :x="x1" :y="cy + r1 + 38" :text="labelD1" anchor="middle" class-name="txt-primary" color="#409eff" :width="110" :font-size="11" />
 
       <!-- d2 -->
       <line :x1="x2 - r2" :y1="cy - r2 - 14" :x2="x2 + r2" :y2="cy - r2 - 14" class="dim" stroke="#64748b" stroke-width="1.2" marker-start="url(#gr-arrow)" marker-end="url(#gr-arrow)" />
-      <text :x="x2" :y="cy - r2 - 22" class="txt" font-size="11" text-anchor="middle">d₂ = {{ d2.toFixed(1) }} mm</text>
+      <SvgMathText :x="x2" :y="cy - r2 - 22" :text="labelD2" anchor="middle" class-name="txt" color="#334155" :width="110" :font-size="11" />
 
       <!-- m, z -->
-      <text :x="x1" :y="cy + 6" class="txt-muted" font-size="11" text-anchor="middle">z₁={{ pinionTeeth }}</text>
-      <text :x="x2" :y="cy + 6" class="txt-muted" font-size="11" text-anchor="middle">z₂={{ gearTeeth }}</text>
-      <text x="24" y="240" class="txt-muted" font-size="11">m = {{ module }} mm</text>
+      <SvgMathText :x="x1" :y="cy + 6" :text="labelZ1" anchor="middle" class-name="txt-muted" color="#94a3b8" :width="56" :font-size="11" />
+      <SvgMathText :x="x2" :y="cy + 6" :text="labelZ2" anchor="middle" class-name="txt-muted" color="#94a3b8" :width="56" :font-size="11" />
+      <SvgMathText :x="24" :y="240" :text="labelM" class-name="txt-muted" color="#94a3b8" :width="80" :font-size="11" />
 
       <!-- T -->
       <path :d="`M ${x1 - 28} ${cy} A 12 12 0 1 1 ${x1 - 10} ${cy - 16}`" fill="none" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#gr-arrow)" />
-      <text :x="x1 - 38" :y="cy + 4" fill="#8b5cf6" font-size="11">T</text>
+      <SvgMathText :x="x1 - 38" :y="cy + 4" text="$T$" color="#8b5cf6" :width="16" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -50,7 +50,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('gear')
+const { dt, dm } = useDiagramI18n('gear')
 
 const props = defineProps({
   module: { type: Number, default: 2 },
@@ -71,8 +71,12 @@ const x1 = computed(() => cxMid - r1.value - 4)
 const x2 = computed(() => cxMid + r2.value + 4)
 const cy = 130
 
-const labelSmall = computed(() => `z₁=${props.pinionTeeth}`)
-const labelLarge = computed(() => `z₂=${props.gearTeeth}`)
+const labelD1 = computed(() => `d₁ = ${d1.value.toFixed(1)} mm`)
+const labelD2 = computed(() => `d₂ = ${d2.value.toFixed(1)} mm`)
+const labelZ1 = computed(() => `z₁=${props.pinionTeeth}`)
+const labelZ2 = computed(() => `z₂=${props.gearTeeth}`)
+const labelM = computed(() => `m = ${props.module} mm`)
+const labelB = computed(() => `b = ${props.faceWidth} mm`)
 </script>
 
 <style scoped>

@@ -25,20 +25,20 @@
         <template v-if="msaResult && !msaResult.errorKey">
           <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-              <dt class="text-xs text-gray-500">{{ pr('pctGRR') }}</dt>
+              <ResultLabel label-class="text-xs text-gray-500" :text="pr('pctGRR')" />
               <dd class="font-mono text-xl" :class="grrClass">{{ msaResult.pctGRR?.toFixed(1) }}%</dd>
               <p class="mt-1 text-xs">{{ msaRatingLabel }}</p>
             </div>
             <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-              <dt class="text-xs text-gray-500">{{ pr('repeatability') }}</dt>
+              <ResultLabel label-class="text-xs text-gray-500" :text="pr('repeatability')" />
               <dd class="font-mono">{{ msaResult.pctEV?.toFixed(1) }}%</dd>
             </div>
             <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-              <dt class="text-xs text-gray-500">{{ pr('reproducibility') }}</dt>
+              <ResultLabel label-class="text-xs text-gray-500" :text="pr('reproducibility')" />
               <dd class="font-mono">{{ msaResult.pctAV?.toFixed(1) }}%</dd>
             </div>
             <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-              <dt class="text-xs text-gray-500">{{ pr('ndc') }}</dt>
+              <ResultLabel label-class="text-xs text-gray-500" :text="pr('ndc')" />
               <dd class="font-mono">{{ msaResult.ndc === Infinity ? '—' : msaResult.ndc?.toFixed(1) }}</dd>
               <p class="mt-1 text-xs text-gray-500">{{ pt('ndcHint') }}</p>
             </div>
@@ -70,9 +70,9 @@
         </section>
         <template v-if="xrResult && !xrResult.errorKey">
           <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
-            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><dt class="text-gray-500">X̿</dt><dd class="font-mono">{{ xrResult.xBarBar?.toFixed(4) }}</dd></div>
-            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><dt class="text-gray-500">R̄</dt><dd class="font-mono">{{ xrResult.rBar?.toFixed(4) }}</dd></div>
-            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><dt class="text-gray-500">σ</dt><dd class="font-mono">{{ xrResult.sigma?.toFixed(4) }}</dd></div>
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel label-class="text-gray-500" text="X̿" /><dd class="font-mono">{{ xrResult.xBarBar?.toFixed(4) }}</dd></div>
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel label-class="text-gray-500" text="R̄" /><dd class="font-mono">{{ xrResult.rBar?.toFixed(4) }}</dd></div>
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel label-class="text-gray-500" text="σ" /><dd class="font-mono">{{ xrResult.sigma?.toFixed(4) }}</dd></div>
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel label-class="text-gray-500" :text="pt('outOfControl')" />
               <dd>{{ pt('outOfControlCount', { count: outOfControlCount }) }}</dd>

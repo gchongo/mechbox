@@ -96,21 +96,21 @@
           </div>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between rounded bg-primary/5 p-3">
-              <dt>{{ pr('stackedTolerance') }}</dt>
+              <ResultLabel :text="pr('stackedTolerance')" />
               <dd class="font-mono text-lg text-primary">{{ result.chainResult.totalTolerance?.toFixed(4) }} mm</dd>
             </div>
             <div v-if="result.modifier.effective !== result.chainResult.totalTolerance" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('withBonus', { modifier: form.toleranceModifier }) }}</dt>
+              <ResultLabel :text="pr('withBonus', { modifier: form.toleranceModifier })" />
               <dd class="font-mono">{{ result.modifier.effective?.toFixed(4) }} mm</dd>
             </div>
             <div v-if="result.datumStack" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('withDatumStack') }}</dt>
+              <ResultLabel :text="pr('withDatumStack')" />
               <dd class="font-mono" :class="result.passWithDatum ? 'text-success' : 'text-error'">
                 {{ result.effectiveWithDatum?.toFixed(4) }} mm
               </dd>
             </div>
             <div v-if="result.worstCaseMargin != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('worstMargin') }}</dt>
+              <ResultLabel :text="pr('worstMargin')" />
               <dd class="font-mono" :class="result.worstCaseMargin >= 0 ? 'text-success' : 'text-error'">
                 {{ result.worstCaseMargin?.toFixed(4) }} mm
               </dd>

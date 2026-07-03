@@ -96,7 +96,7 @@
               <div v-if="result.slendernessWarning" class="text-xs text-amber-600">{{ pr('slendernessWarning') }}</div>
             </template>
             <div v-if="result.stressAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <dt>{{ pr('stressAmplitude') }}</dt>
+              <ResultLabel :text="pr('stressAmplitude')" />
               <dd class="font-mono">{{ result.stressAmplitude?.toFixed(1) }} MPa</dd>
             </div>
           </dl>

@@ -44,30 +44,30 @@
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>{{ pr('carbonEquivalent') }}</dt>
+                <ResultLabel :text="pr('carbonEquivalent')" />
                 <dd class="font-mono text-lg text-primary">{{ result.carbonEquivalent }}</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('weldability')" />
                 <dd>{{ rm('heatTreatment', `weldability_${result.weldabilityKey}`) }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('idealCriticalDiameter') }}</dt>
+                <ResultLabel :text="pr('idealCriticalDiameter')" />
                 <dd class="font-mono">{{ result.hardenability?.idealCriticalDiameter }} mm</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('surfaceHRC') }}</dt>
+                <ResultLabel :text="pr('surfaceHRC')" />
                 <dd class="font-mono">{{ result.hardenability?.surfaceHRC }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('coreHRC') }}</dt>
+                <ResultLabel :text="pr('coreHRC')" />
                 <dd class="font-mono">{{ result.hardenability?.estimatedCoreHRC }}</dd>
               </div>
               <div v-if="calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('hardenabilityVerdict') }}</dt>
+                <ResultLabel :text="pr('hardenabilityVerdict')" />
                 <dd>{{ rm('heatTreatment', `verdict_${result.hardenability?.verdictKey}`) }}</dd>
               </div>
               <div v-if="calcMode === 'complete' || calcMode === 'professional'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('preheatAdvice') }}</dt>
+                <ResultLabel :text="pr('preheatAdvice')" />
                 <dd>{{ result.preheatRequired ? `${result.preheatTemp}°C` : fc('notRequired') }}</dd>
               </div>
               <el-tag v-if="calcMode === 'professional'" class="mt-2" :type="result.pass ? 'success' : 'warning'">
@@ -106,7 +106,7 @@
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>{{ pr('temperedHRC') }}</dt>
+                <ResultLabel :text="pr('temperedHRC')" />
                 <dd class="font-mono text-lg text-primary">{{ temperResult.temperedHRC }}</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hardnessDrop')" />

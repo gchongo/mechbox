@@ -67,15 +67,15 @@
               <dd class="font-mono">{{ result.shaft.minSize.toFixed(4) }} ~ {{ result.shaft.maxSize.toFixed(4) }}</dd>
             </div>
             <div v-if="result.meanClearance != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('meanClearance') }}</dt>
+              <ResultLabel :text="pr('meanClearance')" />
               <dd class="font-mono">{{ (result.meanClearance * 1000).toFixed(1) }} μm</dd>
             </div>
             <div v-if="result.fitQuality != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('fitQuality') }}</dt>
+              <ResultLabel :text="pr('fitQuality')" />
               <dd class="font-mono">{{ result.fitQuality }}</dd>
             </div>
             <div v-if="result.thermalShift != null && deltaT !== 0" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('thermalShift') }}</dt>
+              <ResultLabel :text="pr('thermalShift')" />
               <dd class="font-mono">{{ (result.thermalShift * 1000).toFixed(1) }} μm</dd>
             </div>
             <div v-if="result.thermalRisk" class="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/20">

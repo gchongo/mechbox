@@ -77,7 +77,7 @@
         <el-alert v-if="result.errorKey" :title="re(result.errorKey)" type="error" show-icon />
         <template v-else>
           <div class="mb-4 rounded-lg bg-primary/5 p-4 text-center">
-            <dt class="text-sm text-gray-500">{{ pf('flatLength') }}</dt>
+            <ResultLabel label-class="text-sm text-gray-500" :text="pf('flatLength')" />
             <dd class="font-mono text-3xl text-primary">
               {{ (calcMode === 'professional' && result.compensatedFlatLength ? result.compensatedFlatLength : result.flatLength)?.toFixed(2) }} mm
             </dd>
@@ -88,11 +88,11 @@
           </div>
           <dl v-if="calcMode !== 'simple'" class="mb-4 space-y-2 text-sm">
             <div v-if="result.minFlangeRule" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pf('minFlange') }}</dt>
+              <ResultLabel :text="pf('minFlange')" />
               <dd class="font-mono">{{ result.minFlangeRule?.toFixed(1) }} mm</dd>
             </div>
             <div v-if="result.minStraightLength != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pf('minStraight') }}</dt>
+              <ResultLabel :text="pf('minStraight')" />
               <dd class="font-mono" :class="result.flangePass ? 'text-success' : 'text-warning'">{{ result.minStraightLength?.toFixed(1) }} mm</dd>
             </div>
           </dl>

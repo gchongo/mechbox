@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ showFit ? dt('titleFit') : dt('titleLinear') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint', { deltaT }) }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint', { deltaT }))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -20,11 +20,11 @@
 
       <!-- L -->
       <line :x1="barX" :y1="barY + barH + 20" :x2="barX + barW" :y2="barY + barH + 20" class="dim-primary" marker-start="url(#te-arrow-blue)" marker-end="url(#te-arrow-blue)" />
-      <text :x="barX + barW / 2" :y="barY + barH + 36" class="txt-primary" font-size="12" text-anchor="middle">L = {{ length }} mm</text>
+      <SvgMathText :x="barX + barW / 2" :y="barY + barH + 36" :text="labelL" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="12" />
 
       <!-- ΔL -->
       <line :x1="barX + barW" :y1="barY - 14" :x2="barX + barW + expandW" :y2="barY - 14" stroke="#e6a23c" stroke-width="1.5" marker-start="url(#te-arrow)" marker-end="url(#te-arrow)" />
-      <text :x="barX + barW + expandW / 2" :y="barY - 20" fill="#e6a23c" font-size="12" text-anchor="middle">ΔL</text>
+      <SvgMathText :x="barX + barW + expandW / 2" :y="barY - 20" text="ΔL" anchor="middle" color="#e6a23c" :width="28" :font-size="12" />
 
       <!-- 配合截面 -->
       <template v-if="showFit">
@@ -32,10 +32,10 @@
         <circle :cx="360" :cy="130" :r="rHole" class="hole" />
         <circle :cx="360" :cy="130" :r="rShaft" class="shaft" />
         <line :x1="360 - rShaft" :y1="130 + rHole + 16" :x2="360 + rShaft" :y2="130 + rHole + 16" class="dim-primary" marker-start="url(#te-arrow-blue)" marker-end="url(#te-arrow-blue)" />
-        <text x="360" :y="130 + rHole + 32" class="txt-primary" font-size="11" text-anchor="middle">d / D</text>
+        <SvgMathText :x="360" :y="130 + rHole + 32" text="$d$ / $D$" anchor="middle" class-name="txt-primary" color="#409eff" :width="48" :font-size="11" />
       </template>
 
-      <text x="24" y="240" class="txt-muted" font-size="11">α = {{ alpha }} ×10⁻⁶ /°C</text>
+      <SvgMathText :x="24" :y="240" :text="labelAlpha" class-name="txt-muted" color="#94a3b8" :width="160" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -44,7 +44,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('thermal')
+const { dt, dm } = useDiagramI18n('thermal')
 
 const props = defineProps({
   length: { type: Number, default: 100 },
@@ -64,6 +64,9 @@ const expandW = computed(() => Math.max(8, Math.abs(props.deltaT) * 0.15))
 const scale = computed(() => 40 / Math.max(props.holeDiameter / 2, 1))
 const rHole = computed(() => (props.holeDiameter / 2) * scale.value)
 const rShaft = computed(() => (props.shaftDiameter / 2) * scale.value)
+
+const labelL = computed(() => `$L$ = ${props.length} mm`)
+const labelAlpha = computed(() => `$\\alpha$ = ${props.alpha} ×10⁻⁶ /°C`)
 </script>
 
 <style scoped>

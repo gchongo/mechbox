@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { enrichMathText } from '@/utils/math-label'
+import { enrichMathText, dimLabel, identToLatex } from '@/utils/math-label'
 
 describe('math-label enrichMathText', () => {
   it('converts friction coefficients', () => {
@@ -17,8 +17,39 @@ describe('math-label enrichMathText', () => {
     expect(enrichMathText(s)).toBe(s)
   })
 
+  it('preserves latex while enriching plain segments', () => {
+    const s = '已知 $d_1$ 与 d_2 配合'
+    const out = enrichMathText(s)
+    expect(out).toContain('$d_1$')
+    expect(out).toContain('d_2')
+  })
+
   it('converts stack method symbols', () => {
     expect(enrichMathText('T=ΣTᵢ')).toContain('\\sum T_i')
     expect(enrichMathText('D_km · μ_K')).toContain('D_{km}')
+  })
+
+  it('auto-converts dimension labels', () => {
+    expect(enrichMathText('d = 50 mm')).toContain('$d$')
+    expect(enrichMathText('L = 100 mm')).toMatch(/\$L\$ = 100/)
+    expect(dimLabel('b', 8)).toContain('$b$ = 8')
+  })
+
+  it('auto-converts axis and tolerance labels', () => {
+    expect(enrichMathText('N (log)')).toContain('$N$')
+    expect(enrichMathText('S')).toBe('$S$')
+    expect(enrichMathText('ES')).toBe('$ES$')
+    expect(enrichMathText('design ES value')).toContain('$ES$')
+    expect(enrichMathText('DESIGN')).toBe('DESIGN')
+  })
+
+  it('converts statistical bar symbols', () => {
+    expect(enrichMathText('X̿')).toContain('\\bar{X}')
+    expect(enrichMathText('R̄')).toContain('\\bar{R}')
+  })
+
+  it('identToLatex handles subscripts', () => {
+    expect(identToLatex('d_cs')).toBe('$d_{cs}$')
+    expect(identToLatex('F_beta')).toBe('$F_{\\beta}$')
   })
 })

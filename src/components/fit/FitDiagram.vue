@@ -41,17 +41,11 @@
       stroke-width="2"
       marker-end="url(#arrow)"
     />
-    <text :x="160 + (shaftR + holeR) / 2" y="88" text-anchor="middle" font-size="11" fill="#e6a23c">
-      {{ gapLabel }}
-    </text>
+    <SvgMathText :x="160 + (shaftR + holeR) / 2" :y="88" :text="enrichedGapLabel" anchor="middle" color="#e6a23c" :width="100" :font-size="11" />
 
     <!-- 尺寸标注 -->
-    <text x="160" y="175" text-anchor="middle" font-size="11">
-      {{ holeDimText }}
-    </text>
-    <text x="160" y="190" text-anchor="middle" font-size="11">
-      {{ shaftDimText }}
-    </text>
+    <SvgMathText :x="160" :y="175" :text="enrichedHoleDim" anchor="middle" :width="300" :font-size="11" />
+    <SvgMathText :x="160" :y="190" :text="enrichedShaftDim" anchor="middle" :width="300" :font-size="11" />
 
     <defs>
       <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
@@ -64,6 +58,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
+import { enrichMathText } from '@/utils/math-label'
 
 const { dt, locale } = useDiagramI18n('fit')
 
@@ -117,4 +112,8 @@ const gapLabel = computed(() => {
   if (props.fit.fitType === 'transition') return dt('fitTransition')
   return `${(c * 1000).toFixed(0)} μm`
 })
+
+const enrichedGapLabel = computed(() => enrichMathText(gapLabel.value))
+const enrichedHoleDim = computed(() => enrichMathText(holeDimText.value))
+const enrichedShaftDim = computed(() => enrichMathText(shaftDimText.value))
 </script>

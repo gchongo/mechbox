@@ -154,7 +154,7 @@
             <el-alert v-if="fatigueResult?.errorKey" :title="resultError(fatigueResult)" type="warning" show-icon />
             <dl v-else class="space-y-2 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>{{ pr('estimatedLife') }}</dt>
+                <ResultLabel :text="pr('estimatedLife')" />
                 <dd class="font-mono text-primary">{{ fatigueResult.estimatedLife?.toLocaleString() }} {{ pr('lifeUnit') }}</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('allowableAtCycles')" />
@@ -204,7 +204,7 @@
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <dl class="space-y-2 text-sm">
               <div class="flex justify-between rounded bg-primary/5 p-3">
-                <dt>{{ pr('hazWidth') }}</dt>
+                <ResultLabel :text="pr('hazWidth')" />
                 <dd class="font-mono text-primary">{{ hazResult.hazWidthMm }} mm</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hazAllowShear')" />

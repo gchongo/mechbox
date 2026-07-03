@@ -84,7 +84,7 @@
         <el-alert v-if="result.errorKey" :title="resultError(result)" type="error" show-icon />
         <dl v-else class="space-y-3 text-sm">
           <div v-if="result.thermal" class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-950">
-            <dt>{{ pr('thermalInterference') }}</dt>
+            <ResultLabel :text="pr('thermalInterference')" />
             <dd class="font-mono">{{ result.interference?.toFixed(4) }} mm (Δi {{ result.thermal.interferenceChange?.toFixed(4) }})</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('contactPressure')" />
@@ -97,7 +97,7 @@
             </dd>
           </div>
           <div v-if="result.hollowShaft" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('hollowShaft') }}</dt>
+            <ResultLabel :text="pr('hollowShaft')" />
             <dd class="font-mono">{{ fc('yes') }}</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('pressForce')" />

@@ -57,7 +57,7 @@
             </dd>
           </div>
           <div v-if="result.criticalBoltIndex" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('criticalBolt') }}</dt>
+            <ResultLabel :text="pr('criticalBolt')" />
             <dd class="font-mono">#{{ result.criticalBoltIndex }}</dd>
           </div>
         </dl>

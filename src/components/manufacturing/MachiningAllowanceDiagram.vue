@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint'))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 240" role="img" :aria-label="dt('aria')">
       <defs>
@@ -25,19 +25,19 @@
       <rect :x="320" y="70" :width="lenW" height="28" rx="2" class="stock-bar" />
       <rect :x="322" y="74" :width="lenW - 4" height="20" rx="1" class="part-bar" />
       <line x1="320" :y1="115" :x2="320 + lenW" y2="115" class="dim-primary" marker-start="url(#ma-arrow-blue)" marker-end="url(#ma-arrow-blue)" />
-      <text :x="320 + lenW / 2" y="132" class="txt-primary" font-size="13" text-anchor="middle">L = {{ length }} mm</text>
+      <SvgMathText :x="320 + lenW / 2" :y="132" :text="labelL" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- d_part -->
       <line :x1="cx - rPart" :y1="cy + rStock + 20" :x2="cx + rPart" :y2="cy + rStock + 20" class="dim-primary" marker-start="url(#ma-arrow-blue)" marker-end="url(#ma-arrow-blue)" />
-      <text :x="cx" :y="cy + rStock + 36" class="txt-primary" font-size="13" text-anchor="middle">d = {{ nominalDiameter }} mm</text>
+      <SvgMathText :x="cx" :y="cy + rStock + 36" :text="labelD" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- allowance -->
       <line :x1="cx + rPart" :y1="cy" :x2="cx + rStock" :y2="cy" stroke="#e6a23c" stroke-width="2" marker-end="url(#ma-arrow)" />
-      <text :x="cx + (rPart + rStock) / 2" :y="cy - 8" fill="#e6a23c" font-size="11" text-anchor="middle">a</text>
+      <SvgMathText :x="cx + (rPart + rStock) / 2" :y="cy - 8" text="$a$" anchor="middle" color="#e6a23c" :width="16" :font-size="11" />
 
       <!-- D_stock -->
       <line :x1="cx - rStock" :y1="cy - rStock - 12" :x2="cx + rStock" :y2="cy - rStock - 12" class="dim" marker-start="url(#ma-arrow)" marker-end="url(#ma-arrow)" />
-      <text :x="cx" :y="cy - rStock - 24" class="txt" font-size="12" text-anchor="middle">D_stock = {{ stockDiameter.toFixed(1) }} mm</text>
+      <SvgMathText :x="cx" :y="cy - rStock - 24" :text="labelDStock" anchor="middle" class-name="txt" color="#334155" :width="140" :font-size="12" />
     </svg>
   </div>
 </template>
@@ -46,7 +46,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('machining')
+const { dt, dm } = useDiagramI18n('machining')
 
 const props = defineProps({
   nominalDiameter: { type: Number, default: 50 },
@@ -61,6 +61,10 @@ const scale = computed(() => 90 / Math.max(props.stockDiameter / 2, 1))
 const rPart = computed(() => (props.nominalDiameter / 2) * scale.value)
 const rStock = computed(() => (props.stockDiameter / 2) * scale.value)
 const lenW = computed(() => Math.min(140, Math.max(70, props.length * 0.8)))
+
+const labelL = computed(() => `$L$ = ${props.length} mm`)
+const labelD = computed(() => `$d$ = ${props.nominalDiameter} mm`)
+const labelDStock = computed(() => `D_stock = ${props.stockDiameter.toFixed(1)} mm`)
 </script>
 
 <style scoped>

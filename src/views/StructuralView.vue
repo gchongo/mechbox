@@ -56,7 +56,7 @@
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('frictionDrop')" /><dd class="font-mono">{{ pipeResult.pressureDropKPa?.toFixed(2) }} kPa</dd>
               </div>
               <div v-if="pipeResult.methodCompare" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('hwCompare') }}</dt><dd class="font-mono">{{ pipeResult.methodCompare.hazenKPa?.toFixed(2) }} kPa</dd>
+                <ResultLabel :text="pr('hwCompare')" /><dd class="font-mono">{{ pipeResult.methodCompare.hazenKPa?.toFixed(2) }} kPa</dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('totalDrop')" /><dd class="font-mono text-lg text-primary">{{ pipeResult.totalPressureDropKPa?.toFixed(2) }} kPa</dd>
               </div>
@@ -105,10 +105,10 @@
                 </dd>
               </div>
               <div v-if="plateResult.utilization" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('utilization') }}</dt><dd class="font-mono">{{ (plateResult.utilization * 100).toFixed(1) }}%</dd>
+                <ResultLabel :text="pr('utilization')" /><dd class="font-mono">{{ (plateResult.utilization * 100).toFixed(1) }}%</dd>
               </div>
               <div v-if="plateResult.postBucklingReserve" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('postBuckling') }}</dt><dd class="font-mono">{{ plateResult.postBucklingReserve?.toFixed(1) }} MPa</dd>
+                <ResultLabel :text="pr('postBuckling')" /><dd class="font-mono">{{ plateResult.postBucklingReserve?.toFixed(1) }} MPa</dd>
               </div>
             </dl>
             <el-tag class="mt-4" :type="plateResult.pass ? 'success' : 'danger'">
@@ -155,7 +155,7 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <div class="rounded bg-primary/5 p-4 text-center">
-              <dt class="text-sm text-gray-500">{{ pr('naturalFreq') }}</dt>
+              <ResultLabel label-class="text-sm text-gray-500" :text="pr('naturalFreq')" />
               <dd class="font-mono text-3xl text-primary">{{ modalResult.modal?.fn?.toFixed(2) ?? '—' }} Hz</dd>
               <p class="mt-1 text-xs">{{ rm('modal', `mode_${modalResult.modal?.modeKey}`) }}</p>
             </div>
@@ -164,7 +164,7 @@
                 <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('resonanceMargin')" /><dd class="font-mono">{{ modalResult.resonance.marginPercent?.toFixed(1) }}%</dd>
                 </div>
                 <div v-if="modalResult.amplificationFactor" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                  <dt>{{ pr('amplification') }}</dt><dd class="font-mono">{{ modalResult.amplificationFactor?.toFixed(2) }}</dd>
+                  <ResultLabel :text="pr('amplification')" /><dd class="font-mono">{{ modalResult.amplificationFactor?.toFixed(2) }}</dd>
                 </div>
                 <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('assessment')" /><dd :class="modalResult.resonance.pass ? 'text-success' : 'text-error'">{{ rm('modal', `assessment_${modalResult.resonance.assessmentKey}`) }}</dd>
                 </div>

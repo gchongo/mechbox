@@ -120,11 +120,11 @@
             <dd>{{ result.widthOk ? pr('widthOk') : pr('widthBad') }}</dd>
           </div>
           <div v-if="result.extrusionPass != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('extrusionGap') }}</dt>
+            <ResultLabel :text="pr('extrusionGap')" />
             <dd>{{ result.extrusionGap }} / {{ result.maxExtrusionGap?.toFixed(2) }} mm {{ result.extrusionPass ? '✓' : '✗' }}</dd>
           </div>
           <div v-if="result.maxAllowPressure" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <dt>{{ pr('maxPressure') }}</dt>
+            <ResultLabel :text="pr('maxPressure')" />
             <dd class="font-mono">{{ result.maxAllowPressure?.toFixed(1) }} MPa</dd>
           </div>
         </dl>

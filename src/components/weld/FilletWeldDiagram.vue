@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint'))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -27,19 +27,19 @@
 
       <!-- 喉厚 a -->
       <line :x1="throatX1" :y1="throatY1" :x2="throatX2" :y2="throatY2" stroke="#409eff" stroke-width="2" marker-end="url(#weld-arrow-blue)" />
-      <text :x="throatX2 + 8" :y="throatY2 + 4" class="txt-primary" font-size="13">a = {{ throat.toFixed(2) }} mm</text>
+      <SvgMathText :x="throatX2 + 8" :y="throatY2 + 4" :text="dl('a', throat.toFixed(2))" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- 焊脚 s -->
       <line :x1="legX1" :y1="legY1" :x2="legX2" :y2="legY2" class="dim" marker-end="url(#weld-arrow)" />
-      <text :x="legX2 + 6" :y="legY2 - 4" class="txt" font-size="12">s = {{ legSize }} mm</text>
+      <SvgMathText :x="legX2 + 6" :y="legY2 - 4" :text="dl('s', legSize)" :width="100" :font-size="12" />
 
       <!-- 焊缝长度 L（透视） -->
       <line x1="120" y1="178" :x2="120 + lenPx" y2="178" class="dim-primary" marker-start="url(#weld-arrow-blue)" marker-end="url(#weld-arrow-blue)" />
-      <text :x="120 + lenPx / 2" y="198" class="txt-primary" font-size="13" text-anchor="middle">L = {{ weldLength }} mm</text>
+      <SvgMathText :x="120 + lenPx / 2" :y="198" :text="dl('L', weldLength)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- 载荷 F -->
       <line x1="200" y1="70" x2="200" y2="110" stroke="#8b5cf6" stroke-width="2" marker-end="url(#weld-arrow-blue)" />
-      <text x="210" y="92" fill="#8b5cf6" font-size="12">F</text>
+      <SvgMathText :x="210" :y="92" text="$F$" color="#8b5cf6" :width="16" :font-size="12" />
     </svg>
   </div>
 </template>
@@ -48,7 +48,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('weld')
+const { dt, dm, dl } = useDiagramI18n('weld')
 
 const props = defineProps({
   legSize: { type: Number, default: 6 },

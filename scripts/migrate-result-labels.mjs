@@ -88,6 +88,62 @@ for (const root of roots) {
       },
     )
 
+    src = src.replace(
+      /<div class="rounded bg-gray-50 p-3">\s*<dt class="text-gray-500">\{\{\s*(pr(?:Cast)?|pt|pf)\(([^)]+)\)\s*\}\}\s*<\/dt>/g,
+      (_, fn, key) => {
+        plainPrCount++
+        return `<div class="rounded bg-gray-50 p-3"><ResultLabel label-class="text-gray-500" :text="${fn}(${key})" />`
+      },
+    )
+
+    src = src.replace(
+      /<div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>\{\{\s*(pr(?:Cast)?|pt|pf)\(([^)]+)\)\s*\}\}\s*<\/dt>/g,
+      (_, fn, key) => {
+        plainPrCount++
+        return `<div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="${fn}(${key})" />`
+      },
+    )
+
+    src = src.replace(
+      /<div class="flex justify-between rounded bg-gray-50 p-3"><dt>\{\{\s*(pr(?:Cast)?|pt|pf)\(([^)]+)\)\s*\}\}\s*<\/dt>/g,
+      (_, fn, key) => {
+        plainPrCount++
+        return `<div class="flex justify-between rounded bg-gray-50 p-3"><ResultLabel :text="${fn}(${key})" />`
+      },
+    )
+
+    src = src.replace(
+      /<div v-if="([^"]+)" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><dt>\{\{\s*(pr(?:Cast)?|pt|pf)\(([^)]+)\)\s*\}\}\s*<\/dt>/g,
+      (_, vIf, fn, key) => {
+        plainPrCount++
+        return `<div v-if="${vIf}" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="${fn}(${key})" />`
+      },
+    )
+
+    src = src.replace(
+      /<dt class="text-xs text-gray-500">\{\{\s*(pr(?:Cast)?|pt|pf)\(([^)]+)\)\s*\}\}\s*<\/dt>/g,
+      (_, fn, key) => {
+        plainGrayCount++
+        return `<ResultLabel label-class="text-xs text-gray-500" :text="${fn}(${key})" />`
+      },
+    )
+
+    src = src.replace(
+      /<dt class="text-sm text-gray-500">\{\{\s*(pr(?:Cast)?|pt|pf)\(([^)]+)\)\s*\}\}\s*<\/dt>/g,
+      (_, fn, key) => {
+        plainGrayCount++
+        return `<ResultLabel label-class="text-sm text-gray-500" :text="${fn}(${key})" />`
+      },
+    )
+
+    src = src.replace(
+      /<dt>\{\{\s*(pr(?:Cast)?|pt|pf)\(([^)]+)\)\s*\}\}\s*<\/dt>/g,
+      (_, fn, key) => {
+        plainPrCount++
+        return `<ResultLabel :text="${fn}(${key})" />`
+      },
+    )
+
     if (src !== orig) fs.writeFileSync(file, src)
   }
 }

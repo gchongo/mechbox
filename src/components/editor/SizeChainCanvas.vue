@@ -31,7 +31,7 @@
         <span class="chain-canvas__swatch chain-canvas__swatch--dec" /> {{ pt('canvas.legendDec') }}
       </span>
       <span class="chain-canvas__legend-item">
-        <span class="chain-canvas__swatch chain-canvas__swatch--closed" /> {{ pt('canvas.legendClosed') }} <MathTex expr="A_0" />
+        <span class="chain-canvas__swatch chain-canvas__swatch--closed" /> {{ pt('canvas.legendClosed') }} <MathContent text="$A_0$" />
       </span>
     </div>
   </div>

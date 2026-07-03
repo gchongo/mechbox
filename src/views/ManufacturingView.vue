@@ -60,13 +60,13 @@
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('materialRemovalVolume')" /><dd class="font-mono">{{ (machResult.materialRemovalVolume / 1000).toFixed(1) }} cm³</dd>
               </div>
               <div v-if="mach.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('grindingAllowance') }}</dt><dd class="font-mono">{{ machResult.grindingAllowance?.toFixed(2) }} mm</dd>
+                <ResultLabel :text="pr('grindingAllowance')" /><dd class="font-mono">{{ machResult.grindingAllowance?.toFixed(2) }} mm</dd>
               </div>
               <div v-if="mach.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('minStockDiameter') }}</dt><dd class="font-mono">{{ machResult.minStockDiameter?.toFixed(1) }} mm</dd>
+                <ResultLabel :text="pr('minStockDiameter')" /><dd class="font-mono">{{ machResult.minStockDiameter?.toFixed(1) }} mm</dd>
               </div>
               <div v-if="mach.calcMode === 'professional'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-                <dt>{{ pr('estimatedMachiningMinutes') }}</dt><dd class="font-mono text-primary">{{ machResult.estimatedMachiningMinutes?.toFixed(0) }} min</dd>
+                <ResultLabel :text="pr('estimatedMachiningMinutes')" /><dd class="font-mono text-primary">{{ machResult.estimatedMachiningMinutes?.toFixed(0) }} min</dd>
               </div>
             </dl>
             <el-table :data="machResult.details" size="small" border class="mt-4">
@@ -119,7 +119,7 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <div class="rounded bg-primary/5 p-4 text-center">
-              <dt class="text-sm text-gray-500">{{ prCast('recommendedDraftAngle') }}</dt>
+              <ResultLabel label-class="text-sm text-gray-500" :text="prCast('recommendedDraftAngle')" />
               <dd class="font-mono text-3xl text-primary">{{ castResult.draftAngleDeg?.toFixed(2) }}°</dd>
             </div>
             <dl class="mt-4 space-y-3 text-sm">

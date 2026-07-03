@@ -1,4 +1,5 @@
 import { useLocale } from '@/composables/useLocale'
+import { enrichMathText, dimLabel } from '@/utils/math-label'
 
 /**
  * @param {string} diagramKey e.g. 'spring', 'beam'
@@ -15,5 +16,15 @@ export function useDiagramI18n(diagramKey) {
     return commonVal !== common ? commonVal : suffix
   }
 
-  return { t, locale, dt }
+  /** 示意图说明文字 — 自动补 $...$ LaTeX */
+  function dm(text) {
+    return enrichMathText(text)
+  }
+
+  /** 尺寸标注 sym = value unit — 自动 LaTeX */
+  function dl(symbol, value, unit = 'mm') {
+    return dimLabel(symbol, value, unit)
+  }
+
+  return { t, locale, dt, dm, dl }
 }

@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ mode === 'combined' ? dt('titleCombined') : dt('titleTorsion') }}</h3>
-      <p class="mech-diagram__hint">{{ hintText }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(hintText)" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -25,7 +25,7 @@
 
       <!-- d -->
       <line :x1="cxSec - rOuter" :y1="cySec + rOuter + 18" :x2="cxSec + rOuter" :y2="cySec + rOuter + 18" class="dim-primary" marker-start="url(#sh-arrow-blue)" marker-end="url(#sh-arrow-blue)" />
-      <text :x="cxSec" :y="cySec + rOuter + 34" class="txt-primary" font-size="13" text-anchor="middle">d = {{ diameter }} mm</text>
+      <SvgMathText :x="cxSec" :y="cySec + rOuter + 34" :text="labelD" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- 侧视轴 -->
       <text x="280" y="28" class="txt-muted" font-size="13">{{ dt('sideView') }}</text>
@@ -33,17 +33,17 @@
 
       <!-- T -->
       <path :d="`M ${shaftX - 20} ${shaftY + shaftH / 2} A 14 14 0 1 1 ${shaftX - 4} ${shaftY + shaftH / 2 - 12}`" fill="none" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#sh-arrow-purple)" />
-      <text :x="shaftX - 32" :y="shaftY + shaftH / 2 + 4" fill="#8b5cf6" font-size="12">T</text>
+      <SvgMathText :x="shaftX - 32" :y="shaftY + shaftH / 2 + 4" text="$T$" color="#8b5cf6" :width="16" :font-size="12" />
 
       <!-- M (combined) -->
       <template v-if="mode === 'combined'">
         <path :d="`M ${shaftX + shaftLen + 16} ${shaftY + shaftH / 2} A 16 16 0 1 1 ${shaftX + shaftLen + 12} ${shaftY + shaftH / 2 - 18}`" fill="none" stroke="#e6a23c" stroke-width="1.5" marker-end="url(#sh-arrow)" />
-        <text :x="shaftX + shaftLen + 28" :y="shaftY + shaftH / 2 + 4" fill="#e6a23c" font-size="12">M</text>
+        <SvgMathText :x="shaftX + shaftLen + 28" :y="shaftY + shaftH / 2 + 4" text="$M$" color="#e6a23c" :width="20" :font-size="12" />
       </template>
 
       <!-- L -->
       <line v-if="mode === 'torsion' && length > 0" :x1="shaftX" :y1="shaftY + shaftH + 22" :x2="shaftX + shaftLen" :y2="shaftY + shaftH + 22" class="dim" marker-start="url(#sh-arrow)" marker-end="url(#sh-arrow)" />
-      <text v-if="mode === 'torsion' && length > 0" :x="shaftX + shaftLen / 2" :y="shaftY + shaftH + 38" class="txt" font-size="12" text-anchor="middle">L = {{ length }} mm</text>
+      <SvgMathText v-if="mode === 'torsion' && length > 0" :x="shaftX + shaftLen / 2" :y="shaftY + shaftH + 38" :text="labelL" anchor="middle" class-name="txt" color="#334155" :width="120" :font-size="12" />
     </svg>
   </div>
 </template>
@@ -52,7 +52,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('shaft')
+const { dt, dm } = useDiagramI18n('shaft')
 
 const props = defineProps({
   diameter: { type: Number, default: 30 },
@@ -76,6 +76,9 @@ const shaftX = 280
 const shaftY = 110
 const shaftLen = 160
 const shaftH = computed(() => Math.max(14, props.diameter * 0.5))
+
+const labelD = computed(() => `$d$ = ${props.diameter} mm`)
+const labelL = computed(() => `$L$ = ${props.length} mm`)
 </script>
 
 <style scoped>

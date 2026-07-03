@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint', { surfaces: dt('frictionSurfaces', { n: surfaces }) }) }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint', { surfaces: dt('frictionSurfaces', { n: surfaces }) }))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
@@ -28,22 +28,22 @@
 
       <!-- D_o -->
       <line :x1="cx - rOuter" :y1="cy - rOuter - 14" :x2="cx + rOuter" :y2="cy - rOuter - 14" class="dim" marker-start="url(#cl-arrow)" marker-end="url(#cl-arrow)" />
-      <text :x="cx" :y="cy - rOuter - 22" class="txt" font-size="12" text-anchor="middle">D_o = {{ outerDiameter }} mm</text>
+      <SvgMathText :x="cx" :y="cy - rOuter - 22" :text="labelDo" anchor="middle" :width="130" :font-size="12" />
 
       <!-- D_i -->
       <line :x1="cx - rInner" :y1="cy + rOuter + 18" :x2="cx + rInner" :y2="cy + rOuter + 18" class="dim-primary" marker-start="url(#cl-arrow-blue)" marker-end="url(#cl-arrow-blue)" />
-      <text :x="cx" :y="cy + rOuter + 34" class="txt-primary" font-size="12" text-anchor="middle">D_i = {{ innerDiameter }} mm</text>
+      <SvgMathText :x="cx" :y="cy + rOuter + 34" :text="labelDi" anchor="middle" class-name="txt-primary" color="#409eff" :width="130" :font-size="12" />
 
       <!-- R -->
       <line :x1="cx" :y1="cy" :x2="cx + rEff" :y2="cy" stroke="#e6a23c" stroke-width="1.5" marker-end="url(#cl-arrow)" />
-      <text :x="cx + rEff / 2" :y="cy - 8" fill="#e6a23c" font-size="12" text-anchor="middle">R</text>
+      <SvgMathText :x="cx + rEff / 2" :y="cy - 8" text="$R$" anchor="middle" color="#e6a23c" :width="20" :font-size="12" />
 
       <!-- F -->
       <line :x1="cx" :y1="cy - rOuter - 40" :x2="cx" :y2="cy - rOuter - 58" stroke="#8b5cf6" stroke-width="2" marker-end="url(#cl-arrow-purple)" />
-      <text :x="cx + 8" :y="cy - rOuter - 44" fill="#8b5cf6" font-size="12">F</text>
+      <SvgMathText :x="cx + 8" :y="cy - rOuter - 44" text="$F$" color="#8b5cf6" :width="16" :font-size="12" />
 
       <!-- μ -->
-      <text x="380" y="140" class="txt-muted" font-size="13">μ = {{ frictionCoeff }}</text>
+      <SvgMathText :x="380" :y="140" :text="labelMu" class-name="txt-muted" color="#94a3b8" :width="80" :font-size="13" />
     </svg>
   </div>
 </template>
@@ -52,7 +52,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('clutch')
+const { dt, dm } = useDiagramI18n('clutch')
 
 const props = defineProps({
   innerDiameter: { type: Number, default: 100 },
@@ -68,6 +68,10 @@ const scale = computed(() => 72 / Math.max(props.outerDiameter / 2, 1))
 const rOuter = computed(() => (props.outerDiameter / 2) * scale.value)
 const rInner = computed(() => (props.innerDiameter / 2) * scale.value)
 const rEff = computed(() => props.effectiveRadius * scale.value)
+
+const labelDo = computed(() => `D_o = ${props.outerDiameter} mm`)
+const labelDi = computed(() => `D_i = ${props.innerDiameter} mm`)
+const labelMu = computed(() => `$\\mu$ = ${props.frictionCoeff}`)
 
 const annulusPath = computed(() => {
   const ro = rOuter.value - 4

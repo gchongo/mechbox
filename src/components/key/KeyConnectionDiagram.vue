@@ -2,7 +2,7 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(dt('hint'))" /></p>
     </header>
     <svg class="mech-diagram__svg" viewBox="0 0 520 280" role="img" :aria-label="dt('aria')">
       <defs>
@@ -39,7 +39,7 @@
         marker-start="url(#key-arrow-blue)"
         marker-end="url(#key-arrow-blue)"
       />
-      <text :x="shaftX + shaftW / 2" :y="shaftY + shaftH + 34" class="txt-primary" font-size="13" text-anchor="middle">d = {{ shaftDiameter }} mm</text>
+      <SvgMathText :x="shaftX + shaftW / 2" :y="shaftY + shaftH + 34" :text="dl('d', shaftDiameter)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- b 键宽 -->
       <line
@@ -51,7 +51,7 @@
         marker-start="url(#key-arrow)"
         marker-end="url(#key-arrow)"
       />
-      <text :x="keyX + keyW / 2" :y="keyY - 16" class="txt" font-size="12" text-anchor="middle">b = {{ keyWidth }} mm</text>
+      <SvgMathText :x="keyX + keyW / 2" :y="keyY - 16" :text="dl('b', keyWidth)" anchor="middle" :width="100" :font-size="12" />
 
       <!-- h 键高 -->
       <line
@@ -63,7 +63,7 @@
         marker-start="url(#key-arrow)"
         marker-end="url(#key-arrow)"
       />
-      <text :x="keyX + keyW + 28" :y="keyY + keyH / 2 + 4" class="txt" font-size="12">h = {{ keyHeight }} mm</text>
+      <SvgMathText :x="keyX + keyW + 28" :y="keyY + keyH / 2 + 4" :text="dl('h', keyHeight)" :width="100" :font-size="12" />
 
       <!-- L 键长 -->
       <line
@@ -75,11 +75,11 @@
         marker-start="url(#key-arrow-blue)"
         marker-end="url(#key-arrow-blue)"
       />
-      <text :x="keyX + keyW / 2" :y="keyY + keyH + 38" class="txt-primary" font-size="13" text-anchor="middle">L = {{ keyLength }} mm</text>
+      <SvgMathText :x="keyX + keyW / 2" :y="keyY + keyH + 38" :text="dl('L', keyLength)" anchor="middle" class-name="txt-primary" color="#409eff" :width="120" :font-size="13" />
 
       <!-- 扭矩方向 -->
       <path :d="`M ${shaftX - 30} ${shaftY + shaftH / 2} A 22 22 0 1 1 ${shaftX - 8} ${shaftY + shaftH / 2 - 18}`" fill="none" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#key-arrow-blue)" />
-      <text :x="shaftX - 42" :y="shaftY + shaftH / 2 + 4" fill="#8b5cf6" font-size="11">T</text>
+      <SvgMathText :x="shaftX - 42" :y="shaftY + shaftH / 2 + 4" text="$T$" color="#8b5cf6" :width="16" :font-size="11" />
     </svg>
   </div>
 </template>
@@ -88,7 +88,7 @@
 import { computed } from 'vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt } = useDiagramI18n('key')
+const { dt, dm, dl } = useDiagramI18n('key')
 
 const props = defineProps({
   shaftDiameter: { type: Number, default: 30 },
