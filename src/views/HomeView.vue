@@ -34,7 +34,7 @@
             <li v-for="type in group.types" :key="type.id">
               <button type="button" class="home-analysis-item" @click="startWithType(type.id)">
                 <el-icon class="shrink-0 text-primary/60"><component :is="type.icon || 'Document'" /></el-icon>
-                <span>{{ type.name }}</span>
+                <span>{{ localizedAnalysisType(type.id, locale) }}</span>
                 <el-icon class="ml-auto shrink-0 text-gray-300"><ArrowRight /></el-icon>
               </button>
             </li>
@@ -90,7 +90,7 @@ import { ANALYSIS_GROUPS } from '@/constants/analysis-types'
 import { STAT_TOOLS, TOOL_GROUPS } from '@/constants/tool-catalog'
 import HomeToolCard from '@/components/home/HomeToolCard.vue'
 import { useLocale } from '@/composables/useLocale'
-import { localizedToolLabel, localizedStatTool } from '@/i18n'
+import { localizedToolLabel, localizedStatTool, localizedAnalysisType } from '@/i18n'
 
 const router = useRouter()
 const { locale, t } = useLocale()

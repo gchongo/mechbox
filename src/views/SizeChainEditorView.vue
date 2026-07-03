@@ -395,11 +395,14 @@ import { isFavorite, toggleFavorite } from '@/utils/favorites'
 import { closedRingAsDesign, ensureRingEsEi } from '@/utils/ring-tolerance'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useContentI18n } from '@/composables/useContentI18n'
+import { casesEn } from '@/i18n/cases-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const { pt, pf, pr, t } = useCalcPage('editor')
 const { ol } = useOptionsI18n()
+const { exportFilename, locale } = useContentI18n()
 
 const currentStep = ref(1)
 const activeGroup = ref('1d')
@@ -684,14 +687,14 @@ function initFromRoute() {
 
 function loadDefaultDemoIfEmpty() {
   if (selectedType.value || componentRings.value.length > 0) return
-  const state = prepareEditorDemoState()
+  const state = prepareEditorDemoState(locale.value)
   if (!state) return
   applyEditorState(state)
   isDemoLoaded.value = true
 }
 
 function loadDefaultDemo() {
-  const state = prepareEditorDemoState()
+  const state = prepareEditorDemoState(locale.value)
   if (!state) return
   applyEditorState(state)
   isDemoLoaded.value = true
@@ -708,8 +711,10 @@ function applyDefaultSettings() {
 function loadCasePreset(caseId) {
   const preset = findCasePreset(caseId)
   if (!preset) return
-  applyEditorState(prepareCaseForEditor(preset))
-  ElMessage.success(pt('msgCaseLoaded', { title: preset.title }))
+  const displayTitle =
+    locale.value === 'en' && casesEn[preset.id]?.title ? casesEn[preset.id].title : preset.title
+  applyEditorState(prepareCaseForEditor(preset, locale.value))
+  ElMessage.success(pt('msgCaseLoaded', { title: displayTitle }))
 }
 
 function applyEditorState(state) {
@@ -935,29 +940,37 @@ function saveResult() {
 
 async function handleExportPdf() {
   if (!resultPanelRef.value) return
-  await exportResultPdf(resultPanelRef.value, undefined, {
-    title: `${selectedType.value ? typeName(selectedType.value.id) : pt('saveTitleFallback')} ${closedRing.value.name || 'L0'}`,
-  })
+  const date = new Date().toISOString().slice(0, 10)
+  await exportResultPdf(
+    resultPanelRef.value,
+    exportFilename('stackPdf', { date }),
+    {
+      title: `${selectedType.value ? typeName(selectedType.value.id) : pt('saveTitleFallback')} ${closedRing.value.name || 'L0'}`,
+      locale: locale.value,
+    },
+  )
   ElMessage.success(pt('msgPdfOk'))
 }
 
 function handleExportExcel() {
-  exportExcel(buildExportPayload())
+  const date = new Date().toISOString().slice(0, 10)
+  exportExcel(buildExportPayload(), exportFilename('stackXlsx', { date }), locale.value)
   ElMessage.success(pt('msgExcelOk'))
 }
 
 function handleExportPng() {
+  const date = new Date().toISOString().slice(0, 10)
   const canvas = canvasRef.value?.getCanvas?.()
   if (canvas) {
-    exportCanvasPng(canvas)
+    exportCanvasPng(canvas, exportFilename('stackCanvasPng', { date }))
   } else if (resultPanelRef.value) {
-    exportResultPng(resultPanelRef.value)
+    exportResultPng(resultPanelRef.value, exportFilename('stackPng', { date }), locale.value)
   }
   ElMessage.success(pt('msgPngOk'))
 }
 
 async function handleCopy() {
-  await copyResultText(buildResultText(buildExportPayload()))
+  await copyResultText(buildResultText(buildExportPayload(), locale.value))
   ElMessage.success(pt('msgCopied'))
 }
 </script>

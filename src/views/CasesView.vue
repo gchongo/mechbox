@@ -19,14 +19,15 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { prepareCaseForEditor, CASE_STORAGE_KEY } from '@/constants/cases'
+import { prepareCaseForEditor, CASE_STORAGE_KEY, findCasePreset } from '@/constants/cases'
 import { useContentI18n } from '@/composables/useContentI18n'
 
 const router = useRouter()
-const { ct, casePresets } = useContentI18n()
+const { ct, casePresets, locale } = useContentI18n()
 
 function loadCase(item) {
-  sessionStorage.setItem(CASE_STORAGE_KEY, JSON.stringify(prepareCaseForEditor(item)))
+  const preset = findCasePreset(item.id) ?? item
+  sessionStorage.setItem(CASE_STORAGE_KEY, JSON.stringify(prepareCaseForEditor(preset, locale.value)))
   router.push({ name: 'editor', query: { case: item.id } })
 }
 </script>

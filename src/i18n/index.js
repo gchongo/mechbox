@@ -467,3 +467,9 @@ export function localizedStatTool(tool, locale = 'zh') {
     desc: node.desc ?? tool.desc,
   }
 }
+
+export function localizedAnalysisType(typeId, locale = 'zh', field = 'name') {
+  const path = `calc.pages.editor.analysisTypes.${typeId}.${field}`
+  const val = t(path, locale)
+  return val !== path ? val : typeId
+}

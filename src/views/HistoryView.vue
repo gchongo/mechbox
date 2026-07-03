@@ -36,7 +36,9 @@
           </button>
         </template>
       </el-table-column>
-      <el-table-column prop="title" :label="ct('history.colTitle')" min-width="160" />
+      <el-table-column :label="ct('history.colTitle')" min-width="160">
+        <template #default="{ row }">{{ formatHistoryTitle(row, locale) }}</template>
+      </el-table-column>
       <el-table-column :label="ct('history.colSource')" width="110">
         <template #default="{ row }">
           <el-tag size="small" :type="row.source === 'tool' ? 'warning' : 'primary'">
@@ -73,7 +75,7 @@ import * as XLSX from 'xlsx'
 import { getHistory, deleteAnalysis } from '@/utils/storage'
 import { isFavorite, toggleFavorite, removeFavorite } from '@/utils/favorites'
 import { exportMergedHistoryPdf } from '@/utils/export'
-import { formatHistorySource, formatHistoryStatus, getToolRoute } from '@/utils/calc-history'
+import { formatHistorySource, formatHistoryStatus, formatHistoryTitle, formatHistoryType, getToolRoute } from '@/utils/calc-history'
 import { useContentI18n } from '@/composables/useContentI18n'
 
 const router = useRouter()
@@ -151,11 +153,11 @@ function exportJson() {
 
 function exportExcel() {
   const rows = records.value.map((r) => ({
-    [ct('history.excelColTitle')]: r.title,
+    [ct('history.excelColTitle')]: formatHistoryTitle(r, locale.value),
     [ct('history.excelColSource')]: formatHistorySource(r, locale.value),
     [ct('history.excelColStatus')]: formatHistoryStatus(r.status, locale.value),
     [ct('history.excelColDate')]: formatDate(r.date),
-    [ct('history.excelColType')]: r.data?.selectedType?.name ?? r.data?.toolLabel ?? '',
+    [ct('history.excelColType')]: formatHistoryType(r, locale.value),
   }))
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), ct('history.excelSheet'))
@@ -170,7 +172,7 @@ function onSelectionChange(rows) {
 async function exportMergedPdf() {
   const picked = records.value.filter((r) => selectedIds.value.includes(r.id))
   if (!picked.length) return
-  await exportMergedHistoryPdf(picked)
+  await exportMergedHistoryPdf(picked, undefined, locale.value)
   ElMessage.success(ct('history.pdfExported', { n: picked.length }))
 }
 </script>

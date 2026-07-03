@@ -1,5 +1,73 @@
 /** English case display strings keyed by case id (matches constants/cases.js) */
 
+export const caseClosedRingNamesEn = {
+  '间隙 L0': 'Clearance L0',
+  '过盈量 L0': 'Interference L0',
+  '轴向间隙 L0': 'Axial clearance L0',
+  '台阶差 L0': 'Step height L0',
+  '平行度 L0': 'Parallelism L0',
+  '位置度 L0': 'Position L0',
+  '垂直度 L0': 'Perpendicularity L0',
+  '同轴度 L0': 'Coaxiality L0',
+  '平面度 L0': 'Flatness L0',
+  '跳动 L0': 'Runout L0',
+  '轮廓度 L0': 'Profile L0',
+  '直线度 L0': 'Straightness L0',
+  '圆度 L0': 'Roundness L0',
+}
+
+export const caseRingNamesEn = {
+  '挡环厚度': 'Retainer thickness',
+  '齿轮宽度': 'Gear width',
+  '轴径': 'Shaft diameter',
+  '孔径': 'Bore diameter',
+  '垫片 A': 'Shim A',
+  '垫片 B': 'Shim B',
+  '垫片 C': 'Shim C',
+  '总高度': 'Total height',
+  '大轴段': 'Large shaft section',
+  '小轴段': 'Small shaft section',
+  '基准面 flatness': 'Datum flatness',
+  '上表面 flatness': 'Top surface flatness',
+  '厚度': 'Thickness',
+  'X 向定位': 'X locating',
+  'Y 向定位': 'Y locating',
+  '侧壁 flatness': 'Sidewall flatness',
+  '定位尺寸': 'Locating dimension',
+  '轴径 A': 'Shaft diameter A',
+  '轴径 B': 'Shaft diameter B',
+  '径向跳动': 'Radial runout',
+  '面 A flatness': 'Surface A flatness',
+  '面 B flatness': 'Surface B flatness',
+  '圆度': 'Roundness',
+  '偏心': 'Eccentricity',
+  '段1 轮廓': 'Segment 1 profile',
+  '段2 轮廓': 'Segment 2 profile',
+  '段1 直线': 'Segment 1 straightness',
+  '段2 直线': 'Segment 2 straightness',
+  '段3 直线': 'Segment 3 straightness',
+  '截面 A 圆度': 'Section A roundness',
+  '截面 B 圆度': 'Section B roundness',
+  '径向尺寸': 'Radial dimension',
+}
+
+export function localizeCasePresetData(data, locale = 'zh') {
+  if (locale !== 'en' || !data) return data
+  return {
+    ...data,
+    closedRing: data.closedRing
+      ? {
+          ...data.closedRing,
+          name: caseClosedRingNamesEn[data.closedRing.name] ?? data.closedRing.name,
+        }
+      : data.closedRing,
+    componentRings: data.componentRings?.map((ring) => ({
+      ...ring,
+      name: caseRingNamesEn[ring.name] ?? ring.name,
+    })),
+  }
+}
+
 export const casesEn = {
   'gear-gap': {
     title: 'Gear Assembly Clearance',

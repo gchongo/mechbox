@@ -70,6 +70,9 @@ const cxMid = 230
 const x1 = computed(() => cxMid - r1.value - 4)
 const x2 = computed(() => cxMid + r2.value + 4)
 const cy = 130
+
+const labelSmall = computed(() => `z₁=${props.pinionTeeth}`)
+const labelLarge = computed(() => `z₂=${props.gearTeeth}`)
 </script>
 
 <style scoped>

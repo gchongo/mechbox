@@ -107,6 +107,8 @@ export const contentZh = {
     excelColStatus: '状态',
     excelColDate: '日期',
     excelColType: '类型',
+    toolCalcTitle: '{tool} 计算',
+    untitled: '未命名',
   },
   toolMap: {
     title: '工具地图',
@@ -167,6 +169,11 @@ export const contentZh = {
     batchCsv: '批量验证_{date}.csv',
     fitHistoryTitle: '配合 {hole}/{shaft} Ø{nominal}',
     fitHistoryTitleEn: 'Fit {hole}/{shaft} Ø{nominal}',
+    stackPdf: '尺寸链分析_{date}.pdf',
+    stackXlsx: '尺寸链分析_{date}.xlsx',
+    stackPng: '尺寸链分析_{date}.png',
+    stackCanvasPng: '尺寸链矢量图_{date}.png',
+    historyMergePdf: 'MechBox历史合并_{date}.pdf',
   },
 }
 
@@ -277,6 +284,8 @@ export const contentEn = {
     excelColStatus: 'Status',
     excelColDate: 'Date',
     excelColType: 'Type',
+    toolCalcTitle: '{tool} calculation',
+    untitled: 'Untitled',
   },
   toolMap: {
     title: 'Tool map',
@@ -337,6 +346,11 @@ export const contentEn = {
     batchCsv: 'batch_verify_{date}.csv',
     fitHistoryTitle: '配合 {hole}/{shaft} Ø{nominal}',
     fitHistoryTitleEn: 'Fit {hole}/{shaft} Ø{nominal}',
+    stackPdf: 'Stack_analysis_{date}.pdf',
+    stackXlsx: 'Stack_analysis_{date}.xlsx',
+    stackPng: 'Stack_analysis_{date}.png',
+    stackCanvasPng: 'Stack_vector_{date}.png',
+    historyMergePdf: 'MechBox_history_merge_{date}.pdf',
   },
 }
 

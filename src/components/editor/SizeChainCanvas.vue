@@ -14,7 +14,7 @@
 
     <p v-if="showFormula && rings.length" class="chain-canvas__formula">
       {{ pt('canvas.closedFormula') }}
-      <MathTex expr="A_0 = \sum L_{\text{增}} - \sum L_{\text{减}}" />
+      <MathTex :expr="formulaExpr" />
       <span class="chain-canvas__sep">|</span>
       {{ pt('canvas.ringCount', { n: rings.length }) }}
       <template v-if="nominalClosed != null">
@@ -71,6 +71,8 @@ const closedLabel = computed(() => {
   if (!name) return 'A_0'
   return name.replace(/₀/g, '_0').replace(/0$/, '_0')
 })
+
+const formulaExpr = computed(() => pt('canvas.formulaLatex'))
 
 const canvasHeight = computed(() => {
   const stack = gdtMode.value?.stack

@@ -1,4 +1,5 @@
 import { findAnalysisType } from '@/constants/analysis-types'
+import { localizeCasePresetData } from '@/i18n/cases-i18n'
 
 export const CASE_PRESETS = [
   {
@@ -325,10 +326,11 @@ export function findCasePreset(caseId) {
   return CASE_PRESETS.find((c) => c.id === caseId) ?? null
 }
 
-export function prepareCaseForEditor(preset) {
-  const type = findAnalysisType(preset.data.selectedTypeId)
-  const closedDirection = preset.data.closedRing.direction
-  const componentRings = preset.data.componentRings.map((ring) => ({
+export function prepareCaseForEditor(preset, locale = 'zh') {
+  const data = localizeCasePresetData(preset.data, locale)
+  const type = findAnalysisType(data.selectedTypeId)
+  const closedDirection = data.closedRing.direction
+  const componentRings = data.componentRings.map((ring) => ({
     ...ring,
     uid: ring.uid ?? crypto.randomUUID(),
     type: ring.direction === closedDirection ? 'increasing' : 'decreasing',
@@ -336,10 +338,10 @@ export function prepareCaseForEditor(preset) {
   return {
     selectedType: type,
     activeGroup: type?.groupId ?? '1d',
-    closedRing: { ...preset.data.closedRing },
+    closedRing: { ...data.closedRing },
     componentRings,
-    method: preset.data.method ?? 'rss',
-    rssDistribution: preset.data.rssDistribution ?? 'skewed',
+    method: data.method ?? 'rss',
+    rssDistribution: data.rssDistribution ?? 'skewed',
     currentStep: 5,
   }
 }
@@ -349,10 +351,10 @@ export const CASE_STORAGE_KEY = 'mechbox_load_case'
 /** 编辑器空白打开时加载的默认示范案例 ID */
 export const EDITOR_DEMO_CASE_ID = 'gear-gap'
 
-export function prepareEditorDemoState() {
+export function prepareEditorDemoState(locale = 'zh') {
   const preset = findCasePreset(EDITOR_DEMO_CASE_ID)
   if (!preset) return null
-  const state = prepareCaseForEditor(preset)
+  const state = prepareCaseForEditor(preset, locale)
   state.currentStep = 3
   state.componentRings = state.componentRings.map((ring, i) => ({
     ...ring,

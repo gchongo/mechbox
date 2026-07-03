@@ -1,10 +1,26 @@
 import * as XLSX from 'xlsx'
+import { t } from '@/i18n'
+import {
+  formatHistorySource,
+  formatHistoryStatus,
+  formatHistoryTitle,
+  formatHistoryType,
+} from '@/utils/calc-history'
 
 function dateStamp() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function ex(key, locale = 'zh', params) {
+  return t(`calc.pages.editor.export.${key}`, locale, params)
+}
+
+function ringTypeLabel(type, locale = 'zh') {
+  return type === 'increasing' ? ex('ringInc', locale) : ex('ringDec', locale)
+}
+
 export async function exportToolReportPdf({ title, sections = [], element, filename, meta = {} }) {
+  const locale = meta.locale ?? 'zh'
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import('html2canvas'),
     import('jspdf'),
@@ -16,10 +32,10 @@ export async function exportToolReportPdf({ title, sections = [], element, filen
   let y = margin
 
   pdf.setFontSize(14)
-  pdf.text(title ?? 'MechBox 计算报告', margin, y)
+  pdf.text(title ?? ex('defaultReport', locale), margin, y)
   y += 8
   pdf.setFontSize(8)
-  pdf.text(`日期: ${dateStamp()}`, margin, y)
+  pdf.text(`${ex('date', locale)}: ${dateStamp()}`, margin, y)
   y += 5
   if (meta.subtitle) {
     pdf.text(meta.subtitle, margin, y)
@@ -79,7 +95,7 @@ export async function exportToolReportPdf({ title, sections = [], element, filen
   for (let i = 1; i <= pages; i++) {
     pdf.setPage(i)
     pdf.setFontSize(8)
-    pdf.text(`MechBox · ${dateStamp()} · 第 ${i}/${pages} 页`, pageW / 2, pageH - 8, {
+    pdf.text(ex('footer', locale, { date: dateStamp(), page: i, pages }), pageW / 2, pageH - 8, {
       align: 'center',
     })
   }
@@ -88,27 +104,28 @@ export async function exportToolReportPdf({ title, sections = [], element, filen
 }
 
 /** 从历史记录合并导出 PDF */
-export async function exportMergedHistoryPdf(records, filename) {
+export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
+  const dateLoc = locale === 'en' ? 'en-US' : 'zh-CN'
   const sections = records.map((r, i) => {
     const data = r.data ?? {}
     const rows = [
-      { label: '状态', value: r.status === 'pass' ? '合格' : r.status === 'fail' ? '不合格' : '草稿' },
-      { label: '来源', value: r.source === 'tool' ? (r.data?.toolLabel ?? '工具') : '尺寸链' },
-      { label: '日期', value: new Date(r.date).toLocaleString('zh-CN') },
-      { label: '分析类型', value: data.selectedType?.name ?? data.typeName ?? '-' },
-      { label: '计算方法', value: data.method ?? data.methodLabel ?? '-' },
+      { label: ex('mergeStatus', locale), value: formatHistoryStatus(r.status, locale) },
+      { label: ex('mergeSource', locale), value: formatHistorySource(r, locale) },
+      { label: ex('mergeDate', locale), value: new Date(r.date).toLocaleString(dateLoc) },
+      { label: ex('mergeAnalysisType', locale), value: formatHistoryType(r, locale) },
+      { label: ex('mergeMethod', locale), value: data.method ?? data.methodLabel ?? '-' },
     ]
     if (data.closedRing) {
       rows.push({
-        label: '封闭环',
+        label: ex('closedRing', locale),
         value: `${data.closedRing.name ?? '-'} [${data.closedRing.min} ~ ${data.closedRing.max}]`,
       })
     }
     if (data.results?.length) {
       const best = data.results.find((x) => x.pass) ?? data.results[0]
       rows.push({
-        label: '结果',
-        value: `${best.method ?? '-'} T=${best.tolerance ?? '-'} ${best.pass ? '合格' : '不合格'}`,
+        label: ex('mergeResult', locale),
+        value: `${best.method ?? '-'} T=${best.tolerance ?? '-'} ${best.pass ? ex('pass', locale) : ex('fail', locale)}`,
       })
     }
     if (data.summary?.length) {
@@ -117,23 +134,28 @@ export async function exportMergedHistoryPdf(records, filename) {
       }
     }
     if (data.componentRings?.length) {
-      rows.push({ label: '组成环数', value: String(data.componentRings.length) })
+      rows.push({
+        label: ex('mergeRingCount', locale),
+        value: String(data.componentRings.length),
+      })
     }
     return {
-      heading: `${i + 1}. ${r.title ?? '未命名'}`,
+      heading: `${i + 1}. ${formatHistoryTitle(r, locale) || ex('mergeUnnamed', locale)}`,
       rows,
     }
   })
 
   await exportToolReportPdf({
-    title: 'MechBox 历史记录合并报告',
-    subtitle: `共 ${records.length} 条记录 · ${dateStamp()}`,
+    title: ex('mergeTitle', locale),
+    subtitle: ex('mergeSubtitle', locale, { n: records.length, date: dateStamp() }),
     sections,
-    filename: filename ?? `MechBox历史合并_${dateStamp()}.pdf`,
+    filename,
+    meta: { locale },
   })
 }
 
 export async function exportResultPdf(element, filename, meta = {}) {
+  const locale = meta.locale ?? 'zh'
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import('html2canvas'),
     import('jspdf'),
@@ -145,10 +167,10 @@ export async function exportResultPdf(element, filename, meta = {}) {
   const pageH = pdf.internal.pageSize.getHeight()
 
   pdf.setFontSize(10)
-  pdf.text('MechBox 尺寸链分析报告', 14, 12)
+  pdf.text(ex('reportTitle', locale), 14, 12)
   pdf.setFontSize(8)
-  pdf.text(`日期: ${dateStamp()}`, 14, 18)
-  if (meta.title) pdf.text(`项目: ${meta.title}`, 14, 23)
+  pdf.text(`${ex('date', locale)}: ${dateStamp()}`, 14, 18)
+  if (meta.title) pdf.text(`${ex('project', locale)}: ${meta.title}`, 14, 23)
 
   const topMargin = 28
   const imgH = ((canvas.height * (pageW - 28)) / canvas.width)
@@ -169,7 +191,7 @@ export async function exportResultPdf(element, filename, meta = {}) {
   for (let i = 1; i <= pages; i++) {
     pdf.setPage(i)
     pdf.setFontSize(8)
-    pdf.text(`MechBox · ${dateStamp()} · 第 ${i}/${pages} 页`, pageW / 2, pageH - 8, {
+    pdf.text(ex('footer', locale, { date: dateStamp(), page: i, pages }), pageW / 2, pageH - 8, {
       align: 'center',
     })
   }
@@ -177,65 +199,86 @@ export async function exportResultPdf(element, filename, meta = {}) {
   pdf.save(filename ?? `尺寸链分析_${dateStamp()}.pdf`)
 }
 
-export async function exportResultPng(element, filename, width = 1920, height = 1080) {
+export async function exportResultPng(element, filename, locale = 'zh') {
   const { default: html2canvas } = await import('html2canvas')
   const src = await html2canvas(element, { scale: 2, useCORS: true })
   const exportCanvas = document.createElement('canvas')
-  exportCanvas.width = width
-  exportCanvas.height = height
+  exportCanvas.width = 1920
+  exportCanvas.height = 1080
   const ctx = exportCanvas.getContext('2d')
   ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, width, height)
-  const scale = Math.min(width / src.width, height / src.height)
+  ctx.fillRect(0, 0, 1920, 1080)
+  const scale = Math.min(1920 / src.width, 1080 / src.height)
   const dw = src.width * scale
   const dh = src.height * scale
-  ctx.drawImage(src, (width - dw) / 2, (height - dh) / 2, dw, dh)
+  ctx.drawImage(src, (1920 - dw) / 2, (1080 - dh) / 2, dw, dh)
   const link = document.createElement('a')
   link.download = filename ?? `尺寸链分析_${dateStamp()}.png`
   link.href = exportCanvas.toDataURL('image/png')
   link.click()
 }
 
-export function exportCanvasPng(canvas, filename, width = 1920, height = 1080) {
+export function exportCanvasPng(canvas, filename) {
   const exportCanvas = document.createElement('canvas')
-  exportCanvas.width = width
-  exportCanvas.height = height
+  exportCanvas.width = 1920
+  exportCanvas.height = 1080
   const ctx = exportCanvas.getContext('2d')
   ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, width, height)
-  const scale = Math.min(width / canvas.width, height / canvas.height)
+  ctx.fillRect(0, 0, 1920, 1080)
+  const scale = Math.min(1920 / canvas.width, 1080 / canvas.height)
   const dw = canvas.width * scale
   const dh = canvas.height * scale
-  ctx.drawImage(canvas, (width - dw) / 2, (height - dh) / 2, dw, dh)
+  ctx.drawImage(canvas, (1920 - dw) / 2, (1080 - dh) / 2, dw, dh)
   const link = document.createElement('a')
   link.download = filename ?? `尺寸链矢量图_${dateStamp()}.png`
   link.href = exportCanvas.toDataURL('image/png')
   link.click()
 }
 
-export function exportExcel(payload, filename) {
+export function exportExcel(payload, filename, locale = 'zh') {
   const wb = XLSX.utils.book_new()
 
   const summary = [
-    ['MechBox 尺寸链分析报告'],
-    ['日期', dateStamp()],
-    ['分析类型', payload.typeName ?? ''],
-    ['封闭环', payload.closedRing?.name ?? ''],
-    ['目标范围', `${payload.closedRing?.min} ~ ${payload.closedRing?.max} ${payload.unit}`],
+    [ex('excelTitle', locale)],
+    [ex('date', locale), dateStamp()],
+    [ex('analysisType', locale), payload.typeName ?? ''],
+    [ex('closedRing', locale), payload.closedRing?.name ?? ''],
+    [
+      ex('targetRange', locale),
+      `${payload.closedRing?.min} ~ ${payload.closedRing?.max} ${payload.unit}`,
+    ],
     [],
-    ['组成环', '尺寸', '公差', '传递系数', '类型'],
+    [
+      ex('componentRing', locale),
+      ex('colSize', locale),
+      ex('colTolerance', locale),
+      ex('colFactor', locale),
+      ex('colType', locale),
+    ],
     ...payload.componentRings.map((r) => [
       r.name,
       r.size,
       r.tolerance,
       r.factor,
-      r.type === 'increasing' ? '增环' : '减环',
+      ringTypeLabel(r.type, locale),
     ]),
     [],
-    ['方法', '总公差', '上限', '下限', '合格'],
-    ...payload.results.map((r) => [r.method, r.tolerance, r.upper, r.lower, r.pass ? '合格' : '不合格']),
+    [
+      ex('colMethod', locale),
+      ex('colTotalTol', locale),
+      ex('colUpper', locale),
+      ex('colLower', locale),
+      ex('colPass', locale),
+    ],
+    ...payload.results.map((r) => [
+      r.method,
+      r.tolerance,
+      r.upper,
+      r.lower,
+      r.pass ? ex('pass', locale) : ex('fail', locale),
+    ]),
   ]
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), '分析结果')
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), ex('sheetName', locale))
   XLSX.writeFile(wb, filename ?? `尺寸链分析_${dateStamp()}.xlsx`)
 }
 
@@ -243,22 +286,22 @@ export async function copyResultText(text) {
   await navigator.clipboard.writeText(text)
 }
 
-export function buildResultText(payload) {
+export function buildResultText(payload, locale = 'zh') {
   const lines = [
-    '=== MechBox 尺寸链分析结果 ===',
-    `类型: ${payload.typeName ?? '-'}`,
-    `封闭环: ${payload.closedRing?.name} (${payload.closedRing?.min} ~ ${payload.closedRing?.max} ${payload.unit})`,
+    ex('resultHeader', locale),
+    `${ex('typeLabel', locale)}: ${payload.typeName ?? '-'}`,
+    `${ex('closedRing', locale)}: ${payload.closedRing?.name} (${payload.closedRing?.min} ~ ${payload.closedRing?.max} ${payload.unit})`,
     '',
-    '组成环:',
+    `${ex('ringsHeader', locale)}:`,
     ...payload.componentRings.map(
       (r, i) =>
-        `  ${i + 1}. ${r.name}  ${r.size}±${r.tolerance}  ${r.type === 'increasing' ? '增环' : '减环'}`,
+        `  ${i + 1}. ${r.name}  ${r.size}±${r.tolerance}  ${ringTypeLabel(r.type, locale)}`,
     ),
     '',
-    `计算方法: ${payload.methodLabel}`,
+    `${ex('methodLabel', locale)}: ${payload.methodLabel}`,
     ...payload.formulaLines,
     '',
-    '结果对比:',
+    `${ex('resultsCompare', locale)}:`,
     ...payload.results.map(
       (r) => `  ${r.method}: T=${r.tolerance}, [${r.lower}, ${r.upper}] ${r.pass ? '✓' : '✗'}`,
     ),

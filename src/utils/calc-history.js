@@ -2,7 +2,7 @@
  * 全局计算历史 — 各工具页结果写入统一历史存储
  */
 import { saveAnalysis } from '@/utils/storage'
-import { t, localizedToolLabel } from '@/i18n'
+import { t, localizedToolLabel, localizedAnalysisType } from '@/i18n'
 
 export const TOOL_META = {
   editor: { label: '尺寸链', route: '/editor' },
@@ -51,16 +51,47 @@ export function formatHistoryStatus(status, locale = 'zh') {
   return t('content.history.statusDraft', locale)
 }
 
-export function buildSummaryRows(record) {
+export function formatHistoryTitle(record, locale = 'zh') {
+  const data = record.data ?? {}
+  if (data.selectedType?.id) {
+    const typeName = localizedAnalysisType(data.selectedType.id, locale)
+    const ringName = data.closedRing?.name ?? 'L0'
+    return `${typeName} ${ringName}`
+  }
+  if (record.source === 'tool' && record.tool) {
+    const route = getToolRoute(record.tool)
+    const label = route ? localizedToolLabel(route, locale) : record.tool
+    return t('content.history.toolCalcTitle', locale, { tool: label })
+  }
+  return record.title ?? t('content.history.untitled', locale)
+}
+
+export function formatHistoryType(record, locale = 'zh') {
+  const data = record.data ?? {}
+  if (data.selectedType?.id) {
+    return localizedAnalysisType(data.selectedType.id, locale)
+  }
+  if (record.source === 'tool') {
+    const route = getToolRoute(record.tool)
+    if (route) return localizedToolLabel(route, locale)
+    return record.data?.toolLabel ?? record.tool ?? '-'
+  }
+  return data.selectedType?.name ?? '-'
+}
+
+export function buildSummaryRows(record, locale = 'zh') {
   const data = record.data ?? {}
   if (record.source === 'tool' && data.summary?.length) {
     return data.summary
   }
   if (data.closedRing) {
     return [
-      { label: '封闭环', value: data.closedRing.name },
-      { label: '范围', value: `${data.closedRing.min} ~ ${data.closedRing.max}` },
-      { label: '方法', value: data.method ?? '-' },
+      { label: t('calc.pages.editor.export.closedRing', locale), value: data.closedRing.name },
+      {
+        label: t('calc.pages.editor.dashboard.range', locale),
+        value: `${data.closedRing.min} ~ ${data.closedRing.max}`,
+      },
+      { label: t('calc.pages.editor.export.colMethod', locale), value: data.method ?? '-' },
     ]
   }
   return []
