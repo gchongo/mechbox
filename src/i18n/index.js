@@ -26,6 +26,7 @@ const zh = {
     faq: 'FAQ',
     quiz: '练习',
     analysis: '分析',
+    forum: '社区论坛',
     login: '登录',
     settings: '设置',
     language: '切换语言',
@@ -54,6 +55,7 @@ const zh = {
     settings: '设置',
     quiz: '练习题',
     manual: '公式手册',
+    forum: 'CAX 社区论坛',
     copyright: '© {year} 机械工具箱',
   },
   settings: {
@@ -229,6 +231,7 @@ const en = {
     faq: 'FAQ',
     quiz: 'Quiz',
     analysis: 'Analysis',
+    forum: 'Community',
     login: 'Sign in',
     settings: 'Settings',
     language: 'Switch language',
@@ -257,6 +260,7 @@ const en = {
     settings: 'Settings',
     quiz: 'Quiz',
     manual: 'Formula manual',
+    forum: 'CAX community forum',
     copyright: '© {year} MechBox',
   },
   settings: {

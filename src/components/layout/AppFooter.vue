@@ -10,12 +10,12 @@
           {{ t('footer.tagline') }}
         </p>
         <a
-          href="https://cax.do"
+          :href="FORUM_URL"
           target="_blank"
           rel="noopener noreferrer"
           class="mt-1.5 inline-block text-xs text-primary hover:underline"
         >
-          CAX FORUM →
+          {{ t('footer.forum') }} →
         </a>
       </div>
 
@@ -43,6 +43,7 @@
             <router-link to="/faq">{{ t('footer.faq') }}</router-link>
             <router-link to="/glossary">{{ t('footer.glossary') }}</router-link>
             <router-link to="/settings">{{ t('footer.settings') }}</router-link>
+            <a :href="FORUM_URL" target="_blank" rel="noopener noreferrer">{{ t('footer.forum') }}</a>
           </nav>
         </div>
       </div>
@@ -55,6 +56,7 @@
 <script setup>
 import { computed } from 'vue'
 import AppLogo from '@/components/common/AppLogo.vue'
+import { FORUM_URL } from '@/constants/external-links'
 import { useLocale } from '@/composables/useLocale'
 
 const { t } = useLocale()

@@ -27,6 +27,8 @@ export const contentZh = {
     deleteTitle: '确认',
     accountDeleted: '账号已删除',
     backupDownloaded: '备份已下载',
+    localAccountNote: '本页账号仅保存在当前浏览器，用于本地收藏与备份，与 CAX 社区论坛账号无关。',
+    forumLink: '前往 CAX 社区论坛 →',
   },
   faq: {
     title: '常见问题',
@@ -204,6 +206,8 @@ export const contentEn = {
     deleteTitle: 'Confirm',
     accountDeleted: 'Account deleted',
     backupDownloaded: 'Backup downloaded',
+    localAccountNote: 'This account is stored in your browser only (favorites & backup). It is separate from the CAX community forum.',
+    forumLink: 'Visit CAX community forum →',
   },
   faq: {
     title: 'FAQ',

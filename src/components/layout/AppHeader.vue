@@ -111,6 +111,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from '@/utils/auth'
 import { getSettings } from '@/utils/settings'
+import { FORUM_URL } from '@/constants/external-links'
 import { t, localizedToolLabel } from '@/i18n'
 import AppLogo from '@/components/common/AppLogo.vue'
 import LocaleToggle from '@/components/layout/LocaleToggle.vue'
@@ -179,6 +180,7 @@ const moreItems = computed(() => [
   { path: '/faq', label: t('nav.faq', locale.value) },
   { path: '/quiz', label: t('nav.quiz', locale.value) },
   { path: '/history', label: t('tools.history', locale.value) },
+  { path: FORUM_URL, label: t('nav.forum', locale.value), external: true },
 ])
 
 const allToolPaths = computed(() => [
@@ -226,6 +228,10 @@ function isActive(path) {
 function goTool(path) {
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur()
+  }
+  if (String(path).startsWith('http')) {
+    window.open(path, '_blank', 'noopener,noreferrer')
+    return
   }
   router.push(path)
 }

@@ -51,6 +51,18 @@
       </el-tabs>
     </section>
 
+    <p class="mt-6 w-full max-w-md text-center text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+      {{ ct('account.localAccountNote') }}
+      <a
+        :href="FORUM_URL"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="mt-1 block text-primary hover:underline"
+      >
+        {{ ct('account.forumLink') }}
+      </a>
+    </p>
+
     <section v-if="user && favoriteRecords.length" class="card-panel mt-6 w-full">
       <h2 class="mb-4 text-center font-semibold sm:text-left">{{ ct('account.favoritesTitle') }}</h2>
       <div class="space-y-2">
@@ -84,6 +96,7 @@ import {
 import { getFavorites } from '@/utils/favorites'
 import { getHistory } from '@/utils/storage'
 import { downloadBackup } from '@/utils/backup'
+import { FORUM_URL } from '@/constants/external-links'
 import { useContentI18n } from '@/composables/useContentI18n'
 
 const router = useRouter()
