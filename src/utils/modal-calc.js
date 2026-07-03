@@ -74,6 +74,7 @@ export const MODAL_CASES = {
 }
 
 export function analyzeModal(input) {
+  const calcMode = input.calcMode ?? 'simple'
   const caseId = input.caseId ?? 'sdof'
   let modal = null
 
@@ -86,9 +87,28 @@ export function analyzeModal(input) {
   }
 
   let resonance = null
-  if (input.excitationFreq && modal?.fn) {
-    resonance = calcResonanceMargin(modal.fn, input.excitationFreq)
+  const excFreq = input.excitationFreq ?? (calcMode !== 'simple' ? 0 : null)
+  if (excFreq && modal?.fn) {
+    resonance = calcResonanceMargin(modal.fn, excFreq)
   }
 
-  return { caseId, modal, resonance }
+  const result = { calcMode, caseId, modal, resonance }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    result.criticalSpeed = modal?.fn ? modal.fn * 60 : null
+    if (input.rpm && modal?.fn) {
+      const rpmHz = input.rpm / 60
+      result.operatingResonance = calcResonanceMargin(modal.fn, rpmHz)
+    }
+  }
+
+  if (calcMode === 'professional') {
+    const zeta = input.dampingRatio ?? 0.02
+    const r = resonance?.frequencyRatio ?? 1
+    result.dampingRatio = zeta
+    result.amplificationFactor = 1 / Math.sqrt((1 - r ** 2) ** 2 + (2 * zeta * r) ** 2)
+    result.pass = resonance ? resonance.pass : true
+  }
+
+  return result
 }

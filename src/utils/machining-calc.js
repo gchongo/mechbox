@@ -26,12 +26,13 @@ function lookupRow(diameter) {
  * operations: ['rough', 'semi', 'finish'] 或自定义
  */
 export function calcMachiningAllowance(input) {
+  const calcMode = input.calcMode ?? 'complete'
   const d = input.nominalDiameter ?? 50
   const L = input.length ?? 100
   const row = lookupRow(d)
   const grade = TOLERANCE_GRADES[input.toleranceGrade ?? 'medium'] ?? TOLERANCE_GRADES.medium
 
-  const ops = input.operations ?? ['rough', 'semi', 'finish']
+  const ops = input.operations ?? (calcMode === 'simple' ? ['rough', 'finish'] : ['rough', 'semi', 'finish'])
   const details = []
   let totalRadial = 0
 
@@ -48,10 +49,12 @@ export function calcMachiningAllowance(input) {
   }
 
   const totalDiameter = totalRadial * 2
+  const endFace = input.endFaceAllowance ?? (calcMode === 'simple' ? 1 : 2)
   const stockDiameter = d + totalDiameter
-  const stockLength = L + (input.endFaceAllowance ?? 2) * 2
+  const stockLength = L + endFace * 2
 
-  return {
+  const result = {
+    calcMode,
     nominalDiameter: d,
     length: L,
     toleranceGrade: grade.label,
@@ -60,9 +63,22 @@ export function calcMachiningAllowance(input) {
     totalDiameterAllowance: totalDiameter,
     recommendedStockDiameter: stockDiameter,
     recommendedStockLength: stockLength,
-    materialRemovalVolume:
-      (Math.PI / 4) * (stockDiameter ** 2 - d ** 2) * stockLength,
+    materialRemovalVolume: (Math.PI / 4) * (stockDiameter ** 2 - d ** 2) * stockLength,
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    const grinding = calcGrindingAllowance(d)
+    result.grindingAllowance = grinding
+    result.minStockDiameter = d + row.finish * 2 * grade.factor
+  }
+
+  if (calcMode === 'professional') {
+    const removalRate = input.removalRate ?? 50 // mm³/min
+    result.estimatedMachiningMinutes = result.materialRemovalVolume / removalRate
+    result.removalRate = removalRate
+  }
+
+  return result
 }
 
 /** 磨削余量 */

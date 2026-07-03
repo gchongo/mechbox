@@ -84,25 +84,34 @@ function calcSection(sectionType, dims) {
 }
 
 export function analyzeBeam(input) {
+  const calcMode = input.calcMode ?? 'simple'
   const beamCase = BEAM_CASES[input.caseId] ?? BEAM_CASES.simply_center
   const section = calcSection(input.sectionType ?? 'solid_round', input)
-  if (section.error) return { error: section.error }
+  if (section.error) return { error: section.error, calcMode }
 
   const L = input.spanLength
   const E = input.elasticModulus ?? 210000
-  const P = input.load ?? 1000
+  const loadFactor = calcMode === 'professional' ? input.dynamicFactor ?? 1 : 1
+  const P = (input.load ?? 1000) * loadFactor
   const allowStress = input.allowableStress ?? 160
   const allowDeflection = input.allowableDeflection ?? L / 1000
 
   const deflection = beamCase.deflection(P, L, E, section.I)
   const moment = beamCase.maxMoment(P, L)
-  const stress = moment / section.W
+  let stress = moment / section.W
 
-  return {
+  if (calcMode === 'professional') {
+    const Kt = input.stressConcentration ?? 1
+    stress *= Kt
+  }
+
+  const result = {
+    calcMode,
     caseId: beamCase.id,
     caseLabel: beamCase.label,
     spanLength: L,
-    load: P,
+    load: input.load ?? 1000,
+    designLoad: P,
     elasticModulus: E,
     moment,
     deflection,
@@ -115,4 +124,41 @@ export function analyzeBeam(input) {
     deflectionPass: deflection <= allowDeflection,
     pass: stress <= allowStress && deflection <= allowDeflection,
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    result.stressUtilization = allowStress ? stress / allowStress : 0
+    result.deflectionUtilization = allowDeflection ? deflection / allowDeflection : 0
+    result.minSectionModulusStress = moment / allowStress
+    switch (beamCase.id) {
+      case 'cantilever_end':
+        result.minInertiaDeflection = (P * L ** 3) / (3 * E * allowDeflection)
+        break
+      case 'simply_uniform':
+        result.minInertiaDeflection = (5 * P * L ** 4) / (384 * E * allowDeflection)
+        break
+      case 'cantilever_uniform':
+        result.minInertiaDeflection = (P * L ** 4) / (8 * E * allowDeflection)
+        break
+      default:
+        result.minInertiaDeflection = (P * L ** 3) / (48 * E * allowDeflection)
+    }
+    const charDim = input.diameter ?? input.height ?? 30
+    result.spanRatio = L / charDim
+    result.slendernessWarning = result.spanRatio > 40
+  }
+
+  if (calcMode === 'professional') {
+    result.dynamicFactor = loadFactor
+    result.stressConcentration = input.stressConcentration ?? 1
+    if (input.loadMin != null && input.loadMax != null) {
+      const mMin = beamCase.maxMoment(input.loadMin, L)
+      const mMax = beamCase.maxMoment(input.loadMax * loadFactor, L)
+      result.stressAmplitude = ((mMax - mMin) / section.W) * (input.stressConcentration ?? 1) / 2
+      const endurance = input.enduranceLimit ?? allowStress * 0.5
+      result.fatiguePass = result.stressAmplitude <= endurance
+      result.pass = result.pass && result.fatiguePass
+    }
+  }
+
+  return result
 }

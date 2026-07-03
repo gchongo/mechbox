@@ -21,20 +21,24 @@ export const SURFACE_TYPES = {
  * depth: 拔模高度 mm
  */
 export function calcDraftAngle(input) {
+  const calcMode = input.calcMode ?? 'simple'
   const mat = CAST_MATERIALS[input.material ?? 'sand_iron'] ?? CAST_MATERIALS.sand_iron
   const surf = SURFACE_TYPES[input.surfaceType ?? 'external'] ?? SURFACE_TYPES.external
   const depth = input.depth ?? 50
   const texture = input.roughSurface ? 1.2 : 1.0
 
-  const angle = (mat.baseDraft + mat.deepFactor * Math.sqrt(depth)) * surf.factor * texture
+  let angle = (mat.baseDraft + mat.deepFactor * Math.sqrt(depth)) * surf.factor * texture
+  if (calcMode !== 'simple') {
+    angle *= input.imperfectionFactor ?? 1.05
+  }
   const minAngle = input.minDraft ?? 0.5
   const recommended = Math.max(minAngle, angle)
 
-  // 线性拔模：顶部与底部尺寸差 Δ = 2 · h · tan(α)
   const rad = (recommended * Math.PI) / 180
   const linearIncrease = 2 * depth * Math.tan(rad)
 
   return {
+    calcMode,
     material: mat.label,
     surfaceType: surf.label,
     depth,

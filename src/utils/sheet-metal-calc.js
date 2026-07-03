@@ -27,13 +27,14 @@ export function calcBendDeduction(angleDeg, radius, thickness, kFactor = 0.33) {
  * segments: [{ type: 'straight', length }, { type: 'bend', angle, radius?, kFactor? }]
  */
 export function analyzeSheetMetalUnfold(input) {
+  const calcMode = input.calcMode ?? 'simple'
   const thickness = input.thickness ?? 1.5
   const defaultRadius = input.bendRadius ?? thickness
   const defaultK = input.kFactor ?? 0.33
   const method = input.method ?? 'k_factor'
   const segments = input.segments ?? []
 
-  if (!segments.length) return { error: '至少需要一个直段' }
+  if (!segments.length) return { error: '至少需要一个直段', calcMode }
 
   let flatLength = 0
   const details = []
@@ -79,8 +80,10 @@ export function analyzeSheetMetalUnfold(input) {
     }
   }
 
+  let result
   if (method === 'k_factor') {
-    return {
+    result = {
+      calcMode,
       method: 'k_factor',
       thickness,
       bendRadius: defaultRadius,
@@ -89,24 +92,45 @@ export function analyzeSheetMetalUnfold(input) {
       bendCount,
       details,
     }
+  } else {
+    const outerSum = input.outerSum ?? flatLength
+    const totalDeduction = details
+      .filter((d) => d.type === 'bend')
+      .reduce((s, d) => s + (d.bendDeduction ?? 0), 0)
+    flatLength = outerSum - totalDeduction
+    result = {
+      calcMode,
+      method: 'bend_deduction',
+      thickness,
+      outerSum,
+      totalDeduction,
+      flatLength,
+      bendCount,
+      details,
+    }
   }
 
-  // 折弯扣除模式：需用户提供外轮廓总长 outerSum
-  const outerSum = input.outerSum ?? flatLength
-  const totalDeduction = details
-    .filter((d) => d.type === 'bend')
-    .reduce((s, d) => s + (d.bendDeduction ?? 0), 0)
-  flatLength = outerSum - totalDeduction
-
-  return {
-    method: 'bend_deduction',
-    thickness,
-    outerSum,
-    totalDeduction,
-    flatLength,
-    bendCount,
-    details,
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    const minFlange = thickness * 4
+    const straightLengths = details.filter((d) => d.type === 'straight').map((d) => d.length ?? 0)
+    const minStraight = straightLengths.length ? Math.min(...straightLengths) : 0
+    result.minFlangeRule = minFlange
+    result.minStraightLength = minStraight
+    result.flangePass = minStraight >= minFlange || bendCount === 0
+    result.pass = result.flangePass
   }
+
+  if (calcMode === 'professional') {
+    const springback = input.springbackFactor ?? 0.5
+    result.springbackDeg = springback
+    result.compensatedFlatLength = result.flatLength * (1 + springback / (90 * Math.max(bendCount, 1)))
+    const innerRadius = defaultRadius
+    result.minInnerRadius = thickness
+    result.radiusPass = innerRadius >= thickness
+    result.pass = (result.pass !== false) && result.radiusPass
+  }
+
+  return result
 }
 
 /** 常见 K 因子参考 */

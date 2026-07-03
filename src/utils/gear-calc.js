@@ -62,6 +62,7 @@ export function analyzeGearStrength(input) {
   const allowContact = input.allowContact ?? 900
 
   return {
+    calcMode: 'simple',
     geometry: geo,
     tangentialForce: force,
     bendingStress: sigmaF,
@@ -71,5 +72,23 @@ export function analyzeGearStrength(input) {
     contactPass: sigmaH <= allowContact,
     allowBending: allowBend,
     allowContact: allowContact,
+    pass: sigmaF <= allowBend && sigmaH <= allowContact,
+  }
+}
+
+/** 统一入口：按 calcMode 返回简化 / ISO / 对照结果 */
+export function analyzeGear(input) {
+  const calcMode = input.calcMode ?? 'complete'
+  if (calcMode === 'simple') {
+    return analyzeGearStrength({
+      ...input,
+      teeth: input.teeth ?? input.pinionTeeth,
+      gearRatio: (input.gearTeeth ?? input.pinionTeeth) / (input.pinionTeeth ?? input.teeth ?? 1),
+    })
+  }
+  return {
+    calcMode,
+    needsISO: calcMode === 'complete' || calcMode === 'professional',
+    needsCompare: calcMode === 'professional',
   }
 }

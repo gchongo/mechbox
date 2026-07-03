@@ -1,43 +1,96 @@
-/** 实心圆轴扭转应力与变形 */
+/** 实心/空心圆轴扭转应力与变形 */
 
-export function calcPolarMoment(diameter) {
-  return (Math.PI * diameter ** 4) / 32
+export function calcPolarMoment(diameter, innerDiameter = 0) {
+  const d = diameter
+  const di = innerDiameter ?? 0
+  if (di > 0 && di < d) {
+    return (Math.PI * (d ** 4 - di ** 4)) / 32
+  }
+  return (Math.PI * d ** 4) / 32
 }
 
-export function calcTorsionStress(torque, diameter) {
-  const J = calcPolarMoment(diameter)
+export function calcTorsionStress(torque, diameter, innerDiameter = 0) {
+  const J = calcPolarMoment(diameter, innerDiameter)
   if (!J) return 0
   const Tnmm = torque * 1000
   return (Tnmm * (diameter / 2)) / J
 }
 
-export function calcTorsionAngle(torque, length, diameter, shearModulus = 79000) {
-  const J = calcPolarMoment(diameter)
+export function calcTorsionAngle(torque, length, diameter, shearModulus = 79000, innerDiameter = 0) {
+  const J = calcPolarMoment(diameter, innerDiameter)
   if (!J || !shearModulus) return 0
   const Tnmm = torque * 1000
   return (Tnmm * length) / (shearModulus * J) * (180 / Math.PI)
 }
 
-export function calcMinDiameterForTorque(torque, allowableShear) {
+export function calcMinDiameterForTorque(torque, allowableShear, innerDiameter = 0) {
   if (!allowableShear) return 0
-  const tau = allowableShear
   const Tnmm = torque * 1000
-  return Math.cbrt((16 * Tnmm) / (Math.PI * tau))
+  if (innerDiameter > 0) {
+    const ratio = innerDiameter
+    let d = 30
+    for (let i = 0; i < 40; i++) {
+      const tau = calcTorsionStress(torque, d, ratio)
+      if (tau <= allowableShear) return d
+      d += 1
+    }
+    return d
+  }
+  return Math.cbrt((16 * Tnmm) / (Math.PI * allowableShear))
 }
 
 export function analyzeShaftTorsion(input) {
+  const calcMode = input.calcMode ?? 'simple'
   const d = input.diameter
-  const tau = calcTorsionStress(input.torque, d)
-  const theta = calcTorsionAngle(input.torque, input.length ?? 500, d, input.shearModulus)
-  const allow = input.allowableShear ?? 40
-  const dMin = calcMinDiameterForTorque(input.torque, allow)
+  const di = calcMode === 'simple' ? 0 : input.innerDiameter ?? 0
+  const G = input.shearModulus ?? 79000
+  let allow = input.allowableShear ?? 40
 
-  return {
+  if (calcMode !== 'simple' && input.yieldStrength) {
+    allow = input.allowableShear ?? 0.577 * input.yieldStrength
+  }
+
+  let tau = calcTorsionStress(input.torque, d, di)
+  const theta = calcTorsionAngle(input.torque, input.length ?? 500, d, G, di)
+  const dMin = calcMinDiameterForTorque(input.torque, allow, di)
+
+  const result = {
+    calcMode,
     shearStress: tau,
     twistAngle: theta,
-    polarMoment: calcPolarMoment(d),
+    polarMoment: calcPolarMoment(d, di),
     minDiameter: dMin,
     pass: tau <= allow,
     allowableShear: allow,
+    hollowShaft: di > 0,
+    innerDiameter: di,
+    utilization: allow ? tau / allow : 0,
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    result.torsionPass = tau <= allow
+    result.anglePass = input.maxTwistAngle == null || theta <= input.maxTwistAngle
+    result.pass = result.torsionPass && result.anglePass
+  }
+
+  if (calcMode === 'professional') {
+    const Kt = input.stressConcentrationTorsion ?? 1
+    const tauPeak = tau * Kt
+    result.stressConcentrationTorsion = Kt
+    result.peakShearStress = tauPeak
+    result.peakPass = tauPeak <= allow
+
+    if (input.torqueAmplitude != null && input.torqueAmplitude > 0) {
+      const tauAmp = calcTorsionStress(input.torqueAmplitude, d, di) * Kt
+      const endurance = input.enduranceLimit ?? 0.577 * (input.yieldStrength ?? 235)
+      result.fatigueAmplitude = tauAmp
+      result.fatigueEndurance = endurance
+      result.fatiguePass = tauAmp <= endurance
+      result.pass = result.pass && result.peakPass && result.fatiguePass
+    } else {
+      result.pass = result.pass && result.peakPass
+    }
+  }
+
+  return result
 }

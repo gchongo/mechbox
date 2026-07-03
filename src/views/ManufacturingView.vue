@@ -5,6 +5,16 @@
 
     <el-tabs v-model="tab">
       <el-tab-pane label="机加工余量" name="machining">
+        <section class="card-panel mb-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="text-sm font-medium">计算模型</span>
+            <el-radio-group v-model="machCalcMode">
+              <el-radio-button value="simple">简化</el-radio-button>
+              <el-radio-button value="complete">完整</el-radio-button>
+              <el-radio-button value="professional">专业</el-radio-button>
+            </el-radio-group>
+          </div>
+        </section>
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -43,6 +53,12 @@
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <dt>切除体积（估算）</dt><dd class="font-mono">{{ (machResult.materialRemovalVolume / 1000).toFixed(1) }} cm³</dd>
               </div>
+              <div v-if="machResult.grindingAllowance != null && machCalcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <dt>磨削余量</dt><dd class="font-mono">{{ machResult.grindingAllowance?.toFixed(2) }} mm</dd>
+              </div>
+              <div v-if="machResult.estimatedMachiningMinutes" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <dt>估算工时</dt><dd class="font-mono">{{ machResult.estimatedMachiningMinutes?.toFixed(0) }} min</dd>
+              </div>
             </dl>
             <el-table :data="machResult.details" size="small" border class="mt-4">
               <el-table-column prop="operation" label="工序" />
@@ -55,6 +71,16 @@
       </el-tab-pane>
 
       <el-tab-pane label="铸造拔模斜度" name="casting">
+        <section class="card-panel mb-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="text-sm font-medium">计算模型</span>
+            <el-radio-group v-model="castCalcMode">
+              <el-radio-button value="simple">简化</el-radio-button>
+              <el-radio-button value="complete">完整</el-radio-button>
+              <el-radio-button value="professional">专业</el-radio-button>
+            </el-radio-group>
+          </div>
+        </section>
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <el-form label-width="120px">
@@ -111,6 +137,8 @@ import { calcMachiningAllowance, TOLERANCE_GRADES } from '@/utils/machining-calc
 import { calcDraftAngle, verifyDraftAngle, CAST_MATERIALS, SURFACE_TYPES } from '@/utils/casting-calc'
 
 const tab = ref('machining')
+const machCalcMode = ref('simple')
+const castCalcMode = ref('simple')
 
 const mach = reactive({
   nominalDiameter: 50,
@@ -127,8 +155,8 @@ const cast = reactive({
   actualDraftAngle: 0,
 })
 
-const machResult = computed(() => calcMachiningAllowance(mach))
-const castResult = computed(() => calcDraftAngle(cast))
+const machResult = computed(() => calcMachiningAllowance({ ...mach, calcMode: machCalcMode.value }))
+const castResult = computed(() => calcDraftAngle({ ...cast, calcMode: castCalcMode.value }))
 const verifyResult = computed(() =>
   cast.actualDraftAngle > 0 ? verifyDraftAngle(cast) : { pass: true },
 )

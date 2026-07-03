@@ -5,6 +5,22 @@
       沟槽尺寸、压缩率与填充率校核（Parker / ISO 3601 简化）
     </p>
 
+    <section class="card-panel mb-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium">计算模型</span>
+        <el-radio-group v-model="form.calcMode">
+          <el-radio-button value="simple">简化</el-radio-button>
+          <el-radio-button value="complete">完整</el-radio-button>
+          <el-radio-button value="professional">专业</el-radio-button>
+        </el-radio-group>
+        <p class="w-full text-xs text-gray-500">
+          <template v-if="form.calcMode === 'simple'">静密封压缩率 / 填充率。</template>
+          <template v-else-if="form.calcMode === 'complete'">动压密封、挤出间隙、材料/温度。</template>
+          <template v-else>往复速度、极限压力、热膨胀修正。</template>
+        </p>
+      </div>
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">输入参数</h2>
@@ -33,6 +49,24 @@
             <el-input-number v-model="form.pressure" :min="0" :max="50" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">MPa（0=静密封）</span>
           </el-form-item>
+          <template v-if="form.calcMode !== 'simple'">
+            <el-form-item label="挤出间隙 (mm)">
+              <el-input-number v-model="form.extrusionGap" :min="0.05" :max="0.5" :precision="2" :step="0.01" />
+            </el-form-item>
+            <el-form-item label="材料">
+              <el-select v-model="form.material" class="w-full">
+                <el-option v-for="(m, k) in materials" :key="k" :label="m.label" :value="k" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="工作温度 (°C)">
+              <el-input-number v-model="form.operatingTemp" :min="-40" :max="250" />
+            </el-form-item>
+          </template>
+          <template v-if="form.calcMode === 'professional'">
+            <el-form-item label="往复速度 (m/s)">
+              <el-input-number v-model="form.strokeSpeed" :min="0" :max="2" :precision="2" :step="0.1" />
+            </el-form-item>
+          </template>
           <el-form-item label="孔径推荐">
             <el-input-number v-model="boreForRec" :min="5" />
             <el-button class="ml-2" size="small" @click="applyRecommend">应用推荐沟槽</el-button>
@@ -70,6 +104,14 @@
             <dt>宽度校核</dt>
             <dd>{{ result.widthOk ? '✓ 合理' : '✗ 偏窄/宽' }}</dd>
           </div>
+          <div v-if="result.extrusionPass != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <dt>挤出间隙</dt>
+            <dd>{{ result.extrusionGap }} / {{ result.maxExtrusionGap?.toFixed(2) }} mm {{ result.extrusionPass ? '✓' : '✗' }}</dd>
+          </div>
+          <div v-if="result.maxAllowPressure" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <dt>极限压力</dt>
+            <dd class="font-mono">{{ result.maxAllowPressure?.toFixed(1) }} MPa</dd>
+          </div>
         </dl>
         <p class="mt-4 text-xs text-gray-500">{{ result.notes }}</p>
       </section>
@@ -79,15 +121,21 @@
 
 <script setup>
 import { reactive, computed, ref } from 'vue'
-import { analyzeORingSeal, recommendGroove, ORING_SECTIONS } from '@/utils/o-ring-calc'
+import { analyzeORingSeal, recommendGroove, ORING_SECTIONS, ORING_MATERIALS } from '@/utils/o-ring-calc'
 
+const materials = ORING_MATERIALS
 const form = reactive({
+  calcMode: 'simple',
   crossSection: 3.53,
   grooveDiameter: 18.5,
   grooveWidth: 4.8,
   compressionPercent: 20,
   stretchPercent: 2,
   pressure: 0,
+  extrusionGap: 0.15,
+  material: 'nbr',
+  operatingTemp: 25,
+  strokeSpeed: 0,
 })
 
 const boreForRec = ref(25)

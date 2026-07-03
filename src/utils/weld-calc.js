@@ -73,23 +73,134 @@ export function analyzeFilletWeldAWS(input) {
 
 /** 对接焊缝正应力简化 */
 export function analyzeButtWeld(input) {
+  const calcMode = input.calcMode ?? 'complete'
   const grade = WELD_STEEL_GRADES[input.steelGrade ?? 'Q235'] ?? WELD_STEEL_GRADES['Q235']
   const area = (input.thickness ?? 8) * (input.weldLength ?? 100)
   const sigma = area ? input.force / area : 0
   const allowGB = grade.gbAllow * 1.1
   const allowEC = grade.fu / (1.25 * 1.0)
   const allowAWS = 0.6 * grade.fu
-  return {
+
+  const gb = { allow: round(allowGB, 1), pass: sigma <= allowGB }
+  const eurocode = { allow: round(allowEC, 1), pass: sigma <= allowEC }
+  const aws = { allow: round(allowAWS, 1), pass: sigma <= allowAWS }
+
+  if (calcMode === 'simple') {
+    return {
+      calcMode,
+      area,
+      normalStress: sigma,
+      gb,
+      pass: gb.pass,
+    }
+  }
+
+  const result = {
+    calcMode,
     area,
     normalStress: sigma,
-    gb: { allow: round(allowGB, 1), pass: sigma <= allowGB },
-    eurocode: { allow: round(allowEC, 1), pass: sigma <= allowEC },
-    aws: { allow: round(allowAWS, 1), pass: sigma <= allowAWS },
+    gb,
+    eurocode,
+    aws,
+    pass: gb.pass && eurocode.pass && aws.pass,
+    strictest: sigma <= allowGB ? 'GB' : sigma <= allowEC ? 'Eurocode' : sigma <= allowAWS ? 'AWS' : '—',
   }
+
+  if (calcMode === 'professional') {
+    const eff = input.penetrationEfficiency ?? 1
+    const kf = input.stressConcentration ?? 1.2
+    result.effectiveStress = sigma * kf / eff
+    result.penetrationEfficiency = eff
+    result.stressConcentration = kf
+    result.gb.pass = result.effectiveStress <= allowGB
+    result.eurocode.pass = result.effectiveStress <= allowEC
+    result.aws.pass = result.effectiveStress <= allowAWS
+    result.pass = result.gb.pass && result.eurocode.pass && result.aws.pass
+  }
+
+  return result
 }
 
 export function analyzeFilletWeld(input) {
-  return analyzeFilletWeldGB(input)
+  const calcMode = input.calcMode ?? 'simple'
+  if (calcMode === 'simple') {
+    const gb = analyzeFilletWeldGB(input)
+    return { calcMode, ...gb, standards: [{ id: 'gb', ...gb }] }
+  }
+  if (calcMode === 'complete') {
+    const cmp = compareWeldStandards(input)
+    return { calcMode, ...cmp }
+  }
+  return analyzeFilletWeldProfessional(input)
+}
+
+/** 偏心/合成载荷角焊缝 (简化 directional method) */
+export function analyzeFilletWeldCombined(input) {
+  const throat = calcFilletThroat(input.legSize)
+  const L = input.weldLength
+  const area = throat * L
+  if (!area) return { error: '焊缝几何无效' }
+
+  const Fx = input.forceX ?? 0
+  const Fy = input.forceY ?? 0
+  const F = input.force ?? Math.sqrt(Fx ** 2 + Fy ** 2)
+  const M = input.moment ?? F * (input.eccentricity ?? 0)
+  const W = (L * throat ** 2) / 6
+
+  const tau = F / area
+  const sigmaB = W ? M * 1000 / W : 0
+  const equiv = Math.sqrt(sigmaB ** 2 + 3 * tau ** 2)
+
+  return {
+    throat,
+    shearStress: tau,
+    bendingStress: sigmaB,
+    equivalentStress: equiv,
+    area,
+    moment: M,
+  }
+}
+
+/** 专业：合成应力 + 三标准 + HAZ + 可选疲劳 */
+export function analyzeFilletWeldProfessional(input) {
+  const combined = analyzeFilletWeldCombined(input)
+  if (combined.error) return { calcMode: 'professional', error: combined.error }
+
+  const cmp = compareWeldStandards(input)
+  const grade = WELD_STEEL_GRADES[input.steelGrade ?? 'Q235'] ?? WELD_STEEL_GRADES['Q235']
+  const allowCombined = grade.gbAllow * 1.15
+  const combinedPass = combined.equivalentStress <= allowCombined
+
+  const haz = analyzeHAZ({
+    heatInput: input.heatInput ?? 1.5,
+    plateThickness: input.plateThickness ?? 8,
+    steelGrade: input.steelGrade,
+    legSize: input.legSize,
+    force: input.force ?? Math.sqrt((input.forceX ?? 0) ** 2 + (input.forceY ?? 0) ** 2),
+    weldLength: input.weldLength,
+  })
+
+  let fatigue = null
+  if (input.stressRange != null || input.peakStress != null) {
+    fatigue = analyzeWeldFatigue({
+      stressRange: input.stressRange ?? combined.shearStress,
+      peakStress: input.peakStress,
+      minStress: input.minStress ?? 0,
+      cycles: input.cycles ?? 1e6,
+      detailCategory: input.detailCategory ?? 'medium',
+    })
+  }
+
+  return {
+    calcMode: 'professional',
+    ...cmp,
+    combined,
+    combinedAllow: allowCombined,
+    combinedPass,
+    haz,
+    fatigue,
+    allPass: cmp.allPass && combinedPass && haz.pass && (fatigue ? fatigue.pass : true),
+  }
 }
 
 /** 三标准对照 */

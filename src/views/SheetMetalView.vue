@@ -5,6 +5,22 @@
       折弯扣除与 K 因子法，估算展开下料长度
     </p>
 
+    <section class="card-panel mb-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium">计算模型</span>
+        <el-radio-group v-model="calcMode">
+          <el-radio-button value="simple">简化</el-radio-button>
+          <el-radio-button value="complete">完整</el-radio-button>
+          <el-radio-button value="professional">专业</el-radio-button>
+        </el-radio-group>
+        <p class="w-full text-xs text-gray-500">
+          <template v-if="calcMode === 'simple'">单段 K 因子展开。</template>
+          <template v-else-if="calcMode === 'complete'">多段折弯与最小法兰校核。</template>
+          <template v-else>回弹补偿与最小内径规则。</template>
+        </p>
+      </div>
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">参数</h2>
@@ -31,6 +47,10 @@
           <el-form-item v-if="form.method === 'bend_deduction'" label="外轮廓总长">
             <el-input-number v-model="form.outerSum" :min="1" :precision="2" />
             <span class="ml-2 text-xs text-gray-500">mm（直段外尺寸之和）</span>
+          </el-form-item>
+          <el-form-item v-if="calcMode === 'professional'" label="回弹系数">
+            <el-input-number v-model="form.springbackFactor" :min="0" :max="3" :precision="1" :step="0.1" />
+            <span class="ml-2 text-xs text-gray-500">°/90° 估算</span>
           </el-form-item>
         </el-form>
 
@@ -65,9 +85,24 @@
         <template v-else>
           <div class="mb-4 rounded-lg bg-primary/5 p-4 text-center">
             <dt class="text-sm text-gray-500">展开长度</dt>
-            <dd class="font-mono text-3xl text-primary">{{ result.flatLength?.toFixed(2) }} mm</dd>
-            <p class="mt-1 text-xs text-gray-500">{{ result.bendCount }} 道折弯 · {{ form.method === 'k_factor' ? 'K 因子法' : '折弯扣除' }}</p>
+            <dd class="font-mono text-3xl text-primary">
+              {{ (calcMode === 'professional' && result.compensatedFlatLength ? result.compensatedFlatLength : result.flatLength)?.toFixed(2) }} mm
+            </dd>
+            <p class="mt-1 text-xs text-gray-500">
+              {{ result.bendCount }} 道折弯 · {{ form.method === 'k_factor' ? 'K 因子法' : '折弯扣除' }}
+              <span v-if="calcMode === 'professional' && result.compensatedFlatLength">（含回弹补偿）</span>
+            </p>
           </div>
+          <dl v-if="calcMode !== 'simple'" class="mb-4 space-y-2 text-sm">
+            <div v-if="result.minFlangeRule" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+              <dt>最小法兰 (4T)</dt>
+              <dd class="font-mono">{{ result.minFlangeRule?.toFixed(1) }} mm</dd>
+            </div>
+            <div v-if="result.minStraightLength != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+              <dt>最短直段</dt>
+              <dd class="font-mono" :class="result.flangePass ? 'text-success' : 'text-warning'">{{ result.minStraightLength?.toFixed(1) }} mm</dd>
+            </div>
+          </dl>
           <el-table :data="result.details" size="small" border>
             <el-table-column label="#" width="50">
               <template #default="{ row }">{{ row.index + 1 }}</template>
@@ -81,6 +116,9 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="result.pass ? 'success' : 'warning'">
+            {{ result.pass ? '工艺可行' : '法兰/半径需调整' }}
+          </el-tag>
         </template>
       </section>
     </div>
@@ -91,12 +129,15 @@
 import { reactive, ref, computed } from 'vue'
 import { analyzeSheetMetalUnfold, K_FACTOR_PRESETS } from '@/utils/sheet-metal-calc'
 
+const calcMode = ref('simple')
+
 const form = reactive({
   method: 'k_factor',
   thickness: 1.5,
   bendRadius: 1.5,
   kFactor: 0.33,
   outerSum: 200,
+  springbackFactor: 0.5,
 })
 
 const segments = ref([
@@ -123,6 +164,7 @@ function removeSeg(i) {
 
 const result = computed(() =>
   analyzeSheetMetalUnfold({
+    calcMode: calcMode.value,
     ...form,
     segments: segments.value,
     bendRadius: form.bendRadius || form.thickness,

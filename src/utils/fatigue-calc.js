@@ -129,31 +129,66 @@ export function calcMinerDamage(material, loads) {
 }
 
 export function analyzeFatigue(input) {
+  const calcMode = input.calcMode ?? 'complete'
   const material = input.material ?? 'steel_45'
-  const stressAmplitude = input.stressAmplitude
+  const m = SN_MATERIALS[material] ?? SN_MATERIALS.steel_45
+  let stressAmplitude = input.stressAmplitude ?? 0
+
+  if (calcMode === 'professional' && input.meanStress != null) {
+    const method = input.meanStressMethod ?? 'goodman'
+    const uts = m.uts
+    const Se = m.enduranceLimit * (input.surfaceFactor ?? 1) * (input.sizeFactor ?? 1)
+    if (method === 'soderberg') {
+      stressAmplitude = stressAmplitude / (1 - (input.meanStress / (uts || 1)))
+    } else {
+      stressAmplitude = stressAmplitude / (1 - (input.meanStress / (uts || 1)))
+    }
+    stressAmplitude = Math.max(stressAmplitude, 0)
+  }
 
   let life = null
   if (stressAmplitude > 0) {
-    life = calcLifeFromStress(material, stressAmplitude)
+    const Se = m.enduranceLimit * (calcMode === 'professional' ? (input.surfaceFactor ?? 1) * (input.sizeFactor ?? 1) : 1)
+    if (stressAmplitude <= Se) {
+      life = Infinity
+    } else {
+      life = calcLifeFromStress(material, stressAmplitude)
+    }
   }
 
   let miner = null
-  if (input.loads?.length) {
+  if (calcMode !== 'simple' && input.loads?.length) {
     miner = calcMinerDamage(material, input.loads)
   }
 
   const snCurve = generateSNCurve(material)
 
-  return {
+  const result = {
+    calcMode,
     material,
-    materialLabel: SN_MATERIALS[material]?.label,
-    stressAmplitude,
+    materialLabel: m.label,
+    stressAmplitude: input.stressAmplitude,
+    effectiveAmplitude: stressAmplitude,
     life,
-    lifeFormatted: life === Infinity ? '无限寿命' : Math.round(life),
+    lifeFormatted: life === Infinity ? '无限寿命' : life != null ? Math.round(life) : null,
     miner,
     snCurve,
-    enduranceLimit: SN_MATERIALS[material]?.enduranceLimit,
+    enduranceLimit: m.enduranceLimit,
+    pass: miner ? miner.pass : life === Infinity || (life != null && life >= (input.targetLife ?? 1e6)),
   }
+
+  if (calcMode === 'professional') {
+    result.meanStress = input.meanStress
+    result.surfaceFactor = input.surfaceFactor ?? 1
+    result.sizeFactor = input.sizeFactor ?? 1
+    result.adjustedEndurance = m.enduranceLimit * result.surfaceFactor * result.sizeFactor
+    if (input.meanStress != null && input.stressAmplitude > 0) {
+      result.goodmanPass = input.stressAmplitude / result.adjustedEndurance + input.meanStress / m.uts <= 1
+      result.pass = result.pass && result.goodmanPass
+    }
+  }
+
+  return result
 }
 
 /** 解析载荷谱文本：应力,循环次数 每行 */

@@ -53,6 +53,26 @@ export function getLifeConditionFactor(key = 'standard') {
   return LIFE_CONDITION_FACTORS[key] ?? 1.0
 }
 
+/** 温度系数 a₂ (ISO 281 简化) */
+export const TEMPERATURE_FACTORS = {
+  120: 1.0,
+  150: 0.9,
+  175: 0.8,
+  200: 0.75,
+  250: 0.5,
+}
+
+export function getTemperatureFactor(tempC = 120) {
+  const keys = Object.keys(TEMPERATURE_FACTORS)
+    .map(Number)
+    .sort((a, b) => a - b)
+  let factor = 1.0
+  for (const t of keys) {
+    if (tempC >= t) factor = TEMPERATURE_FACTORS[t]
+  }
+  return factor
+}
+
 /** 静载荷安全系数 S₀ = C₀ / P₀ */
 export function calcStaticSafetyFactor(staticLoad, equivalentLoad) {
   if (!equivalentLoad || equivalentLoad <= 0) return Infinity
@@ -61,12 +81,15 @@ export function calcStaticSafetyFactor(staticLoad, equivalentLoad) {
 
 /** 自动查表 X/Y 并计算寿命 */
 export function analyzeBearingLife(input) {
+  const calcMode = input.calcMode ?? 'complete'
   let x = input.x
   let y = input.y
   let xyInfo = null
   let bearingType = input.bearingType ?? 'ball'
 
-  if (input.autoLookup !== false && (input.seriesId || input.bearingModel)) {
+  const useAutoLookup = calcMode !== 'simple' && input.autoLookup !== false && (input.seriesId || input.bearingModel)
+
+  if (useAutoLookup) {
     const seriesId = input.seriesId ?? resolveSeriesFromModel(input.bearingModel)
     xyInfo = lookupBearingXY({
       seriesId,
@@ -78,6 +101,31 @@ export function analyzeBearingLife(input) {
     bearingType = xyInfo.bearingType
   }
 
+  if (calcMode === 'simple') {
+    x = input.x ?? 1
+    y = input.y ?? 0
+    if (input.simpleEquivalentLoad != null) {
+      const p = input.simpleEquivalentLoad
+      const l10 = calcL10MillionRevolutions(input.dynamicLoad, p, bearingType)
+      const hours = calcLifeHours(l10, input.rpm)
+      return {
+        calcMode,
+        equivalentLoad: p,
+        x,
+        y,
+        l10MillionRev: l10,
+        modifiedLifeMillionRev: l10,
+        reliabilityFactor: 1,
+        lifeConditionFactor: 1,
+        temperatureFactor: 1,
+        lifeHours: hours,
+        targetHours: input.targetHours ?? 10000,
+        pass: hours >= (input.targetHours ?? 10000),
+        bearingType,
+      }
+    }
+  }
+
   const p = calcEquivalentLoad({
     radialLoad: input.radialLoad,
     axialLoad: input.axialLoad,
@@ -86,11 +134,37 @@ export function analyzeBearingLife(input) {
   })
 
   const l10 = calcL10MillionRevolutions(input.dynamicLoad, p, bearingType)
+
+  if (calcMode === 'simple') {
+    const hours = calcLifeHours(l10, input.rpm)
+    return {
+      calcMode,
+      equivalentLoad: p,
+      x: x ?? 1,
+      y: y ?? 0,
+      xyInfo,
+      l10MillionRev: l10,
+      modifiedLifeMillionRev: l10,
+      reliabilityFactor: 1,
+      lifeConditionFactor: 1,
+      temperatureFactor: 1,
+      lifeHours: hours,
+      targetHours: input.targetHours ?? 10000,
+      pass: hours >= (input.targetHours ?? 10000),
+      bearingType,
+      seriesId: input.seriesId ?? xyInfo?.series,
+    }
+  }
+
   const a1 = input.reliability
     ? getReliabilityFactor(input.reliability)
     : (input.reliabilityFactor ?? 1)
   const aIso = input.lifeConditionFactor ?? getLifeConditionFactor(input.lifeCondition ?? 'standard')
-  const lnm = calcModifiedLife(l10, a1 * aIso)
+  let a2 = 1
+  if (calcMode === 'professional') {
+    a2 = input.temperatureFactor ?? getTemperatureFactor(input.operatingTemp ?? 120)
+  }
+  const lnm = calcModifiedLife(l10, a1 * aIso * a2)
   const hours = calcLifeHours(lnm, input.rpm)
   const targetHours = input.targetHours ?? 10000
   const staticSafety = input.staticLoad
@@ -98,7 +172,15 @@ export function analyzeBearingLife(input) {
     : null
   const minStaticSafety = input.minStaticSafety ?? 1.5
 
+  let speedPass = true
+  let speedWarning = null
+  if (calcMode === 'professional' && input.limitingSpeed) {
+    speedPass = input.rpm <= input.limitingSpeed
+    speedWarning = speedPass ? null : `转速 ${input.rpm} 超过极限 ${input.limitingSpeed} rpm`
+  }
+
   return {
+    calcMode,
     equivalentLoad: p,
     x: x ?? 1,
     y: y ?? 0,
@@ -107,11 +189,17 @@ export function analyzeBearingLife(input) {
     modifiedLifeMillionRev: lnm,
     reliabilityFactor: a1,
     lifeConditionFactor: aIso,
+    temperatureFactor: a2,
     staticSafetyFactor: staticSafety,
     staticPass: staticSafety == null ? true : staticSafety >= minStaticSafety,
     lifeHours: hours,
     targetHours,
-    pass: hours >= targetHours && (staticSafety == null || staticSafety >= minStaticSafety),
+    speedPass,
+    speedWarning,
+    pass:
+      hours >= targetHours &&
+      (staticSafety == null || staticSafety >= minStaticSafety) &&
+      speedPass,
     bearingType,
     seriesId: input.seriesId ?? xyInfo?.series,
   }

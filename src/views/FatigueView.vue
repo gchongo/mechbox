@@ -5,6 +5,22 @@
       S-N 曲线估算与 Miner 线性累积损伤法则
     </p>
 
+    <section class="card-panel mb-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium">计算模型</span>
+        <el-radio-group v-model="calcMode">
+          <el-radio-button value="simple">简化</el-radio-button>
+          <el-radio-button value="complete">完整</el-radio-button>
+          <el-radio-button value="professional">专业</el-radio-button>
+        </el-radio-group>
+        <p class="w-full text-xs text-gray-500">
+          <template v-if="calcMode === 'simple'">单级应力幅 → 寿命。</template>
+          <template v-else-if="calcMode === 'complete'">S-N 曲线 + Miner 载荷谱。</template>
+          <template v-else>Goodman 平均应力修正、表面/尺寸系数。</template>
+        </p>
+      </div>
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">材料与应力</h2>
@@ -18,6 +34,15 @@
             <el-input-number v-model="stressAmplitude" :min="0" :precision="1" />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
           </el-form-item>
+          <template v-if="calcMode === 'professional'">
+            <el-form-item label="平均应力 Sm">
+              <el-input-number v-model="meanStress" :min="0" :precision="1" />
+            </el-form-item>
+            <el-form-item label="表面 / 尺寸系数">
+              <el-input-number v-model="surfaceFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="w-28" />
+              <el-input-number v-model="sizeFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="ml-2 w-28" />
+            </el-form-item>
+          </template>
         </el-form>
         <div v-if="stressAmplitude > 0" class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
           <dt class="text-gray-500">估算寿命 N</dt>
@@ -25,15 +50,21 @@
           <p class="mt-1 text-xs text-gray-500">疲劳极限 σ₋₁ = {{ result.enduranceLimit }} MPa</p>
         </div>
 
-        <h3 class="mb-2 mt-6 text-sm font-semibold">Miner 载荷谱</h3>
-        <p class="mb-2 text-xs text-gray-500">每行：应力幅(MPa), 循环次数</p>
-        <el-input v-model="loadText" type="textarea" :rows="5" placeholder="300,1e4&#10;250,5e4&#10;200,1e5" />
-        <el-button class="mt-2" size="small" @click="loadSample">加载示例</el-button>
+        <h3 v-if="calcMode !== 'simple'" class="mb-2 mt-6 text-sm font-semibold">Miner 载荷谱</h3>
+        <p v-if="calcMode !== 'simple'" class="mb-2 text-xs text-gray-500">每行：应力幅(MPa), 循环次数</p>
+        <el-input v-if="calcMode !== 'simple'" v-model="loadText" type="textarea" :rows="5" placeholder="300,1e4&#10;250,5e4&#10;200,1e5" />
+        <el-button v-if="calcMode !== 'simple'" class="mt-2" size="small" @click="loadSample">加载示例</el-button>
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">Miner 累积损伤</h2>
-        <template v-if="result.miner && !result.miner.error">
+        <h2 class="mb-4 font-semibold">{{ calcMode === 'simple' ? '寿命估算' : 'Miner 累积损伤' }}</h2>
+        <template v-if="calcMode === 'simple'">
+          <div class="rounded bg-gray-50 p-4 text-sm dark:bg-gray-900">
+            <p>有效应力幅: <span class="font-mono">{{ result.effectiveAmplitude?.toFixed(1) ?? stressAmplitude }}</span> MPa</p>
+            <p class="mt-2">寿命 N: <span class="font-mono text-lg">{{ lifeDisplay }}</span></p>
+          </div>
+        </template>
+        <template v-else-if="result.miner && !result.miner.error">
           <div class="mb-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
               <dt class="text-gray-500">累积损伤 D</dt>
@@ -57,7 +88,7 @@
             </el-table-column>
           </el-table>
         </template>
-        <el-empty v-else description="输入载荷谱行" />
+        <el-empty v-else-if="calcMode !== 'simple'" description="输入载荷谱行" />
       </section>
     </div>
 
@@ -76,8 +107,12 @@ import {
   parseLoadSpectrum,
 } from '@/utils/fatigue-calc'
 
+const calcMode = ref('complete')
 const material = ref('steel_45')
 const stressAmplitude = ref(350)
+const meanStress = ref(100)
+const surfaceFactor = ref(0.9)
+const sizeFactor = ref(0.85)
 const loadText = ref('')
 const chartRef = ref(null)
 let plotly = null
@@ -86,8 +121,12 @@ const loads = computed(() => parseLoadSpectrum(loadText.value))
 
 const result = computed(() =>
   analyzeFatigue({
+    calcMode: calcMode.value,
     material: material.value,
     stressAmplitude: stressAmplitude.value,
+    meanStress: meanStress.value,
+    surfaceFactor: surfaceFactor.value,
+    sizeFactor: sizeFactor.value,
     loads: loads.value,
   }),
 )

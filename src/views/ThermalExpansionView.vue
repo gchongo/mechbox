@@ -5,6 +5,22 @@
       线膨胀与配合尺寸随温度变化估算，适用于高温装配与过盈/间隙设计
     </p>
 
+    <section class="card-panel mb-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium">计算模型</span>
+        <el-radio-group v-model="calcMode">
+          <el-radio-button value="simple">简化</el-radio-button>
+          <el-radio-button value="complete">完整</el-radio-button>
+          <el-radio-button value="professional">专业</el-radio-button>
+        </el-radio-group>
+        <p class="w-full text-xs text-gray-500">
+          <template v-if="calcMode === 'simple'">单材料线膨胀 ΔL。</template>
+          <template v-else-if="calcMode === 'complete'">双材料配合过盈随温度变化。</template>
+          <template v-else>装配/服役两阶段温度链与过盈裕度。</template>
+        </p>
+      </div>
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">线膨胀</h2>
@@ -33,7 +49,7 @@
         </div>
       </section>
 
-      <section class="card-panel">
+      <section v-if="calcMode !== 'simple'" class="card-panel">
         <h2 class="mb-4 font-semibold">配合尺寸变化</h2>
         <el-form label-width="148px">
           <el-form-item label="材料 2（孔）">
@@ -51,6 +67,16 @@
             <el-input-number v-model="form.alpha2" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
             <span class="ml-2 text-xs text-gray-500">×10⁻⁶ /°C</span>
           </el-form-item>
+          <template v-if="calcMode === 'professional'">
+            <el-form-item label="装配温差">
+              <el-input-number v-model="form.assemblyDeltaT" :min="-200" :max="400" :step="10" />
+              <span class="ml-2 text-xs text-gray-500">°C</span>
+            </el-form-item>
+            <el-form-item label="服役温差">
+              <el-input-number v-model="form.serviceDeltaT" :min="-200" :max="800" :step="10" />
+              <span class="ml-2 text-xs text-gray-500">°C</span>
+            </el-form-item>
+          </template>
         </el-form>
         <template v-if="linearResult.fit">
           <dl class="space-y-3 text-sm">
@@ -72,10 +98,17 @@
               <dt>变为间隙</dt>
               <dd class="font-mono">{{ linearResult.fit.finalClearance?.toFixed(4) }} mm</dd>
             </div>
+            <div v-if="linearResult.assemblyFit" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <dt>装配后过盈</dt>
+              <dd class="font-mono">{{ linearResult.assemblyFit.finalInterference?.toFixed(4) }} mm</dd>
+            </div>
           </dl>
           <router-link to="/interference-fit" class="mt-3 inline-block text-xs text-primary hover:underline">
             → 过盈配合强度计算
           </router-link>
+          <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="linearResult.pass ? 'success' : 'danger'">
+            {{ linearResult.pass ? '服役过盈安全' : '可能松脱' }}
+          </el-tag>
         </template>
       </section>
     </div>
@@ -86,6 +119,7 @@
 import { reactive, computed, ref } from 'vue'
 import { analyzeThermalExpansion, THERMAL_MATERIALS } from '@/utils/thermal-expansion-calc'
 
+const calcMode = ref('simple')
 const mat1 = ref('steel')
 const mat2 = ref('steel')
 
@@ -96,6 +130,8 @@ const form = reactive({
   alpha2: 11.5,
   shaftDiameter: 50,
   holeDiameter: 49.975,
+  assemblyDeltaT: 80,
+  serviceDeltaT: 100,
 })
 
 function onMat1(k) {
@@ -107,12 +143,15 @@ function onMat2(k) {
 
 const linearResult = computed(() =>
   analyzeThermalExpansion({
+    calcMode: calcMode.value,
     length: form.length,
     deltaT: form.deltaT,
     alpha: form.alpha * 1e-6,
     alpha2: form.alpha2 * 1e-6,
-    shaftDiameter: form.shaftDiameter,
-    holeDiameter: form.holeDiameter,
+    shaftDiameter: calcMode.value === 'simple' ? undefined : form.shaftDiameter,
+    holeDiameter: calcMode.value === 'simple' ? undefined : form.holeDiameter,
+    assemblyDeltaT: form.assemblyDeltaT,
+    serviceDeltaT: form.serviceDeltaT,
   }),
 )
 </script>

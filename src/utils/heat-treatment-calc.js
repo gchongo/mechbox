@@ -107,6 +107,7 @@ export const STEEL_PRESETS = {
 }
 
 export function analyzeHeatTreatment(input) {
+  const calcMode = input.calcMode ?? 'complete'
   const comp = input.composition ?? STEEL_PRESETS['4140']
   const grainSize = input.grainSize ?? 7
   const partDiameter = input.partDiameter ?? 50
@@ -118,14 +119,34 @@ export function analyzeHeatTreatment(input) {
   const jominyCurve = generateJominyCurve(ce, grainSize)
   const temper = calcTemperedHardness(hardenability.surfaceHRC, temperTemp, temperTime)
 
-  return {
+  const result = {
+    calcMode,
     composition: comp,
     carbonEquivalent: ce,
     weldability,
-    hardenability,
-    jominyCurve,
-    temper,
+    hardenability: calcMode === 'simple' ? { surfaceHRC: hardenability.surfaceHRC, verdict: hardenability.verdict } : hardenability,
+    jominyCurve: calcMode === 'simple' ? [] : jominyCurve,
+    temper: calcMode === 'simple' ? null : temper,
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    result.preheatRequired = ce >= 0.45
+    result.preheatTemp = ce >= 0.6 ? 200 : ce >= 0.45 ? 150 : 0
+    result.pass = hardenability.ratio <= 1
+  }
+
+  if (calcMode === 'professional') {
+    const depths = [0, 10, 20, 30, 40, 50]
+    result.hardnessProfile = depths.map((d) => ({
+      distance: d,
+      hrc: estimateJominyHardness(ce, d, grainSize),
+    }))
+    result.temper = temper
+    result.finalHardnessPass = temper.temperedHRC >= (input.minFinalHRC ?? 28) && temper.temperedHRC <= (input.maxFinalHRC ?? 45)
+    result.pass = result.pass && result.finalHardnessPass
+  }
+
+  return result
 }
 
 function round(v, d) {

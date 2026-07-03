@@ -12,20 +12,14 @@ export const THERMAL_MATERIALS = {
   titanium: { label: '钛合金', alpha: 8.6e-6 },
 }
 
-/** 线膨胀 ΔL = α · L · ΔT (mm) */
 export function calcLinearExpansion(length, alpha, deltaT) {
   return alpha * length * deltaT
 }
 
-/** 直径热膨胀 Δd = α · d · ΔT */
 export function calcDiameterExpansion(diameter, alpha, deltaT) {
   return alpha * diameter * deltaT
 }
 
-/**
- * 配合间隙/过盈随温度变化
- * 正值 = 过盈增加，负值 = 间隙增加
- */
 export function calcFitChange({
   shaftDiameter,
   holeDiameter,
@@ -52,14 +46,15 @@ export function calcFitChange({
 }
 
 export function analyzeThermalExpansion(input) {
+  const calcMode = input.calcMode ?? 'simple'
   const alpha1 = input.alpha ?? THERMAL_MATERIALS.steel.alpha
   const alpha2 = input.alpha2 ?? alpha1
   const deltaT = input.deltaT ?? 0
+  const Tref = input.referenceTemp ?? 20
+  const Toper = input.operatingTemp ?? Tref + deltaT
 
   const linear1 = calcLinearExpansion(input.length ?? 100, alpha1, deltaT)
-  const linear2 = input.length2
-    ? calcLinearExpansion(input.length2, alpha2, deltaT)
-    : null
+  const linear2 = input.length2 ? calcLinearExpansion(input.length2, alpha2, deltaT) : null
 
   let fit = null
   if (input.shaftDiameter && input.holeDiameter) {
@@ -73,12 +68,55 @@ export function analyzeThermalExpansion(input) {
     })
   }
 
-  return {
+  const result = {
+    calcMode,
     deltaT,
+    referenceTemp: Tref,
+    operatingTemp: Toper,
     alpha1,
     alpha2,
     linearExpansion: linear1,
     linearExpansion2: linear2,
     fit,
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    result.assemblyDeltaT = input.assemblyDeltaT ?? 0
+    result.serviceDeltaT = input.serviceDeltaT ?? deltaT
+    if (input.shaftDiameter && input.holeDiameter && input.assemblyDeltaT != null) {
+      const assemblyFit = calcFitChange({
+        shaftDiameter: input.shaftDiameter,
+        holeDiameter: input.holeDiameter,
+        shaftAlpha: alpha1,
+        holeAlpha: alpha2,
+        deltaT: input.assemblyDeltaT,
+        initialInterference: input.initialInterference ?? input.shaftDiameter - input.holeDiameter,
+      })
+      result.assemblyFit = assemblyFit
+      if (calcMode === 'professional' && input.serviceDeltaT != null) {
+        const serviceFit = calcFitChange({
+          shaftDiameter: input.shaftDiameter + assemblyFit.shaftExpansion,
+          holeDiameter: input.holeDiameter + assemblyFit.holeExpansion,
+          shaftAlpha: alpha1,
+          holeAlpha: alpha2,
+          deltaT: input.serviceDeltaT - input.assemblyDeltaT,
+          initialInterference: assemblyFit.finalInterference,
+        })
+        result.serviceFit = serviceFit
+        result.fit = serviceFit
+        result.pass = !serviceFit.becomesClearance
+      }
+    }
+    if (fit) {
+      result.pass = !fit.becomesClearance
+    }
+  }
+
+  if (calcMode === 'professional' && fit) {
+    result.interferenceMargin = fit.finalInterference
+    result.clearanceRisk = fit.becomesClearance
+    result.recommendedMaxDeltaT = input.maxDeltaT ?? Math.abs(deltaT) * 1.2
+  }
+
+  return result
 }

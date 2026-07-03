@@ -63,6 +63,47 @@ export function calcPipePressureDrop(input) {
   }
 }
 
+/** 管路压降分析（含 calcMode） */
+export function analyzePipeFlow(input) {
+  const calcMode = input.calcMode ?? 'simple'
+  const darcy = calcPipePressureDrop(input)
+  const result = { calcMode, ...darcy }
+
+  if (calcMode === 'simple') {
+    result.localLoss = 0
+    result.totalPressureDrop = darcy.pressureDrop
+    result.totalPressureDropKPa = darcy.pressureDropKPa
+  }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    const hw = calcHazenWilliams(
+      input.diameter ?? 50,
+      input.length ?? 100,
+      input.flowRate ?? 10,
+      input.hazenC ?? 130,
+    )
+    result.hazenWilliams = hw
+    result.methodCompare = {
+      darcyKPa: darcy.totalPressureDropKPa,
+      hazenKPa: hw.pressureDropKPa,
+      deltaPercent: Math.abs(darcy.totalPressureDropKPa - hw.pressureDropKPa) / Math.max(darcy.totalPressureDropKPa, 0.01) * 100,
+    }
+  }
+
+  if (calcMode === 'professional') {
+    const maxV = input.maxVelocity ?? 3
+    const maxDP = input.maxPressureDropKPa ?? 200
+    result.maxVelocity = maxV
+    result.maxPressureDropKPa = maxDP
+    result.velocityPass = darcy.velocity <= maxV
+    result.pressurePass = darcy.totalPressureDropKPa <= maxDP
+    result.pass = result.velocityPass && result.pressurePass
+    result.erosionRisk = darcy.velocity > 5 ? '高' : darcy.velocity > 3 ? '中' : '低'
+  }
+
+  return result
+}
+
 /** Hazen-Williams 水力（水管道，m/s 流速） */
 export function calcHazenWilliams(diameter, length, flowRate, C = 130) {
   const D = diameter / 1000

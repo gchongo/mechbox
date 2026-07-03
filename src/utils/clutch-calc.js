@@ -1,7 +1,7 @@
-/** 摩擦离合器扭矩计算 (简化) */
+/** 摩擦离合器扭矩计算 */
 
 export function calcClutchTorque({ frictionCoeff, force, radius, surfaces = 1 }) {
-  return frictionCoeff * force * radius * surfaces / 1000 // N·mm → N·m
+  return (frictionCoeff * force * radius * surfaces) / 1000
 }
 
 export function calcRequiredForce({ torque, frictionCoeff, radius, surfaces = 1 }) {
@@ -9,17 +9,96 @@ export function calcRequiredForce({ torque, frictionCoeff, radius, surfaces = 1 
   return (torque * 1000) / (frictionCoeff * radius * surfaces)
 }
 
+/** 均匀压力模型有效半径 (内外径) */
+export function calcMeanFrictionRadius(innerDiameter, outerDiameter) {
+  const Ri = innerDiameter / 2
+  const Ro = outerDiameter / 2
+  if (Ro <= Ri) return Ro
+  return (2 * (Ro ** 3 - Ri ** 3)) / (3 * (Ro ** 2 - Ri ** 2))
+}
+
+/** 离心效应减载 (简化) */
+export function calcCentrifugalReduction(rpm, outerDiameter, massPerPlate = 0.5) {
+  const omega = (rpm * 2 * Math.PI) / 60
+  const r = outerDiameter / 2000
+  return massPerPlate * omega ** 2 * r
+}
+
 export function analyzeClutch(input) {
-  const torque = input.torque ?? calcClutchTorque(input)
-  const force = input.force ?? calcRequiredForce({ ...input, torque: input.requiredTorque })
-  const power = (torque * 2 * Math.PI * (input.rpm ?? 0)) / 60000 // kW
+  const calcMode = input.calcMode ?? 'simple'
+  let radius = input.radius ?? 80
+  let force = input.force ?? 0
+
+  if (calcMode !== 'simple' && input.innerDiameter && input.outerDiameter) {
+    radius = calcMeanFrictionRadius(input.innerDiameter, input.outerDiameter)
+  }
+
+  const torque =
+    input.torque ??
+    calcClutchTorque({
+      frictionCoeff: input.frictionCoeff ?? 0.15,
+      force: force || calcRequiredForce({ ...input, radius, torque: input.requiredTorque }),
+      radius,
+      surfaces: input.surfaces ?? 1,
+    })
+
+  if (!force && input.requiredTorque) {
+    force = calcRequiredForce({
+      torque: input.requiredTorque,
+      frictionCoeff: input.frictionCoeff ?? 0.15,
+      radius,
+      surfaces: input.surfaces ?? 1,
+    })
+  } else if (!force) {
+    force = input.force ?? 0
+  }
+
+  const rpm = input.rpm ?? 0
+  const power = (torque * 2 * Math.PI * rpm) / 60000
   const allow = input.allowableTorque ?? Infinity
 
-  return {
+  const result = {
+    calcMode,
     torque,
     clampForce: force,
+    effectiveRadius: radius,
     power,
     pass: torque <= allow,
     allowableTorque: allow,
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    const area =
+      input.innerDiameter && input.outerDiameter
+        ? (Math.PI * (input.outerDiameter ** 2 - input.innerDiameter ** 2)) / 4
+        : Math.PI * (2 * radius) ** 2 / 4
+    result.contactArea = area
+    result.contactPressure = area ? force / area : 0
+    result.maxPressure = input.maxPressure ?? 1.5
+    result.pressurePass = !result.contactPressure || result.contactPressure <= result.maxPressure
+    result.utilization = allow !== Infinity ? torque / allow : 0
+    result.pass = result.pass && result.pressurePass
+  }
+
+  if (calcMode === 'professional') {
+    const centrifugal = calcCentrifugalReduction(rpm, input.outerDiameter ?? radius * 2, input.plateMass ?? 0.5)
+    result.centrifugalForce = centrifugal
+    const effectiveForce = Math.max(0, force - centrifugal)
+    const torqueAtSpeed = calcClutchTorque({
+      frictionCoeff: input.frictionCoeff ?? 0.15,
+      force: effectiveForce,
+      radius,
+      surfaces: input.surfaces ?? 1,
+    })
+    result.torqueAtSpeed = torqueAtSpeed
+    const fade = input.thermalFade ?? 1
+    result.thermalFade = fade
+    result.deratedTorque = torqueAtSpeed * fade
+    result.safetyFactor = input.safetyFactor ?? 1.2
+    if (input.requiredTorque) {
+      result.pass = result.deratedTorque >= input.requiredTorque * result.safetyFactor && result.pressurePass !== false
+    }
+  }
+
+  return result
 }
