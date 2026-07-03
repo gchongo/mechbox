@@ -12,6 +12,7 @@
           </el-option>
         </el-select>
         <el-button size="small" type="primary" @click="createNew">{{ ct('newChain') }}</el-button>
+        <el-button size="small" plain @click="router.push('/design/projects')">{{ ct('projectsLink') }}</el-button>
         <el-button size="small" plain :disabled="!activeChain" @click="renameCurrent">{{ ct('rename') }}</el-button>
         <el-popconfirm :title="ct('confirmDelete')" @confirm="removeCurrent">
           <template #reference>

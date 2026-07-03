@@ -3,6 +3,7 @@
  */
 
 import { adaptShaftTorsion, adaptBearing, adaptKeyConnection, adaptBoltPreload, adaptBoltGroup, adaptFilletWeld } from '@/utils/calc-adapters'
+import { updateSharedInputs } from '@/utils/design-context'
 
 /** 从共享输入构建某步骤的 analyze* 入参 */
 export function buildStepInputs(chainType, stepKey, shared) {
@@ -182,4 +183,72 @@ export function resolveInverseApply(spec, result) {
 
 function getPath(obj, path) {
   return path.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj)
+}
+
+/** 工具页 form 字段 → 设计链共享输入字段 */
+export const CHAIN_TOOL_TO_SHARED = {
+  powertrain: {
+    shaft: [
+      ['shaftDiameter', 'diameter'],
+      ['torque', 'torque'],
+      ['yieldStrength', 'yieldStrength'],
+    ],
+    bearing: [
+      ['dynamicLoad', 'dynamicLoad'],
+      ['radialLoad', 'radialLoad'],
+      ['axialLoad', 'axialLoad'],
+      ['rpm', 'rpm'],
+      ['targetHours', 'targetHours'],
+    ],
+    key: [
+      ['torque', 'torque'],
+      ['shaftDiameter', 'shaftDiameter'],
+      ['keyWidth', 'keyWidth'],
+      ['keyLength', 'keyLength'],
+    ],
+  },
+  'bolt-joint': {
+    'bolt-preload': [
+      ['diameter', 'diameter'],
+      ['pitch', 'pitch'],
+      ['preload', 'preload'],
+      ['externalAxialLoad', 'externalAxialLoad'],
+      ['gripLength', 'gripLength'],
+    ],
+    'bolt-group': [
+      ['boltCount', 'boltCount'],
+      ['boltCircleRadius', 'boltCircleRadius'],
+      ['shearX', 'shearX'],
+      ['shearY', 'shearY'],
+      ['moment', 'moment'],
+      ['allowPerBolt', 'allowPerBolt'],
+      ['preload', 'clampForcePerBolt'],
+    ],
+    weld: [
+      ['legSize', 'legSize'],
+      ['weldLength', 'weldLength'],
+      ['weldForce', 'force'],
+    ],
+  },
+}
+
+/** 从工具页 form 提取可写回设计链的共享输入 patch */
+export function extractSharedFromStepForm(chainType, stepKey, form) {
+  const pairs = CHAIN_TOOL_TO_SHARED[chainType]?.[stepKey]
+  if (!pairs || !form) return {}
+  const patch = {}
+  for (const [sharedKey, formKey] of pairs) {
+    const v = form[formKey]
+    if (v == null) continue
+    if (typeof v === 'number' && Number.isFinite(v)) patch[sharedKey] = v
+  }
+  return patch
+}
+
+/** 将工具页 form 写回设计链共享输入 */
+export function syncStepFormToChain(chainId, chainType, stepKey, form) {
+  if (!chainId) return null
+  const patch = extractSharedFromStepForm(chainType, stepKey, form)
+  if (!Object.keys(patch).length) return null
+  return updateSharedInputs(chainId, patch)
 }

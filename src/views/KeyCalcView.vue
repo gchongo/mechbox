@@ -3,6 +3,15 @@
     <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
+    <ChainSyncBanner
+      :session="chainSession"
+      :chain-name="chainName"
+      :dirty="dirty"
+      @sync="syncToChain"
+      @back="backToChain"
+      @dismiss="dismissSession"
+    />
+
     <CalcModePanel v-model="form.calcMode" page-key="key" />
 
     <div class="grid gap-6 lg:grid-cols-2">
@@ -64,6 +73,7 @@ import { analyzeKeyConnection, lookupKeySize } from '@/utils/key-calc'
 import KeyConnectionDiagram from '@/components/key/KeyConnectionDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptKeyConnection } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
@@ -81,7 +91,14 @@ const form = reactive({
   keyCount: 1,
   torqueAmplitude: 80,
 })
-useChainHandoff('key', form)
+const {
+  chainSession,
+  chainName,
+  dirty,
+  syncToChain,
+  backToChain,
+  dismissSession,
+} = useChainHandoff('key', form)
 
 const stdKey = computed(() => lookupKeySize(form.shaftDiameter))
 const result = computed(() => analyzeKeyConnection(form))

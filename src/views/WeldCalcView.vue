@@ -3,6 +3,15 @@
     <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
+    <ChainSyncBanner
+      :session="chainSession"
+      :chain-name="chainName"
+      :dirty="dirty"
+      @sync="syncToChain"
+      @back="backToChain"
+      @dismiss="dismissSession"
+    />
+
     <el-tabs v-model="tab">
       <el-tab-pane :label="pf('tabFillet')" name="fillet">
         <CalcModePanel v-model="form.calcMode" page-key="weld" />
@@ -259,6 +268,7 @@ import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import FilletWeldDiagram from '@/components/weld/FilletWeldDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptFilletWeld } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
@@ -293,7 +303,14 @@ const form = reactive({
   plateThickness: 8,
   stressRange: 35,
 })
-useChainHandoff('weld', form)
+const {
+  chainSession,
+  chainName,
+  dirty,
+  syncToChain,
+  backToChain,
+  dismissSession,
+} = useChainHandoff('weld', form)
 const butt = reactive({
   calcMode: 'complete',
   thickness: 8,

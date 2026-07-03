@@ -54,6 +54,13 @@ export const decisionZh = {
   stepPass: '通过 ✓',
   stepFail: '不通过 ✗',
   handoffApplied: '已从设计链载入参数',
+  handoffSynced: '已同步回设计链',
+  handoffSyncEmpty: '没有可写回的参数',
+  chainSyncTitle: '设计链联动',
+  chainSyncDesc: '当前来自设计链「{name}」',
+  chainSyncDirty: '有未同步修改',
+  syncToChain: '同步回设计链',
+  backToChain: '返回设计链',
 }
 
 export const decisionEn = {
@@ -112,4 +119,11 @@ export const decisionEn = {
   stepPass: 'Pass ✓',
   stepFail: 'Fail ✗',
   handoffApplied: 'Loaded parameters from design chain',
+  handoffSynced: 'Synced back to design chain',
+  handoffSyncEmpty: 'Nothing to sync',
+  chainSyncTitle: 'Design chain link',
+  chainSyncDesc: 'Opened from design chain "{name}"',
+  chainSyncDirty: 'Unsaved changes',
+  syncToChain: 'Sync to chain',
+  backToChain: 'Back to chain',
 }

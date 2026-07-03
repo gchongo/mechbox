@@ -44,9 +44,14 @@ import {
 import {
   writeChainHandoff,
   consumeChainHandoff,
+  getChainSession,
   applyHandoffInputs,
-  clearChainHandoff,
+  clearChainSession,
 } from '@/utils/chain-handoff'
+import {
+  extractSharedFromStepForm,
+  syncStepFormToChain,
+} from '@/utils/chain-snapshots'
 import { buildChainReport } from '@/utils/chain-report'
 import { adaptShaftTorsion, adaptBearing, adaptKeyConnection } from '@/utils/calc-adapters'
 
@@ -186,6 +191,22 @@ describe('chain-handoff', () => {
     expect(consumeChainHandoff('shaft')).toBeNull()
   })
 
+  it('session persists after consume for reverse sync', () => {
+    writeChainHandoff({
+      chainId: 'dc_2',
+      chainType: 'bolt-joint',
+      stepKey: 'bolt-preload',
+      toolId: 'bolt-preload',
+      inputs: { preload: 30000 },
+    })
+    consumeChainHandoff('bolt-preload')
+    const session = getChainSession('bolt-preload')
+    expect(session.chainId).toBe('dc_2')
+    expect(session.stepKey).toBe('bolt-preload')
+    clearChainSession()
+    expect(getChainSession('bolt-preload')).toBeNull()
+  })
+
   it('applyHandoffInputs only writes existing form keys', () => {
     const form = { diameter: 30, torque: 200, length: 500 }
     const applied = applyHandoffInputs(form, {
@@ -198,7 +219,40 @@ describe('chain-handoff', () => {
     expect(form.torque).toBe(280)
     expect(form.length).toBe(500)
     expect(applied).toEqual(['diameter', 'torque'])
-    clearChainHandoff()
+    clearChainSession()
+  })
+})
+
+describe('reverse sync', () => {
+  beforeEach(resetStorage)
+
+  it('extractSharedFromStepForm maps shaft form to shared patch', () => {
+    const patch = extractSharedFromStepForm('powertrain', 'shaft', {
+      diameter: 42,
+      torque: 280,
+      yieldStrength: 300,
+      length: 500,
+    })
+    expect(patch).toEqual({
+      shaftDiameter: 42,
+      torque: 280,
+      yieldStrength: 300,
+    })
+  })
+
+  it('syncStepFormToChain writes bolt-group clamp back to preload', () => {
+    const c = createChain({ type: 'bolt-joint' })
+    const updated = syncStepFormToChain(c.id, 'bolt-joint', 'bolt-group', {
+      boltCount: 10,
+      clampForcePerBolt: 33000,
+      boltCircleRadius: 60,
+      shearX: 5000,
+      shearY: 2000,
+      moment: 120000,
+      allowPerBolt: 8000,
+    })
+    expect(updated.sharedInputs.boltCount).toBe(10)
+    expect(updated.sharedInputs.preload).toBe(33000)
   })
 })
 

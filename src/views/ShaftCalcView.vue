@@ -3,6 +3,15 @@
     <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
+    <ChainSyncBanner
+      :session="chainSession"
+      :chain-name="chainName"
+      :dirty="dirty"
+      @sync="syncToChain"
+      @back="backToChain"
+      @dismiss="dismissSession"
+    />
+
     <CalcModePanel v-model="form.calcMode" page-key="shaft" />
 
     <el-tabs v-model="mode" class="mb-6">
@@ -101,6 +110,7 @@ import { materialsEn } from '@/i18n/materials-i18n'
 import ShaftDiagram from '@/components/shaft/ShaftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptShaftTorsion } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
@@ -127,7 +137,14 @@ const form = reactive({
   torqueAmplitude: 80,
   bendingAmplitude: 60,
 })
-useChainHandoff('shaft', form)
+const {
+  chainSession,
+  chainName,
+  dirty,
+  syncToChain,
+  backToChain,
+  dismissSession,
+} = useChainHandoff('shaft', form)
 
 const materialOptions = computed(() =>
   MATERIALS.map((m) => ({

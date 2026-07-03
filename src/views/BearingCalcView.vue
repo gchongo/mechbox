@@ -5,6 +5,15 @@
       {{ pt('subtitle') }}
     </p>
 
+    <ChainSyncBanner
+      :session="chainSession"
+      :chain-name="chainName"
+      :dirty="dirty"
+      @sync="syncToChain"
+      @back="backToChain"
+      @dismiss="dismissSession"
+    />
+
     <CalcModePanel v-model="form.calcMode" page-key="bearing" />
 
     <div class="grid gap-6 lg:grid-cols-2">
@@ -152,6 +161,7 @@ import { analyzeBearingLife, listBearingSeries, resolveSeriesFromModel } from '@
 import BearingLoadDiagram from '@/components/bearing/BearingLoadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptBearing } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
@@ -197,7 +207,14 @@ const form = reactive({
   operatingTemp: 120,
   limitingSpeed: 8000,
 })
-useChainHandoff('bearing', form)
+const {
+  chainSession,
+  chainName,
+  dirty,
+  syncToChain,
+  backToChain,
+  dismissSession,
+} = useChainHandoff('bearing', form)
 
 const result = computed(() => analyzeBearingLife(form))
 const modifierProduct = computed(() => {

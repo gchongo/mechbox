@@ -242,6 +242,11 @@ const routes = [
     name: 'design-bolt-joint',
     component: () => import('@/views/design/BoltJointChainView.vue'),
   },
+  {
+    path: '/design/projects',
+    name: 'design-projects',
+    component: () => import('@/views/design/DesignProjectsView.vue'),
+  },
 ]
 
 const ENGINEERING_ROUTE_NAMES = new Set([
@@ -281,6 +286,7 @@ const ENGINEERING_ROUTE_NAMES = new Set([
   'gdt-stack',
   'design-powertrain',
   'design-bolt-joint',
+  'design-projects',
 ])
 
 for (const route of routes) {

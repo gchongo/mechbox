@@ -5,6 +5,15 @@
       {{ pt('subtitle') }}
     </p>
 
+    <ChainSyncBanner
+      :session="chainSession"
+      :chain-name="chainName"
+      :dirty="dirty"
+      @sync="syncToChain"
+      @back="backToChain"
+      @dismiss="dismissSession"
+    />
+
     <CalcModePanel v-model="form.calcMode" page-key="bolt-group" />
 
     <div class="grid gap-6 lg:grid-cols-2">
@@ -131,6 +140,7 @@ import { analyzeBoltGroup } from '@/utils/bolt-group-calc'
 import BoltGroupDiagram from '@/components/bolt/BoltGroupDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { adaptBoltGroup } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
@@ -152,7 +162,14 @@ const form = reactive({
   pryingArm: 40,
   allowTensionPerBolt: 8000,
 })
-useChainHandoff('bolt-group', form)
+const {
+  chainSession,
+  chainName,
+  dirty,
+  syncToChain,
+  backToChain,
+  dismissSession,
+} = useChainHandoff('bolt-group', form)
 
 const result = computed(() => analyzeBoltGroup(form))
 

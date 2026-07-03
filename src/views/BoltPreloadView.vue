@@ -5,6 +5,15 @@
       {{ pt('subtitle') }}
     </p>
 
+    <ChainSyncBanner
+      :session="chainSession"
+      :chain-name="chainName"
+      :dirty="dirty"
+      @sync="syncToChain"
+      @back="backToChain"
+      @dismiss="dismissSession"
+    />
+
     <el-tabs v-model="pageTab">
       <el-tab-pane :label="pf('tabCalc')" name="calc">
     <CalcModePanel v-model="calcModePanel" page-key="bolt-preload" />
@@ -337,6 +346,7 @@ import { runVdi2230Wizard, TIGHTENING_METHODS, buildWizardReportText, localizeVd
 import { exportToolReportPdf } from '@/utils/export'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptBoltPreload } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
@@ -384,7 +394,14 @@ const form = reactive({
   torque: 50,
   preload: 25000,
 })
-useChainHandoff('bolt-preload', form)
+const {
+  chainSession,
+  chainName,
+  dirty,
+  syncToChain,
+  backToChain,
+  dismissSession,
+} = useChainHandoff('bolt-preload', form)
 
 const wizardForm = reactive({
   tighteningMethod: 'torque',
