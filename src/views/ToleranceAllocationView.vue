@@ -121,6 +121,40 @@
           </el-table-column>
         </el-table>
 
+        <section v-if="compareRows.length" class="mt-6">
+          <h3 class="mb-2 font-semibold">{{ pt('sectionCompare') }}</h3>
+          <p class="mb-2 text-xs text-gray-500">{{ pt('compareHint') }}</p>
+          <el-table
+            :data="compareRows"
+            border
+            size="small"
+            highlight-current-row
+            :row-class-name="compareRowClass"
+            @row-click="applyCompareRow"
+          >
+            <el-table-column prop="method" :label="pr('method')" min-width="120" />
+            <el-table-column :label="pr('rssMm')" width="100">
+              <template #default="{ row }">{{ row.stacked.toFixed(4) }}</template>
+            </el-table-column>
+            <el-table-column :label="pr('utilization')" width="90">
+              <template #default="{ row }">
+                <span :class="row.pass ? 'text-success' : 'text-error'">
+                  {{ row.utilization.toFixed(1) }}%
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column :label="pr('minTol')" width="90">
+              <template #default="{ row }">{{ row.minTol.toFixed(4) }}</template>
+            </el-table-column>
+            <el-table-column :label="pr('maxTol')" width="90">
+              <template #default="{ row }">{{ row.maxTol.toFixed(4) }}</template>
+            </el-table-column>
+            <el-table-column :label="pr('costIndex')" width="100">
+              <template #default="{ row }">{{ row.costIndex.toFixed(1) }}</template>
+            </el-table-column>
+          </el-table>
+        </section>
+
         <section v-if="paretoResult?.pareto?.length" class="mt-6">
           <h3 class="mb-3 font-semibold">{{ pt('sectionPareto') }}</h3>
           <p class="mb-2 text-xs text-gray-500">{{ pt('paretoHint', { count: paretoResult.pareto.length }) }}</p>
@@ -153,7 +187,11 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ALLOCATION_METHODS, runToleranceAllocation } from '@/utils/tolerance-allocation'
+import {
+  ALLOCATION_METHODS,
+  runToleranceAllocation,
+  compareAllocationMethods,
+} from '@/utils/tolerance-allocation'
 import { geneticAlgorithmAllocation, multiObjectivePareto } from '@/utils/tolerance-optimization'
 import { CASE_STORAGE_KEY } from '@/constants/cases'
 import { findAnalysisType } from '@/constants/analysis-types'
@@ -199,6 +237,31 @@ const needsSensitivity = computed(
 )
 
 const displayVerify = computed(() => result.value?.verify ?? { stacked: 0, pass: false, utilization: 0 })
+
+const compareRows = computed(() => {
+  if (rings.value.length < 2) return []
+  return compareAllocationMethods(targetTolerance.value, rings.value)
+})
+
+function compareRowClass({ row }) {
+  return row.methodId === methodId.value ? 'is-current-method' : ''
+}
+
+function applyCompareRow(row) {
+  if (!row?.methodId) return
+  methodId.value = row.methodId
+  result.value = {
+    method: row.method,
+    methodId: row.methodId,
+    allocated: row.allocated,
+    verify: {
+      stacked: row.stacked,
+      utilization: row.utilization,
+      pass: row.pass,
+    },
+  }
+  paretoResult.value = null
+}
 
 function addRing() {
   rings.value.push({

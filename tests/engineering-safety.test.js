@@ -16,7 +16,7 @@ import { combineStackAdvice, evaluateStackFromRings, assessMcWorstGap } from '@/
 import { analyzeBeam } from '@/utils/beam-calc'
 import { batchValidate } from '@/utils/batch-analysis'
 import { runMonteCarloSimulation, createSeededRandom } from '@/utils/monte-carlo'
-import { runToleranceAllocation } from '@/utils/tolerance-allocation'
+import { runToleranceAllocation, compareAllocationMethods } from '@/utils/tolerance-allocation'
 import { calcSpringEffectiveAmplitude, analyzeSpring } from '@/utils/spring-calc'
 import { calcJointUnderAxialLoad, analyzeBoltPreload } from '@/utils/bolt-preload-calc'
 import { analyzeButtWeld } from '@/utils/weld-calc'
@@ -287,6 +287,21 @@ describe('tolerance allocation', () => {
     ]
     const result = runToleranceAllocation('sensitivity', 0.1, rings)
     expect(result.verify.pass).toBe(true)
+  })
+
+  it('compareAllocationMethods ranks all analytical methods', () => {
+    const rings = [
+      { name: 'A', factor: 1, cost: 1, nominal: 20 },
+      { name: 'B', factor: 1, cost: 2, nominal: 30 },
+      { name: 'C', factor: 1.5, cost: 1, nominal: 10 },
+    ]
+    const rows = compareAllocationMethods(0.1, rings)
+    expect(rows.length).toBeGreaterThanOrEqual(4)
+    expect(rows.find((r) => r.methodId === 'equal-effect')?.pass).toBe(true)
+    expect(rows.find((r) => r.methodId === 'min-cost')?.pass).toBe(true)
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i].costIndex).toBeGreaterThanOrEqual(rows[i - 1].costIndex)
+    }
   })
 })
 

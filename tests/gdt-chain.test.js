@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { calculateChainResult, getGdtCalcMode } from '@/utils/gdt-chain'
+import {
+  calculateChainResult,
+  getGdtCalcMode,
+  sizeToleranceOfRing,
+  calcAutoBonusTolerance,
+  resolveBonusTolerance,
+} from '@/utils/gdt-chain'
+import { analyzeGdtStack } from '@/utils/gdt-stack-calc'
 
 describe('gdt-chain', () => {
   it('resolves position mode', () => {
@@ -28,9 +35,87 @@ describe('gdt-chain', () => {
       typeId: 'flatness',
       toleranceModifier: 'MMC',
       bonusTolerance: 0.02,
+      autoBonus: false,
     })
     expect(withBonus.effectiveTolerance ?? withBonus.totalTolerance).toBeGreaterThanOrEqual(
       base.totalTolerance,
     )
+  })
+
+  it('sizeToleranceOfRing prefers explicit sizeTolerance then es-ei', () => {
+    expect(sizeToleranceOfRing({ sizeTolerance: 0.04 })).toBeCloseTo(0.04)
+    expect(sizeToleranceOfRing({ es: 0.02, ei: -0.01 })).toBeCloseTo(0.03)
+  })
+
+  it('auto bonus sums only FOS rings', () => {
+    const rings = [
+      { name: 'pos', tolerance: 0.05, featureKind: '' },
+      { name: 'hole', tolerance: 0.02, featureKind: 'hole', sizeTolerance: 0.03 },
+      { name: 'shaft', tolerance: 0.01, featureKind: 'shaft', es: 0.01, ei: -0.02 },
+    ]
+    const { total, items } = calcAutoBonusTolerance(rings, { toleranceModifier: 'MMC' })
+    expect(items).toHaveLength(2)
+    expect(total).toBeCloseTo(0.06)
+  })
+
+  it('resolveBonusTolerance prefers auto FOS sum over manual', () => {
+    const rings = [{ name: 'hole', featureKind: 'hole', sizeTolerance: 0.025 }]
+    const r = resolveBonusTolerance(rings, {
+      toleranceModifier: 'MMC',
+      bonusTolerance: 0.1,
+      autoBonus: true,
+    })
+    expect(r.source).toBe('auto')
+    expect(r.bonus).toBeCloseTo(0.025)
+  })
+
+  it('auto MMC bonus applied in position stack', () => {
+    const rings = [
+      { name: 'X', tolerance: 0.05, direction: 'right', factor: 1, type: 'increasing' },
+      {
+        name: 'hole',
+        tolerance: 0.02,
+        direction: 'right',
+        factor: 0.5,
+        type: 'increasing',
+        featureKind: 'hole',
+        sizeTolerance: 0.03,
+      },
+    ]
+    const base = calculateChainResult({ min: 0, max: 0.2 }, rings, 'rss', {
+      typeId: 'position',
+      toleranceModifier: 'RFS',
+    })
+    const mmc = calculateChainResult({ min: 0, max: 0.2 }, rings, 'rss', {
+      typeId: 'position',
+      toleranceModifier: 'MMC',
+      autoBonus: true,
+    })
+    expect(mmc.bonusSource).toBe('auto')
+    expect(mmc.bonusApplied).toBeCloseTo(0.03)
+    expect(mmc.effectiveTolerance).toBeCloseTo(base.totalTolerance + 0.03)
+  })
+
+  it('analyzeGdtStack exposes bonus breakdown', () => {
+    const r = analyzeGdtStack({
+      typeId: 'position',
+      closedRing: { min: 0, max: 0.2 },
+      rings: [
+        {
+          name: '孔径',
+          tolerance: 0.02,
+          direction: 'right',
+          factor: 1,
+          type: 'increasing',
+          featureKind: 'hole',
+          sizeTolerance: 0.04,
+        },
+      ],
+      toleranceModifier: 'MMC',
+      autoBonus: true,
+    })
+    expect(r.modifier.source).toBe('auto')
+    expect(r.modifier.bonus).toBeCloseTo(0.04)
+    expect(r.modifier.breakdown[0].name).toBe('孔径')
   })
 })

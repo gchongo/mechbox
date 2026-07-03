@@ -114,6 +114,7 @@ export function analyzeGdtStack(input) {
     method = 'rss',
     toleranceModifier = 'RFS',
     bonusTolerance = 0,
+    autoBonus = true,
     datums = [],
   } = input
 
@@ -125,6 +126,7 @@ export function analyzeGdtStack(input) {
     typeId,
     toleranceModifier,
     bonusTolerance,
+    autoBonus,
     distribution: input.distribution ?? 'normal',
   })
 
@@ -138,7 +140,10 @@ export function analyzeGdtStack(input) {
     pass: chainResult.pass,
     modifier: {
       type: toleranceModifier,
-      bonus: bonusTolerance,
+      bonus: chainResult.bonusApplied ?? 0,
+      bonusInput: bonusTolerance,
+      source: chainResult.bonusSource ?? 'none',
+      breakdown: chainResult.bonusBreakdown ?? [],
       effective: chainResult.effectiveTolerance ?? chainResult.totalTolerance,
     },
   }
@@ -180,6 +185,7 @@ export function analyzeGdtStack(input) {
       typeId,
       toleranceModifier,
       bonusTolerance,
+      autoBonus,
     })
     const wc = result.worstCase
     result.worstCaseMargin = round(
@@ -200,7 +206,15 @@ export const GDT_STACK_PRESETS = {
     rings: [
       { name: 'X 定位', tolerance: 0.05, direction: 'right', factor: 1, type: 'increasing' },
       { name: 'Y 定位', tolerance: 0.04, direction: 'up', factor: 1, type: 'increasing' },
-      { name: '孔径', tolerance: 0.02, direction: 'right', factor: 0.5, type: 'increasing' },
+      {
+        name: '孔径',
+        tolerance: 0.02,
+        direction: 'right',
+        factor: 0.5,
+        type: 'increasing',
+        featureKind: 'hole',
+        sizeTolerance: 0.03,
+      },
     ],
     datums: [
       { label: 'A 底面', priority: 'primary', tolerance: 0.02 },

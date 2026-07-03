@@ -51,8 +51,22 @@
               <el-radio label="LMC">LMC</el-radio>
             </el-radio-group>
           </CalcFormItem>
-          <CalcFormItem v-if="form.toleranceModifier !== 'RFS'" :label="pf('bonusTolerance')">
+          <CalcFormItem v-if="form.toleranceModifier !== 'RFS'" :label="pf('autoBonus')">
+            <el-switch v-model="form.autoBonus" />
+            <span class="ml-2 text-xs text-gray-500">{{ pf('autoBonusHint') }}</span>
+          </CalcFormItem>
+          <CalcFormItem
+            v-if="form.toleranceModifier !== 'RFS' && !form.autoBonus"
+            :label="pf('bonusTolerance')"
+          >
             <el-input-number v-model="form.bonusTolerance" :min="0" :precision="4" :step="0.005" />
+          </CalcFormItem>
+          <CalcFormItem
+            v-if="form.toleranceModifier !== 'RFS' && form.autoBonus && result?.modifier"
+            :label="pf('bonusTolerance')"
+          >
+            <span class="font-mono text-sm">{{ (result.modifier.bonus ?? 0).toFixed(4) }} mm</span>
+            <span class="ml-2 text-xs text-gray-500">{{ pf('bonusAutoLabel') }}</span>
           </CalcFormItem>
         </el-form>
 
@@ -66,6 +80,20 @@
               <el-option value="right" label="X" />
               <el-option value="up" label="Y" />
             </el-select>
+            <el-select v-model="ring.featureKind" size="small" class="w-24" :placeholder="pf('featureKind')">
+              <el-option value="" :label="pf('featureNone')" />
+              <el-option value="hole" :label="pf('featureHole')" />
+              <el-option value="shaft" :label="pf('featureShaft')" />
+            </el-select>
+            <el-input-number
+              v-if="ring.featureKind"
+              v-model="ring.sizeTolerance"
+              :min="0"
+              :precision="4"
+              :step="0.005"
+              size="small"
+              :placeholder="pf('sizeTolerance')"
+            />
             <el-button size="small" type="danger" text @click="removeRing(i)">{{ fc('delete') }}</el-button>
           </div>
         </div>
@@ -99,9 +127,26 @@
               <ResultLabel :text="pr('stackedTolerance')" />
               <dd class="font-mono text-lg text-primary">{{ result.chainResult.totalTolerance?.toFixed(4) }} mm</dd>
             </div>
-            <div v-if="result.modifier.effective !== result.chainResult.totalTolerance" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+            <div
+              v-if="result.modifier?.bonus > 0"
+              class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900"
+            >
               <ResultLabel :text="pr('withBonus', { modifier: form.toleranceModifier })" />
-              <dd class="font-mono">{{ result.modifier.effective?.toFixed(4) }} mm</dd>
+              <dd class="font-mono">
+                {{ result.modifier.effective?.toFixed(4) }} mm
+                <span class="ml-1 text-xs text-gray-400">
+                  (+{{ result.modifier.bonus?.toFixed(4) }}
+                  · {{ result.modifier.source === 'auto' ? pf('bonusAutoLabel') : pf('bonusManualLabel') }})
+                </span>
+              </dd>
+            </div>
+            <div
+              v-if="result.modifier?.breakdown?.length"
+              class="rounded bg-gray-50 p-2 text-xs text-gray-500 dark:bg-gray-900"
+            >
+              <div v-for="(b, i) in result.modifier.breakdown" :key="i">
+                {{ b.name }} ({{ b.featureKind }}): T_size={{ b.sizeTolerance?.toFixed(4) }}
+              </div>
             </div>
             <div v-if="result.datumStack" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
               <ResultLabel :text="pr('withDatumStack')" />
@@ -192,9 +237,10 @@ const form = reactive({
   method: 'rss',
   closedMax: 0.15,
   toleranceModifier: 'RFS',
+  autoBonus: true,
   bonusTolerance: 0,
-  rings: [...GDT_STACK_PRESETS.position.rings],
-  datums: [...GDT_STACK_PRESETS.position.datums],
+  rings: GDT_STACK_PRESETS.position.rings.map((r) => ({ ...r })),
+  datums: GDT_STACK_PRESETS.position.datums.map((d) => ({ ...d })),
 })
 
 const needsDirection = computed(() => {
@@ -212,6 +258,7 @@ const result = computed(() =>
     datums: form.datums,
     toleranceModifier: form.toleranceModifier,
     bonusTolerance: form.bonusTolerance,
+    autoBonus: form.autoBonus,
   }),
 )
 
@@ -230,8 +277,11 @@ function applyEditorPayload(payload) {
   form.method = payload.method
   form.closedMax = payload.closedMax
   form.toleranceModifier = payload.toleranceModifier
-  form.bonusTolerance = payload.bonusTolerance
-  form.rings = payload.rings.length ? payload.rings : form.rings
+  form.bonusTolerance = payload.bonusTolerance ?? 0
+  form.autoBonus = payload.autoBonus ?? !(payload.bonusTolerance > 0)
+  form.rings = payload.rings.length
+    ? payload.rings.map((r) => ({ featureKind: '', sizeTolerance: 0, ...r }))
+    : form.rings
   form.datums = payload.datums ?? []
   importedTypeName.value = payload.typeName ?? payload.typeId
 }
@@ -257,7 +307,7 @@ function loadPreset(key) {
   if (!p) return
   form.typeId = p.typeId
   form.closedMax = p.closedRing.max
-  form.rings = p.rings.map((r) => ({ ...r }))
+  form.rings = p.rings.map((r) => ({ featureKind: '', sizeTolerance: 0, ...r }))
   form.datums = (p.datums ?? []).map((d) => ({ ...d }))
 }
 
@@ -268,6 +318,8 @@ function addRing() {
     factor: 1,
     type: 'increasing',
     direction: 'right',
+    featureKind: '',
+    sizeTolerance: 0,
   })
 }
 

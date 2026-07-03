@@ -147,3 +147,33 @@ export function runToleranceAllocation(methodId, targetTolerance, rings) {
     verify,
   }
 }
+
+/**
+ * 多分配法横向对比（按成本指数升序）
+ * costIndex ≈ Σ (cost / Tᵢ)，公差越松成本越低
+ */
+export function compareAllocationMethods(targetTolerance, rings, methodIds) {
+  const ids = methodIds ?? Object.keys(ALLOCATION_METHODS)
+  return ids
+    .map((id) => {
+      const r = runToleranceAllocation(id, targetTolerance, rings)
+      const tols = r.allocated.map((a) => a.tolerance)
+      const costIndex = r.allocated.reduce(
+        (s, a) => s + (a.cost ?? 1) / Math.max(a.tolerance, 1e-9),
+        0,
+      )
+      return {
+        methodId: r.methodId,
+        method: r.method,
+        stacked: r.verify.stacked,
+        utilization: r.verify.utilization,
+        pass: r.verify.pass,
+        minTol: Math.min(...tols),
+        maxTol: Math.max(...tols),
+        spread: Math.max(...tols) - Math.min(...tols),
+        costIndex,
+        allocated: r.allocated,
+      }
+    })
+    .sort((a, b) => a.costIndex - b.costIndex)
+}

@@ -137,7 +137,76 @@ function buildLimitsFromTolerance(nominal, totalTolerance, closedRing) {
   return { nominal, upper, lower, totalTolerance, pass, calcMode: 'gdt' }
 }
 
-/** GD&T 材料条件 modifier：MMC 奖励公差 / LMC 部分奖励 */
+/** 组成环尺寸公差（es−ei 或显式 sizeTolerance） */
+export function sizeToleranceOfRing(ring) {
+  if (!ring) return 0
+  if (ring.sizeTolerance != null && Number.isFinite(Number(ring.sizeTolerance))) {
+    return Math.abs(Number(ring.sizeTolerance))
+  }
+  if (
+    ring.es != null &&
+    ring.ei != null &&
+    Number.isFinite(Number(ring.es)) &&
+    Number.isFinite(Number(ring.ei))
+  ) {
+    return Math.abs(Number(ring.es) - Number(ring.ei))
+  }
+  return 0
+}
+
+/** 是否为尺寸要素（仅这些环参与 MMC/LMC 奖励） */
+export function isFeatureOfSize(ring) {
+  const kind = ring?.featureKind
+  return kind === 'hole' || kind === 'shaft' || kind === 'fos'
+}
+
+/**
+ * 按 ASME Y14.5：最大可用奖励 = 尺寸公差全额
+ * （要素从 MMC/LMC 偏离至另一极限尺寸时）
+ */
+export function calcAutoBonusTolerance(rings, options = {}) {
+  const mod = options.toleranceModifier ?? 'RFS'
+  if (mod === 'RFS') return { total: 0, items: [] }
+  const items = []
+  for (const r of rings ?? []) {
+    if (!isFeatureOfSize(r)) continue
+    const tSize = sizeToleranceOfRing(r)
+    if (tSize <= 0) continue
+    items.push({
+      name: r.name ?? 'FOS',
+      featureKind: r.featureKind,
+      sizeTolerance: tSize,
+      bonus: tSize,
+    })
+  }
+  return {
+    total: items.reduce((s, i) => s + i.bonus, 0),
+    items,
+  }
+}
+
+/**
+ * 解析奖励公差：默认自动（FOS 环尺寸公差之和），无 FOS 时回退手动值
+ * options.autoBonus === false 时强制使用 bonusTolerance
+ */
+export function resolveBonusTolerance(rings, options = {}) {
+  const mod = options.toleranceModifier ?? 'RFS'
+  if (mod === 'RFS') return { bonus: 0, source: 'none', items: [] }
+
+  const manual = options.bonusTolerance
+  const manualVal = manual != null && Number.isFinite(Number(manual)) ? Number(manual) : 0
+
+  if (options.autoBonus === false) {
+    return { bonus: manualVal, source: 'manual', items: [] }
+  }
+
+  const { total, items } = calcAutoBonusTolerance(rings, options)
+  if (total > 0) return { bonus: total, source: 'auto', items }
+  if (manualVal > 0) return { bonus: manualVal, source: 'manual', items: [] }
+  return { bonus: 0, source: 'auto', items: [] }
+}
+
+/** GD&T 材料条件 modifier：MMC 全额奖励 / LMC 半额（保守简化） */
 export function applyToleranceModifier(totalTolerance, options = {}) {
   const bonus = options.bonusTolerance ?? 0
   const mod = options.toleranceModifier ?? 'RFS'
@@ -147,15 +216,29 @@ export function applyToleranceModifier(totalTolerance, options = {}) {
   return totalTolerance
 }
 
-function withModifier(result, closedRing, options) {
-  const adjusted = applyToleranceModifier(result.totalTolerance, options)
-  if (adjusted === result.totalTolerance) return result
+function withModifier(result, closedRing, options, rings = []) {
+  const resolved = resolveBonusTolerance(rings, options)
+  const adjusted = applyToleranceModifier(result.totalTolerance, {
+    ...options,
+    bonusTolerance: resolved.bonus,
+  })
+  if (adjusted === result.totalTolerance) {
+    return {
+      ...result,
+      bonusApplied: 0,
+      bonusSource: resolved.source,
+      bonusBreakdown: resolved.items,
+      toleranceModifier: options.toleranceModifier ?? 'RFS',
+    }
+  }
   const next = buildLimitsFromTolerance(result.nominal ?? 0, adjusted, closedRing)
   return {
     ...result,
     ...next,
     effectiveTolerance: adjusted,
     bonusApplied: adjusted - result.totalTolerance,
+    bonusSource: resolved.source,
+    bonusBreakdown: resolved.items,
     toleranceModifier: options.toleranceModifier ?? 'MMC',
   }
 }
@@ -262,7 +345,7 @@ export function calculateChainResult(closedRing, componentRings, method, options
   const mode = getGdtCalcMode(typeId)
   if (mode && isExtendedAnalysisType(typeId)) {
     const result = calculateGdtChain(closedRing, componentRings, method, { ...options, mode, typeId })
-    return withModifier(result, closedRing, options)
+    return withModifier(result, closedRing, options, componentRings)
   }
   if (method === 'worst') {
     const limits = calculateWorstCaseLimits(componentRings)
