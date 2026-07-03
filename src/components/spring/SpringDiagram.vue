@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">压缩弹簧示意</h3>
-      <p class="mech-diagram__hint">线径 d、中径 D、有效圈数 n{{ freeLength ? '、自由高度 L₀' : '' }}</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ freeLength ? dt('hintWithL0') : dt('hint') }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="压缩弹簧参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="spr-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -47,6 +47,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('spring')
 
 const props = defineProps({
   wireDiameter: { type: Number, default: 3 },

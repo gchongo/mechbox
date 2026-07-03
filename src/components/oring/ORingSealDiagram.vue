@@ -1,15 +1,15 @@
 <template>
   <div class="oring-diagram">
     <header class="oring-diagram__head">
-      <h3 class="oring-diagram__title">沟槽截面示意图</h3>
-      <p class="oring-diagram__hint">对照下图理解各输入项在沟槽中的位置与含义</p>
+      <h3 class="oring-diagram__title">{{ dt('title') }}</h3>
+      <p class="oring-diagram__hint">{{ dt('hint') }}</p>
     </header>
 
     <svg
       class="oring-diagram__svg"
       viewBox="0 0 560 360"
       role="img"
-      aria-label="O 型圈沟槽参数示意图"
+      :aria-label="dt('aria')"
     >
       <defs>
         <marker id="oring-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
@@ -22,7 +22,7 @@
 
       <!-- 壳体 -->
       <rect :x="layout.hx" :y="layout.hy" :width="layout.hw" :height="layout.hh" rx="4" class="housing" />
-      <text :x="layout.hx + 12" :y="layout.hy + 22" class="txt-muted" font-size="15">壳体 / 孔壁</text>
+      <text :x="layout.hx + 12" :y="layout.hy + 22" class="txt-muted" font-size="15">{{ dt('housing') }}</text>
 
       <!-- 沟槽 -->
       <rect
@@ -100,7 +100,7 @@
           font-weight="600"
           text-anchor="middle"
         >
-          压缩 {{ compressionPercent?.toFixed(0) }}%
+          {{ dt('compression', { pct: compressionPercent?.toFixed(0) }) }}
         </text>
       </template>
 
@@ -138,7 +138,7 @@
           class="txt-pro"
           font-size="14"
         >
-          间隙
+          {{ dt('gap') }}
         </text>
       </template>
 
@@ -151,13 +151,13 @@
       <!-- 孔径 -->
       <template v-if="boreDiameter">
         <line :x1="layout.boreX" :y1="layout.hy" :x2="layout.boreX" :y2="layout.hy + layout.hh" class="bore-line" />
-        <text :x="layout.boreX + 8" :y="layout.hy + layout.hh / 2" class="txt-muted" font-size="15">孔径 Ø{{ boreDiameter }}</text>
+        <text :x="layout.boreX + 8" :y="layout.hy + layout.hh / 2" class="txt-muted" font-size="15">{{ dt('bore', { bore: boreDiameter }) }}</text>
       </template>
 
       <!-- 自由截面放大（独立区域，右下角） -->
       <g :transform="`translate(${layout.insetX}, ${layout.insetY})`">
         <rect x="0" y="0" :width="layout.insetW" :height="layout.insetH" rx="6" class="inset-box" />
-        <text x="10" y="20" class="txt-muted" font-size="14">自由截面</text>
+        <text x="10" y="20" class="txt-muted" font-size="14">{{ dt('freeSection') }}</text>
         <circle :cx="layout.insetW / 2" :cy="layout.insetH / 2 + 6" :r="layout.insetR" class="oring-inset" />
         <line
           :x1="layout.insetW / 2 - layout.insetR"
@@ -182,7 +182,7 @@
 
       <template v-if="showPro && stretchPercent > 0">
         <text :x="layout.hx + 8" :y="layout.hy + layout.hh + 18" class="txt-pro" font-size="14">
-          安装拉伸 {{ stretchPercent?.toFixed(1) }}%
+          {{ dt('installStretch', { pct: stretchPercent?.toFixed(1) }) }}
         </text>
       </template>
     </svg>
@@ -201,6 +201,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('oRing')
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },

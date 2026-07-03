@@ -3,7 +3,7 @@
     viewBox="0 0 320 200"
     class="w-full max-w-md text-gray-700 dark:text-gray-300"
     role="img"
-    aria-label="轴孔配合示意图"
+    :aria-label="dt('fitAria')"
   >
     <rect x="0" y="0" width="320" height="200" fill="transparent" />
 
@@ -63,6 +63,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('fit')
 
 const props = defineProps({
   fit: { type: Object, required: true },

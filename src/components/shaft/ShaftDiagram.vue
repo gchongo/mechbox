@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">{{ mode === 'combined' ? '弯扭合成轴示意' : '扭转轴示意' }}</h3>
-      <p class="mech-diagram__hint">轴径 d{{ innerDiameter > 0 ? '、内径 dᵢ' : '' }}，{{ mode === 'combined' ? '弯矩 M + 扭矩 T' : '扭矩 T' }}</p>
+      <h3 class="mech-diagram__title">{{ mode === 'combined' ? dt('titleCombined') : dt('titleTorsion') }}</h3>
+      <p class="mech-diagram__hint">{{ hintText }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="轴强度参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="sh-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -17,7 +17,7 @@
         </marker>
       </defs>
 
-      <text x="24" y="28" class="txt-muted" font-size="13">径向截面</text>
+      <text x="24" y="28" class="txt-muted" font-size="13">{{ dt('radialSection') }}</text>
 
       <!-- 截面 -->
       <circle :cx="cxSec" :cy="cySec" :r="rOuter" class="shaft-ring" />
@@ -28,7 +28,7 @@
       <text :x="cxSec" :y="cySec + rOuter + 34" class="txt-primary" font-size="13" text-anchor="middle">d = {{ diameter }} mm</text>
 
       <!-- 侧视轴 -->
-      <text x="280" y="28" class="txt-muted" font-size="13">侧视</text>
+      <text x="280" y="28" class="txt-muted" font-size="13">{{ dt('sideView') }}</text>
       <rect :x="shaftX" :y="shaftY" :width="shaftLen" :height="shaftH" rx="3" class="shaft-bar" />
 
       <!-- T -->
@@ -50,6 +50,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('shaft')
 
 const props = defineProps({
   diameter: { type: Number, default: 30 },
@@ -63,6 +66,11 @@ const cySec = 130
 const scale = computed(() => 55 / Math.max(props.diameter / 2, 1))
 const rOuter = computed(() => (props.diameter / 2) * scale.value)
 const rInner = computed(() => (props.innerDiameter / 2) * scale.value)
+
+const innerPart = computed(() => (props.innerDiameter > 0 ? dt('innerSuffix') : ''))
+const hintText = computed(() =>
+  dt(props.mode === 'combined' ? 'hintCombined' : 'hintTorsion', { inner: innerPart.value }),
+)
 
 const shaftX = 280
 const shaftY = 110

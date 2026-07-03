@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">平键连接示意图</h3>
-      <p class="mech-diagram__hint">轴—轮毂键槽与键尺寸 b × h，键长 L</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 520 280" role="img" aria-label="平键连接参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 520 280" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="key-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -86,6 +86,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('key')
 
 const props = defineProps({
   shaftDiameter: { type: Number, default: 30 },

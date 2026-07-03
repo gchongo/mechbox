@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">{{ showFit ? '热膨胀配合示意' : '线膨胀示意' }}</h3>
-      <p class="mech-diagram__hint">ΔL = α·L·ΔT，温差 ΔT = {{ deltaT }} °C</p>
+      <h3 class="mech-diagram__title">{{ showFit ? dt('titleFit') : dt('titleLinear') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint', { deltaT }) }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="热膨胀参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="te-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -28,7 +28,7 @@
 
       <!-- 配合截面 -->
       <template v-if="showFit">
-        <text x="300" y="48" class="txt-muted" font-size="12">径向截面</text>
+        <text x="300" y="48" class="txt-muted" font-size="12">{{ dt('radialSection') }}</text>
         <circle :cx="360" :cy="130" :r="rHole" class="hole" />
         <circle :cx="360" :cy="130" :r="rShaft" class="shaft" />
         <line :x1="360 - rShaft" :y1="130 + rHole + 16" :x2="360 + rShaft" :y2="130 + rHole + 16" class="dim-primary" marker-start="url(#te-arrow-blue)" marker-end="url(#te-arrow-blue)" />
@@ -42,6 +42,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('thermal')
 
 const props = defineProps({
   length: { type: Number, default: 100 },

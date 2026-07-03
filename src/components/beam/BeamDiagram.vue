@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">梁载荷示意</h3>
-      <p class="mech-diagram__hint">{{ caseLabel }} · 跨度 L</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint', { case: caseLabel }) }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 220" role="img" aria-label="梁挠度参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 220" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="beam-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -39,7 +39,7 @@
       <template v-else>
         <line :x1="x1 + 20" :y1="loadYTop" :x2="x2 - 20" :y2="loadYTop" stroke="#8b5cf6" stroke-width="1.5" />
         <line v-for="i in 7" :key="i" :x1="x1 + 20 + ((x2 - x1 - 40) / 6) * (i - 1)" :y1="loadYTop" :x2="x1 + 20 + ((x2 - x1 - 40) / 6) * (i - 1)" :y2="beamY - 4" stroke="#8b5cf6" stroke-width="1.2" marker-end="url(#beam-arrow-purple)" />
-        <text :x="(x1 + x2) / 2" :y="loadYTop - 8" fill="#8b5cf6" font-size="12" text-anchor="middle">q (均布)</text>
+        <text :x="(x1 + x2) / 2" :y="loadYTop - 8" fill="#8b5cf6" font-size="12" text-anchor="middle">{{ dt('udl') }}</text>
       </template>
 
       <!-- L -->
@@ -48,7 +48,7 @@
 
       <!-- 挠度示意 -->
       <path :d="deflectPath" fill="none" stroke="#409eff" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7" />
-      <text :x="(x1 + x2) / 2" :y="beamY + 72" class="txt-muted" font-size="11" text-anchor="middle">δ (挠度)</text>
+      <text :x="(x1 + x2) / 2" :y="beamY + 72" class="txt-muted" font-size="11" text-anchor="middle">{{ dt('deflection') }}</text>
     </svg>
   </div>
 </template>
@@ -56,6 +56,9 @@
 <script setup>
 import { computed } from 'vue'
 import { BEAM_CASES } from '@/utils/beam-calc'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('beam')
 
 const props = defineProps({
   caseId: { type: String, default: 'simply_center' },

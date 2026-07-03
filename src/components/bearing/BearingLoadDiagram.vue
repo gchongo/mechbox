@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">轴承受力示意</h3>
-      <p class="mech-diagram__hint">当量动载荷 P = X·Fr + Y·Fa</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="轴承载荷示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="br-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -48,6 +48,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('bearing')
 
 const props = defineProps({
   radialLoad: { type: Number, default: 5000 },
@@ -73,7 +76,7 @@ const balls = computed(() => {
 })
 
 const bearingLabel = computed(() =>
-  props.bearingType === 'roller' ? '滚子轴承 · ε = 10/3' : '球轴承 · ε = 3',
+  props.bearingType === 'roller' ? dt('rollerBearing') : dt('ballBearing'),
 )
 </script>
 

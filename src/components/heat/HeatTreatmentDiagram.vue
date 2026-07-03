@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">淬透性 / Jominy 示意</h3>
-      <p class="mech-diagram__hint">端淬试棒截面，表面→心部硬度梯度</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="热处理淬透性示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <linearGradient id="hrc-grad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stop-color="#409eff" stop-opacity="0.7" />
@@ -17,10 +17,10 @@
 
       <!-- Jominy 棒侧视 -->
       <rect x="60" y="100" width="200" height="36" rx="4" fill="url(#hrc-grad)" stroke="#64748b" stroke-width="2" />
-      <text x="160" y="122" class="txt-muted" font-size="11" text-anchor="middle">水冷端 →</text>
+      <text x="160" y="122" class="txt-muted" font-size="11" text-anchor="middle">{{ dt('waterEnd') }}</text>
 
       <!-- 截面 -->
-      <text x="300" y="48" class="txt-muted" font-size="12">零件截面</text>
+      <text x="300" y="48" class="txt-muted" font-size="12">{{ dt('partSection') }}</text>
       <circle :cx="360" :cy="130" :r="rPart" class="part-ring" />
       <circle :cx="360" :cy="130" :r="rCore" class="core" />
 
@@ -41,6 +41,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('heat')
 
 const props = defineProps({
   partDiameter: { type: Number, default: 50 },

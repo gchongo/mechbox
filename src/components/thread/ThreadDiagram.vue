@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">公制螺纹示意</h3>
-      <p class="mech-diagram__hint">M{{ diameter }} · 螺距 P = {{ pitch }} mm · 旋合长度 L</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint', { diameter, pitch }) }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="螺纹参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="th-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -27,7 +27,7 @@
       <!-- 螺纹牙型（放大） -->
       <g transform="translate(60, 180)">
         <path :d="toothPath" fill="none" stroke="#409eff" stroke-width="1.5" />
-        <text x="0" y="-8" class="txt-muted" font-size="11">牙型放大</text>
+        <text x="0" y="-8" class="txt-muted" font-size="11">{{ dt('threadEnlarge') }}</text>
       </g>
 
       <!-- d -->
@@ -52,6 +52,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('thread')
 
 const props = defineProps({
   diameter: { type: Number, default: 12 },

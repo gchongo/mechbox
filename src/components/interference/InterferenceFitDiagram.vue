@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">过盈配合截面示意图</h3>
-      <p class="mech-diagram__hint">径向截面：轴径 d、孔径 D、轮毂外径 D<sub>A</sub> 与配合长度 L</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint" v-html="dt('hint')" />
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 520 300" role="img" aria-label="过盈配合参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 520 300" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="if-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -15,7 +15,7 @@
       </defs>
 
       <!-- 横截面 -->
-      <text x="24" y="28" class="txt-muted" font-size="13">径向截面</text>
+      <text x="24" y="28" class="txt-muted" font-size="13">{{ dt('radialSection') }}</text>
       <circle :cx="cx" :cy="cy" :r="rHub" class="hub-ring" />
       <circle :cx="cx" :cy="cy" :r="rHole" class="hole-ring" />
       <circle :cx="cx" :cy="cy" :r="rShaft" class="shaft-fill" />
@@ -83,6 +83,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('interference')
 
 const props = defineProps({
   shaftDiameter: { type: Number, default: 50 },

@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">折弯展开示意</h3>
-      <p class="mech-diagram__hint">板厚 T、内半径 R、折弯角 θ，K = {{ kFactor }}</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint', { k: kFactor }) }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="钣金折弯参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="sm-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -37,13 +37,16 @@
       <text :x="arcCx + arcR + 14" :y="arcCy + 4" fill="#e6a23c" font-size="13">θ = {{ bendAngle }}°</text>
 
       <!-- BA 标注 -->
-      <text x="360" y="220" class="txt-muted" font-size="11">折弯补偿 BA ≈ (π/180)·θ·(R + K·T)</text>
+      <text x="360" y="220" class="txt-muted" font-size="11">{{ dt('baFormula') }}</text>
     </svg>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('sheetMetal')
 
 const props = defineProps({
   thickness: { type: Number, default: 1.5 },

@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">{{ variant === 'pneumatic' ? '气缸示意' : '液压缸示意' }}</h3>
-      <p class="mech-diagram__hint">缸径 D、活塞杆 d、压力 p</p>
+      <h3 class="mech-diagram__title">{{ variant === 'pneumatic' ? dt('titlePneumatic') : dt('titleHydraulic') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" aria-label="液压气缸参数示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="cy-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -39,13 +39,16 @@
 
       <!-- stroke -->
       <line v-if="strokeLength > 0" :x1="pistonX + pistonW / 2" :y1="barrelY - 12" :x2="rodX + rodLen + 20" :y2="barrelY - 12" class="dim" stroke-dasharray="4 3" marker-start="url(#cy-arrow)" marker-end="url(#cy-arrow)" />
-      <text v-if="strokeLength > 0" :x="(pistonX + rodX + rodLen + 20) / 2" :y="barrelY - 18" class="txt-muted" font-size="11" text-anchor="middle">行程 {{ strokeLength }} mm</text>
+      <text v-if="strokeLength > 0" :x="(pistonX + rodX + rodLen + 20) / 2" :y="barrelY - 18" class="txt-muted" font-size="11" text-anchor="middle">{{ dt('stroke', { len: strokeLength }) }}</text>
     </svg>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('cylinder')
 
 const props = defineProps({
   variant: { type: String, default: 'hydraulic' },

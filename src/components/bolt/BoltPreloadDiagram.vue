@@ -1,15 +1,15 @@
 <template>
   <div class="bolt-diagram">
     <header class="bolt-diagram__head">
-      <h3 class="bolt-diagram__title">参数示意图</h3>
-      <p class="bolt-diagram__hint">对照下图理解各输入项在螺栓连接中的位置与含义</p>
+      <h3 class="bolt-diagram__title">{{ dt('title') }}</h3>
+      <p class="bolt-diagram__hint">{{ dt('hint') }}</p>
     </header>
 
     <svg
       class="bolt-diagram__svg"
       viewBox="0 0 520 300"
       role="img"
-      aria-label="螺栓连接参数示意图"
+      :aria-label="dt('aria')"
     >
       <defs>
         <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
@@ -67,7 +67,7 @@
 
       <!-- 预紧力 F -->
       <line x1="260" y1="42" x2="260" y2="64" marker-end="url(#arrow-blue)" class="dim-force" />
-      <text x="268" y="50" class="label label--primary">F 预紧力</text>
+      <text x="268" y="50" class="label label--primary">{{ dt('preloadF') }}</text>
 
       <!-- 扭矩 T -->
       <path
@@ -81,7 +81,7 @@
       <!-- 公称直径 d -->
       <line x1="248" y1="108" x2="218" y2="108" marker-end="url(#arrow-gray)" />
       <line x1="272" y1="108" x2="302" y2="108" marker-end="url(#arrow-gray)" />
-      <text x="188" y="104" class="label">d 公称直径</text>
+      <text x="188" y="104" class="label">{{ dt('nominalD') }}</text>
 
       <!-- 夹紧长度 L_K -->
       <template v-if="showPro">
@@ -96,7 +96,7 @@
       <template v-if="showPro">
         <line x1="238" y1="202" x2="208" y2="202" marker-end="url(#arrow-gray)" />
         <line x1="282" y1="202" x2="312" y2="202" marker-end="url(#arrow-gray)" />
-        <text x="168" y="218" class="label label--pro">d_h 孔径</text>
+        <text x="168" y="218" class="label label--pro">{{ dt('holeD') }}</text>
       </template>
 
       <!-- d_W 头部支承 -->
@@ -113,7 +113,7 @@
 
       <!-- μ_G -->
       <template v-if="showVdi">
-        <text x="168" y="188" class="label label--vdi">μ_G 螺纹摩擦</text>
+        <text x="168" y="188" class="label label--vdi">{{ dt('threadMu') }}</text>
       </template>
 
       <!-- 嵌入 f_Z -->
@@ -122,28 +122,28 @@
           <line x1="130" y1="118" x2="130" y2="124" />
           <line x1="126" y1="118" x2="134" y2="118" />
           <line x1="126" y1="124" x2="134" y2="124" />
-          <text x="72" y="124" class="label label--embed">f_Z 嵌入</text>
+          <text x="72" y="124" class="label label--embed">{{ dt('embedFZ') }}</text>
         </g>
       </template>
 
       <!-- 螺距 P 放大示意 -->
       <g transform="translate(400, 218)">
         <rect x="0" y="0" width="96" height="56" rx="6" class="inset-box" />
-        <text x="8" y="16" class="label-inset-title">螺纹放大</text>
+        <text x="8" y="16" class="label-inset-title">{{ dt('threadZoom') }}</text>
         <path d="M 12 36 L 28 28 L 44 36 L 60 28 L 76 36" fill="none" class="thread-profile" />
         <line x1="12" y1="44" x2="76" y2="44" class="dim-line" />
-        <text x="28" y="54" class="label-inset">P 螺距</text>
+        <text x="28" y="54" class="label-inset">{{ dt('pitchP') }}</text>
       </g>
 
       <!-- 简化模式 μ -->
       <template v-if="calcMode === 'simple'">
-        <text x="318" y="92" class="label label--simple">μ 综合摩擦</text>
+        <text x="318" y="92" class="label label--simple">{{ dt('muCombined') }}</text>
         <ellipse cx="260" cy="88" rx="28" ry="7" class="friction friction--simple" />
       </template>
 
       <!-- ΔT 专业 -->
       <template v-if="showPro && deltaT">
-        <text x="24" y="148" class="label label--pro">ΔT 温差</text>
+        <text x="24" y="148" class="label label--pro">{{ dt('deltaT') }}</text>
         <text x="24" y="162" class="label-sub">{{ deltaT > 0 ? '+' : '' }}{{ deltaT }} °C</text>
       </template>
     </svg>
@@ -162,6 +162,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('boltPreload')
 
 const props = defineProps({
   calcMode: { type: String, default: 'simple' },

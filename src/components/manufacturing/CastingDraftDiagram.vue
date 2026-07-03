@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">拔模斜度示意</h3>
-      <p class="mech-diagram__hint">拔模高度 h、推荐拔模角 α</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 240" role="img" aria-label="铸造拔模斜度示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 240" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="cd-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -17,7 +17,7 @@
       <!-- 型腔侧壁（带拔模） -->
       <polygon :points="cavityPoints" class="cavity" />
       <line x1="120" y1="200" x2="360" y2="200" class="parting-line" />
-      <text x="365" y="204" class="txt-muted" font-size="11">分型面</text>
+      <text x="365" y="204" class="txt-muted" font-size="11">{{ dt('partingLine') }}</text>
 
       <!-- h -->
       <line x1="95" :y1="topY" x2="95" y2="200" class="dim-primary" marker-start="url(#cd-arrow-blue)" marker-end="url(#cd-arrow-blue)" />
@@ -37,6 +37,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('casting')
 
 const props = defineProps({
   depth: { type: Number, default: 80 },

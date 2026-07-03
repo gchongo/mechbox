@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">螺栓组布局示意</h3>
-      <p class="mech-diagram__hint">分布圆半径 R，n = {{ boltCount }} 栓，剪力与弯矩合成</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint', { n: boltCount }) }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 280" role="img" aria-label="螺栓组受力示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 280" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="bg-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -63,6 +63,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('boltGroup')
 
 const props = defineProps({
   boltCount: { type: Number, default: 6 },

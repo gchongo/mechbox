@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">{{ variant === 'chain' ? '链传动示意' : '皮带传动示意' }}</h3>
-      <p class="mech-diagram__hint">{{ labelSmall }} / {{ labelLarge }}，中心距 C，包角 θ</p>
+      <h3 class="mech-diagram__title">{{ diagramTitle }}</h3>
+      <p class="mech-diagram__hint">{{ hintText }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="variant === 'chain' ? '链传动示意图' : '皮带传动示意图'">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 260" role="img" :aria-label="diagramAria">
       <defs>
         <marker id="drv-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#409EFF" />
@@ -46,6 +46,9 @@
 <script setup>
 import { computed } from 'vue'
 import { calcWrapAngle } from '@/utils/belt-calc'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('drive')
 
 const props = defineProps({
   variant: { type: String, default: 'belt' },
@@ -94,6 +97,16 @@ const labelLarge = computed(() =>
   props.variant === 'chain'
     ? `z₂ = ${props.drivenTeeth}`
     : `D₂ = ${props.drivenDiameter} mm`,
+)
+
+const diagramTitle = computed(() =>
+  dt(props.variant === 'chain' ? 'titleChain' : 'titleBelt'),
+)
+const diagramAria = computed(() =>
+  dt(props.variant === 'chain' ? 'ariaChain' : 'ariaBelt'),
+)
+const hintText = computed(() =>
+  dt('hint', { small: labelSmall.value, large: labelLarge.value }),
 )
 
 const beltPath = computed(() => {

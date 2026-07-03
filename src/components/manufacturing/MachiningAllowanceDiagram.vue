@@ -1,10 +1,10 @@
 <template>
   <div class="mech-diagram">
     <header class="mech-diagram__head">
-      <h3 class="mech-diagram__title">机加工余量示意</h3>
-      <p class="mech-diagram__hint">成品直径、单面余量与推荐毛坯直径</p>
+      <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
+      <p class="mech-diagram__hint">{{ dt('hint') }}</p>
     </header>
-    <svg class="mech-diagram__svg" viewBox="0 0 480 240" role="img" aria-label="机加工余量示意图">
+    <svg class="mech-diagram__svg" viewBox="0 0 480 240" role="img" :aria-label="dt('aria')">
       <defs>
         <marker id="ma-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#64748b" />
@@ -14,7 +14,7 @@
         </marker>
       </defs>
 
-      <text x="24" y="28" class="txt-muted" font-size="13">径向截面</text>
+      <text x="24" y="28" class="txt-muted" font-size="13">{{ dt('radialSection') }}</text>
 
       <!-- 毛坯 -->
       <circle :cx="cx" :cy="cy" :r="rStock" class="stock-ring" />
@@ -44,6 +44,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('machining')
 
 const props = defineProps({
   nominalDiameter: { type: Number, default: 50 },

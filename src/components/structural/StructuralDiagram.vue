@@ -51,6 +51,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDiagramI18n } from '@/composables/useDiagramI18n'
+
+const { dt } = useDiagramI18n('structural')
 
 const props = defineProps({
   variant: { type: String, default: 'pipe' },
@@ -63,17 +66,13 @@ const props = defineProps({
 
 const plateH = computed(() => Math.max(16, props.plateThickness * 8))
 
-const title = computed(() => {
-  if (props.variant === 'pipe') return '管路压降示意'
-  if (props.variant === 'plate') return '薄板屈曲示意'
-  return '单自由度模态示意'
-})
+const title = computed(() =>
+  dt(props.variant === 'pipe' ? 'pipeTitle' : props.variant === 'plate' ? 'plateTitle' : 'modalTitle'),
+)
 
-const hint = computed(() => {
-  if (props.variant === 'pipe') return '内径 D、管长 L、流量 Q'
-  if (props.variant === 'plate') return '板厚 t、受压边长 a'
-  return '质量 m、刚度 k → 固有频率 fn'
-})
+const hint = computed(() =>
+  dt(props.variant === 'pipe' ? 'pipeHint' : props.variant === 'plate' ? 'plateHint' : 'modalHint'),
+)
 </script>
 
 <style scoped>

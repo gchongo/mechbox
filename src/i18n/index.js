@@ -2,6 +2,7 @@
 
 import { calcZh, calcEn } from './calc-i18n'
 import { fieldsZh, fieldsEn, mergeCalcPageFields } from './calc-fields-i18n'
+import { diagramZh, diagramEn } from './diagram-i18n'
 
 const zh = {
   appName: '机械工具箱',
@@ -191,6 +192,7 @@ const zh = {
   calc: {
     common: calcZh.common,
     pages: calcZh.pages,
+    diagrams: diagramZh,
   },
 }
 
@@ -382,6 +384,7 @@ const en = {
   calc: {
     common: calcEn.common,
     pages: calcEn.pages,
+    diagrams: diagramEn,
   },
 }
 
