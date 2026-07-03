@@ -254,6 +254,24 @@ const routes = [
     meta: { title: '工具地图' },
   },
   {
+    path: '/units',
+    name: 'units',
+    component: () => import('@/views/UnitsView.vue'),
+    meta: { title: '单位换算' },
+  },
+  {
+    path: '/fit',
+    name: 'fit',
+    component: () => import('@/views/FitView.vue'),
+    meta: { title: 'ISO 286 配合' },
+  },
+  {
+    path: '/gdt-stack',
+    name: 'gdt-stack',
+    component: () => import('@/views/GdtStackView.vue'),
+    meta: { title: 'GD&T 公差栈' },
+  },
+  {
     path: '/faq',
     name: 'faq',
     component: () => import('@/views/FaqView.vue'),

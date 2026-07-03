@@ -345,6 +345,7 @@
         <el-button @click="handleExportPng">🖼️ 导出图片</el-button>
         <el-button @click="handleCopy">📋 复制结果</el-button>
         <el-button type="success" @click="goToMonteCarlo">🎲 Monte Carlo 验证</el-button>
+        <el-button v-if="gdtModeInfo" type="success" plain @click="goToGdtStack">📐 GD&T 公差栈</el-button>
       </div>
     </section>
   </div>
@@ -360,7 +361,7 @@ import RingParameterTable from '@/components/editor/RingParameterTable.vue'
 import ChainResultDashboard from '@/components/editor/ChainResultDashboard.vue'
 import { ANALYSIS_GROUPS, findAnalysisType } from '@/constants/analysis-types'
 import { findCasePreset, prepareCaseForEditor, prepareEditorDemoState, CASE_STORAGE_KEY } from '@/constants/cases'
-import { MC_STORAGE_KEY, serializeEditorForMonteCarlo } from '@/constants/editor-bridge'
+import { MC_STORAGE_KEY, GDT_STACK_STORAGE_KEY, serializeEditorForMonteCarlo, serializeEditorForGdtStack } from '@/constants/editor-bridge'
 import {
   calculateChainResult,
   buildFormulaLines,
@@ -548,6 +549,23 @@ function goToMonteCarlo() {
     ),
   )
   router.push({ path: '/monte-carlo', query: { from: 'editor' } })
+}
+
+function goToGdtStack() {
+  sessionStorage.setItem(
+    GDT_STACK_STORAGE_KEY,
+    JSON.stringify(
+      serializeEditorForGdtStack({
+        closedRing: closedRing.value,
+        componentRings: componentRings.value,
+        method: method.value,
+        selectedType: selectedType.value,
+        gdtModifier: gdtModifier.value,
+        bonusTolerance: bonusTolerance.value,
+      }),
+    ),
+  )
+  router.push({ path: '/gdt-stack', query: { from: 'editor' } })
 }
 
 const closedRingTolerance = computed(() => {

@@ -16,6 +16,8 @@ export function saveAnalysis(record) {
     title: record.title ?? '未命名分析',
     date: record.date ?? new Date().toISOString(),
     status: record.status ?? 'draft',
+    source: record.source ?? 'editor',
+    tool: record.tool ?? null,
     data: record.data ?? {},
   }
   const filtered = history.filter((item) => item.id !== entry.id)

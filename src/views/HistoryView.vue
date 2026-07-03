@@ -2,10 +2,13 @@
   <div>
     <h1 class="page-title">历史记录</h1>
     <p class="mb-6 text-gray-600 dark:text-gray-400">
-      本地保存的分析记录，最多 50 条
+      尺寸链与各工具计算结果，本地最多 50 条
     </p>
 
-    <div class="mb-4 flex flex-wrap items-center gap-2">
+    <div class="mb-4 flex flex-wrap items-center gap-2 tool-action-bar">
+      <el-button type="primary" :disabled="!selectedIds.length" @click="exportMergedPdf">
+        合并导出 PDF ({{ selectedIds.length }})
+      </el-button>
       <el-button type="primary" :disabled="!records.length" @click="exportJson">
         导出 JSON
       </el-button>
@@ -13,10 +16,23 @@
       <el-button type="danger" plain :disabled="!records.length" @click="confirmClear">
         清空全部
       </el-button>
-      <el-checkbox v-model="favoritesOnly" class="ml-auto">仅显示收藏</el-checkbox>
+      <el-select v-model="sourceFilter" class="w-32" size="small">
+        <el-option label="全部来源" value="all" />
+        <el-option label="尺寸链" value="editor" />
+        <el-option label="工具计算" value="tool" />
+      </el-select>
+      <el-checkbox v-model="favoritesOnly">仅收藏</el-checkbox>
     </div>
 
-    <el-table v-if="displayRecords.length" :data="displayRecords" border stripe>
+    <el-table
+      v-if="displayRecords.length"
+      :data="displayRecords"
+      border
+      stripe
+      class="history-table"
+      @selection-change="onSelectionChange"
+    >
+      <el-table-column type="selection" width="45" />
       <el-table-column width="50" align="center">
         <template #default="{ row }">
           <button class="text-lg" @click="toggleFav(row.id)">
@@ -24,21 +40,28 @@
           </button>
         </template>
       </el-table-column>
-      <el-table-column prop="title" label="标题" min-width="200" />
-      <el-table-column label="状态" width="90">
+      <el-table-column prop="title" label="标题" min-width="160" />
+      <el-table-column label="来源" width="110">
+        <template #default="{ row }">
+          <el-tag size="small" :type="row.source === 'tool' ? 'warning' : 'primary'">
+            {{ formatHistorySource(row) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="80">
         <template #default="{ row }">
           <el-tag :type="row.status === 'pass' ? 'success' : row.status === 'fail' ? 'danger' : 'info'" size="small">
             {{ row.status === 'pass' ? '合格' : row.status === 'fail' ? '不合格' : '草稿' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="日期" width="180">
+      <el-table-column label="日期" width="150" class-name="hidden sm:table-cell">
         <template #default="{ row }">{{ formatDate(row.date) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column label="操作" width="140" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openRecord(row.id)">打开</el-button>
-          <el-button size="small" type="danger" text @click="removeRecord(row.id)">删除</el-button>
+          <el-button size="small" @click="openRecord(row)">打开</el-button>
+          <el-button size="small" type="danger" text @click="removeRecord(row.id)">删</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -53,14 +76,22 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import * as XLSX from 'xlsx'
 import { getHistory, deleteAnalysis } from '@/utils/storage'
 import { isFavorite, toggleFavorite, removeFavorite } from '@/utils/favorites'
+import { exportMergedHistoryPdf } from '@/utils/export'
+import { formatHistorySource, getToolRoute } from '@/utils/calc-history'
 
 const router = useRouter()
 const records = ref([])
 const favoritesOnly = ref(false)
+const sourceFilter = ref('all')
+const selectedIds = ref([])
 
-const displayRecords = computed(() =>
-  favoritesOnly.value ? records.value.filter((r) => isFavorite(r.id)) : records.value,
-)
+const displayRecords = computed(() => {
+  let list = records.value
+  if (favoritesOnly.value) list = list.filter((r) => isFavorite(r.id))
+  if (sourceFilter.value === 'editor') list = list.filter((r) => (r.source ?? 'editor') === 'editor')
+  if (sourceFilter.value === 'tool') list = list.filter((r) => r.source === 'tool')
+  return list
+})
 
 onMounted(refresh)
 
@@ -69,11 +100,18 @@ function refresh() {
 }
 
 function formatDate(iso) {
-  return new Date(iso).toLocaleString('zh-CN')
+  return new Date(iso).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-function openRecord(id) {
-  router.push({ name: 'editor-detail', params: { id } })
+function openRecord(row) {
+  if (row.source === 'tool' && row.tool) {
+    const route = getToolRoute(row.tool)
+    if (route) {
+      router.push(route)
+      return
+    }
+  }
+  router.push({ name: 'editor-detail', params: { id: row.id } })
 }
 
 function toggleFav(id) {
@@ -115,15 +153,25 @@ function exportJson() {
 function exportExcel() {
   const rows = records.value.map((r) => ({
     标题: r.title,
+    来源: formatHistorySource(r),
     状态: r.status === 'pass' ? '合格' : r.status === 'fail' ? '不合格' : '草稿',
     日期: formatDate(r.date),
-    类型: r.data?.selectedType?.name ?? '',
-    封闭环: r.data?.closedRing?.name ?? '',
-    方法: r.data?.method ?? '',
+    类型: r.data?.selectedType?.name ?? r.data?.toolLabel ?? '',
   }))
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '历史记录')
   XLSX.writeFile(wb, `mechbox_history_${new Date().toISOString().slice(0, 10)}.xlsx`)
   ElMessage.success('Excel 已下载')
+}
+
+function onSelectionChange(rows) {
+  selectedIds.value = rows.map((r) => r.id)
+}
+
+async function exportMergedPdf() {
+  const picked = records.value.filter((r) => selectedIds.value.includes(r.id))
+  if (!picked.length) return
+  await exportMergedHistoryPdf(picked)
+  ElMessage.success(`已导出 ${picked.length} 条记录`)
 }
 </script>

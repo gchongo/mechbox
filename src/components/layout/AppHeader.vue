@@ -116,6 +116,9 @@ const toolGroups = computed(() => ({
   chain: [
     { path: '/batch', label: locale.value === 'en' ? 'Batch verify' : '批量验证' },
     { path: '/allocation', label: locale.value === 'en' ? 'Tolerance allocation' : '公差分配' },
+    { path: '/fit', label: locale.value === 'en' ? 'ISO 286 fit' : 'ISO 286 配合' },
+    { path: '/gdt-stack', label: locale.value === 'en' ? 'GD&T stack' : 'GD&T 公差栈' },
+    { path: '/units', label: locale.value === 'en' ? 'Unit converter' : '单位换算' },
     { path: '/fatigue', label: locale.value === 'en' ? 'Fatigue life' : '疲劳寿命' },
     { path: '/interference-fit', label: locale.value === 'en' ? 'Interference fit' : '过盈配合' },
     { path: '/thermal-expansion', label: locale.value === 'en' ? 'Thermal expansion' : '热膨胀' },

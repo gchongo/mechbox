@@ -275,6 +275,30 @@ export const GLOSSARY_TERMS = [
       '通过 DOE 试验拟合响应与因子之间的数学模型（常为二次多项式），并用等高线图寻找最优工艺窗口。中心复合设计 (CCD) 是二因子 RSM 的常用方案。',
     tags: ['RSM', 'DOE', '优化'],
   },
+  {
+    term: 'ISO 286 配合',
+    symbol: '—',
+    category: '公差',
+    definition:
+      '基于孔轴公差带位置关系划分的配合制度。孔代号大写（如 H7）、轴代号小写（如 g6）；H7/g6 为常见精密间隙配合。配合类型由最大/最小间隙判断：全为正间隙、全为负过盈或跨零为过渡。',
+    tags: ['ISO286', '公差', '配合'],
+  },
+  {
+    term: 'VDI 2230',
+    symbol: '—',
+    category: '螺栓',
+    definition:
+      '德国工程师协会螺栓连接设计规范，分 R0–R13 计算步骤，涵盖拧紧方法、夹紧力需求、嵌入与温差损失、应力与疲劳等。MechBox 提供工程简化版分步向导辅助校核。',
+    tags: ['VDI2230', '螺栓', '预紧力'],
+  },
+  {
+    term: '基准参考系 (DRF)',
+    symbol: 'A|B|C',
+    category: 'GD&T',
+    definition:
+      '由主、次、第三基准构成的坐标系，用于约束被测要素的测量与公差叠加。基准面自身的 flatness 与 perpendicularity 误差会累积到以该基准为参考的形位公差栈中。',
+    tags: ['GD&T', '基准', 'DRF'],
+  },
 ]
 
 export function searchGlossary(query) {
