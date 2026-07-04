@@ -53,12 +53,17 @@
           </template>
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerVarLoad') }}</el-divider>
-            <CalcFormItem :label="pf('loadMin')">
-              <el-input-number v-model="form.loadMin" :min="0" :precision="1" />
-            </CalcFormItem>
-            <CalcFormItem :label="pf('loadMax')">
-              <el-input-number v-model="form.loadMax" :min="0" :precision="1" />
-            </CalcFormItem>
+            <p v-if="form.installHeight != null && form.workingHeight != null" class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+              {{ pf('fatigueFromHeights') }}
+            </p>
+            <template v-else>
+              <CalcFormItem :label="pf('loadMin')">
+                <el-input-number v-model="form.loadMin" :min="0" :precision="1" />
+              </CalcFormItem>
+              <CalcFormItem :label="pf('loadMax')">
+                <el-input-number v-model="form.loadMax" :min="0" :precision="1" />
+              </CalcFormItem>
+            </template>
             <CalcFormItem :label="pf('targetCycles')">
               <el-input-number v-model="form.targetCycles" :min="1e4" :step="1e5" />
             </CalcFormItem>

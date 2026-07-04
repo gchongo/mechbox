@@ -302,6 +302,29 @@ describe('spring-calc modes', () => {
     expect(r.shearPass).toBe(false)
     expect(r.pass).toBe(false)
   })
+
+  it('professional fatigue uses H1/H2 loads not manual F_min/F_max', () => {
+    const r = analyzeSpring({
+      calcMode: 'professional',
+      material: '50CrVA',
+      wireDiameter: 1.1,
+      outerDiameter: 6.5,
+      activeCoils: 5,
+      totalCoils: 7,
+      freeLength: 15,
+      installHeight: 13,
+      workingHeight: 12,
+      endType: 'fixed',
+      loadMin: 50,
+      loadMax: 170,
+      targetCycles: 1e6,
+    })
+    expect(r.fatigueFromHeights).toBe(true)
+    expect(r.loadMin).toBeCloseTo(37.19, 1)
+    expect(r.loadMax).toBeCloseTo(55.79, 1)
+    expect(r.shearAmplitude).toBeLessThan(200)
+    expect(r.shearAmplitude).toBeGreaterThan(0)
+  })
 })
 
 describe('bearing-calc modes', () => {

@@ -1,5 +1,5 @@
 /** 圆柱螺旋压缩弹簧设计 (GB/T 1239 / 机械设计手册) */
-import { calcLifeFromStress, SN_MATERIALS } from '@/utils/fatigue-calc'
+import { assessComponentFatigue, calcMeanStressEffectiveAmplitude } from '@/utils/fatigue-calc'
 
 /** G 默认 80000 MPa（手册弹簧钢丝）；[τ] 为许用切应力 MPa */
 export const SPRING_MATERIALS = {
@@ -74,12 +74,7 @@ export function calcUnwindLength(meanDiameter, totalCoils) {
 
 /** 弹簧切应力幅值 + 平均应力 → Goodman/Soderberg 等效幅值 */
 export function calcSpringEffectiveAmplitude(tauAmp, tauMean, method = 'goodman') {
-  if (!tauAmp || tauAmp <= 0) return 0
-  const m = SN_MATERIALS.spring_steel
-  const denom = method === 'soderberg' ? m.yieldMin : m.uts
-  if (tauMean <= 0) return tauAmp
-  if (tauMean >= denom) return Infinity
-  return tauAmp / (1 - tauMean / denom)
+  return calcMeanStressEffectiveAmplitude(tauAmp, tauMean, 'spring_steel', method, 'shear')
 }
 
 /** 压缩弹簧稳定性 (简化 slenderness) */
@@ -219,23 +214,36 @@ export function analyzeSpring(input) {
   }
 
   if (calcMode === 'professional') {
-    const fMin = input.loadMin ?? heightLoads.install ?? 0
-    const fMax = input.loadMax ?? heightLoads.working ?? force
+    const useHeightFatigue =
+      usesHeightLoads && input.installHeight != null && input.workingHeight != null
+    const fMin = useHeightFatigue
+      ? (heightLoads.install ?? 0)
+      : (input.loadMin ?? heightLoads.install ?? 0)
+    const fMax = useHeightFatigue
+      ? (heightLoads.working ?? force)
+      : (input.loadMax ?? heightLoads.working ?? force)
     const tauMin = calcSpringShearStress(fMin, d, D2)
     const tauMax = calcSpringShearStress(fMax, d, D2)
     const tauAmp = (tauMax - tauMin) / 2
     const tauMean = (tauMax + tauMin) / 2
     const meanMethod = input.meanStressMethod ?? 'goodman'
-    const tauEff = calcSpringEffectiveAmplitude(tauAmp, tauMean, meanMethod)
-    const life = calcLifeFromStress('spring_steel', tauEff)
+    const fatigue = assessComponentFatigue({
+      snMaterial: 'spring_steel',
+      stressMode: 'shear',
+      stressAmplitude: tauAmp,
+      meanStress: tauMean,
+      meanStressMethod: meanMethod,
+      targetCycles: input.targetCycles ?? 1e6,
+    })
     result.loadMin = fMin
     result.loadMax = fMax
+    result.fatigueFromHeights = useHeightFatigue
     result.shearAmplitude = tauAmp
     result.shearMean = tauMean
-    result.effectiveShearAmplitude = tauEff
+    result.effectiveShearAmplitude = fatigue.effectiveAmplitude
     result.meanStressMethod = meanMethod
-    result.fatigueLife = life
-    result.fatiguePass = life >= (input.targetCycles ?? 1e6)
+    result.fatigueLife = fatigue.fatigueLife
+    result.fatiguePass = fatigue.fatiguePass
     result.pass = result.pass && result.fatiguePass
   }
 

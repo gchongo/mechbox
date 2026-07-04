@@ -5,9 +5,13 @@
       <p class="mech-diagram__hint"><MathContent :text="dm(freeLength ? dt('hintWithH0') : dt('hint'))" /></p>
     </header>
 
+    <!--
+      固定示意：弹簧中心线 x∈[200,280] 对应 D₂，右端 x=280 贴线圈；
+      d 圆截面在右线圈上，H₀ 尺寸线在最右侧 x=350，避免与 d 标注重叠。
+    -->
     <svg
       class="mech-diagram__svg"
-      viewBox="0 0 480 240"
+      viewBox="0 0 480 260"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       :aria-label="dt('aria')"
@@ -21,11 +25,13 @@
         </marker>
       </defs>
 
-      <rect x="100" y="34" width="280" height="8" rx="1" class="end-plate" />
-      <rect x="100" y="178" width="280" height="8" rx="1" class="end-plate" />
+      <!-- 端板 -->
+      <rect x="90" y="32" width="300" height="8" rx="1" class="end-plate" />
+      <rect x="90" y="184" width="300" height="8" rx="1" class="end-plate" />
 
+      <!-- 弹簧中心线（左右交替 200↔280） -->
       <path
-        d="M 178 48 Q 302 61 178 74 Q 302 87 178 100 Q 302 113 178 126 Q 302 139 178 152 Q 302 165 178 174"
+        d="M 200 48 Q 280 62 200 76 Q 280 90 200 104 Q 280 118 200 132 Q 280 146 200 160 Q 280 174 200 180"
         fill="none"
         stroke="#409eff"
         stroke-width="3"
@@ -33,28 +39,34 @@
         stroke-linejoin="round"
       />
 
-      <line x1="240" y1="12" x2="240" y2="32" stroke="#8b5cf6" stroke-width="2" marker-end="url(#spr-arr-blue)" />
-      <text x="248" y="22" class="lbl-force">F</text>
+      <!-- 载荷 F -->
+      <line x1="240" y1="10" x2="240" y2="30" stroke="#8b5cf6" stroke-width="2" marker-end="url(#spr-arr-blue)" />
+      <text x="248" y="20" class="lbl-force">F</text>
 
-      <line x1="162" y1="48" x2="162" y2="174" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
-      <line x1="168" y1="48" x2="156" y2="48" class="ext-line" />
-      <line x1="168" y1="174" x2="156" y2="174" class="ext-line" />
-      <text x="148" y="115" class="lbl-muted" text-anchor="middle">n</text>
+      <!-- 有效圈数 n（左侧，对应有效段 y=48~180） -->
+      <line x1="168" y1="48" x2="168" y2="180" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
+      <line x1="174" y1="48" x2="162" y2="48" class="ext-line" />
+      <line x1="174" y1="180" x2="162" y2="180" class="ext-line" />
+      <text x="155" y="118" class="lbl-muted" text-anchor="middle">n</text>
 
-      <circle cx="302" cy="113" r="5.5" class="wire-sample" />
-      <line x1="314" y1="113" x2="326" y2="113" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
-      <line x1="307" y1="113" x2="314" y2="113" class="ext-line" />
-      <text x="332" y="117" class="lbl-muted">d</text>
+      <!-- 线径 d：圆心在右线圈 (280,118)，竖向尺寸线 -->
+      <circle cx="280" cy="118" r="7" class="wire-sample" />
+      <line x1="280" y1="108" x2="280" y2="128" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
+      <line x1="274" y1="108" x2="286" y2="108" class="ext-line" />
+      <line x1="274" y1="128" x2="286" y2="128" class="ext-line" />
+      <text x="292" y="122" class="lbl-muted">d</text>
 
-      <line x1="178" y1="111" x2="178" y2="196" class="ext-line" />
-      <line x1="302" y1="111" x2="302" y2="196" class="ext-line" />
-      <line x1="178" y1="196" x2="302" y2="196" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
-      <text x="240" y="212" class="lbl-primary" text-anchor="middle">D2</text>
+      <!-- 中径 D₂：底部水平尺寸，端点对准线圈中心 x=200、280 -->
+      <line x1="200" y1="114" x2="200" y2="210" class="ext-line" />
+      <line x1="280" y1="114" x2="280" y2="210" class="ext-line" />
+      <line x1="200" y1="210" x2="280" y2="210" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
+      <text x="240" y="228" class="lbl-primary" text-anchor="middle">D2</text>
 
-      <line x1="178" y1="48" x2="328" y2="48" class="ext-line" />
-      <line x1="178" y1="174" x2="328" y2="174" class="ext-line" />
-      <line x1="328" y1="48" x2="328" y2="174" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
-      <text x="340" y="115" class="lbl-primary">H0</text>
+      <!-- 自由高度 H₀：最右侧独立尺寸线，不与 d 重叠 -->
+      <line x1="350" y1="40" x2="350" y2="184" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
+      <line x1="356" y1="40" x2="344" y2="40" class="ext-line" />
+      <line x1="356" y1="184" x2="344" y2="184" class="ext-line" />
+      <text x="362" y="118" class="lbl-primary">H0</text>
     </svg>
 
     <dl class="mech-diagram__params">
