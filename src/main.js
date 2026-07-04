@@ -18,24 +18,43 @@ import CalcFormItem from './components/calc/CalcFormItem.vue'
 import ResultLabel from './components/common/ResultLabel.vue'
 import SvgMathText from './components/common/SvgMathText.vue'
 
-const app = createApp(App)
-
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
+/** SW 误把 /api/* 当 SPA 路由时会白屏；注销 SW 后重载一次即可 */
+async function recoverFromApiSwTrap() {
+  if (!window.location.pathname.startsWith('/api/')) return false
+  if (!('serviceWorker' in navigator)) {
+    window.location.replace(window.location.pathname + window.location.search)
+    return true
+  }
+  const regs = await navigator.serviceWorker.getRegistrations()
+  await Promise.all(regs.map((r) => r.unregister()))
+  window.location.replace(window.location.pathname + window.location.search)
+  return true
 }
 
-app.component('MathTex', MathTex)
-app.component('MathContent', MathContent)
-app.component('FormMathLabel', FormMathLabel)
-app.component('CalcFormItem', CalcFormItem)
-app.component('ResultLabel', ResultLabel)
-app.component('SvgMathText', SvgMathText)
+function bootstrap() {
+  const app = createApp(App)
 
-app.use(ElementPlus)
-app.use(router)
-initSettings()
-initAuth()
-router.isReady().then(() => {
-  applySeoMeta(router.currentRoute.value)
-  app.mount('#app')
+  for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component)
+  }
+
+  app.component('MathTex', MathTex)
+  app.component('MathContent', MathContent)
+  app.component('FormMathLabel', FormMathLabel)
+  app.component('CalcFormItem', CalcFormItem)
+  app.component('ResultLabel', ResultLabel)
+  app.component('SvgMathText', SvgMathText)
+
+  app.use(ElementPlus)
+  app.use(router)
+  initSettings()
+  initAuth()
+  router.isReady().then(() => {
+    applySeoMeta(router.currentRoute.value)
+    app.mount('#app')
+  })
+}
+
+recoverFromApiSwTrap().then((trapped) => {
+  if (!trapped) bootstrap()
 })

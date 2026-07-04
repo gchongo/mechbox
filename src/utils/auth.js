@@ -74,7 +74,13 @@ export function clearAuthCache() {
 export function startLogin(returnPath) {
   const path = returnPath || `${window.location.pathname}${window.location.search}`
   const safe = path.startsWith('/') && !path.startsWith('//') ? path : '/'
-  window.location.href = `${API_BASE}/auth/login?return=${encodeURIComponent(safe)}`
+  // 经静态网关页跳转，避免旧版 PWA Service Worker 拦截 /api 导致白屏
+  window.location.href = `/auth-login.html?return=${encodeURIComponent(safe)}`
+}
+
+export function loginGatewayUrl(returnPath = '/account') {
+  const safe = returnPath.startsWith('/') && !returnPath.startsWith('//') ? returnPath : '/account'
+  return `/auth-login.html?return=${encodeURIComponent(safe)}`
 }
 
 export async function logout() {

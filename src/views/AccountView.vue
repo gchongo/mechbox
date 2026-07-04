@@ -28,9 +28,12 @@
       <p class="mb-4 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         {{ ct('account.loginHint') }}
       </p>
-      <el-button type="primary" size="large" @click="handleLogin">
+      <a
+        :href="loginUrl"
+        class="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2.5 text-base font-medium text-white hover:bg-primary/90"
+      >
         {{ ct('account.loginWithCax') }}
-      </el-button>
+      </a>
       <p class="mt-4 text-xs text-gray-500">
         <a
           :href="FORUM_REGISTER_URL"
@@ -74,10 +77,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { startLogin, logout } from '@/utils/auth'
+import { logout, loginGatewayUrl } from '@/utils/auth'
 import { useAuth } from '@/composables/useAuth'
 import { ensureLoggedIn } from '@/utils/auth-guard'
 import { getFavorites } from '@/utils/favorites'
@@ -99,6 +102,11 @@ const favoriteRecords = computed(() => {
   return getHistory().filter((h) => favIds.includes(h.id))
 })
 
+const loginUrl = computed(() => {
+  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/account'
+  return loginGatewayUrl(redirect)
+})
+
 onMounted(async () => {
   await refresh()
   if (route.query.auth_error) {
@@ -106,24 +114,9 @@ onMounted(async () => {
   }
 })
 
-watch(
-  () => route.query.redirect,
-  async (redirect) => {
-    if (redirect && !user.value) {
-      await ensureLoggedIn(locale.value)
-    }
-  },
-  { immediate: true },
-)
-
 function formatDate(iso) {
   const loc = locale.value === 'en' ? 'en-US' : 'zh-CN'
   return new Date(iso).toLocaleString(loc)
-}
-
-function handleLogin() {
-  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/account'
-  startLogin(redirect)
 }
 
 async function handleLogout() {

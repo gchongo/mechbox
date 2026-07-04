@@ -29,8 +29,16 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        // 勿把 /api 登录跳转交给 SPA 离线回退，否则会白屏
+        // 关闭 SW 导航回退：/api 登录跳转不能被 index.html 接管（会白屏）
+        // 在线时由 Nginx try_files 处理 SPA 路由即可
+        navigateFallback: null,
         navigateFallbackDenylist: [/^\/api\//],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+            handler: 'NetworkOnly',
+          },
+        ],
       },
     }),
   ],
