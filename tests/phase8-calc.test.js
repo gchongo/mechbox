@@ -11,7 +11,9 @@ import {
   formatHistoryStatus,
   getToolRoute,
   getToolReplayRecord,
+  resolveHistoryOpenTarget,
   saveToolHistory,
+  toolSupportsReplay,
   TOOL_META,
 } from '@/utils/calc-history'
 import { getHistory, deleteAnalysis, saveAnalysis } from '@/utils/storage'
@@ -108,6 +110,45 @@ describe('calc-history', () => {
     const replay = getToolReplayRecord(entry.id, 'fit')
     expect(replay?.id).toBe(entry.id)
     expect(getToolReplayRecord(entry.id, 'weld')).toBe(null)
+  })
+
+  it('only whitelisted tools support input replay', () => {
+    expect(toolSupportsReplay('fit')).toBe(true)
+    expect(toolSupportsReplay('gdt-stack')).toBe(true)
+    expect(toolSupportsReplay('weld')).toBe(true)
+    expect(toolSupportsReplay('beam')).toBe(false)
+    expect(toolSupportsReplay('bolt-preload')).toBe(false)
+
+    const beamEntry = saveToolHistory({ tool: 'beam', title: '梁', status: 'pass' })
+    savedIds.push(beamEntry.id)
+    expect(buildToolReplayRoute(beamEntry)).toBe(null)
+  })
+
+  it('resolveHistoryOpenTarget routes editor vs replay vs blank tool', () => {
+    const editorEntry = saveAnalysis({
+      source: 'editor',
+      title: '链',
+      data: { closedRing: { min: 0, max: 1 } },
+    })
+    savedIds.push(editorEntry.id)
+    expect(resolveHistoryOpenTarget(editorEntry)).toEqual({
+      kind: 'editor',
+      id: String(editorEntry.id),
+    })
+
+    const fitEntry = saveToolHistory({ tool: 'fit', title: '配合', status: 'pass', input: {} })
+    savedIds.push(fitEntry.id)
+    const fitTarget = resolveHistoryOpenTarget(fitEntry)
+    expect(fitTarget.kind).toBe('replay')
+    expect(fitTarget.route.path).toBe('/fit')
+
+    const beamEntry = saveToolHistory({ tool: 'beam', title: '梁', status: 'pass' })
+    savedIds.push(beamEntry.id)
+    expect(resolveHistoryOpenTarget(beamEntry)).toEqual({
+      kind: 'tool-blank',
+      path: '/beam',
+      tool: 'beam',
+    })
   })
 
   it('preserves review status and snapshot warnings in tool history', () => {

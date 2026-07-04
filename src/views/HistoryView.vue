@@ -76,11 +76,12 @@ import { getHistory, deleteAnalysis } from '@/utils/storage'
 import { isFavorite, toggleFavorite, removeFavorite } from '@/utils/favorites'
 import { exportMergedHistoryPdf } from '@/utils/export'
 import {
-  buildToolReplayRoute,
+  buildSummaryRows,
   formatHistorySource,
   formatHistoryStatus,
   formatHistoryTitle,
   formatHistoryType,
+  resolveHistoryOpenTarget,
 } from '@/utils/calc-history'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { ensureLoggedIn } from '@/utils/auth-guard'
@@ -111,15 +112,28 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString(loc, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-function openRecord(row) {
-  if (row.source === 'tool' && row.tool) {
-    const replayRoute = buildToolReplayRoute(row)
-    if (replayRoute) {
-      router.push(replayRoute)
-      return
-    }
+async function openRecord(row) {
+  const target = resolveHistoryOpenTarget(row)
+  if (target.kind === 'editor') {
+    router.push({ name: 'editor-detail', params: { id: target.id } })
+    return
   }
-  router.push({ name: 'editor-detail', params: { id: row.id } })
+  if (target.kind === 'replay') {
+    router.push(target.route)
+    return
+  }
+  if (target.kind === 'tool-blank') {
+    ElMessage.warning(ct('history.replayUnsupported'))
+    router.push(target.path)
+    return
+  }
+  const summary = buildSummaryRows(row, locale.value)
+  const body = summary.length
+    ? summary.map((s) => `${s.label}: ${s.value}`).join('\n')
+    : ct('history.summaryOnlyBody')
+  await ElMessageBox.alert(body, ct('history.summaryOnlyTitle'), {
+    confirmButtonText: ct('history.confirmTitle'),
+  })
 }
 
 async function toggleFav(id) {

@@ -15,6 +15,13 @@ export const TOOL_META = {
   beam: { label: '梁挠度', route: '/beam' },
 }
 
+/** L1: only these tools restore saved inputs from historyId query */
+export const REPLAY_SUPPORTED_TOOLS = new Set(['fit', 'gdt-stack', 'weld'])
+
+export function toolSupportsReplay(tool) {
+  return REPLAY_SUPPORTED_TOOLS.has(tool)
+}
+
 export function normalizeHistoryStatus(status) {
   if (status === 'pass' || status === 'review' || status === 'fail') return status
   return 'draft'
@@ -42,12 +49,35 @@ export function getToolRoute(tool) {
 }
 
 export function buildToolReplayRoute(record) {
-  const route = getToolRoute(record?.tool)
-  if (!route || !record?.id) return null
+  if (!record?.id || (record.source ?? 'editor') !== 'tool') return null
+  if (!toolSupportsReplay(record.tool)) return null
+  const route = getToolRoute(record.tool)
+  if (!route) return null
   return {
     path: route,
     query: { historyId: String(record.id), replay: 'history' },
   }
+}
+
+/**
+ * Resolve how a history row should open (editor reload, input replay, or tool page without replay).
+ * @returns {{ kind: 'editor', id: string } | { kind: 'replay', route: object } | { kind: 'tool-blank', path: string, tool: string } | { kind: 'summary-only', record: object }}
+ */
+export function resolveHistoryOpenTarget(record) {
+  if (!record?.id) return { kind: 'summary-only', record }
+  const source = record.source ?? 'editor'
+  if (source !== 'tool') {
+    return { kind: 'editor', id: String(record.id) }
+  }
+  const replayRoute = buildToolReplayRoute(record)
+  if (replayRoute) {
+    return { kind: 'replay', route: replayRoute }
+  }
+  const path = getToolRoute(record.tool)
+  if (path) {
+    return { kind: 'tool-blank', path, tool: record.tool }
+  }
+  return { kind: 'summary-only', record }
 }
 
 export function getToolReplayRecord(historyId, tool) {

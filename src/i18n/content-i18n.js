@@ -143,6 +143,9 @@ export const contentZh = {
     excelColType: '类型',
     toolCalcTitle: '{tool} 计算',
     untitled: '未命名',
+    replayUnsupported: '当前版本暂不支持从此记录还原输入，已打开工具页；请以历史摘要或导出报告为准。',
+    summaryOnlyTitle: '历史记录摘要',
+    summaryOnlyBody: '该记录暂无法跳转到对应工具页，请在此查看摘要。',
   },
   toolMap: {
     title: '工具地图',
@@ -356,6 +359,10 @@ export const contentEn = {
     excelColType: 'Type',
     toolCalcTitle: '{tool} calculation',
     untitled: 'Untitled',
+    replayUnsupported:
+      'This release cannot restore inputs from this record. The tool page is opened blank — use the history summary or exported report.',
+    summaryOnlyTitle: 'History summary',
+    summaryOnlyBody: 'This record cannot open a tool page. Review the summary below.',
   },
   toolMap: {
     title: 'Tool map',

@@ -49,6 +49,7 @@
       </div>
 
       <p class="app-footer__copy">{{ t('footer.copyright', { year }) }}</p>
+      <p class="app-footer__disclaimer">{{ t('footer.disclaimer') }}</p>
     </div>
   </footer>
 </template>
@@ -108,6 +109,10 @@ const learnLinks = computed(() => [
   @apply mt-4 border-t border-gray-100 pt-3 text-center text-[11px] text-gray-400 dark:border-gray-700 sm:mt-6 sm:pt-4 sm:text-xs;
 }
 
+.app-footer__disclaimer {
+  @apply mt-2 text-center text-[10px] leading-relaxed text-gray-400 dark:text-gray-500 sm:text-[11px];
+}
+
 @media (min-width: 640px) {
   .app-footer__inner {
     display: grid;
@@ -120,6 +125,10 @@ const learnLinks = computed(() => [
   }
 
   .app-footer__copy {
+    grid-column: 1 / -1;
+  }
+
+  .app-footer__disclaimer {
     grid-column: 1 / -1;
   }
 }

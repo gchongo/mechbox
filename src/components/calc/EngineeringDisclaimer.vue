@@ -4,14 +4,14 @@
     role="note"
   >
     <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-      <span class="font-medium text-gray-600 dark:text-gray-300">{{ ct('disclaimerTitle') }}：</span>
-      {{ ct('disclaimerBody') }}
+      <span class="font-medium text-gray-600 dark:text-gray-300">{{ t('calc.common.disclaimerTitle') }}：</span>
+      {{ t('calc.common.disclaimerBody') }}
     </p>
   </aside>
 </template>
 
 <script setup>
-import { useCalcPage } from '@/composables/useCalcPage'
+import { useLocale } from '@/composables/useLocale'
 
-const { ct } = useCalcPage('beam')
+const { t } = useLocale()
 </script>

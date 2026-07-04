@@ -23,6 +23,13 @@ function ex(key, locale = 'zh', params) {
   return t(`calc.pages.editor.export.${key}`, locale, params)
 }
 
+function productDisclaimerSection(locale = 'zh') {
+  return {
+    heading: t('calc.common.disclaimerTitle', locale),
+    text: t('product.l1DisclaimerPdf', locale),
+  }
+}
+
 function ringTypeLabel(type, locale = 'zh') {
   return type === 'increasing' ? ex('ringInc', locale) : ex('ringDec', locale)
 }
@@ -255,8 +262,9 @@ export async function exportToolReportPdf({ title, sections = [], element, filen
 
   const canvases = [await renderTextCanvas(html2canvas, headerLines, { boldFirst: true, fontSize: 11 })]
 
-  if (sections.length) {
-    canvases.push(await renderSectionsCanvas(html2canvas, sections))
+  const sectionsWithDisclaimer = [...sections, productDisclaimerSection(locale)]
+  if (sectionsWithDisclaimer.length) {
+    canvases.push(await renderSectionsCanvas(html2canvas, sectionsWithDisclaimer))
   }
   if (element) {
     canvases.push(await captureElement(element, html2canvas))
@@ -365,8 +373,9 @@ export async function exportResultPdf(element, filename, meta = {}) {
     boldFirst: true,
     fontSize: 11,
   })
+  const disclaimerCanvas = await renderSectionsCanvas(html2canvas, [productDisclaimerSection(locale)])
   const bodyCanvas = await captureElement(element, html2canvas)
-  const combined = stackCanvases([headerCanvas, bodyCanvas])
+  const combined = stackCanvases([headerCanvas, disclaimerCanvas, bodyCanvas])
 
   const pdf = new jsPDF('p', 'mm', 'a4')
   addCanvasPaginated(pdf, combined)
