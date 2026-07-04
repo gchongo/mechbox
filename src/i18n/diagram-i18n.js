@@ -55,8 +55,8 @@ export const diagramZh = {
   },
   spring: {
     title: '压缩弹簧示意',
-    hint: '线径 $d$、中径 $D_2$、有效圈数 $n$',
-    hintWithL0: '线径 $d$、中径 $D_2$、有效圈数 $n$、自由高度 $L_0$',
+    hint: '示意图固定；当前参数见下方数值表',
+    hintWithL0: '示意图固定；当前 $d$、$D_2$、$n$、$L_0$ 见下方数值表',
     aria: '压缩弹簧参数示意图',
   },
   beam: {
@@ -260,8 +260,8 @@ export const diagramEn = {
   },
   spring: {
     title: 'Compression spring',
-    hint: 'Wire $d$, mean diameter $D_2$, active coils $n$',
-    hintWithL0: 'Wire $d$, mean $D_2$, coils $n$, free length $L_0$',
+    hint: 'Fixed schematic; see parameter table below for current values',
+    hintWithL0: 'Fixed schematic; see table below for $d$, $D_2$, $n$, $L_0$',
     aria: 'Compression spring diagram',
   },
   beam: {
