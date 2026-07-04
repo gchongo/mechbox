@@ -81,6 +81,7 @@ import {
 import { downloadBackup, importFullBackup } from '@/utils/backup'
 import { useLocale } from '@/composables/useLocale'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { ensureLoggedIn } from '@/utils/auth-guard'
 
 const { locale, t } = useLocale()
 const { optionMap } = useOptionsI18n()
@@ -113,13 +114,16 @@ function reset() {
   ElMessage.info(t('settings.resetDone'))
 }
 
-function handleExportBackup() {
+async function handleExportBackup() {
+  if (!(await ensureLoggedIn(locale.value))) return
   downloadBackup()
   ElMessage.success(t('settings.backupExported'))
 }
 
 function triggerImport() {
-  fileInput.value?.click()
+  void ensureLoggedIn(locale.value).then((user) => {
+    if (user) fileInput.value?.click()
+  })
 }
 
 function handleImport(event) {

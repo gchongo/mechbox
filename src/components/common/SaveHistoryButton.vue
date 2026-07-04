@@ -8,6 +8,7 @@
 import { ElMessage } from 'element-plus'
 import { saveToolHistory } from '@/utils/calc-history'
 import { useLocale } from '@/composables/useLocale'
+import { ensureLoggedIn } from '@/utils/auth-guard'
 
 const props = defineProps({
   tool: { type: String, required: true },
@@ -18,9 +19,10 @@ const props = defineProps({
   result: { type: Object, default: () => ({}) },
 })
 
-const { t } = useLocale()
+const { t, locale } = useLocale()
 
-function handleSave() {
+async function handleSave() {
+  if (!(await ensureLoggedIn(locale.value))) return
   saveToolHistory({
     tool: props.tool,
     title: props.title,

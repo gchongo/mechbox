@@ -77,6 +77,7 @@ import { isFavorite, toggleFavorite, removeFavorite } from '@/utils/favorites'
 import { exportMergedHistoryPdf } from '@/utils/export'
 import { formatHistorySource, formatHistoryStatus, formatHistoryTitle, formatHistoryType, getToolRoute } from '@/utils/calc-history'
 import { useContentI18n } from '@/composables/useContentI18n'
+import { ensureLoggedIn } from '@/utils/auth-guard'
 
 const router = useRouter()
 const { ct, locale } = useContentI18n()
@@ -115,7 +116,8 @@ function openRecord(row) {
   router.push({ name: 'editor-detail', params: { id: row.id } })
 }
 
-function toggleFav(id) {
+async function toggleFav(id) {
+  if (!(await ensureLoggedIn(locale.value))) return
   const added = toggleFavorite(id)
   ElMessage.success(added ? ct('history.favAdded') : ct('history.favRemoved'))
 }

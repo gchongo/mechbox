@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx'
 import { t } from '@/i18n'
+import { ensureLoggedIn } from '@/utils/auth-guard'
 import {
   formatHistorySource,
   formatHistoryStatus,
@@ -244,6 +245,7 @@ async function renderSectionsCanvas(html2canvas, sections) {
 
 export async function exportToolReportPdf({ title, sections = [], element, filename, meta = {} }) {
   const locale = meta.locale ?? 'zh'
+  if (!(await ensureLoggedIn(locale))) return
   const { html2canvas, jsPDF } = await loadPdfLibs()
 
   const headerLines = [`${title ?? ex('defaultReport', locale)}`, `${ex('date', locale)}: ${dateStamp()}`]
@@ -266,6 +268,7 @@ export async function exportToolReportPdf({ title, sections = [], element, filen
 
 /** 从历史记录合并导出 PDF */
 export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
+  if (!(await ensureLoggedIn(locale))) return
   const dateLoc = locale === 'en' ? 'en-US' : 'zh-CN'
   const sections = records.map((r, i) => {
     const data = r.data ?? {}
@@ -317,6 +320,7 @@ export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
 
 export async function exportResultPdf(element, filename, meta = {}) {
   const locale = meta.locale ?? 'zh'
+  if (!(await ensureLoggedIn(locale))) return
   const { html2canvas, jsPDF } = await loadPdfLibs()
 
   const headerLines = [
@@ -374,7 +378,8 @@ export function exportCanvasPng(canvas, filename) {
   link.click()
 }
 
-export function exportExcel(payload, filename, locale = 'zh') {
+export async function exportExcel(payload, filename, locale = 'zh') {
+  if (!(await ensureLoggedIn(locale))) return
   const wb = XLSX.utils.book_new()
 
   const summary = [

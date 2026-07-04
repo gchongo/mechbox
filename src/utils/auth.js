@@ -1,66 +1,112 @@
-const USER_KEY = 'mechbox_user'
-const SESSION_KEY = 'mechbox_session'
+const API_BASE = '/api'
 
-async function hashPassword(password) {
-  const data = new TextEncoder().encode(password)
-  const buf = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
+let cachedUser = undefined
+let inflight = null
+
+const AUTH_CHANGED = 'mechbox-auth-changed'
+
+export function onAuthChanged(listener) {
+  window.addEventListener(AUTH_CHANGED, listener)
+  return () => window.removeEventListener(AUTH_CHANGED, listener)
 }
 
-function readUser() {
-  try {
-    const raw = localStorage.getItem(USER_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
+function notifyAuthChanged() {
+  window.dispatchEvent(new Event(AUTH_CHANGED))
+}
+
+function normalizeUser(raw) {
+  if (!raw) return null
+  return {
+    id: raw.id,
+    username: raw.username,
+    name: raw.name || raw.username,
+    email: raw.email || '',
+    avatarUrl: raw.avatarUrl || '',
+    admin: !!raw.admin,
+    moderator: !!raw.moderator,
+    groups: raw.groups || [],
+    loggedInAt: raw.loggedInAt || null,
+    createdAt: raw.loggedInAt || null,
   }
+}
+
+export async function fetchCurrentUser({ force = false } = {}) {
+  if (!force && cachedUser !== undefined) {
+    return cachedUser
+  }
+  if (!force && inflight) {
+    return inflight
+  }
+
+  inflight = fetch(`${API_BASE}/auth/me`, { credentials: 'include' })
+    .then(async (res) => {
+      if (!res.ok) {
+        cachedUser = null
+        return null
+      }
+      const data = await res.json()
+      cachedUser = normalizeUser(data.user)
+      return cachedUser
+    })
+    .catch(() => {
+      cachedUser = null
+      return null
+    })
+    .finally(() => {
+      inflight = null
+    })
+
+  return inflight
 }
 
 export function getCurrentUser() {
-  const session = sessionStorage.getItem(SESSION_KEY)
-  if (!session) return null
-  const user = readUser()
-  if (!user || user.username !== session) return null
-  return { username: user.username, createdAt: user.createdAt }
+  return cachedUser ?? null
 }
 
 export function isLoggedIn() {
-  return !!getCurrentUser()
+  return !!cachedUser
 }
 
-export async function register(username, password) {
-  const name = username.trim()
-  if (!name || name.length < 2) throw new Error('用户名至少 2 个字符')
-  if (!password || password.length < 4) throw new Error('密码至少 4 个字符')
-  if (readUser()) throw new Error('本设备已注册账号，请先删除后重新注册')
+export function clearAuthCache() {
+  cachedUser = undefined
+}
 
-  const user = {
-    username: name,
-    passwordHash: await hashPassword(password),
-    createdAt: new Date().toISOString(),
+export function startLogin(returnPath) {
+  const path = returnPath || `${window.location.pathname}${window.location.search}`
+  const safe = path.startsWith('/') && !path.startsWith('//') ? path : '/'
+  window.location.href = `${API_BASE}/auth/login?return=${encodeURIComponent(safe)}`
+}
+
+export async function logout() {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+  } finally {
+    cachedUser = null
+    notifyAuthChanged()
   }
-  localStorage.setItem(USER_KEY, JSON.stringify(user))
-  sessionStorage.setItem(SESSION_KEY, name)
-  return { username: name }
 }
 
-export async function login(username, password) {
-  const user = readUser()
-  if (!user) throw new Error('尚未注册，请先注册')
-  if (user.username !== username.trim()) throw new Error('用户名不正确')
-  const hash = await hashPassword(password)
-  if (hash !== user.passwordHash) throw new Error('密码不正确')
-  sessionStorage.setItem(SESSION_KEY, user.username)
-  return { username: user.username }
+export async function initAuth() {
+  const user = await fetchCurrentUser({ force: true })
+  notifyAuthChanged()
+  return user
 }
 
-export function logout() {
-  sessionStorage.removeItem(SESSION_KEY)
+/** @deprecated 本机账号已移除，请使用 startLogin */
+export async function login() {
+  startLogin()
+  return null
 }
 
+/** @deprecated */
+export async function register() {
+  throw new Error('请使用 CAX 论坛账号登录')
+}
+
+/** @deprecated */
 export function deleteAccount() {
   logout()
-  localStorage.removeItem(USER_KEY)
 }

@@ -1,63 +1,54 @@
 <template>
   <div class="mx-auto flex max-w-2xl flex-col items-center">
     <h1 class="page-title mb-6 w-full text-center">{{ ct('account.title') }}</h1>
+
     <section v-if="user" class="card-panel w-full max-w-md">
       <div class="mb-4 flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-        <el-avatar :size="48" class="bg-primary">{{ user.username[0]?.toUpperCase() }}</el-avatar>
+        <el-avatar :size="48" class="bg-primary" :src="user.avatarUrl || undefined">
+          {{ user.username[0]?.toUpperCase() }}
+        </el-avatar>
         <div>
-          <p class="font-semibold">{{ user.username }}</p>
-          <p class="text-xs text-gray-500">{{ ct('account.registered', { date: formatDate(user.createdAt) }) }}</p>
+          <p class="font-semibold">{{ user.name || user.username }}</p>
+          <p class="text-xs text-gray-500">@{{ user.username }}</p>
+          <p v-if="user.loggedInAt" class="text-xs text-gray-500">
+            {{ ct('account.registered', { date: formatDate(user.loggedInAt) }) }}
+          </p>
         </div>
       </div>
       <div class="flex flex-wrap justify-center gap-2 sm:justify-start">
         <el-button @click="handleBackup">{{ ct('account.exportBackup') }}</el-button>
         <el-button @click="router.push('/history')">{{ ct('account.myHistory') }}</el-button>
-        <el-button type="warning" plain @click="logout">{{ ct('account.logout') }}</el-button>
-        <el-button type="danger" plain @click="confirmDelete">{{ ct('account.deleteAccount') }}</el-button>
+        <el-button type="warning" plain :loading="loggingOut" @click="handleLogout">
+          {{ ct('account.logout') }}
+        </el-button>
       </div>
     </section>
 
-    <section v-else class="card-panel w-full max-w-md">
-      <el-tabs v-model="tab" class="account-tabs">
-        <el-tab-pane :label="ct('account.loginTab')" name="login">
-          <el-form label-width="80px" class="mt-2">
-            <el-form-item :label="ct('account.username')">
-              <el-input v-model="loginForm.username" />
-            </el-form-item>
-            <el-form-item :label="ct('account.password')">
-              <el-input v-model="loginForm.password" type="password" show-password />
-            </el-form-item>
-            <div class="text-center sm:text-left">
-              <el-button type="primary" :loading="loading" @click="doLogin">{{ ct('account.login') }}</el-button>
-            </div>
-          </el-form>
-        </el-tab-pane>
-        <el-tab-pane :label="ct('account.registerTab')" name="register">
-          <el-form label-width="80px" class="mt-2">
-            <el-form-item :label="ct('account.username')">
-              <el-input v-model="registerForm.username" :placeholder="ct('account.usernameMin')" />
-            </el-form-item>
-            <el-form-item :label="ct('account.password')">
-              <el-input v-model="registerForm.password" type="password" show-password :placeholder="ct('account.passwordMin')" />
-            </el-form-item>
-            <el-form-item :label="ct('account.confirmPassword')">
-              <el-input v-model="registerForm.confirm" type="password" show-password />
-            </el-form-item>
-            <div class="text-center sm:text-left">
-              <el-button type="primary" :loading="loading" @click="doRegister">{{ ct('account.register') }}</el-button>
-            </div>
-          </el-form>
-        </el-tab-pane>
-      </el-tabs>
+    <section v-else class="card-panel w-full max-w-md text-center">
+      <p class="mb-4 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+        {{ ct('account.loginHint') }}
+      </p>
+      <el-button type="primary" size="large" @click="handleLogin">
+        {{ ct('account.loginWithCax') }}
+      </el-button>
+      <p class="mt-4 text-xs text-gray-500">
+        <a
+          :href="FORUM_REGISTER_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary hover:underline"
+        >
+          {{ ct('account.registerOnForum') }}
+        </a>
+      </p>
     </section>
 
     <p class="mt-6 w-full max-w-md text-center text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-      {{ ct('account.localAccountNote') }}
       <a
         :href="FORUM_URL"
         target="_blank"
         rel="noopener noreferrer"
-        class="mt-1 block text-primary hover:underline"
+        class="text-primary hover:underline"
       >
         {{ ct('account.forumLink') }}
       </a>
@@ -83,90 +74,70 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  getCurrentUser,
-  login,
-  register,
-  logout as authLogout,
-  deleteAccount,
-} from '@/utils/auth'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { startLogin, logout } from '@/utils/auth'
+import { useAuth } from '@/composables/useAuth'
+import { ensureLoggedIn } from '@/utils/auth-guard'
 import { getFavorites } from '@/utils/favorites'
 import { getHistory } from '@/utils/storage'
 import { downloadBackup } from '@/utils/backup'
 import { FORUM_URL } from '@/constants/external-links'
 import { useContentI18n } from '@/composables/useContentI18n'
 
+const FORUM_REGISTER_URL = `${FORUM_URL}/signup`
+
 const router = useRouter()
+const route = useRoute()
 const { ct, locale } = useContentI18n()
-const user = ref(null)
-const tab = ref('login')
-const loading = ref(false)
-const loginForm = ref({ username: '', password: '' })
-const registerForm = ref({ username: '', password: '', confirm: '' })
+const { user, refresh } = useAuth()
+const loggingOut = ref(false)
 
 const favoriteRecords = computed(() => {
   const favIds = getFavorites()
   return getHistory().filter((h) => favIds.includes(h.id))
 })
 
-onMounted(refresh)
+onMounted(async () => {
+  await refresh()
+  if (route.query.auth_error) {
+    ElMessage.error(ct('account.authError'))
+  }
+})
 
-function refresh() {
-  user.value = getCurrentUser()
-}
+watch(
+  () => route.query.redirect,
+  async (redirect) => {
+    if (redirect && !user.value) {
+      await ensureLoggedIn(locale.value)
+    }
+  },
+  { immediate: true },
+)
 
 function formatDate(iso) {
   const loc = locale.value === 'en' ? 'en-US' : 'zh-CN'
   return new Date(iso).toLocaleString(loc)
 }
 
-async function doLogin() {
-  loading.value = true
+function handleLogin() {
+  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/account'
+  startLogin(redirect)
+}
+
+async function handleLogout() {
+  loggingOut.value = true
   try {
-    user.value = await login(loginForm.value.username, loginForm.value.password)
-    ElMessage.success(ct('account.loginSuccess'))
-  } catch (e) {
-    ElMessage.error(e.message)
+    await logout()
+    ElMessage.info(ct('account.loggedOut'))
   } finally {
-    loading.value = false
+    loggingOut.value = false
   }
 }
 
-async function doRegister() {
-  if (registerForm.value.password !== registerForm.value.confirm) {
-    ElMessage.error(ct('account.passwordMismatch'))
-    return
-  }
-  loading.value = true
-  try {
-    user.value = await register(registerForm.value.username, registerForm.value.password)
-    ElMessage.success(ct('account.registerSuccess'))
-  } catch (e) {
-    ElMessage.error(e.message)
-  } finally {
-    loading.value = false
-  }
-}
-
-function logout() {
-  authLogout()
-  user.value = null
-  ElMessage.info(ct('account.loggedOut'))
-}
-
-async function confirmDelete() {
-  await ElMessageBox.confirm(ct('account.deleteConfirm'), ct('account.deleteTitle'), {
-    type: 'warning',
-  })
-  deleteAccount()
-  user.value = null
-  ElMessage.success(ct('account.accountDeleted'))
-}
-
-function handleBackup() {
+async function handleBackup() {
+  if (!(await ensureLoggedIn(locale.value))) return
   downloadBackup()
   ElMessage.success(ct('account.backupDownloaded'))
 }

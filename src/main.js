@@ -10,6 +10,7 @@ import './assets/styles/main.css'
 import 'katex/dist/katex.min.css'
 import { initSettings } from './utils/settings'
 import { applySeoMeta } from './utils/seo-meta'
+import { initAuth } from './utils/auth'
 import MathTex from './components/common/MathTex.vue'
 import MathContent from './components/common/MathContent.vue'
 import FormMathLabel from './components/common/FormMathLabel.vue'
@@ -33,6 +34,7 @@ app.component('SvgMathText', SvgMathText)
 app.use(ElementPlus)
 app.use(router)
 initSettings()
+initAuth()
 router.isReady().then(() => {
   applySeoMeta(router.currentRoute.value)
   app.mount('#app')

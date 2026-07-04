@@ -119,7 +119,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getCurrentUser } from '@/utils/auth'
+import { useAuth } from '@/composables/useAuth'
 import { getSettings } from '@/utils/settings'
 import { FORUM_URL } from '@/constants/external-links'
 import { t, localizedToolLabel } from '@/i18n'
@@ -128,7 +128,7 @@ import LocaleToggle from '@/components/layout/LocaleToggle.vue'
 
 const route = useRoute()
 const router = useRouter()
-const user = ref(null)
+const { user } = useAuth()
 const locale = ref(getSettings().locale ?? 'zh')
 
 const navItems = computed(() => [
@@ -200,21 +200,13 @@ const allToolPaths = computed(() => [
   ...toolGroups.value.material,
 ].map((item) => item.path))
 
-const morePaths = ['/tools', '/cases', '/manual', '/tutorial', '/glossary', '/faq', '/quiz', '/history']
-
-const toolsActive = computed(() => allToolPaths.value.some((p) => route.path.startsWith(p)))
-const moreActive = computed(() => morePaths.some((p) => route.path.startsWith(p)))
-
-function refreshUser() {
-  user.value = getCurrentUser()
-}
+const morePaths = ['/tools', '/cases', '/manual', '/tutorial', '/glossary', '/faq', '/quiz']
 
 function onSettingsChange(e) {
   locale.value = e.detail?.locale ?? getSettings().locale ?? 'zh'
 }
 
 onMounted(() => {
-  refreshUser()
   window.addEventListener('mechbox-settings', onSettingsChange)
 })
 
@@ -222,7 +214,8 @@ onUnmounted(() => {
   window.removeEventListener('mechbox-settings', onSettingsChange)
 })
 
-watch(() => route.path, refreshUser)
+const toolsActive = computed(() => allToolPaths.value.some((p) => route.path.startsWith(p)))
+const moreActive = computed(() => morePaths.some((p) => route.path.startsWith(p)))
 
 function navLinkClass(path) {
   const active = isActive(path)

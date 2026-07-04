@@ -2,7 +2,7 @@
   <section class="card-panel mb-6">
     <div class="flex flex-wrap items-center gap-3">
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ ct('model') }}</span>
-      <el-radio-group :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">
+      <el-radio-group :model-value="modelValue" @change="onModeChange">
         <el-radio-button value="simple">{{ ct('simple') }}</el-radio-button>
         <el-radio-button value="complete">{{ ct('complete') }}</el-radio-button>
         <el-radio-button value="professional">{{ ct('professional') }}</el-radio-button>
@@ -28,8 +28,11 @@
 
 <script setup>
 import { computed } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import { enrichMathText } from '@/utils/math-label'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { fetchCurrentUser, startLogin } from '@/utils/auth'
+import { t } from '@/i18n'
 
 const props = defineProps({
   modelValue: { type: String, default: 'simple' },
@@ -39,9 +42,9 @@ const props = defineProps({
   hintProfessional: { type: String, default: '' },
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
 
-const { pt, ct } = useCalcPage(props.pageKey)
+const { pt, ct, locale } = useCalcPage(props.pageKey)
 
 const hintSimple = computed(() => props.hintSimple || pt('hintSimple'))
 const hintComplete = computed(() => props.hintComplete || pt('hintComplete'))
@@ -54,4 +57,28 @@ const modeHintRich = computed(() =>
     props.modelValue === 'complete' ? hintComplete.value : hintProfessional.value,
   ),
 )
+
+async function onModeChange(next) {
+  if (next === 'professional') {
+    const user = await fetchCurrentUser()
+    if (!user) {
+      try {
+        await ElMessageBox.confirm(
+          t('content.auth.professionalModeBody', locale.value),
+          t('content.auth.professionalModeTitle', locale.value),
+          {
+            confirmButtonText: t('content.auth.loginWithCax', locale.value),
+            cancelButtonText: t('content.auth.cancel', locale.value),
+            type: 'info',
+          },
+        )
+        startLogin()
+      } catch {
+        // keep current mode
+      }
+      return
+    }
+  }
+  emit('update:modelValue', next)
+}
 </script>

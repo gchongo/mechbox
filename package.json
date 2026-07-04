@@ -6,13 +6,18 @@
   "description": "MechBox - 机械工具箱，尺寸链叠加分析工具",
   "scripts": {
     "dev": "vite",
+    "dev:auth": "node server/index.js",
     "build": "vite build",
     "preview": "vite preview",
+    "start:auth": "node server/index.js",
     "test": "vitest run"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
+    "cookie-session": "^2.1.1",
+    "dotenv": "^16.6.1",
     "element-plus": "^2.9.0",
+    "express": "^4.22.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "katex": "^0.17.0",

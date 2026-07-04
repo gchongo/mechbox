@@ -51,6 +51,7 @@ const routes = [
     path: '/history',
     name: 'history',
     component: () => import('@/views/HistoryView.vue'),
+    meta: { requiresLogin: true },
   },
   {
     path: '/settings',
@@ -316,6 +317,17 @@ const router = createRouter({
       })
     })
   },
+})
+
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresLogin) return true
+  const { fetchCurrentUser } = await import('@/utils/auth')
+  const user = await fetchCurrentUser()
+  if (user) return true
+  return {
+    name: 'account',
+    query: { redirect: to.fullPath },
+  }
 })
 
 router.afterEach((to) => {

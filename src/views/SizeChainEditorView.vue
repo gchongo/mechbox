@@ -421,6 +421,7 @@ import { adaptSizeChain } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
+import { ensureLoggedIn } from '@/utils/auth-guard'
 import { casesEn, localizeEditorRingNames, translateRingName, translateClosedRingName } from '@/i18n/cases-i18n'
 
 const route = useRoute()
@@ -464,8 +465,9 @@ const unit = computed(() => unitLabel(closedRing.value.unit))
 
 const isFavorited = computed(() => (savedId.value ? isFavorite(savedId.value) : false))
 
-function toggleSavedFavorite() {
+async function toggleSavedFavorite() {
   if (!savedId.value) return
+  if (!(await ensureLoggedIn(locale.value))) return
   const added = toggleFavorite(savedId.value)
   ElMessage.success(added ? pt('msgFavoriteAdded') : pt('msgFavoriteRemoved'))
 }
@@ -1001,8 +1003,9 @@ async function handleExportPdf() {
 
 function handleExportExcel() {
   const date = new Date().toISOString().slice(0, 10)
-  exportExcel(buildExportPayload(), exportFilename('stackXlsx', { date }), locale.value)
-  ElMessage.success(pt('msgExcelOk'))
+  void exportExcel(buildExportPayload(), exportFilename('stackXlsx', { date }), locale.value).then(() => {
+    ElMessage.success(pt('msgExcelOk'))
+  })
 }
 
 function handleExportPng() {
