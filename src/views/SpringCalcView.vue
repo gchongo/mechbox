@@ -157,6 +157,13 @@
           <template v-if="form.calcMode === 'professional' && result.fatigueLife != null">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('fatigueSafety')" />
+              <dd class="font-mono" :class="result.fatiguePass ? 'text-success' : 'text-error'">
+                {{ result.fatigueSafetyFactor?.toFixed(2) }} (≥ {{ result.fatigueMinSafety }})
+                {{ result.fatiguePass ? '✓' : '✗' }}
+              </dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('fatigueLife')" />
               <dd class="font-mono" :class="result.fatiguePass ? 'text-success' : 'text-error'">
                 {{ formatFatigueLife(result.fatigueLife) }} {{ pr('cyclesUnit') }}

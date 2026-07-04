@@ -467,8 +467,8 @@ export const fieldsZh = {
     spring: {
       fields: {
         wireDiameter: '线径 d (mm)',
-        outerDiameter: '外径 D (mm)',
-        meanDiameter: '中径 D₂ (mm)',
+        outerDiameter: '外径 D₂ (mm)',
+        meanDiameter: '中径 D (mm)',
         activeCoils: '有效圈数 n',
         totalCoils: '总圈数 n_t',
         load: '工作载荷 F (N)',
@@ -506,6 +506,8 @@ export const fieldsZh = {
         geometryBadDesc: 'H₀ = {h0} mm < L_s = {ls} mm，弹簧无法装配，请增大自由高度或减少有效圈数',
         shearAmplitude: '切应力幅 τ_a',
         fatigueLife: '疲劳寿命 N',
+        fatigueSafety: '疲劳安全系数 S',
+        fatigueTauU0: '脉动疲劳极限 τu0',
         cyclesUnit: '次',
       },
     },
@@ -1299,8 +1301,8 @@ export const fieldsEn = {
     spring: {
       fields: {
         wireDiameter: 'Wire diameter d (mm)',
-        outerDiameter: 'Outer diameter D (mm)',
-        meanDiameter: 'Mean diameter D₂ (mm)',
+        outerDiameter: 'Outer diameter D₂ (mm)',
+        meanDiameter: 'Mean diameter D (mm)',
         activeCoils: 'Active coils n',
         totalCoils: 'Total coils n_t',
         load: 'Working load F (N)',
@@ -1338,6 +1340,8 @@ export const fieldsEn = {
         geometryBadDesc: 'H₀ = {h0} mm < L_s = {ls} mm — increase free height or reduce active coils',
         shearAmplitude: 'Shear amplitude τ_a',
         fatigueLife: 'Fatigue life N',
+        fatigueSafety: 'Fatigue safety factor S',
+        fatigueTauU0: 'Pulsating limit τu0',
         cyclesUnit: 'cycles',
       },
     },

@@ -56,7 +56,7 @@ export const diagramZh = {
   spring: {
     title: '压缩弹簧示意',
     hint: '示意图固定；当前参数见下方数值表',
-    hintWithH0: '示意图固定；当前 $d$、$D_2$、$n$、$H_0$ 见下方数值表',
+    hintWithH0: '示意图固定；当前 $d$、$D$、$n$、$H_0$ 见下方数值表',
     aria: '压缩弹簧参数示意图',
   },
   beam: {
@@ -261,7 +261,7 @@ export const diagramEn = {
   spring: {
     title: 'Compression spring',
     hint: 'Fixed schematic; see parameter table below for current values',
-    hintWithH0: 'Fixed schematic; see table below for $d$, $D_2$, $n$, $H_0$',
+    hintWithH0: 'Fixed schematic; see table below for $d$, $D$, $n$, $H_0$',
     aria: 'Compression spring diagram',
   },
   beam: {

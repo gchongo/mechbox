@@ -216,9 +216,10 @@ describe('spring-calc modes', () => {
       loadMin: 50,
       loadMax: 250,
       freeLength: 35,
+      material: '60Si2CrVA',
     })
     expect(r.shearAmplitude).toBeGreaterThan(0)
-    expect(r.fatigueLife).toBeGreaterThan(0)
+    expect(r.fatigueSafetyFactor).toBeGreaterThan(0)
   })
 
   it('shear pass is independent of solid height check', () => {
@@ -237,7 +238,7 @@ describe('spring-calc modes', () => {
     expect(r.solidPass).toBe(false)
     expect(r.geometryPass).toBe(false)
     expect(r.pass).toBe(false)
-    expect(r.solidHeight).toBeCloseTo(5.06 * 15, 2)
+    expect(r.solidHeight).toBeCloseTo(5.06 * 16.5, 2)
   })
 
   it('end type changes solid height coil count', () => {
@@ -253,9 +254,8 @@ describe('spring-calc modes', () => {
       freeLength: 80,
       endType: 'free',
     })
-    expect(fixed.solidHeight).toBeGreaterThan(free.solidHeight)
-    expect(fixed.totalCoils).toBe(base.activeCoils + 2)
-    expect(free.totalCoils).toBe(base.activeCoils + 1)
+    expect(fixed.solidHeight).toBe(base.wireDiameter * (base.activeCoils + 2))
+    expect(free.solidHeight).toBe(base.wireDiameter * (base.activeCoils + 1 + 1.5))
   })
 
   it('valid geometry passes solid check when deflection is within margin', () => {
@@ -303,7 +303,7 @@ describe('spring-calc modes', () => {
     expect(r.pass).toBe(false)
   })
 
-  it('professional fatigue uses H1/H2 loads not manual F_min/F_max', () => {
+  it('professional fatigue uses GB/T 23935 formula with H1/H2 loads', () => {
     const r = analyzeSpring({
       calcMode: 'professional',
       material: '50CrVA',
@@ -323,7 +323,8 @@ describe('spring-calc modes', () => {
     expect(r.loadMin).toBeCloseTo(37.19, 1)
     expect(r.loadMax).toBeCloseTo(55.79, 1)
     expect(r.shearAmplitude).toBeLessThan(200)
-    expect(r.shearAmplitude).toBeGreaterThan(0)
+    expect(r.fatigueSafetyFactor).toBeGreaterThan(1)
+    expect(r.fatiguePass).toBe(true)
   })
 })
 

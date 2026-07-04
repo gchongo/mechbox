@@ -60,7 +60,7 @@
       <line x1="200" y1="114" x2="200" y2="210" class="ext-line" />
       <line x1="280" y1="114" x2="280" y2="210" class="ext-line" />
       <line x1="200" y1="210" x2="280" y2="210" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
-      <text x="240" y="228" class="lbl-primary" text-anchor="middle">D2</text>
+      <text x="240" y="228" class="lbl-primary" text-anchor="middle">D</text>
 
       <!-- 自由高度 H₀：最右侧独立尺寸线，不与 d 重叠 -->
       <line x1="350" y1="40" x2="350" y2="184" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
@@ -75,11 +75,11 @@
         <dd>{{ formatMm(wireDiameter) }}</dd>
       </div>
       <div v-if="outerDiameter" class="mech-diagram__param">
-        <dt><MathContent text="$D$" /></dt>
+        <dt><MathContent text="$D_2$" /></dt>
         <dd>{{ formatMm(outerDiameter) }}</dd>
       </div>
       <div class="mech-diagram__param">
-        <dt><MathContent text="$D_2$" /></dt>
+        <dt><MathContent text="$D$" /></dt>
         <dd>{{ formatMm(meanDiameter) }}</dd>
       </div>
       <div class="mech-diagram__param">
