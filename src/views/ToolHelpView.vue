@@ -30,7 +30,6 @@
             @click="selectArticle(item.id)"
           >
             <span class="truncate">{{ item.title }}</span>
-            <el-tag size="small" effect="plain" class="shrink-0">{{ levelLabel(item.level) }}</el-tag>
           </button>
         </div>
         <el-empty v-if="!groupedArticles.length" :description="ct('help.empty')" :image-size="64" />
@@ -39,10 +38,7 @@
       <article v-if="article" class="help-article card-panel">
         <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div class="mb-1 flex flex-wrap items-center gap-2">
-              <h2 class="text-xl font-semibold">{{ article.title }}</h2>
-              <el-tag size="small" :type="levelTagType(article.level)">{{ levelLabel(article.level) }}</el-tag>
-            </div>
+            <h2 class="mb-1 text-xl font-semibold">{{ article.title }}</h2>
             <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-300">{{ article.summary }}</p>
           </div>
           <el-button
@@ -149,31 +145,6 @@
           </ul>
         </section>
 
-        <section
-          v-if="article.beginnerTips?.length || article.professionalChecks?.length"
-          class="help-section"
-        >
-          <h3 class="help-section__title">{{ ct('help.howToTrust') }}</h3>
-          <div class="grid gap-3 md:grid-cols-2">
-            <div v-if="article.beginnerTips?.length" class="help-advice">
-              <h4>{{ ct('help.beginnerTips') }}</h4>
-              <ul class="help-list">
-                <li v-for="(item, i) in article.beginnerTips" :key="i">
-                  <MathContent :text="item" />
-                </li>
-              </ul>
-            </div>
-            <div v-if="article.professionalChecks?.length" class="help-advice">
-              <h4>{{ ct('help.professionalChecks') }}</h4>
-              <ul class="help-list">
-                <li v-for="(item, i) in article.professionalChecks" :key="i">
-                  <MathContent :text="item" />
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
         <section v-if="article.standards?.length" class="help-section">
           <h3 class="help-section__title">{{ ct('help.standards') }}</h3>
           <div class="flex flex-wrap gap-2">
@@ -217,7 +188,6 @@ import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
 import {
   HELP_GROUP_ORDER,
-  HELP_LEVELS,
   getHelpArticle,
   searchHelpArticles,
 } from '@/constants/tool-help'
@@ -234,11 +204,11 @@ const activeId = ref('getting-started')
 
 function syncFromRoute() {
   const id = typeof route.params.id === 'string' ? route.params.id : ''
-  if (id && getHelpArticle(id)) {
+  if (id && getHelpArticle(id, locale.value)) {
     activeId.value = id
     return
   }
-  if (typeof route.query.tool === 'string' && getHelpArticle(route.query.tool)) {
+  if (typeof route.query.tool === 'string' && getHelpArticle(route.query.tool, locale.value)) {
     activeId.value = route.query.tool
     return
   }
@@ -248,7 +218,7 @@ function syncFromRoute() {
 syncFromRoute()
 watch(() => [route.params.id, route.query.tool], syncFromRoute)
 
-const filtered = computed(() => searchHelpArticles(keyword.value))
+const filtered = computed(() => searchHelpArticles(keyword.value, locale.value))
 
 const groupedArticles = computed(() => {
   const map = new Map()
@@ -262,27 +232,17 @@ const groupedArticles = computed(() => {
   }))
 })
 
-const article = computed(() => getHelpArticle(activeId.value) ?? filtered.value[0] ?? null)
+const article = computed(
+  () => getHelpArticle(activeId.value, locale.value) ?? filtered.value[0] ?? null,
+)
 
 const relatedArticles = computed(() => {
   const ids = article.value?.related ?? []
-  return ids.map((id) => getHelpArticle(id)).filter(Boolean)
+  return ids.map((id) => getHelpArticle(id, locale.value)).filter(Boolean)
 })
 
 function groupLabel(id) {
   return ct(`help.groups.${id}`)
-}
-
-function levelLabel(level) {
-  const node = HELP_LEVELS[level]
-  if (!node) return level
-  return locale.value === 'en' ? node.en : node.zh
-}
-
-function levelTagType(level) {
-  if (level === 'beginner') return 'success'
-  if (level === 'advanced') return 'warning'
-  return 'info'
 }
 
 function selectArticle(id) {

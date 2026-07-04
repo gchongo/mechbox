@@ -116,7 +116,7 @@
           type="info"
           :closable="false"
           show-icon
-          :title="result.xyInfo.series"
+          :title="xySeriesTitle"
           :description="`${result.xyInfo.condition} → X=${result.x}, Y=${result.y}`"
         />
         <el-alert
@@ -204,6 +204,7 @@ import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { localizedBearingSeriesLabel } from '@/i18n/bearing-series-i18n'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('bearing')
 const { rm } = useResultI18n()
@@ -229,7 +230,20 @@ const mountingOptions = computed(() => optionMap({
   'duplex-dt': { id: 'duplex-dt' },
 }, 'bearingMountings'))
 
-const seriesList = listBearingSeries()
+const seriesList = computed(() =>
+  listBearingSeries().map((s) => ({
+    ...s,
+    label: localizedBearingSeriesLabel(s.id, locale.value, s.label),
+  })),
+)
+
+const xySeriesTitle = computed(() => {
+  const raw = result.value.xyInfo?.series
+  if (!raw) return ''
+  const match = seriesList.value.find((s) => s.label === raw || s.id === form.seriesId)
+  if (match) return match.label
+  return localizedBearingSeriesLabel(form.seriesId, locale.value, raw)
+})
 
 const form = reactive({
   calcMode: 'complete',

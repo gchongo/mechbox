@@ -220,6 +220,59 @@ describe('spring-calc modes', () => {
     expect(r.shearAmplitude).toBeGreaterThan(0)
     expect(r.fatigueLife).toBeGreaterThan(0)
   })
+
+  it('shear pass is independent of solid height check', () => {
+    const r = analyzeSpring({
+      calcMode: 'complete',
+      wireDiameter: 5.06,
+      meanDiameter: 29,
+      activeCoils: 14,
+      load: 129,
+      allowableShear: 700,
+      freeLength: 40,
+      endType: 'free',
+    })
+    expect(r.shearStress).toBeCloseTo(93.1, 0)
+    expect(r.shearPass).toBe(true)
+    expect(r.solidPass).toBe(false)
+    expect(r.geometryPass).toBe(false)
+    expect(r.pass).toBe(false)
+    expect(r.solidHeight).toBeCloseTo(5.06 * 15, 2)
+  })
+
+  it('end type changes solid height coil count', () => {
+    const fixed = analyzeSpring({
+      ...base,
+      calcMode: 'complete',
+      freeLength: 80,
+      endType: 'fixed',
+    })
+    const free = analyzeSpring({
+      ...base,
+      calcMode: 'complete',
+      freeLength: 80,
+      endType: 'free',
+    })
+    expect(fixed.solidHeight).toBeGreaterThan(free.solidHeight)
+    expect(fixed.totalCoils).toBe(base.activeCoils + 2)
+    expect(free.totalCoils).toBe(base.activeCoils + 1)
+  })
+
+  it('valid geometry passes solid check when deflection is within margin', () => {
+    const r = analyzeSpring({
+      ...base,
+      calcMode: 'complete',
+      freeLength: 60,
+      load: 80,
+      allowableShear: 700,
+      endType: 'fixed',
+    })
+    expect(r.geometryPass).toBe(true)
+    expect(r.solidPass).toBe(true)
+    expect(r.shearPass).toBe(true)
+    expect(r.buckling?.bucklingPass).toBe(true)
+    expect(r.pass).toBe(true)
+  })
 })
 
 describe('bearing-calc modes', () => {

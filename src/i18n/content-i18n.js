@@ -33,7 +33,7 @@ export const contentZh = {
   },
   help: {
     title: '工具帮助文档',
-    subtitle: '面向入门用户与学生：每个工具的操作步骤、原理、公式与注意点',
+    subtitle: '每个工具的操作步骤、原理、公式与注意点',
     searchPlaceholder: '搜索工具、公式、关键词…',
     empty: '未找到匹配文档',
     openTool: '打开工具',
@@ -243,7 +243,7 @@ export const contentEn = {
   },
   help: {
     title: 'Tool help',
-    subtitle: 'Step-by-step guides, principles, formulas, and tips for beginners and students',
+    subtitle: 'Step-by-step guides, principles, formulas, and notes for each tool',
     searchPlaceholder: 'Search tools, formulas, keywords…',
     empty: 'No matching articles',
     openTool: 'Open tool',

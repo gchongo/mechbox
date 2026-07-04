@@ -62,6 +62,63 @@ export const decisionZh = {
   chainSyncDirty: '有未同步修改',
   syncToChain: '同步回设计链',
   backToChain: '返回设计链',
+
+  ringTolerance: '{name} 公差',
+  ringN: '环 {n}',
+
+  metrics: {
+    lifeHours: '额定寿命',
+    equivalentLoad: '当量动载荷 P',
+    staticSafety: '静载安全系数 S₀',
+    shearStress: '切应力 τ',
+    minDiameter: '最小轴径',
+    twistAngle: '扭转角 θ',
+    preloadResidual: '残余预紧力 F_M',
+    stress: '弯曲应力 σ',
+    crushStress: '挤压 σ_c',
+    tangentialForce: '圆周力 F',
+    deflection: '最大挠度 δ',
+    moment: '最大弯矩 M',
+    springRate: '刚度 k',
+    maxBoltForce: '最大螺栓力',
+    slipCapacity: '摩擦抗滑承载',
+    worstMargin: '极值裕度',
+    totalTolerance: '总公差',
+  },
+
+  inverse: {
+    bearing: {
+      'min-dynamic-load': '反推所需 C（满足目标寿命）',
+      'pick-standard-model': '从标准型号中挑选（满足寿命 + 内径）',
+    },
+    shaft: {
+      'min-diameter-standard': '反推最小标准直径',
+      'min-diameter-continuous': '反推最小直径（连续）',
+    },
+    'bolt-preload': {
+      'no-separation': '反推所需预紧力（避免分离）',
+    },
+    key: {
+      'min-key-length': '反推最小键长（剪切+挤压同时满足）',
+    },
+    beam: {
+      'min-diameter-round': '反推所需最小直径（实心圆截面）',
+      'max-span': '反推最大跨度（当前截面）',
+    },
+    spring: {
+      'min-wire-diameter': '反推最小线径（满足许用应力）',
+    },
+    weld: {
+      'min-leg-size': '反推最小焊脚（标准值）',
+      'min-weld-length': '反推最小焊缝长（当前焊脚）',
+    },
+    'bolt-group': {
+      'min-bolt-count': '反推最少螺栓数（满足许用）',
+    },
+    editor: {
+      'relax-critical-tolerance': '反推关键环最大公差（满足闭环）',
+    },
+  },
 }
 
 export const decisionEn = {
@@ -128,4 +185,61 @@ export const decisionEn = {
   chainSyncDirty: 'Unsaved changes',
   syncToChain: 'Sync to chain',
   backToChain: 'Back to chain',
+
+  ringTolerance: '{name} tolerance',
+  ringN: 'Ring {n}',
+
+  metrics: {
+    lifeHours: 'Rating life',
+    equivalentLoad: 'Equivalent load P',
+    staticSafety: 'Static safety S₀',
+    shearStress: 'Shear stress τ',
+    minDiameter: 'Minimum diameter',
+    twistAngle: 'Twist angle θ',
+    preloadResidual: 'Residual preload F_M',
+    stress: 'Bending stress σ',
+    crushStress: 'Crushing σ_c',
+    tangentialForce: 'Circumferential force F',
+    deflection: 'Max deflection δ',
+    moment: 'Max bending moment M',
+    springRate: 'Rate k',
+    maxBoltForce: 'Max bolt force',
+    slipCapacity: 'Slip resistance capacity',
+    worstMargin: 'Worst-case margin',
+    totalTolerance: 'Total tolerance',
+  },
+
+  inverse: {
+    bearing: {
+      'min-dynamic-load': 'Back-calculate required C (target life)',
+      'pick-standard-model': 'Pick from standard catalog (life + bore)',
+    },
+    shaft: {
+      'min-diameter-standard': 'Minimum standard diameter',
+      'min-diameter-continuous': 'Minimum diameter (continuous)',
+    },
+    'bolt-preload': {
+      'no-separation': 'Required preload (no separation)',
+    },
+    key: {
+      'min-key-length': 'Minimum key length (shear + crush)',
+    },
+    beam: {
+      'min-diameter-round': 'Minimum diameter (solid round)',
+      'max-span': 'Maximum span (current section)',
+    },
+    spring: {
+      'min-wire-diameter': 'Minimum wire diameter (allowable stress)',
+    },
+    weld: {
+      'min-leg-size': 'Minimum fillet leg (standard sizes)',
+      'min-weld-length': 'Minimum weld length (current leg)',
+    },
+    'bolt-group': {
+      'min-bolt-count': 'Minimum bolt count (allowable)',
+    },
+    editor: {
+      'relax-critical-tolerance': 'Max tolerance on critical ring (closed loop)',
+    },
+  },
 }

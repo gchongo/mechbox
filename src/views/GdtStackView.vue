@@ -217,6 +217,7 @@ import { useCalcPage } from '@/composables/useCalcPage'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { localizedAnalysisType } from '@/i18n'
 
 const route = useRoute()
 const { pt, pf, pr, fc, locale } = useCalcPage('gdt-stack')
@@ -283,7 +284,9 @@ function applyEditorPayload(payload) {
     ? payload.rings.map((r) => ({ featureKind: '', sizeTolerance: 0, ...r }))
     : form.rings
   form.datums = payload.datums ?? []
-  importedTypeName.value = payload.typeName ?? payload.typeId
+  importedTypeName.value = payload.typeId
+    ? localizedAnalysisType(payload.typeId, locale.value)
+    : (payload.typeName ?? payload.typeId)
 }
 
 onMounted(() => {

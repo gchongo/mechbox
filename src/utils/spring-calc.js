@@ -52,11 +52,24 @@ export function calcBucklingCheck(freeLength, meanDiameter, endType = 'fixed') {
   }
 }
 
+/** 并圈高度对应的总圈数（GB/T 1239 简化：磨平端 +2，一端自由 +1） */
+export function calcSolidCoils(activeCoils, endType = 'fixed') {
+  const endCoils = endType === 'free' ? 1 : 2
+  return activeCoils + endCoils
+}
+
+export function calcSolidHeight({ wireDiameter, activeCoils, totalCoils, endType }) {
+  const d = wireDiameter
+  if (!d) return 0
+  const total = totalCoils ?? calcSolidCoils(activeCoils, endType)
+  return d * total
+}
+
 export function analyzeSpring(input) {
   const calcMode = input.calcMode ?? 'simple'
   const k = calcSpringRate(input)
   const force = input.load ?? k * (input.deflection ?? 0)
-  const deflection = input.deflection ?? (input.load != null ? input.load / k : 0)
+  const deflection = input.deflection ?? (input.load != null && k > 0 ? input.load / k : 0)
   const tau = calcSpringShearStress(force, input.wireDiameter, input.meanDiameter)
   const C = calcSpringIndex(input.wireDiameter, input.meanDiameter)
   const K = calcWahlFactor(input.wireDiameter, input.meanDiameter)
@@ -64,12 +77,20 @@ export function analyzeSpring(input) {
   const matKey = input.material ?? 'custom'
   const mat = SPRING_MATERIALS[matKey] ?? SPRING_MATERIALS.custom
   const allow = input.allowableShear ?? mat.allowableShear ?? 600
+  const shearPass = tau <= allow
 
-  const totalCoils = input.totalCoils ?? input.activeCoils + 2
-  const solidHeight = input.wireDiameter * totalCoils
+  const endType = input.endType ?? 'fixed'
+  const totalCoils = input.totalCoils ?? calcSolidCoils(input.activeCoils, endType)
+  const solidHeight = calcSolidHeight({
+    wireDiameter: input.wireDiameter,
+    totalCoils,
+  })
   const freeLength = input.freeLength ?? solidHeight + deflection + 3 * input.wireDiameter
-  const maxDeflection = freeLength - solidHeight - (input.solidMargin ?? input.wireDiameter)
-  const solidPass = deflection <= maxDeflection
+  const marginD = input.solidMargin ?? input.wireDiameter
+  const geometryPass = freeLength >= solidHeight
+  const maxDeflection = geometryPass ? freeLength - solidHeight - marginD : 0
+  const solidPass = geometryPass && deflection <= maxDeflection
+  const remainingDeflectionMargin = maxDeflection - deflection
 
   const result = {
     calcMode,
@@ -81,20 +102,24 @@ export function analyzeSpring(input) {
     springIndex: C,
     solidHeight,
     freeLength,
-    pass: tau <= allow,
+    totalCoils,
+    shearPass,
     allowableShear: allow,
     materialLabel: mat.label,
+    pass: shearPass,
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
     const indexPass = C >= 4 && C <= 16
-    const buckling = calcBucklingCheck(freeLength, input.meanDiameter, input.endType ?? 'fixed')
+    const buckling = calcBucklingCheck(freeLength, input.meanDiameter, endType)
     result.indexPass = indexPass
     result.indexWarning = C < 4 ? '旋绕比过小' : C > 16 ? '旋绕比过大' : null
     result.buckling = buckling
-    result.solidMargin = maxDeflection
+    result.geometryPass = geometryPass
+    result.maxDeflection = maxDeflection
+    result.remainingDeflectionMargin = remainingDeflectionMargin
     result.solidPass = solidPass
-    result.pass = tau <= allow && indexPass && buckling.bucklingPass && solidPass
+    result.pass = shearPass && indexPass && buckling.bucklingPass && solidPass
   }
 
   if (calcMode === 'professional') {

@@ -370,7 +370,7 @@ export function adaptSpring(input) {
   const r = analyzeSpring(input)
   const keyMetrics = [
     metric('shearStress', '剪切应力 τ', r.shearStress, 'MPa', {
-      status: r.pass ? 'pass' : 'fail',
+      status: r.shearPass ? 'pass' : 'fail',
       utilization: r.allowableShear ? r.shearStress / r.allowableShear : null,
     }),
     metric('springRate', '刚度 k', r.springRate, 'N/mm'),
@@ -385,6 +385,13 @@ export function adaptSpring(input) {
       }),
     )
   }
+  if (r.solidPass != null) {
+    keyMetrics.push(
+      metric('solidMargin', '压并余量', r.remainingDeflectionMargin ?? 0, 'mm', {
+        status: r.solidPass ? 'pass' : 'fail',
+      }),
+    )
+  }
   if (r.fatigueLife != null) {
     keyMetrics.push(
       metric('fatigueLife', '疲劳寿命', r.fatigueLife, 'cyc', {
@@ -394,9 +401,11 @@ export function adaptSpring(input) {
     )
   }
   const suggestions = []
-  if (!r.pass && !r.indexPass) suggestions.push('旋绕比不在 [4, 16] 范围，调整线径/中径')
+  if (!r.shearPass) suggestions.push('切应力超过许用值：增大线径/中径或减小载荷')
+  if (!r.indexPass) suggestions.push('旋绕比不在 [4, 16] 范围，调整线径/中径')
   if (r.buckling && !r.buckling.bucklingPass) suggestions.push('存在失稳风险：缩短自由高度或改端形')
-  if (r.solidPass === false) suggestions.push('压缩量过大接近并圈：加长自由高度或减小载荷')
+  if (r.geometryPass === false) suggestions.push('自由高度小于并圈高度：增大 L₀ 或减少有效圈数')
+  else if (r.solidPass === false) suggestions.push('工作压缩量接近并圈：加长自由高度或减小载荷')
   return buildCalcResult({
     toolId: 'spring',
     toolLabel: '弹簧设计',

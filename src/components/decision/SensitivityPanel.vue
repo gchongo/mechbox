@@ -3,7 +3,12 @@
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <span class="text-sm">{{ dt('trackMetric') }}:</span>
       <el-select v-model="selectedMetric" size="small" class="!w-56">
-        <el-option v-for="m in metricOptions" :key="m" :label="m" :value="m" />
+        <el-option
+          v-for="m in metricOptions"
+          :key="m"
+          :label="metricLabel(toolId, m)"
+          :value="m"
+        />
       </el-select>
       <el-slider
         v-model="deltaPct"
@@ -66,13 +71,14 @@ import { runSensitivityAnalysis } from '@/utils/sensitivity-analysis'
 import { useDecisionI18n } from '@/composables/useDecisionI18n'
 
 const props = defineProps({
+  toolId: { type: String, default: '' },
   baseInputs: { type: Object, required: true },
   parameters: { type: Array, required: true },
   metrics: { type: Array, required: true },
   evaluate: { type: Function, required: true },
 })
 
-const { dt } = useDecisionI18n()
+const { dt, metricLabel, paramLabel } = useDecisionI18n()
 const deltaPct = ref(10)
 const selectedMetric = ref(props.metrics[0])
 const analysis = ref(null)
@@ -116,7 +122,7 @@ const tornadoRows = computed(() => {
       const eff = r.effects[selectedMetric.value] ?? {}
       return {
         parameter: r.parameter,
-        label: r.label,
+        label: paramLabel(props.toolId, r.parameter, r.label, props.baseInputs),
         swingPercent: Math.abs(eff.swingPercent ?? 0),
         lowMetric: eff.low,
         highMetric: eff.high,

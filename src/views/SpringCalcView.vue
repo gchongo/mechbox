@@ -53,18 +53,68 @@
       </section>
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-alert
+          v-if="form.calcMode !== 'simple' && result.geometryPass === false"
+          class="mb-4"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="pr('geometryBad')"
+          :description="pr('geometryBadDesc', { l0: result.freeLength.toFixed(1), ls: result.solidHeight.toFixed(1) })"
+        />
+        <div class="mb-4 flex items-center gap-2">
+          <el-tag :type="result.pass ? 'success' : 'danger'" effect="plain">
+            {{ result.pass ? ct('pass') : ct('fail') }}
+          </el-tag>
+        </div>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springRate')" /><dd class="font-mono">{{ result.springRate.toFixed(2) }} N/mm</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" /><dd class="font-mono">{{ result.deflection.toFixed(2) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress')" /><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springIndex')" /><dd class="font-mono">{{ result.springIndex?.toFixed(2) }} / {{ result.wahlFactor.toFixed(3) }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('shearStress')" />
+            <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
+              {{ result.shearStress.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
+            </dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('springIndex')" />
+            <dd class="font-mono" :class="form.calcMode === 'simple' || result.indexPass ? '' : 'text-error'">
+              {{ result.springIndex?.toFixed(2) }} / {{ result.wahlFactor.toFixed(3) }}
+              <template v-if="form.calcMode !== 'simple'">{{ result.indexPass ? ' ✓' : ' ✗' }}</template>
+            </dd>
+          </div>
           <template v-if="form.calcMode !== 'simple'">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('buckling')" /><dd class="font-mono" :class="result.buckling?.bucklingPass ? '' : 'text-error'">{{ result.buckling?.slenderness?.toFixed(2) }} (≤ {{ result.buckling?.criticalSlenderness }})</dd></div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('solidMargin')" /><dd class="font-mono">{{ result.solidPass ? pr('solidOk') : pr('solidBad') }}</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('solidHeight')" />
+              <dd class="font-mono">{{ result.solidHeight.toFixed(2) }} mm</dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('buckling')" />
+              <dd class="font-mono" :class="result.buckling?.bucklingPass ? '' : 'text-error'">
+                {{ result.buckling?.slenderness?.toFixed(2) }} (≤ {{ result.buckling?.criticalSlenderness }})
+                {{ result.buckling?.bucklingPass ? '✓' : '✗' }}
+              </dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('solidMargin')" />
+              <dd class="font-mono" :class="result.solidPass ? 'text-success' : 'text-error'">
+                <template v-if="result.geometryPass">
+                  {{ result.remainingDeflectionMargin.toFixed(2) }} mm
+                </template>
+                <template v-else>{{ pr('solidBad') }}</template>
+                {{ result.solidPass ? '✓' : '✗' }}
+              </dd>
+            </div>
           </template>
-          <template v-if="form.calcMode === 'professional' && result.fatigueLife">
+          <template v-if="form.calcMode === 'professional' && result.fatigueLife != null">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueLife')" /><dd class="font-mono">{{ result.fatigueLife?.toLocaleString() }} {{ pr('cyclesUnit') }}</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('fatigueLife')" />
+              <dd class="font-mono" :class="result.fatiguePass ? 'text-success' : 'text-error'">
+                {{ formatFatigueLife(result.fatigueLife) }} {{ pr('cyclesUnit') }}
+                {{ result.fatiguePass ? '✓' : '✗' }}
+              </dd>
+            </div>
           </template>
         </dl>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
@@ -131,5 +181,10 @@ function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {
     form[variable] = Number(value.toFixed ? value.toFixed(2) : value)
   }
+}
+
+function formatFatigueLife(life) {
+  if (life === Infinity) return '∞'
+  return life?.toLocaleString?.() ?? String(life)
 }
 </script>

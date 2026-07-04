@@ -19,6 +19,7 @@
       </el-tab-pane>
       <el-tab-pane :label="dt('tabSensitivity')" name="sensitivity">
         <SensitivityPanel
+          :tool-id="preset.toolId"
           :base-inputs="sensitivityBaseInputs"
           :parameters="sensitivityParameters"
           :metrics="preset.sensitivity.metrics"

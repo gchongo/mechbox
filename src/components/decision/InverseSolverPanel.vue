@@ -5,7 +5,7 @@
         <el-option
           v-for="inv in preset.inverse"
           :key="inv.id"
-          :label="inv.label"
+          :label="inverseLabel(preset.toolId, inv.id, inv.label)"
           :value="inv.id"
         />
       </el-select>
@@ -123,7 +123,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['apply'])
-const { dt } = useDecisionI18n()
+const { dt, inverseLabel } = useDecisionI18n()
 
 const selectedId = ref(props.preset.inverse[0]?.id ?? '')
 const result = ref(null)

@@ -200,6 +200,7 @@ import { enrichMathText } from '@/utils/math-label'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useLocale } from '@/composables/useLocale'
+import { localizedAnalysisType } from '@/i18n'
 
 const route = useRoute()
 const { locale } = useLocale()
@@ -354,7 +355,9 @@ function loadFromEditor() {
     distribution.value = fields.distribution
     customK.value = fields.customK
     iterations.value = fields.iterations
-    sourceTypeName.value = fields.typeName ?? ''
+    sourceTypeName.value = fields.typeId
+      ? localizedAnalysisType(fields.typeId, locale.value)
+      : (fields.typeName ?? '')
     sessionStorage.removeItem(MC_STORAGE_KEY)
     ElMessage.success(pt('msgLoadedEditor'))
     return true

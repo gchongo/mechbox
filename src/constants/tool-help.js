@@ -1445,10 +1445,12 @@ const DETAIL_OVERRIDES = {
   },
 }
 
-function withHelpDetails(article) {
+import { localizeHelpArticle } from '@/i18n/tool-help-en'
+
+function withHelpDetails(article, locale = 'zh') {
   if (!article) return null
   const detail = DETAIL_OVERRIDES[article.id] ?? {}
-  return {
+  const merged = {
     ...article,
     useCases: detail.useCases ?? article.useCases ?? COMMON_HELP_DETAILS.useCases,
     inputs: detail.inputs ?? article.inputs ?? COMMON_HELP_DETAILS.inputs,
@@ -1459,20 +1461,21 @@ function withHelpDetails(article) {
       detail.professionalChecks ?? article.professionalChecks ?? COMMON_HELP_DETAILS.professionalChecks,
     keywords: [...(article.keywords ?? []), ...(detail.keywords ?? [])],
   }
+  return localizeHelpArticle(merged, locale)
 }
 
-export function getHelpArticle(id) {
-  return withHelpDetails(TOOL_HELP_ARTICLES.find((a) => a.id === id) ?? null)
+export function getHelpArticle(id, locale = 'zh') {
+  return withHelpDetails(TOOL_HELP_ARTICLES.find((a) => a.id === id) ?? null, locale)
 }
 
-export function getHelpByPath(path) {
+export function getHelpByPath(path, locale = 'zh') {
   const norm = (path ?? '').replace(/\/$/, '') || '/help'
-  return withHelpDetails(TOOL_HELP_ARTICLES.find((a) => a.path === norm) ?? null)
+  return withHelpDetails(TOOL_HELP_ARTICLES.find((a) => a.path === norm) ?? null, locale)
 }
 
-export function searchHelpArticles(query) {
+export function searchHelpArticles(query, locale = 'zh') {
   const q = String(query ?? '').trim().toLowerCase()
-  const articles = TOOL_HELP_ARTICLES.map(withHelpDetails)
+  const articles = TOOL_HELP_ARTICLES.map((a) => withHelpDetails(a, locale))
   if (!q) return articles
   return articles.filter((a) => {
     const hay = [
