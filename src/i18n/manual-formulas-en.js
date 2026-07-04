@@ -6,7 +6,7 @@ const FORMULA_OVERRIDES = {
   'nominal-chain': 'L₀ = ΣL_inc − ΣL_dec',
   'sigma-level': 'σ_level = T_target / (6σ)',
   'pass-rate': 'P = 2Φ(σ_level) − 1',
-  'bearing-l10': 'L10 = (C/P)^ε (million rev)',
+  'bearing-l10': 'L₁₀ = (C/P)^ε (million rev)',
   'it-tolerance': 'IT = i × grade factor',
 }
 

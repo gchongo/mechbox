@@ -47,6 +47,10 @@
             <el-input-number v-model="customK" :min="0" :precision="2" :step="0.1" />
             <span class="ml-2 text-xs text-gray-400">{{ pf('customKHint') }}</span>
           </CalcFormItem>
+          <CalcFormItem :label="pf('truncatedNormal')">
+            <el-switch v-model="truncatedNormal" />
+            <p class="mt-1 text-xs text-gray-500">{{ pf('truncatedNormalHint') }}</p>
+          </CalcFormItem>
           <CalcFormItem :label="pf('iterations')">
             <el-input-number v-model="iterations" :min="1000" :max="100000" :step="1000" />
           </CalcFormItem>
@@ -216,12 +220,14 @@ const sizeList = ref('40,15,55.25')
 const typeList = ref('dec,dec,inc')
 const distribution = ref('normal')
 const customK = ref(0)
+const truncatedNormal = ref(true)
 const iterations = ref(10000)
 const running = ref(false)
 const simResult = ref(null)
 const chartType = ref('histogram')
 const chartComponentRef = ref(null)
 const sourceTypeName = ref('')
+const importedRings = ref(null)
 const sensitivityRunning = ref(false)
 const sensitivityResult = ref(null)
 const stackEval = ref(null)
@@ -297,6 +303,13 @@ function parseList(str) {
 }
 
 function buildRings() {
+  if (importedRings.value?.length) {
+    return importedRings.value.map((r) => ({
+      ...r,
+      factor: r.factor ?? 1,
+      type: r.type,
+    }))
+  }
   const tolerances = parseList(toleranceList.value).map(Number)
   const sizes = parseList(sizeList.value).map(Number)
   const types = parseList(typeList.value)
@@ -304,13 +317,23 @@ function buildRings() {
     throw new Error(RING_MISMATCH)
   }
   return sizes.map((size, i) => ({
+    ...parseTypeToken(types[i]),
     name: pf('ringName', { n: i + 1 }),
     size,
     tolerance: tolerances[i],
     factor: 1,
-    type: types[i].toLowerCase().startsWith('inc') ? 'increasing' : 'decreasing',
-    direction: types[i].toLowerCase().startsWith('inc') ? 'right' : 'left',
   }))
+}
+
+function parseTypeToken(token) {
+  const t = String(token ?? '').trim().toLowerCase()
+  if (t.startsWith('inc')) {
+    return { type: 'increasing', direction: 'right' }
+  }
+  if (t.startsWith('dec')) {
+    return { type: 'decreasing', direction: 'left' }
+  }
+  return { type: null, direction: null }
 }
 
 function simErrorMessage(e, fallbackKey) {
@@ -330,6 +353,7 @@ function runSimulation() {
         iterations: iterations.value,
         distribution: distribution.value,
         customK: customK.value,
+        truncatedNormal: truncatedNormal.value,
       })
       sensitivityResult.value = null
       ElMessage.success(pt('msgSimDone', { n: iterations.value }))
@@ -347,6 +371,7 @@ function loadFromEditor() {
   try {
     const payload = JSON.parse(raw)
     const fields = deserializeMonteCarloPayload(payload)
+    importedRings.value = fields.componentRings
     closedMin.value = fields.closedMin
     closedMax.value = fields.closedMax
     toleranceList.value = fields.toleranceList

@@ -1,5 +1,12 @@
 /** 过程能力指数 — 基于规格限与过程均值/标准差 */
 
+/** σ水平 = 3·Cpk（短程）；非 Motorola 长期 6σ（含 1.5σ 漂移） */
+export const SIGMA_LEVEL_DEFINITION =
+  'sigmaLevel = 3·Cpk (short-term process capability); NOT Motorola long-term 6σ with 1.5σ shift'
+
+export const TOLERANCE_OVER_6SIGMA_DEFINITION =
+  'T/(6σ) equals Cp when the process mean is centered; differs from 3·Cpk when off-center'
+
 function cdfNormalZ(z) {
   const t = 1 / (1 + 0.2316419 * Math.abs(z))
   const d = 0.3989423 * Math.exp((-z * z) / 2)
@@ -35,6 +42,9 @@ export function calcProcessCapability({ lsl, usl, mean, sigma }) {
     c,
     cpk,
     sigmaLevel,
+    sigmaLevelFormula: '3·Cpk',
+    sigmaLevelDefinition: SIGMA_LEVEL_DEFINITION,
+    toleranceOver6Sigma: targetTolerance / (6 * processSigma || 1),
     passRate,
     dppm: Math.round((1 - passRate) * 1_000_000),
     cpu,
@@ -47,6 +57,9 @@ export function formatCapabilitySummary(cap) {
     c: cap.c.toFixed(2),
     cpk: cap.cpk.toFixed(2),
     sigmaLevel: cap.sigmaLevel.toFixed(2),
+    sigmaLevelFormula: cap.sigmaLevelFormula ?? '3·Cpk',
+    sigmaLevelDefinition: cap.sigmaLevelDefinition ?? SIGMA_LEVEL_DEFINITION,
+    toleranceOver6Sigma: cap.toleranceOver6Sigma?.toFixed(2),
     passRate: `${(cap.passRate * 100).toFixed(2)}%`,
     dppm: cap.dppm,
   }

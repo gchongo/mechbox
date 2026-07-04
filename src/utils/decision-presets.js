@@ -68,8 +68,11 @@ export const BEARING_PRESET = {
           staticLoad: bearing.C0,
           bearingType: bearing.type,
         })
+        const target = baseInputs.targetHours ?? 10000
+        const lifeOk = (r.outputs.lifeHours ?? 0) >= target
+        const staticOk = r.outputs.staticSafetyFactor == null || r.outputs.staticPass !== false
         return {
-          pass: r.outputs.pass,
+          pass: lifeOk && staticOk,
           metric: r.outputs.lifeHours,
           extra: {
             model: bearing.model,
@@ -181,7 +184,10 @@ export const KEY_PRESET = {
       bounds: { lo: 5, hi: 500 },
       buildEvaluator: (baseInputs) => (L) => {
         const r = adaptKeyConnection({ ...baseInputs, keyLength: L, hubLength: L })
-        return { pass: r.outputs.pass, metric: r.outputs.shearStress }
+        return {
+          pass: (r.outputs.shearPass ?? false) && (r.outputs.crushPass ?? false),
+          metric: r.outputs.shearStress,
+        }
       },
     },
   ],
@@ -279,7 +285,7 @@ export const WELD_PRESET = {
       buildEvaluator: (baseInputs) => (h) => {
         const r = adaptFilletWeld({ ...baseInputs, legSize: h })
         return {
-          pass: r.outputs.allPass ?? r.outputs.pass ?? r.outputs.gb?.pass,
+          pass: r.outputs.shearPass ?? r.outputs.allPass ?? r.outputs.gb?.pass,
           metric: r.keyMetrics[0]?.value,
         }
       },
@@ -293,7 +299,7 @@ export const WELD_PRESET = {
       buildEvaluator: (baseInputs) => (L) => {
         const r = adaptFilletWeld({ ...baseInputs, weldLength: L })
         return {
-          pass: r.outputs.allPass ?? r.outputs.pass ?? r.outputs.gb?.pass,
+          pass: r.outputs.shearPass ?? r.outputs.allPass ?? r.outputs.gb?.pass,
           metric: r.keyMetrics[0]?.value,
         }
       },
@@ -325,7 +331,7 @@ export const BOLT_GROUP_PRESET = {
       values: [4, 6, 8, 10, 12, 16, 20, 24],
       buildEvaluator: (baseInputs) => (n) => {
         const r = adaptBoltGroup({ ...baseInputs, calcMode: 'simple', boltCount: n })
-        return { pass: r.pass, metric: r.outputs.maxBoltForce }
+        return { pass: r.outputs.forcePass ?? (r.outputs.maxBoltForce <= r.outputs.allowPerBolt), metric: r.outputs.maxBoltForce }
       },
     },
   ],

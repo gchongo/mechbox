@@ -75,12 +75,15 @@ export function analyzeBoltGroupSimple(input) {
   const torsion = (M * rMax) / J
   const maxForce = direct + torsion
   const allow = input.allowPerBolt ?? 8000
+  const forcePass = maxForce <= allow
   return {
     calcMode: 'simple',
     directPerBolt: direct,
     torsionPerBolt: torsion,
     maxBoltForce: maxForce,
-    pass: maxForce <= allow,
+    forcePass,
+    pass: false,
+    estimateOnly: true,
     allowPerBolt: allow,
     boltCount: n,
   }

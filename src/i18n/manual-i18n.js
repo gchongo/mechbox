@@ -169,8 +169,8 @@ export const manualEnById = {
     category: 'Bearings',
   },
   'bearing-l10': {
-    name: 'Bearing rating life L10',
-    formula: 'L10 = (C/P)^ε (million rev)',
+    name: 'Bearing rating life L₁₀',
+    formula: 'L₁₀ = (C/P)^ε (million rev)',
     latex: 'L_{10} = \\left(\\frac{C}{P}\\right)^{\\varepsilon}',
     desc: 'ISO 281 basic rating life; C is basic dynamic load rating (N). Ball bearings ε = 3, roller bearings ε = 10/3.',
     tags: ['Bearings', 'Life'],
@@ -178,7 +178,7 @@ export const manualEnById = {
   },
   'bearing-life-hours': {
     name: 'Bearing life (hours)',
-    desc: 'Convert L10 (million revolutions) and speed n (rpm) to life in hours Lh.',
+    desc: 'Convert L₁₀ (million revolutions) and speed n (rpm) to life in hours L₁₀h.',
     tags: ['Bearings', 'Life'],
     category: 'Bearings',
   },

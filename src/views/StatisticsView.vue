@@ -141,6 +141,9 @@
               />
             </el-select>
             <MathTex :expr="modifiedRssLatexExpr" />
+            <p v-if="modifiedRssEmpirical" class="mt-2 text-xs text-amber-700 dark:text-amber-300">
+              {{ pf('modifiedRssDisclaimer') }}
+            </p>
           </CalcFormItem>
         </el-form>
       </section>
@@ -165,6 +168,7 @@
           </CalcFormItem>
           <CalcFormItem :label="pf('sigmaLevel')">
             <MathTex :expr="sigmaLevelLatex" />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ pf('sigmaLevelNote') }}</p>
           </CalcFormItem>
           <CalcFormItem :label="pf('passRate')">
             <span class="font-mono text-lg" :class="capabilityPassRateOk ? 'text-success' : 'text-error'">
@@ -173,6 +177,7 @@
           </CalcFormItem>
           <CalcFormItem :label="pf('cValue')">
             <MathTex :expr="cValueLatex" />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ pf('cValueNote') }}</p>
           </CalcFormItem>
           <CalcFormItem :label="pf('cpk')">
             <span class="font-mono text-lg" :class="capabilityCpkOk ? 'text-success' : 'text-warning'">
@@ -366,6 +371,7 @@ import {
   sigmaToTolerance,
   rssMethod,
   modifiedRssMethod,
+  getModifiedRssBreakdown,
 } from '@/utils/size-chain'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -439,14 +445,13 @@ const convertLatex = computed(() => {
 
 const sigmaLevelLatex = computed(() => {
   locale.value
-  const sub = locale.value === 'en' ? 'level' : '水平'
-  if (!capability.value) return `\\sigma_{\\text{${sub}}} = \\text{—}`
-  return `\\sigma_{\\text{${sub}}} = ${capability.value.sigmaLevel.toFixed(2)}\\sigma`
+  if (!capability.value) return '3 \\cdot C_{pk} = \\text{—}'
+  return `3 \\cdot C_{pk} = ${capability.value.sigmaLevel.toFixed(2)}\\sigma`
 })
 
 const cValueLatex = computed(() => {
-  if (!capability.value) return 'C = \\text{—}'
-  return `C = ${capability.value.c.toFixed(2)}`
+  if (!capability.value) return 'C = T/(6\\sigma) = \\text{—}'
+  return `C = T/(6\\sigma) = ${capability.value.c.toFixed(2)}`
 })
 
 const capability = computed(() => {
@@ -528,6 +533,13 @@ const modifiedRssTotal = computed(() => {
   if (!tolerances.length) return null
   const skew = parseFloat(stats.value.skewness)
   return modifiedRssMethod(tolerances, modRssDistribution.value, isNaN(skew) ? 0 : skew)
+})
+
+const modifiedRssEmpirical = computed(() => {
+  const tolerances = parseNumbers(toleranceList.value).map((t) => ({ tolerance: t }))
+  if (!tolerances.length) return false
+  const skew = parseFloat(stats.value.skewness)
+  return getModifiedRssBreakdown(tolerances, modRssDistribution.value, isNaN(skew) ? 0 : skew).empirical
 })
 
 const modifiedRssLatexExpr = computed(() => {

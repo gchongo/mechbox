@@ -241,6 +241,9 @@
             </el-select>
           </CalcFormItem>
         </el-form>
+        <p v-if="method === 'modified-rss'" class="mt-2 max-w-xl text-xs text-amber-700 dark:text-amber-300">
+          {{ pt('methodCards.modifiedDisclaimer') }}
+        </p>
       </div>
       <div class="mt-6 flex justify-end gap-2">
         <el-button @click="prevStep">{{ pt('prev') }}</el-button>
@@ -282,6 +285,15 @@
       </el-collapse>
 
       <div ref="resultPanelRef">
+        <el-alert
+          v-if="chainValidationMessage"
+          class="mb-4"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="pt('validation.chainBlocked')"
+          :description="chainValidationMessage"
+        />
         <ChainResultDashboard
           class="mb-6"
           :closed-ring="closedRing"
@@ -336,8 +348,8 @@
               <el-table-column prop="lower" :label="pr('lower')" />
               <el-table-column prop="pass" :label="pr('passCol')">
                 <template #default="{ row }">
-                  <span :class="row.pass ? 'text-success' : 'text-error'">
-                    {{ row.pass ? pr('passMark') : pr('failMark') }}
+                  <span :class="row.pass ? (row.reviewOnly ? 'text-warning' : 'text-success') : 'text-error'">
+                    {{ row.pass ? (row.reviewOnly ? fc('overallWarn') : pr('passMark')) : pr('failMark') }}
                   </span>
                 </template>
               </el-table-column>
@@ -414,10 +426,11 @@ import {
   saveSettings,
 } from '@/utils/settings'
 import { isFavorite, toggleFavorite } from '@/utils/favorites'
-import { closedRingAsDesign, ensureRingEsEi } from '@/utils/ring-tolerance'
+import { closedRingAsDesign, ensureRingEsEi, validateComponentRingTolerances } from '@/utils/ring-tolerance'
 import { useCalcPage } from '@/composables/useCalcPage'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import { adaptSizeChain } from '@/utils/calc-adapters'
+import { getCalcReviewStatus } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
@@ -506,6 +519,7 @@ const gdtModeDescBase = computed(() => {
 
 const chainOpts = computed(() => ({
   typeId: selectedType.value?.id,
+  closedDirection: closedRing.value.direction,
   distribution: rssDistribution.value,
   toleranceModifier: gdtModifier.value,
   autoBonus: gdtAutoBonus.value,
@@ -540,6 +554,21 @@ const activeResult = computed(() => {
   return rssResult.value
 })
 
+const chainValidationMessage = computed(() => {
+  const err = activeResult.value?.validationError
+  if (!err) return ''
+  const ring = activeResult.value?.validationRing ?? '?'
+  const keyMap = {
+    ring_direction_missing: 'validation.ringDirectionMissing',
+    ring_type_missing: 'validation.ringTypeMissing',
+    ring_type_direction_conflict: 'validation.ringTypeDirectionConflict',
+    es_lt_ei: 'validation.esLtEi',
+    negative_tolerance: 'validation.negativeTolerance',
+  }
+  const msgKey = keyMap[err] ?? 'validation.chainGeneric'
+  return pt(msgKey, { ring })
+})
+
 const gdtModeDesc = computed(() => {
   const base = gdtModeDescBase.value
   const bonus = activeResult.value?.bonusApplied
@@ -557,6 +586,7 @@ const resultTable = computed(() => {
       upper: fmtNum(worstResult.value.upper),
       lower: fmtNum(worstResult.value.lower),
       pass: worstResult.value.pass,
+      reviewOnly: false,
     },
     {
       method: pt('methods.rss'),
@@ -564,6 +594,7 @@ const resultTable = computed(() => {
       upper: fmtNum(rssResult.value.upper),
       lower: fmtNum(rssResult.value.lower),
       pass: rssResult.value.pass,
+      reviewOnly: true,
     },
     {
       method: pt('methods.modified-rss'),
@@ -571,6 +602,7 @@ const resultTable = computed(() => {
       upper: fmtNum(modifiedResult.value.upper),
       lower: fmtNum(modifiedResult.value.lower),
       pass: modifiedResult.value.pass,
+      reviewOnly: true,
     },
     {
       method: pt('methods.sigma6-rss'),
@@ -578,6 +610,7 @@ const resultTable = computed(() => {
       upper: fmtNum(sigma6Result.value.upper),
       lower: fmtNum(sigma6Result.value.lower),
       pass: sigma6Result.value.pass,
+      reviewOnly: true,
     },
   ]
   if (gdtModeLabel.value) {
@@ -650,12 +683,14 @@ const isClosedRingValid = computed(
 const formulaLines = computed(() =>
   buildFormulaLines(closedRing.value, componentRings.value, method.value, unit.value, {
     distribution: rssDistribution.value,
+    closedDirection: closedRing.value.direction,
   }),
 )
 
 const formulaLatex = computed(() =>
   buildFormulaLatex(closedRing.value, componentRings.value, method.value, unit.value, {
     distribution: rssDistribution.value,
+    closedDirection: closedRing.value.direction,
   }),
 )
 
@@ -821,6 +856,11 @@ function validateRingsAndNext() {
     ElMessage.warning(pt('msgRingIncomplete'))
     return
   }
+  const tolCheck = validateComponentRingTolerances(componentRings.value)
+  if (!tolCheck.valid) {
+    ElMessage.warning(pt('msgRingEsEiInvalid'))
+    return
+  }
   nextStep()
 }
 
@@ -965,9 +1005,18 @@ function buildExportPayload() {
 
 function saveResult() {
   const title = `${selectedType.value ? typeName(selectedType.value.id) : pt('saveTitleFallback')} ${closedRing.value.name || 'L0'}`
+  const reviewStatus = getCalcReviewStatus(editorSnapshot.value)
+  const historyStatus =
+    reviewStatus === 'pass' ? 'pass' : reviewStatus === 'review' ? 'review' : 'fail'
+  const methodResults = [
+    { method: 'worst', ...worstResult.value },
+    { method: 'rss', ...rssResult.value },
+    { method: 'modified-rss', ...modifiedResult.value },
+    { method: 'sigma6-rss', ...sigma6Result.value },
+  ]
   const entry = saveAnalysis({
     title,
-    status: activeResult.value.pass ? 'pass' : 'fail',
+    status: historyStatus,
     data: {
       selectedType: selectedType.value,
       closedRing: closedRing.value,
@@ -975,12 +1024,14 @@ function saveResult() {
       method: method.value,
       rssDistribution: rssDistribution.value,
       currentStep: currentStep.value,
+      snapshot: editorSnapshot.value,
       results: {
         worst: worstResult.value,
         rss: rssResult.value,
         modifiedRss: modifiedResult.value,
         sigma6Rss: sigma6Result.value,
       },
+      methodResults,
     },
   })
   ElMessage.success(pt('msgSaved'))

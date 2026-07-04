@@ -2,6 +2,7 @@
  * 疲劳寿命 — S-N 曲线与 Miner 累积损伤
  * Basquin: S = Sf' · (2N)^b  或  S = C · N^b
  */
+import { auditCriticalInputs, applyReleaseGate } from '@/utils/critical-input-guard'
 
 export const SN_MATERIALS = {
   steel_45: {
@@ -186,9 +187,10 @@ export function assessComponentFatigue(input = {}) {
         : calcLifeFromStress(snKey, basquinStress)
   }
   const fatiguePass =
-    amp <= 0 ||
-    (Number.isFinite(effectiveAmplitude) &&
-      (effectiveAmplitude <= adjustedEndurance || (fatigueLife != null && fatigueLife >= target)))
+    amp <= 0
+      ? false
+      : Number.isFinite(effectiveAmplitude) &&
+        (effectiveAmplitude <= adjustedEndurance || (fatigueLife != null && fatigueLife >= target))
 
   return {
     snMaterial: snKey,
@@ -199,6 +201,7 @@ export function assessComponentFatigue(input = {}) {
     adjustedEndurance,
     fatigueLife,
     fatiguePass,
+    zeroAmplitude: amp <= 0,
     targetCycles: target,
   }
 }
@@ -344,6 +347,13 @@ export function analyzeFatigue(input) {
       result.goodmanPass = stressAmplitude <= result.adjustedEndurance
       result.pass = result.pass && result.goodmanPass
     }
+  }
+
+  if (calcMode === 'simple') {
+    result.estimateOnly = true
+    result.pass = false
+  } else if (input.enforceCriticalConfirm) {
+    applyReleaseGate(result, auditCriticalInputs('fatigue', calcMode, input))
   }
 
   return result

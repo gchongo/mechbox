@@ -19,8 +19,8 @@ export function calcGdtContributions(rings, method = 'rss', typeId) {
   const is2d = mode?.stack === '2d-position'
 
   if (is2d && method !== 'worst') {
-    const xRings = rings.filter((r) => ['left', 'right'].includes(r.direction ?? 'right'))
-    const yRings = rings.filter((r) => ['up', 'down'].includes(r.direction ?? 'up'))
+    const xRings = rings.filter((r) => r.direction === 'left' || r.direction === 'right')
+    const yRings = rings.filter((r) => r.direction === 'up' || r.direction === 'down')
     const xContrib = calcAxisContributions(xRings, method)
     const yContrib = calcAxisContributions(yRings, method)
     return [...xContrib, ...yContrib].sort((a, b) => b.percent - a.percent)
@@ -127,6 +127,7 @@ export function analyzeGdtStack(input) {
     toleranceModifier,
     bonusTolerance,
     autoBonus,
+    closedDirection: closedRing.direction ?? input.closedDirection,
     distribution: input.distribution ?? 'normal',
   })
 
@@ -163,8 +164,10 @@ export function analyzeGdtStack(input) {
   }
 
   const passWithDatum =
-    chainResult.nominal + effectiveWithDatum / 2 <= closedRing.max &&
-    chainResult.nominal - effectiveWithDatum / 2 >= closedRing.min
+    chainResult.passMode === 'budget'
+      ? effectiveWithDatum >= closedRing.min && effectiveWithDatum <= closedRing.max
+      : chainResult.nominal + effectiveWithDatum / 2 <= closedRing.max &&
+        chainResult.nominal - effectiveWithDatum / 2 >= closedRing.min
 
   Object.assign(result, {
     contributions,
@@ -173,6 +176,9 @@ export function analyzeGdtStack(input) {
     passWithDatum,
     topContributor: contributions[0]?.name ?? null,
   })
+  if (datumStack) {
+    result.pass = result.pass && passWithDatum
+  }
 
   if (calcMode === 'professional') {
     result.sensitivityRanking = contributions.map((c, i) => ({
@@ -186,10 +192,13 @@ export function analyzeGdtStack(input) {
       toleranceModifier,
       bonusTolerance,
       autoBonus,
+      closedDirection: closedRing.direction ?? input.closedDirection,
     })
     const wc = result.worstCase
     result.worstCaseMargin = round(
-      Math.min(closedRing.max - wc.upper, wc.lower - closedRing.min),
+      wc.passMode === 'budget'
+        ? closedRing.max - (wc.effectiveTolerance ?? wc.totalTolerance ?? 0)
+        : Math.min(closedRing.max - wc.upper, wc.lower - closedRing.min),
       4,
     )
     result.pass = result.pass && result.worstCaseMargin >= 0

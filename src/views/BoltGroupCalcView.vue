@@ -71,6 +71,9 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag class="mb-3" :type="overallStatusType">
+          {{ pr('overall') }}: {{ overallStatusLabel }}
+        </el-tag>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('directPerBolt')" />
             <dd class="font-mono">{{ result.directPerBolt?.toFixed(0) }} N</dd>
@@ -79,8 +82,8 @@
             <dd class="font-mono">{{ result.torsionPerBolt?.toFixed(0) }} N</dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxBoltForce')" />
-            <dd class="font-mono text-lg" :class="result.pass ? 'text-success' : 'text-error'">
-              {{ result.maxBoltForce?.toFixed(0) }} N {{ result.pass ? '✓' : '✗' }}
+            <dd class="font-mono text-lg" :class="reviewAwareCheckClass(result.forcePass ?? result.pass, snapshot)">
+              {{ result.maxBoltForce?.toFixed(0) }} N {{ reviewAwareCheckMark(result.forcePass ?? result.pass, snapshot, reviewMarkText) }}
             </dd>
           </div>
           <div v-if="result.criticalBoltIndex" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -94,8 +97,8 @@
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('slipPass')" />
-              <dd class="font-mono" :class="result.slipPass ? 'text-success' : 'text-error'">
-                {{ result.slipPass ? '✓' : '✗' }}
+              <dd class="font-mono" :class="reviewAwareCheckClass(result.slipPass, snapshot)">
+                {{ reviewAwareCheckMark(result.slipPass, snapshot, reviewMarkText) }}
               </dd>
             </div>
           </template>
@@ -106,6 +109,10 @@
             </div>
           </template>
         </dl>
+
+        <p v-if="reviewOnly" class="mt-3 text-xs text-warning">
+          {{ pt('hintSimple') }}
+        </p>
 
         <template v-if="result.bolts?.length">
           <h3 class="mb-2 mt-4 text-sm font-semibold">{{ pr('perBoltLoads') }}</h3>
@@ -143,10 +150,11 @@ import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { adaptBoltGroup } from '@/utils/calc-adapters'
+import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct, pf, pr } = useCalcPage('bolt-group')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('bolt-group')
 
 const form = reactive({
   calcMode: 'simple',
@@ -176,6 +184,19 @@ const result = computed(() => analyzeBoltGroup(form))
 const decisionPreset = DECISION_PRESETS['bolt-group']
 const baseInputs = computed(() => ({ ...form }))
 const snapshot = computed(() => adaptBoltGroup(form))
+const overallStatus = computed(() => getCalcReviewStatus(snapshot.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const reviewOnly = computed(() => isReviewOnlyResult(snapshot.value))
+const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {

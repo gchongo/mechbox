@@ -13,13 +13,40 @@ import { analyzeBoltPreload } from '@/utils/bolt-preload-calc'
 import { analyzeKeyConnection } from '@/utils/key-calc'
 import { analyzeBeam } from '@/utils/beam-calc'
 import { analyzeSpring } from '@/utils/spring-calc'
-import { analyzeFilletWeld } from '@/utils/weld-calc'
+import { analyzeButtWeld, analyzeFilletWeld, analyzeHAZ, analyzeWeldFatigue } from '@/utils/weld-calc'
 import { analyzeBoltGroup } from '@/utils/bolt-group-calc'
+import { analyzeFit } from '@/utils/iso-286-calc'
+import { analyzeGdtStack } from '@/utils/gdt-stack-calc'
 import { calculateChainResult } from '@/utils/gdt-chain'
 
 /** ---------------- Bearing ---------------- */
 export function adaptBearing(input) {
   const r = analyzeBearingLife(input)
+  if (r.errorKey === 'bearing_simple_xy_required') {
+    return buildCalcResult({
+      toolId: 'bearing',
+      toolLabel: '轴承寿命',
+      calcMode: r.calcMode,
+      inputs: input,
+      outputs: r,
+      keyMetrics: [],
+      pass: false,
+      estimateOnly: true,
+      warnings: [
+        {
+          key: r.errorKey,
+          level: 'error',
+          message: '简化模式存在轴向载荷但未提供 Y 系数，禁止输出寿命结论',
+        },
+      ],
+      standards: ['ISO 281:2007'],
+      assumptions: [
+        '简化模式：存在 Fa 时必须显式输入 X/Y 或直接给定当量载荷 P',
+        '默认 Y=0 会忽略轴向力，已阻断计算',
+      ],
+      suggestions: ['输入 Y 系数、选用 complete 模式查表，或直接输入当量动载荷 P'],
+    })
+  }
   const targetHours = input.targetHours ?? 10000
   const utilization = targetHours > 0 && Number.isFinite(r.lifeHours) ? targetHours / r.lifeHours : null
 
@@ -34,7 +61,7 @@ export function adaptBearing(input) {
   ]
   if (r.staticSafetyFactor != null && Number.isFinite(r.staticSafetyFactor)) {
     keyMetrics.push(
-      metric('staticSafety', '静载安全 S0', r.staticSafetyFactor, '', {
+      metric('staticSafety', '静载安全 S₀', r.staticSafetyFactor, '', {
         status: r.staticPass ? 'pass' : 'fail',
         direction: 'higher-better',
       }),
@@ -52,9 +79,16 @@ export function adaptBearing(input) {
     outputs: r,
     keyMetrics,
     pass: r.pass,
-    warnings: r.speedWarningKey
-      ? [{ key: r.speedWarningKey, level: 'warn', message: '转速超出限制' }]
-      : [],
+    estimateOnly: r.estimateOnly ?? false,
+    unconfirmedCriticalInputs: r.unconfirmedCriticalInputs ?? [],
+    warnings: [
+      ...(r.releaseBlocked
+        ? [{ key: 'critical_inputs_unconfirmed', level: 'critical', message: '关键输入未确认，禁止放行寿命结论' }]
+        : []),
+      ...(r.speedWarningKey
+        ? [{ key: r.speedWarningKey, level: 'warn', message: '转速超出限制' }]
+        : []),
+    ],
     standards: ['ISO 281:2007'],
     assumptions: buildBearingAssumptions(r),
     suggestions: buildBearingSuggestions(r, targetHours),
@@ -86,7 +120,7 @@ function buildBearingSuggestions(r, targetHours) {
     list.push(`寿命不足 ${shortfall.toFixed(0)}%，建议：加大轴承规格 / 降低当量载荷 / 提高清洁度`)
   }
   if (r.staticSafetyFactor != null && !r.staticPass) {
-    list.push('静载安全不足，检查峰值载荷或选用更大 C0')
+    list.push('静载安全不足，检查峰值载荷或选用更大 C₀')
   }
   return list
 }
@@ -106,15 +140,25 @@ export function adaptShaftTorsion(input) {
     })
   }
 
+  const torsionPass = r.torsionPass ?? r.pass
   const keyMetrics = [
     metric('shearStress', '扭转应力 τ', r.shearStress, 'MPa', {
-      status: r.pass ? 'pass' : 'fail',
+      status: torsionPass ? 'pass' : 'fail',
       utilization: r.utilization,
     }),
     metric('allowableShear', '许用切应力', r.allowableShear, 'MPa', { direction: 'higher-better' }),
     metric('minDiameter', '所需最小直径', r.minDiameter, 'mm'),
-    metric('twistAngle', '扭转角 θ', r.twistAngle, '°'),
+    metric('twistAngle', '扭转角 θ', r.twistAngle, '°', {
+      status: typeof r.anglePass === 'boolean' ? (r.anglePass ? 'pass' : 'fail') : null,
+    }),
   ]
+  if (r.peakShearStress != null) {
+    keyMetrics.push(
+      metric('peakShearStress', '峰值切应力 τ_peak', r.peakShearStress, 'MPa', {
+        status: typeof r.peakPass === 'boolean' ? (r.peakPass ? 'pass' : 'fail') : null,
+      }),
+    )
+  }
   if (r.fatigueLife != null) {
     keyMetrics.push(
       metric('fatigueLife', '疲劳寿命', r.fatigueLife, 'cyc', {
@@ -145,8 +189,14 @@ export function adaptShaftTorsion(input) {
 
 function buildShaftSuggestions(r, input) {
   const list = []
-  if (!r.pass && r.minDiameter > input.diameter) {
+  if ((r.torsionPass ?? r.pass) === false && r.minDiameter > input.diameter) {
     list.push(`当前直径 ${input.diameter} mm 不足，建议 ≥ ${r.minDiameter.toFixed(1)} mm`)
+  }
+  if (r.anglePass === false) {
+    list.push('扭转角超限：增大直径、缩短轴长或降低扭矩')
+  }
+  if (r.peakPass === false) {
+    list.push('应力集中后峰值切应力超限：优化圆角/退刀槽并降低 Kτ')
   }
   if (r.fatiguePass === false) {
     list.push('疲劳不通过：降低应力幅、改善表面质量或换用高强度材料（40Cr）')
@@ -169,9 +219,10 @@ export function adaptShaftCombined(input) {
     })
   }
   const util = r.allowableStress ? r.equivalentStress / r.allowableStress : null
+  const combinedPass = r.combinedPass ?? r.pass
   const keyMetrics = [
     metric('equivalentStress', '等效应力 σ_eq', r.equivalentStress, 'MPa', {
-      status: r.pass ? 'pass' : 'fail',
+      status: combinedPass ? 'pass' : 'fail',
       utilization: util,
     }),
     metric('allowableStress', '许用应力', r.allowableStress, 'MPa', { direction: 'higher-better' }),
@@ -202,12 +253,13 @@ export function adaptShaftCombined(input) {
 /** ---------------- Bolt preload ---------------- */
 export function adaptBoltPreload(input) {
   const r = analyzeBoltPreload(input)
+  const stressOk = r.stressPass ?? r.stress <= r.allowStress
   const keyMetrics = [
     metric('preloadResidual', '残余预紧力 F_M', r.preloadResidual ?? r.preload, 'N', { direction: 'higher-better' }),
     metric('preloadTightening', '拧紧预紧力 F_V', r.preloadTightening ?? r.preload, 'N'),
     metric('torque', '拧紧扭矩 T', r.torque, 'N·m'),
     metric('stress', '拉应力 σ', r.stress, 'MPa', {
-      status: r.pass ? 'pass' : 'fail',
+      status: stressOk ? 'pass' : 'fail',
       utilization: r.allowStress ? r.stress / r.allowStress : null,
     }),
   ]
@@ -235,13 +287,14 @@ export function adaptBoltPreload(input) {
     outputs: r,
     keyMetrics,
     pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
     standards: input.calcMode === 'simple' ? [] : ['VDI 2230-1'],
     assumptions:
       input.calcMode === 'professional'
         ? ['接头刚度采用圆环简化，未含 VDI 圆锥体细化', '嵌入损失按 VDI 简化预设']
         : input.calcMode === 'vdi2230'
           ? ['扭矩系数按 VDI 2230 R0 简化']
-          : ['简化 T = μ·d·F/1000，未含嵌入/热变化'],
+          : ['简化 T = μ·d·F/1000，未含螺距/螺纹摩擦/嵌入；simple 模式不作正式放行'],
     suggestions,
   })
 }
@@ -254,14 +307,15 @@ function metric(key, label, value, unit, extra = {}) {
 /** ---------------- Key connection ---------------- */
 export function adaptKeyConnection(input) {
   const r = analyzeKeyConnection(input)
+  const simpleLocalPass = (r.shearPass ?? false) && (r.crushPass ?? false)
   const keyMetrics = [
     metric('tangentialForce', '切向力 Ft', r.tangentialForce, 'N'),
     metric('shearStress', '剪切应力 τ', r.shearStress, 'MPa', {
-      status: (r.shearPass ?? r.pass) ? 'pass' : 'fail',
+      status: (r.shearPass ?? simpleLocalPass ?? r.pass) ? 'pass' : 'fail',
       utilization: r.shearUtilization,
     }),
     metric('crushStress', '挤压应力 σ_c', r.crushStress, 'MPa', {
-      status: (r.crushPass ?? r.pass) ? 'pass' : 'fail',
+      status: (r.crushPass ?? simpleLocalPass ?? r.pass) ? 'pass' : 'fail',
       utilization: r.crushUtilization,
     }),
   ]
@@ -288,10 +342,11 @@ export function adaptKeyConnection(input) {
     outputs: r,
     keyMetrics,
     pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
     standards: ['GB/T 1096'],
     assumptions:
       r.calcMode === 'simple'
-        ? ['忽略偏载 / 冲击系数', '许用应力按经验取值']
+        ? ['忽略偏载 / 冲击系数', '轮毂长默认按键长等效，simple 模式不作正式放行', '许用应力按经验取值']
         : r.fatigueLife != null
           ? ['疲劳幅值按 τ 换算，S-N 曲线走 assessComponentFatigue']
           : [],
@@ -345,23 +400,23 @@ export function adaptBeam(input) {
     outputs: r,
     keyMetrics,
     pass: r.pass,
+    estimateOnly: r.slendernessWarning,
     standards: ['GB 50017（弹性梁）', '欧拉-伯努利梁理论'],
     warnings: r.slendernessWarning
       ? [{ key: 'slenderness', level: 'warn', message: `长径比 ${r.spanRatio?.toFixed(1)} > 40，需复核剪切/失稳` }]
       : [],
     assumptions:
-      r.calcMode === 'simple'
-        ? ['简化：忽略动载荷、应力集中']
-        : r.fatigueLife != null
-          ? ['疲劳采用 loadMin/loadMax 换算幅值 + 平均应力']
-          : [],
+      [
+        r.calcMode === 'simple' ? '简化：忽略动载荷、应力集中' : null,
+        r.fatigueLife != null ? '疲劳采用 loadMin/loadMax 换算幅值 + 平均应力' : null,
+        r.slendernessWarning ? '长细比偏大时当前结果仅供复核，需补做剪切变形/稳定性校核' : null,
+      ].filter(Boolean),
     suggestions:
-      !r.pass
-        ? [
-            !r.stressPass && `应力超许用，增大截面或改用高强度材料`,
-            !r.deflectionPass && `挠度超限，加大截面或缩短跨度`,
-          ].filter(Boolean)
-        : [],
+      [
+        !r.stressPass ? `应力超许用，增大截面或改用高强度材料` : null,
+        !r.deflectionPass ? `挠度超限，加大截面或缩短跨度` : null,
+        r.slendernessWarning ? '长细比偏大：补做 Timoshenko 剪切变形或稳定性复核，不宜直接放行' : null,
+      ].filter(Boolean),
   })
 }
 
@@ -374,7 +429,7 @@ export function adaptSpring(input) {
       status: r.shearPass ? 'pass' : 'fail',
       utilization: r.allowableShear ? stressVal / r.allowableShear : null,
     }),
-    metric('springRate', '刚度 P\'', r.springRate, 'N/mm'),
+    metric('springRate', '刚度 k', r.springRate, 'N/mm'),
     metric('deflection', '压缩量 δ', r.deflection, 'mm'),
     metric('springIndex', '旋绕比 C', r.springIndex, ''),
     metric('wahlFactor', 'Wahl 系数 K', r.wahlFactor, ''),
@@ -384,8 +439,36 @@ export function adaptSpring(input) {
   }
   if (r.buckling) {
     keyMetrics.push(
-      metric('slenderness', '长径比', r.buckling.slenderness, '', {
+      metric('slenderness', '长径比 b', r.buckling.slenderness, '', {
         status: r.buckling.bucklingPass ? 'pass' : 'fail',
+      }),
+    )
+    if (r.buckling.criticalLoad != null) {
+      keyMetrics.push(
+        metric('criticalLoad', '临界载荷 Fc', r.buckling.criticalLoad, 'N', {
+          status: r.buckling.bucklingPass ? 'pass' : 'fail',
+          direction: 'higher-better',
+          utilization:
+            r.buckling.criticalLoad > 0 ? r.buckling.maxWorkingLoad / r.buckling.criticalLoad : null,
+        }),
+      )
+    }
+  }
+  if (r.characteristic) {
+    keyMetrics.push(
+      metric('characteristic', '特性 f/fs', r.characteristic.ratio, '', {
+        status: r.characteristicPass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  if (r.naturalFrequency != null) {
+    keyMetrics.push(metric('naturalFrequency', '自振频率 fe', r.naturalFrequency, 'Hz'))
+  }
+  if (r.resonance?.checked) {
+    keyMetrics.push(
+      metric('resonanceRatio', '共振比 fe/fr', r.resonance.ratio, '', {
+        status: r.resonancePass ? 'pass' : 'fail',
+        direction: 'higher-better',
       }),
     )
   }
@@ -396,20 +479,64 @@ export function adaptSpring(input) {
       }),
     )
   }
-  if (r.fatigueLife != null) {
+  if (r.fatigueSafetyFactor != null) {
     keyMetrics.push(
-      metric('fatigueLife', '疲劳寿命', r.fatigueLife, 'cyc', {
+      metric('fatigueSafety', '疲劳安全系数 S', r.fatigueSafetyFactor, '', {
         status: r.fatiguePass ? 'pass' : 'fail',
         direction: 'higher-better',
       }),
     )
   }
+  if (r.fatigueLife != null) {
+    keyMetrics.push(
+      metric('fatigueLife', '估算疲劳分档 N', r.fatigueLife, 'cyc', {
+        direction: 'higher-better',
+      }),
+    )
+  }
   const suggestions = []
-  if (!r.shearPass) suggestions.push('切应力超过许用值：增大线径/中径或减小载荷')
-  if (!r.indexPass) suggestions.push('旋绕比不在 [4, 16] 范围，调整线径/中径')
-  if (r.buckling && !r.buckling.bucklingPass) suggestions.push('存在失稳风险：缩短自由高度或改端形')
-  if (r.geometryPass === false) suggestions.push('自由高度小于并圈高度：增大 H₀ 或减少有效圈数')
+  if (!r.shearPass) suggestions.push('静强度不合格：τ₂ > [τ]，增大线径/中径或减小载荷')
+  if (!r.indexPass) suggestions.push('旋绕比 C < 4，调整线径/中径')
+  else if (r.indexRecommend === false) suggestions.push('旋绕比 C > 16（建议范围），制造/稳定性风险')
+  if (r.heightLoadBlocked) suggestions.push('高度顺序非法：需满足 H₀ ≥ H₁ ≥ H₂ ≥ Hb')
+  if (r.heightLoadsFallback) {
+    suggestions.push('高度顺序非法，静强度/稳定性/压并已改用 F_max（或 load）输入，请勿沿用 H₁/H₂ 载荷')
+  }
+  if (r.buckling && !r.buckling.bucklingPass) {
+    if (r.buckling.cbOutOfRange) {
+      suggestions.push(`稳定性：b=${r.buckling.slenderness?.toFixed(1)} 超出图3查表范围(≤${r.buckling.cbMaxTableSlenderness})，需人工查 CB`)
+    } else if (r.buckling.checkMode === 'critical_load') {
+      suggestions.push('稳定性不足：Fc ≤ F₂，缩短 H₀ / 加导杆 / 增大线径')
+    } else {
+      suggestions.push('稳定性不足：b=H₀/D 超限或弹簧过短')
+    }
+  }
+  if (r.characteristicPass === false) {
+    if (r.characteristic?.loadWithinTest === false) {
+      suggestions.push('工作载荷 F₂ 超过试验载荷 Fs（GB/T 23935 §6.3.1b）')
+    } else {
+      suggestions.push('工作变形量不在 0.2fs～0.8fs（GB/T 23935 §6.3.1）')
+    }
+  }
+  if (r.resonance?.checked && !r.resonancePass) {
+    suggestions.push('共振风险：fe/fr ≤ 10，调整刚度/质量/工作频率或避开激励频率')
+  }
+  if (r.geometryPass === false && !r.heightLoadBlocked) suggestions.push('几何不合格：检查 H₀ 与并紧高度 Hb')
   else if (r.solidPass === false) suggestions.push('工作压缩量接近并圈：加长自由高度或减小载荷')
+  if (r.fatiguePass === false) {
+    suggestions.push('疲劳安全系数不足（GB/T 23935 式30）：降低应力幅或提高材料 Rm / 降低目标循环次数')
+  }
+  if (r.fatigueIssue === 'fatigue_partial_heights') {
+    suggestions.push('疲劳载荷不完整：需同时输入 H₁ 与 H₂，或同时输入 F_min 与 F_max，不可只填一项高度')
+  } else if (r.fatigueIssue === 'fatigue_heights_invalid') {
+    suggestions.push('高度顺序非法，疲劳校核已阻断；修正 H₀/H₁/H₂ 后再算 F₁/F₂，或提供 F_min/F_max')
+  } else if (r.fatigueLoadsFallback) {
+    suggestions.push('高度不可信，疲劳已改用 F_min/F_max（与静强度回退策略一致）')
+  } else if (r.fatigueIssue === 'fatigue_load_range_invalid') {
+    suggestions.push('F_max < F_min，疲劳载荷范围非法')
+  } else if (r.fatigueIssue === 'fatigue_load_inputs_missing') {
+    suggestions.push('专业模式疲劳校核需 H₁+H₂ 或 F_min+F_max')
+  }
   return buildCalcResult({
     toolId: 'spring',
     toolLabel: '弹簧设计',
@@ -418,13 +545,50 @@ export function adaptSpring(input) {
     outputs: r,
     keyMetrics,
     pass: r.pass,
-    standards: ['Wahl 应力修正', r.fatigueLife != null ? 'Goodman 平均应力修正' : null].filter(Boolean),
+    estimateOnly: r.estimateOnly ?? false,
+    unconfirmedCriticalInputs: r.unconfirmedCriticalInputs ?? [],
+    standards: [
+      'Wahl 应力修正',
+      r.calcMode !== 'simple' ? 'GB/T 23935 §6.3.1 特性 / §6.5.2 稳定性' : null,
+      r.resonance?.checked ? 'GB/T 23935 §6.5.3 共振验算' : null,
+      r.fatigueLife != null ? 'GB/T 23935 §6.5.1 式(30) 脉动疲劳' : null,
+    ].filter(Boolean),
+    warnings: r.releaseBlocked
+      ? [{ key: 'critical_inputs_unconfirmed', level: 'critical', message: '关键输入未确认，禁止放行弹簧结论' }]
+      : [],
     assumptions:
       r.calcMode === 'simple'
-        ? ['未校核旋绕比 / 失稳 / 并圈裕量']
-        : r.fatigueLife != null
-          ? ['疲劳采用 loadMin/loadMax 应力幅值 + 平均应力修正']
-          : [],
+        ? ['未校核旋绕比 / 失稳 / 并圈裕量 / 疲劳 / 特性']
+        : [
+            r.testShearStress != null
+              ? `τs=${r.testShearStress.toFixed(0)} MPa (${r.springProcess === 'hot' ? '热卷表5硬度范围' : '冷卷表3'}·式14)`
+              : null,
+            r.springProcess === 'hot' && r.hotCoilHardnessHrc == null ? '热卷未输入硬度，τs 保守取表5下限' : null,
+            r.rmFromAppendixF && r.rmGrade
+              ? `Rm=${r.tensileStrength} MPa（GB/T 23935 附录F·${r.rmGrade}·d 查表下限）`
+              : null,
+            r.tensileStrengthManual ? `Rm=${r.tensileStrength} MPa（用户手动覆盖查表值）` : null,
+            r.loadCategory
+              ? `[τ]=${Math.round(r.allowableShear)} MPa（GB/T 23935 ${r.allowableShearSource ?? '表3'}·${r.loadCategory}${r.stressRatioGamma != null ? `·γ=${r.stressRatioGamma.toFixed(2)}` : ''}）`
+              : null,
+            r.testLoadCappedAtSolid ? '试验载荷 Fs 已按附录限制为压并负荷 Fb' : null,
+            r.heightLoadsFallback ? '高度非法，设计载荷回退至 F_max/load 输入' : null,
+            r.fatigueLoadsFallback ? '高度不可信，疲劳 F₁/F₂ 回退至 F_min/F_max' : null,
+            r.resonance?.checked ? `共振按 fe/fr=${r.resonance.ratio.toFixed(2)}>${r.resonance.minRatio} 校核` : null,
+            r.buckling?.cbOutOfRange
+              ? `b>${r.buckling.cbMaxTableSlenderness} 超出图3 CB 查表范围，稳定性保守判 fail`
+              : r.buckling?.checkMode === 'critical_load'
+                ? `b>${r.buckling.criticalSlenderness} 时按 Fc=CB·k·H₀>F₂ 校核`
+                : 'b≤限值时按简化高径比筛查',
+            ...(r.fatigueLife != null
+              ? [
+                  `Rm=${r.tensileStrength} MPa；τu0 按 GB/T 23935 表9；目标 N=${r.fatigueTargetCycles ?? '—'}`,
+                  '静强度 [τ] 按 GB/T 23935 载荷类型/图1 选取；疲劳判定以式(30) 安全系数 S@目标 N 为准',
+                  '估算分档 N 仅供参考，不可替代标准图线校核',
+                  r.fatigueFromHeights ? '疲劳载荷由 H₁/H₂ → F₁/F₂' : '疲劳载荷由 loadMin/loadMax',
+                ]
+              : []),
+          ].filter(Boolean),
     suggestions,
   })
 }
@@ -434,10 +598,11 @@ export function adaptFilletWeld(input) {
   const r = analyzeFilletWeld(input)
   const shearStress = r.shearStress ?? r.gb?.shearStress ?? 0
   const allow = r.allow ?? r.gb?.allow ?? 0
-  const pass = r.allPass ?? r.pass ?? r.gb?.pass ?? false
+  const shearPass = r.shearPass ?? r.allPass ?? r.pass ?? r.gb?.pass ?? false
+  const pass = r.pass ?? (r.calcMode === 'simple' ? false : shearPass)
   const keyMetrics = [
     metric('shearStress', '剪切应力 τ', shearStress, 'MPa', {
-      status: pass ? 'pass' : 'fail',
+      status: shearPass ? 'pass' : 'fail',
       utilization: allow ? shearStress / allow : null,
     }),
     metric('throat', '喉厚 a', r.throat ?? r.gb?.throat, 'mm'),
@@ -463,13 +628,130 @@ export function adaptFilletWeld(input) {
     outputs: r,
     keyMetrics,
     pass,
+    estimateOnly: r.estimateOnly ?? false,
     standards,
-    assumptions: r.calcMode === 'simple' ? ['仅 GB 简化剪切，未含合成应力'] : [],
+    assumptions: r.calcMode === 'simple' ? ['仅 GB 简化剪切，未含合成应力；simple 模式不作正式放行'] : [],
     suggestions:
-      !pass
+      !shearPass
         ? [`剪切应力超限 ${(((shearStress || 0) / (allow || 1) - 1) * 100).toFixed(0)}%，加大焊脚或延长焊缝`]
         : [],
   })
+}
+
+export function adaptButtWeld(input) {
+  const r = analyzeButtWeld(input)
+  if (r.errorKey) {
+    return buildCalcResult({
+      toolId: 'weld',
+      toolLabel: '焊缝强度',
+      calcMode: input.calcMode,
+      inputs: input,
+      outputs: r,
+      pass: false,
+      warnings: [{ key: r.errorKey, level: 'critical' }],
+    })
+  }
+  const keyMetrics = [
+    metric('normalStress', '正应力 σ', r.normalStress, 'MPa', {
+      status: r.stressPass ?? r.pass ? 'pass' : 'fail',
+    }),
+    metric('area', '承载面积 A', r.area, 'mm²'),
+  ]
+  if (r.effectiveStress != null) {
+    keyMetrics.push(
+      metric('effectiveStress', '有效应力 σ_eff', r.effectiveStress, 'MPa', {
+        status: r.pass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  const pass = r.pass ?? false
+  return buildCalcResult({
+    toolId: 'weld',
+    toolLabel: '焊缝强度',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass,
+    estimateOnly: r.estimateOnly ?? false,
+    standards: ['GB/T 985', 'EN 1993-1-8', 'AWS D1.1'],
+    assumptions:
+      r.calcMode === 'simple'
+        ? ['仅按 GB 简化正应力快速估算；simple 模式不作正式放行']
+        : r.calcMode === 'professional'
+          ? ['专业模式含熔深效率与应力集中修正']
+          : [],
+    suggestions: pass ? [] : ['应力超限：增大焊缝有效截面、降低载荷或提高材料等级'],
+  })
+}
+
+export function adaptWeldFatigue(input) {
+  const r = analyzeWeldFatigue(input)
+  if (r.errorKey) {
+    return buildCalcResult({
+      toolId: 'weld',
+      toolLabel: '焊缝疲劳',
+      calcMode: 'fatigue',
+      inputs: input,
+      outputs: r,
+      pass: false,
+      warnings: [{ key: r.errorKey, level: 'critical', message: '疲劳应力幅输入非法或缺失' }],
+    })
+  }
+  return buildCalcResult({
+    toolId: 'weld',
+    toolLabel: '焊缝疲劳',
+    calcMode: 'fatigue',
+    inputs: input,
+    outputs: r,
+    keyMetrics: [
+      metric('stressRange', '应力幅 Δτ', r.stressRange, 'MPa', {
+        status: r.pass ? 'pass' : 'fail',
+      }),
+      metric('allowableAtCycles', '目标循环许用应力幅', r.allowableAtCycles, 'MPa', {
+        direction: 'higher-better',
+      }),
+      metric('estimatedLife', '估算寿命', r.estimatedLife, 'cyc', {
+        direction: 'higher-better',
+      }),
+      metric('enduranceLimit', '疲劳极限', r.enduranceLimit, 'MPa'),
+    ],
+    pass: r.pass,
+    standards: ['焊缝简化 S-N'],
+    assumptions: ['指数 m=3，参考循环数 Nref=2e6；用于疲劳早期筛查'],
+    suggestions: r.pass ? [] : ['疲劳不通过：降低应力幅、改善焊趾质量或提升细节等级'],
+  })
+}
+
+export function adaptWeldHaz(input) {
+  const r = analyzeHAZ(input)
+  return buildCalcResult({
+    toolId: 'weld',
+    toolLabel: '焊缝 HAZ',
+    calcMode: 'haz',
+    inputs: input,
+    outputs: r,
+    keyMetrics: [
+      metric('hazWidth', 'HAZ 宽度', r.hazWidthMm, 'mm'),
+      metric('hazAllowShear', 'HAZ 许用剪应力', r.hazAllowShear, 'MPa', {
+        direction: 'higher-better',
+      }),
+      metric('weldStress', '焊缝剪应力', r.weldStress, 'MPa', {
+        status: r.pass ? 'pass' : 'fail',
+      }),
+    ],
+    pass: r.pass,
+    standards: ['焊接热输入简化评估'],
+    assumptions: ['HAZ 宽度按热输入与板厚经验近似计算'],
+    suggestions: r.pass ? [] : ['HAZ 区承载不足：降低热输入、增大焊缝截面或降低外载'],
+  })
+}
+
+export function adaptWeldByTab(tab, payload) {
+  if (tab === 'butt') return adaptButtWeld(payload)
+  if (tab === 'fatigue') return adaptWeldFatigue(payload)
+  if (tab === 'haz') return adaptWeldHaz(payload)
+  return adaptFilletWeld(payload)
 }
 
 /** ---------------- Bolt group ---------------- */
@@ -488,9 +770,10 @@ export function adaptBoltGroup(input) {
   }
   const allow = r.allowPerBolt ?? input.allowPerBolt ?? 8000
   const util = allow ? r.maxBoltForce / allow : null
+  const maxBoltForcePass = r.forcePass ?? r.pass
   const keyMetrics = [
     metric('maxBoltForce', '最大栓载 |F|', r.maxBoltForce, 'N', {
-      status: r.pass ? 'pass' : 'fail',
+      status: maxBoltForcePass ? 'pass' : 'fail',
       utilization: util,
     }),
     metric('maxShearForce', '最大剪切', r.maxShearForce ?? r.maxBoltForce, 'N'),
@@ -509,10 +792,12 @@ export function adaptBoltGroup(input) {
     keyMetrics.push(metric('pryingTension', '撬力附加拉力', r.prying.totalTension, 'N'))
   }
   const suggestions = []
-  if (!r.pass) {
-    if (!r.shearPass) suggestions.push('剪切超限：增加螺栓数或加大分布圆半径')
-    if (!r.slipPass) suggestions.push('摩擦抗滑不足：提高预紧力或摩擦系数')
-    if (!r.interactionPass) suggestions.push('剪拉组合交互不通过：降低偏心弯矩或加大许用')
+  if (!maxBoltForcePass) {
+    suggestions.push('最大栓载超限：增加螺栓数或加大分布圆半径')
+  }
+  if (r.calcMode !== 'simple') {
+    if (r.slipPass === false) suggestions.push('摩擦抗滑不足：提高预紧力或摩擦系数')
+    if (r.interactionPass === false) suggestions.push('剪拉组合交互不通过：降低偏心弯矩或加大许用')
   }
   return buildCalcResult({
     toolId: 'bolt-group',
@@ -522,10 +807,216 @@ export function adaptBoltGroup(input) {
     outputs: r,
     keyMetrics,
     pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
     standards: r.calcMode !== 'simple' ? ['VDI 2230 偏心简化', '剪拉交互'] : [],
-    assumptions: r.calcMode === 'simple' ? ['均布简化，未含撬力/摩擦'] : [],
+    assumptions: r.calcMode === 'simple' ? ['均布简化，未含逐栓矢量/撬力/摩擦；simple 模式不作正式放行'] : [],
     suggestions,
   })
+}
+
+/** ---------------- ISO 286 fit ---------------- */
+export function adaptFit(input) {
+  const r = analyzeFit(input.nominal, input.holeCode, input.shaftCode, {
+    calcMode: input.calcMode,
+    deltaT: input.deltaT,
+    alphaHole: input.alphaHole,
+    alphaShaft: input.alphaShaft,
+    useAlphaTemperature: input.useAlphaTemperature,
+  })
+  if (r.errorKey) {
+    return buildCalcResult({
+      toolId: 'fit',
+      toolLabel: 'ISO 286 配合',
+      calcMode: input.calcMode,
+      inputs: input,
+      outputs: r,
+      pass: false,
+      warnings: [{ key: r.errorKey, level: 'critical' }],
+    })
+  }
+
+  const thermalFail = Boolean(r.thermalRiskKey)
+  const keyMetrics = [
+    metric('maxClearance', '最大间隙 / 过盈', r.maxClearance * 1000, 'μm'),
+    metric('minClearance', '最小间隙 / 过盈', r.minClearance * 1000, 'μm'),
+  ]
+  if (r.meanClearance != null) {
+    keyMetrics.push(metric('meanClearance', '平均间隙 / 过盈', r.meanClearance * 1000, 'μm'))
+  }
+  if (r.fitQuality != null) {
+    keyMetrics.push(metric('fitQuality', '配合质量系数', r.fitQuality, ''))
+  }
+  if (r.thermalShift != null) {
+    keyMetrics.push(metric('thermalShift', '热致间隙变化', r.thermalShift * 1000, 'μm'))
+  }
+
+  const warnings = []
+  if (r.thermalRiskKey) {
+    warnings.push({
+      key: r.thermalRiskKey,
+      level: 'warn',
+      message: fitThermalMessage(r.thermalRiskKey),
+    })
+  }
+
+  const suggestions = []
+  if (r.thermalRiskKey === 'thermal_interference_risk') {
+    suggestions.push('温升后可能转为干涉：增大初始最小间隙、降低温差或提高孔件膨胀系数')
+  }
+  if (r.thermalRiskKey === 'thermal_clearance_risk') {
+    suggestions.push('温升后可能转为间隙：提高初始最小过盈、控制温差或提高轴件膨胀系数')
+  }
+
+  return buildCalcResult({
+    toolId: 'fit',
+    toolLabel: 'ISO 286 配合',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: !thermalFail,
+    estimateOnly: !thermalFail,
+    standards: ['ISO 286'],
+    warnings,
+    assumptions: buildFitAssumptions(r, input),
+    suggestions,
+  })
+}
+
+function buildFitAssumptions(r, input) {
+  const list = ['未输入装配功能目标（所需间隙/过盈、装配力、粗糙度）时，结果仅用于分类与复核']
+  if (r.calcMode === 'simple') list.push('仅查表输出配合类型与极限尺寸，不直接代表装配放行')
+  if (r.calcMode === 'complete') list.push('配合质量系数仅用于方案比较，不等同于功能合格判定')
+  if (r.calcMode === 'professional') {
+    list.push(`热修正按线膨胀近似，参考温度 20°C，当前 ΔT=${input.deltaT ?? 0}°C`)
+    if (r.alphaTemperatureUsed) list.push('已启用 α(T) 线性温变修正')
+  }
+  return list
+}
+
+function fitThermalMessage(key) {
+  if (key === 'thermal_interference_risk') return '温度变化后可能转为干涉，需复核装配与运行间隙'
+  if (key === 'thermal_clearance_risk') return '温度变化后可能转为间隙，需复核过盈保持与传扭能力'
+  return key
+}
+
+/** ---------------- GD&T stack ---------------- */
+export function adaptGdtStack(input) {
+  const r = analyzeGdtStack({
+    calcMode: input.calcMode,
+    typeId: input.typeId,
+    method: input.method,
+    closedRing: { min: 0, max: input.closedMax, direction: input.closedDirection },
+    rings: input.rings,
+    datums: input.datums,
+    toleranceModifier: input.toleranceModifier,
+    bonusTolerance: input.bonusTolerance,
+    autoBonus: input.autoBonus,
+  })
+  if (r.errorKey) {
+    return buildCalcResult({
+      toolId: 'gdt-stack',
+      toolLabel: 'GD&T 公差栈',
+      calcMode: input.calcMode,
+      inputs: input,
+      outputs: r,
+      pass: false,
+      warnings: [{ key: r.errorKey, level: 'critical' }],
+    })
+  }
+
+  const simpleDatumsIgnored = r.calcMode === 'simple' && Array.isArray(input.datums) && input.datums.length > 0
+  const util = input.closedMax > 0 ? r.chainResult.totalTolerance / input.closedMax : null
+  const keyMetrics = [
+    metric('stackedTolerance', '叠加公差 T', r.chainResult.totalTolerance, 'mm', {
+      status: r.pass ? 'pass' : 'fail',
+      utilization: util,
+    }),
+    metric('effectiveTolerance', '有效公差 T_eff', r.modifier?.effective ?? r.chainResult.totalTolerance, 'mm'),
+  ]
+  if (r.effectiveWithDatum != null) {
+    keyMetrics.push(
+      metric('withDatumStack', '含基准累积 T_d', r.effectiveWithDatum, 'mm', {
+        status: r.passWithDatum ? 'pass' : 'fail',
+      }),
+    )
+  }
+  if (r.worstCaseMargin != null) {
+    keyMetrics.push(
+      metric('worstMargin', 'Worst-case 裕量', r.worstCaseMargin, 'mm', {
+        status: r.worstCaseMargin >= 0 ? 'pass' : 'fail',
+        direction: 'higher-better',
+      }),
+    )
+  }
+
+  const warnings = []
+  if (simpleDatumsIgnored) {
+    warnings.push({
+      key: 'simple_datums_ignored',
+      level: 'warn',
+      message: 'simple 模式未计入基准累积；当前基准输入仅记录，不参与判定',
+    })
+  }
+  if (r.datumStack && r.passWithDatum === false) {
+    warnings.push({
+      key: 'datum_stack_exceeded',
+      level: 'warn',
+      message: `计入基准累积后 T_d=${r.effectiveWithDatum?.toFixed(4)} mm，超出闭环上限 ${Number(input.closedMax ?? 0).toFixed(4)} mm`,
+    })
+  }
+  if (r.worstCaseMargin != null && r.worstCaseMargin < 0) {
+    warnings.push({
+      key: 'worst_case_margin_negative',
+      level: 'warn',
+      message: `Worst-case 裕量为 ${r.worstCaseMargin.toFixed(4)} mm，极值条件下不满足闭环`,
+    })
+  }
+
+  const suggestions = []
+  if (!r.pass && r.topContributor) {
+    suggestions.push(`优先收紧贡献最大的组成环：${r.topContributor}`)
+  }
+  if (r.passWithDatum === false) {
+    suggestions.push('基准累积后超差：降低基准面公差、优化基准顺序或放宽闭环要求')
+  }
+  if (r.worstCaseMargin != null && r.worstCaseMargin < 0) {
+    suggestions.push('Worst-case 不通过：关键环需按极值法重新分配，不能仅依赖 RSS 结果')
+  }
+  if (simpleDatumsIgnored) {
+    suggestions.push('已输入基准时请切换到 complete 或 professional 模式复核基准累积影响')
+  }
+
+  return buildCalcResult({
+    toolId: 'gdt-stack',
+    toolLabel: 'GD&T 公差栈',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    estimateOnly: simpleDatumsIgnored,
+    standards: ['GD&T 公差栈叠加', methodLabel(input.method)],
+    warnings,
+    assumptions: buildGdtAssumptions(r, input),
+    suggestions,
+  })
+}
+
+function buildGdtAssumptions(r, input) {
+  const list = []
+  if (r.calcMode === 'simple') list.push('仅计算封闭环叠加，不含贡献排序、基准累积与 worst-case 复核')
+  if (r.calcMode === 'simple' && Array.isArray(input.datums) && input.datums.length > 0) {
+    list.push('已输入基准但 simple 模式不计入基准累积，不能据此直接放行 GD&T 结论')
+  }
+  if (r.calcMode !== 'simple') list.push('基准累积按加权 RSS 近似合成，仅用于前期公差预算')
+  if (r.modifier?.type && r.modifier.type !== 'RFS') {
+    list.push(`${r.modifier.type} 修饰符已计入 bonus tolerance；自动 bonus 仍需图样定义复核`)
+  }
+  if (input.method !== 'worst') {
+    list.push(`${methodLabel(input.method)} 结果不能替代极值法封闭性验证`)
+  }
+  return list
 }
 
 /** ---------------- Size chain editor ---------------- */
@@ -547,10 +1038,21 @@ export function adaptSizeChain(input) {
     })
   }
   const spec = { min: closedRing.min, max: closedRing.max }
-  const r = calculateChainResult(spec, componentRings, method, chainOptions)
-  const marginLower = r.lower - closedRing.min
-  const marginUpper = closedRing.max - r.upper
-  const worstMargin = Math.min(marginUpper, marginLower)
+  const r = calculateChainResult(spec, componentRings, method, {
+    ...chainOptions,
+    closedDirection: closedRing.direction ?? chainOptions.closedDirection,
+  })
+  const worstReference =
+    method === 'worst'
+      ? r
+      : calculateChainResult(spec, componentRings, 'worst', {
+          ...chainOptions,
+          closedDirection: closedRing.direction ?? chainOptions.closedDirection,
+        })
+  const marginLower = r.lower != null ? r.lower - closedRing.min : null
+  const marginUpper = r.upper != null ? closedRing.max - r.upper : null
+  const worstMargin =
+    marginLower != null && marginUpper != null ? Math.min(marginUpper, marginLower) : null
 
   const keyMetrics = [
     metric('totalTolerance', '总公差 T', r.totalTolerance, closedRing.unit ?? 'mm'),
@@ -562,10 +1064,37 @@ export function adaptSizeChain(input) {
     }),
   ]
 
+  const warnings = []
+  if (r.validationError) {
+    warnings.push({
+      key: r.validationError,
+      level: 'error',
+      message: `组成环「${r.validationRing ?? '?'}」方向/类型未定义，无法计算`,
+    })
+  }
+  if (method !== 'worst') {
+    warnings.push({
+      key: 'statistical_method_review_only',
+      level: 'warn',
+      message: `${methodLabel(method)} 结果仅用于统计评估，不能替代极值法封闭性放行`,
+    })
+  }
+  if (method !== 'worst' && r.pass && worstReference?.pass === false) {
+    warnings.push({
+      key: 'rss_pass_worst_fail',
+      level: 'critical',
+      message: `${methodLabel(method)} 通过但极值法不通过，当前结果仅可用于方案比较，禁止作为放行依据`,
+    })
+  }
+
   const suggestions = []
-  if (!r.pass) {
-    if (marginLower < 0) suggestions.push(`下偏差超出 ${Math.abs(marginLower).toFixed(3)}，收紧负向环或放宽下限`)
-    if (marginUpper < 0) suggestions.push(`上偏差超出 ${Math.abs(marginUpper).toFixed(3)}，收紧正向环或放宽上限`)
+  if (!r.pass && !r.validationError) {
+    if (marginLower != null && marginLower < 0) {
+      suggestions.push(`下偏差超出 ${Math.abs(marginLower).toFixed(3)}，收紧负向环或放宽下限`)
+    }
+    if (marginUpper != null && marginUpper < 0) {
+      suggestions.push(`上偏差超出 ${Math.abs(marginUpper).toFixed(3)}，收紧正向环或放宽上限`)
+    }
   }
 
   return buildCalcResult({
@@ -575,9 +1104,11 @@ export function adaptSizeChain(input) {
     inputs: input,
     outputs: r,
     keyMetrics,
-    pass: r.pass,
+    pass: r.pass && !r.validationError,
+    estimateOnly: method !== 'worst',
     standards: [methodLabel(method)],
     assumptions: ['1D 线性叠加；GD&T 模式需选对应分析类型'],
+    warnings,
     suggestions,
   })
 }
@@ -603,5 +1134,7 @@ export const CALC_ADAPTERS = {
   beam: adaptBeam,
   spring: adaptSpring,
   weld: adaptFilletWeld,
+  fit: adaptFit,
+  'gdt-stack': adaptGdtStack,
   editor: adaptSizeChain,
 }

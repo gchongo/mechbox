@@ -2,6 +2,7 @@
  * 过盈配合 — 简化 / 完整 Lame（空心轴）/ 专业（温变修正）
  */
 import { calcFitChange } from '@/utils/thermal-expansion-calc'
+import { auditCriticalInputs, applyReleaseGate } from '@/utils/critical-input-guard'
 
 /** 轮毂径向柔度 — 厚壁圆筒平面应力：C_h = (1/E)[(r_o²+r_i²)/(r_o²-r_i²) + ν] */
 function hubCompliance(ri, ro, E, nu) {
@@ -14,7 +15,7 @@ function shaftComplianceSolid(E, nu) {
   return (1 - nu) / E
 }
 
-/** 空心轴径向柔度（外表面受径向压装） */
+/** 空心轴外压柔度 — 内表面自由、外表面接触压 p（厚壁圆筒平面应力） */
 function shaftComplianceHollow(ri, ro, E, nu) {
   if (ro <= ri || ri <= 0) return shaftComplianceSolid(E, nu)
   return (1 / E) * ((ro * ro + ri * ri) / (ro * ro - ri * ri) + nu)
@@ -128,8 +129,7 @@ export function analyzeInterferenceFit(input) {
   const hubAllow = input.hubAllowHoop ?? 350
   const stressPass = contact.hoopShaft <= shaftAllow && contact.hoopHub <= hubAllow
   const estimateOnly = calcMode === 'simple'
-
-  return {
+  const result = {
     calcMode,
     estimateOnly,
     interference,
@@ -154,4 +154,12 @@ export function analyzeInterferenceFit(input) {
       contact.pressure < (input.allowPressure ?? Infinity) &&
       stressPass,
   }
+
+  if (calcMode === 'simple') {
+    result.pass = false
+  } else if (input.enforceCriticalConfirm) {
+    applyReleaseGate(result, auditCriticalInputs('interference-fit', calcMode, input))
+  }
+
+  return result
 }

@@ -5,7 +5,7 @@
  *   { [toolId]: [ { id, name, note, snapshot: CalcResult } ] }
  */
 
-import { diffPercent, isImprovement } from '@/utils/calc-result'
+import { diffPercent, getCalcReviewStatus, isImprovement } from '@/utils/calc-result'
 
 const STORAGE_KEY = 'mechbox.scenarios'
 const MAX_PER_TOOL = 20
@@ -97,6 +97,7 @@ export function buildComparison(scenarios) {
     note: s.note,
     calcMode: s.snapshot?.calcMode,
     pass: !!s.snapshot?.pass,
+    reviewStatus: getCalcReviewStatus(s.snapshot),
   }))
 
   const metricMap = new Map()
@@ -128,6 +129,7 @@ export function buildComparison(scenarios) {
         diffPercent: diff,
         improved,
         status: row.values[s.id]?.status,
+        reviewStatus: getCalcReviewStatus(s.snapshot),
       }
     }
     return { ...row, columns }

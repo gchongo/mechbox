@@ -1,4 +1,7 @@
 /** 可复现伪随机（测试 / 回归验证） */
+import { resolveRingToleranceBounds, validateComponentRingTolerances } from '@/utils/ring-tolerance'
+import { resolveComponentRingTypes } from '@/utils/ring-direction'
+
 export function createSeededRandom(seed = 1) {
   let state = seed >>> 0
   return () => {
@@ -15,33 +18,70 @@ function randNormalFrom(random) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
 }
 
-/** 按分布采样误差（± 半公差范围内）；customK>0 时覆盖分布默认 K */
+function clamp(value, lo, hi) {
+  return Math.min(hi, Math.max(lo, value))
+}
+
+const DISTRIBUTION_K = {
+  normal: 6,
+  uniform: 3.46,
+  rectangular: 3.46,
+  triangular: 4.24,
+  skewed: 5.0,
+}
+
+/**
+ * 按分布采样尺寸偏差（相对环名义值，单位 mm）
+ * @param {number} tolerance - 公差带宽度 ES−EI；未给 es/ei 时按对称 ±T/2
+ * @param {object} [options.es] - 上偏差
+ * @param {object} [options.ei] - 下偏差
+ * @param {boolean} [options.truncatedNormal=true] - 正态采样截断在 [ei, es]（硬公差带）
+ */
 export function sampleToleranceError(
   tolerance,
   distribution = 'normal',
   customK = 0,
   random = Math.random,
+  options = {},
 ) {
-  const defaultK = { normal: 6, uniform: 3.46, rectangular: 3.46, triangular: 4.24, skewed: 5.0 }[
-    distribution
-  ] ?? 6
+  const defaultK = DISTRIBUTION_K[distribution] ?? 6
   const k = customK > 0 ? customK : defaultK
-  const half = tolerance / 2
+  const spread = options.es != null && options.ei != null ? options.es - options.ei : tolerance
+  const es = options.es ?? spread / 2
+  const ei = options.ei ?? -spread / 2
+  const meanDev = (es + ei) / 2
+  const { truncatedNormal = true } = options
   const spreadScale = defaultK / k
 
   switch (distribution) {
     case 'uniform':
-    case 'rectangular':
-      return (random() * 2 - 1) * half * spreadScale
+    case 'rectangular': {
+      const half = spread / 2
+      return meanDev + (random() * 2 - 1) * half * spreadScale
+    }
     case 'triangular': {
+      const half = spread / 2
       const u = random() + random()
-      return (u - 1) * half * spreadScale
+      return meanDev + (u - 1) * half * spreadScale
     }
     case 'skewed':
-      return (random() ** 2 - 0.5) * 2 * half * spreadScale
-    default:
-      return randNormalFrom(random) * (tolerance / k)
+      return meanDev + (random() ** 2 - 0.5) * spread * spreadScale
+    default: {
+      let err = meanDev + randNormalFrom(random) * (spread / k)
+      if (truncatedNormal) err = clamp(err, ei, es)
+      return err
+    }
   }
+}
+
+function calcStdDev(values, useSampleStd = true) {
+  const n = values.length
+  if (n === 0) return { mean: 0, std: 0, stdPopulation: 0 }
+  const mean = values.reduce((a, b) => a + b, 0) / n
+  const sumSq = values.reduce((s, x) => s + (x - mean) ** 2, 0)
+  const stdPopulation = Math.sqrt(sumSq / n)
+  const std = n > 1 && useSampleStd ? Math.sqrt(sumSq / (n - 1)) : stdPopulation
+  return { mean, std, stdPopulation }
 }
 
 /** Monte Carlo 尺寸链模拟 */
@@ -52,11 +92,46 @@ export function runMonteCarloSimulation({
   distribution = 'normal',
   customK = 0,
   random,
+  truncatedNormal = true,
+  useSampleStd = true,
 }) {
+  const normalizedRings = (componentRings ?? []).map((ring) => ({
+    ...ring,
+    direction:
+      ring.direction ??
+      (ring.type === 'increasing'
+        ? 'right'
+        : ring.type === 'decreasing'
+          ? 'left'
+          : ring.direction),
+  }))
+  const resolved = resolveComponentRingTypes(normalizedRings, closedRing?.direction ?? 'right')
+  if (!resolved.valid) {
+    return {
+      errorKey: resolved.errorKey,
+      validationRing: resolved.ringName,
+      results: [],
+      passRate: 0,
+      iterations: 0,
+    }
+  }
+  const rings = resolved.rings
+  const tolCheck = validateComponentRingTolerances(rings)
+  if (!tolCheck.valid) {
+    return {
+      errorKey: tolCheck.errorKey,
+      validationRing: tolCheck.ringName,
+      results: [],
+      passRate: 0,
+      iterations: 0,
+    }
+  }
+
   const rng = random ?? Math.random
-  const nominal = componentRings.reduce((sum, ring) => {
+  const nominal = rings.reduce((sum, ring) => {
     const sign = ring.type === 'increasing' ? 1 : -1
-    return sum + sign * ring.size * (ring.factor ?? 1)
+    const bounds = resolveRingToleranceBounds(ring)
+    return sum + sign * (bounds.nominal + bounds.meanDev)
   }, 0)
 
   const results = []
@@ -64,23 +139,21 @@ export function runMonteCarloSimulation({
 
   for (let i = 0; i < iterations; i++) {
     let value = nominal
-    for (const ring of componentRings) {
+    for (const ring of rings) {
       const sign = ring.type === 'increasing' ? 1 : -1
-      const err = sampleToleranceError(
-        ring.tolerance * (ring.factor ?? 1),
-        distribution,
-        customK,
-        rng,
-      )
-      value += sign * err
+      const bounds = resolveRingToleranceBounds(ring)
+      const err = sampleToleranceError(bounds.tolerance, distribution, customK, rng, {
+        es: bounds.es,
+        ei: bounds.ei,
+        truncatedNormal,
+      })
+      value += sign * (err - bounds.meanDev)
     }
     results.push(value)
     if (value >= closedRing.min && value <= closedRing.max) passCount++
   }
 
-  const mean = results.reduce((a, b) => a + b, 0) / results.length
-  const variance = results.reduce((s, x) => s + (x - mean) ** 2, 0) / results.length
-  const std = Math.sqrt(variance)
+  const { mean, std, stdPopulation } = calcStdDev(results, useSampleStd)
   const sorted = [...results].sort((a, b) => a - b)
 
   return {
@@ -88,6 +161,9 @@ export function runMonteCarloSimulation({
     nominal,
     mean,
     std,
+    stdPopulation,
+    useSampleStd,
+    truncatedNormal,
     min: sorted[0],
     max: sorted[sorted.length - 1],
     passRate: passCount / iterations,
@@ -109,11 +185,15 @@ export function runSensitivityTornado({
   distribution = 'normal',
   customK = 0,
   random,
+  truncatedNormal = true,
+  useSampleStd = true,
 }) {
   const items = componentRings.map((ring, index) => {
     const isolated = componentRings.map((r, j) => ({
       ...r,
       tolerance: j === index ? r.tolerance : 0,
+      es: j === index ? r.es : 0,
+      ei: j === index ? r.ei : 0,
       name: r.name ?? `环${j + 1}`,
     }))
     const sim = runMonteCarloSimulation({
@@ -123,6 +203,8 @@ export function runSensitivityTornado({
       distribution,
       customK,
       random,
+      truncatedNormal,
+      useSampleStd,
     })
     const spread = sim.p95 - sim.p05
     const varianceShare = sim.std ** 2
@@ -156,17 +238,16 @@ export function runSensitivityTornado({
   }
 }
 
-/** 控制图统计量 */
-export function calcControlLimits(values) {
+/** 控制图统计量 — 默认样本标准差 (n−1) */
+export function calcControlLimits(values, useSampleStd = true) {
   if (!values.length) return null
-  const mean = values.reduce((a, b) => a + b, 0) / values.length
-  const variance = values.reduce((s, x) => s + (x - mean) ** 2, 0) / values.length
-  const sigma = Math.sqrt(variance)
+  const { mean, std, stdPopulation } = calcStdDev(values, useSampleStd)
   return {
     mean,
-    sigma,
-    ucl: mean + 3 * sigma,
-    lcl: mean - 3 * sigma,
+    sigma: std,
+    sigmaPopulation: stdPopulation,
+    ucl: mean + 3 * std,
+    lcl: mean - 3 * std,
   }
 }
 

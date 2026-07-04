@@ -41,6 +41,8 @@ export function buildCalcResult({
   outputs = {},
   keyMetrics = [],
   pass = true,
+  estimateOnly = false,
+  unconfirmedCriticalInputs = [],
   warnings = [],
   assumptions = [],
   standards = [],
@@ -54,12 +56,47 @@ export function buildCalcResult({
     outputs: clone(outputs),
     keyMetrics: keyMetrics.map(normalizeMetric),
     pass: !!pass,
+    estimateOnly: !!estimateOnly,
+    unconfirmedCriticalInputs: [...unconfirmedCriticalInputs],
     warnings: warnings.map((w) => ({ level: 'info', ...w })),
     assumptions: [...assumptions],
     standards: [...standards],
     suggestions: [...suggestions],
     timestamp: Date.now(),
   }
+}
+
+/**
+ * 统一评审状态：
+ * - pass: 数值满足且未处于估算/阻断态
+ * - review: 数值可参考，但仍需复核/未放行
+ * - fail: 数值不满足
+ * - unknown: 无快照
+ */
+export function getCalcReviewStatus(snapshot) {
+  if (!snapshot) return 'unknown'
+  if (
+    snapshot.releaseBlocked ||
+    (Array.isArray(snapshot.unconfirmedCriticalInputs) && snapshot.unconfirmedCriticalInputs.length > 0) ||
+    snapshot.estimateOnly
+  ) {
+    return 'review'
+  }
+  return snapshot.pass ? 'pass' : 'fail'
+}
+
+export function isReviewOnlyResult(snapshot) {
+  return getCalcReviewStatus(snapshot) === 'review'
+}
+
+export function reviewAwareCheckClass(passFlag, snapshot) {
+  if (passFlag) return isReviewOnlyResult(snapshot) ? 'text-warning' : 'text-success'
+  return 'text-error'
+}
+
+export function reviewAwareCheckMark(passFlag, snapshot, reviewText = '（待复核）') {
+  if (passFlag) return isReviewOnlyResult(snapshot) ? reviewText : '✓'
+  return '✗'
 }
 
 function clone(obj) {

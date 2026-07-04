@@ -69,6 +69,7 @@ export const messagesZh = {
     type_interference: '过盈配合',
     type_transition: '过渡配合',
     thermal_interference_risk: '加热后可能干涉',
+    thermal_clearance_risk: '加热后可能转为间隙',
   },
   bearing: {
     speed_exceeded: '转速 {rpm} 超过极限 {limit} rpm',
@@ -316,6 +317,7 @@ export const messagesEn = {
     type_interference: 'Interference fit',
     type_transition: 'Transition fit',
     thermal_interference_risk: 'Heating may cause interference',
+    thermal_clearance_risk: 'Heating may create clearance',
   },
   bearing: {
     speed_exceeded: 'Speed {rpm} exceeds limit {limit} rpm',

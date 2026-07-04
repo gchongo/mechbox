@@ -5,6 +5,8 @@
  */
 
 import { topSensitivities } from '@/utils/sensitivity-analysis'
+import { getCalcReviewStatus } from '@/utils/calc-result'
+import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 
 /**
  * @param {Object} config
@@ -17,6 +19,7 @@ export function buildEnhancedReport({ snapshot, sensitivity, primaryMetric }) {
   if (!snapshot) return { title: '计算报告', subtitle: '', sections: [] }
 
   const sections = []
+  const reviewStatus = getCalcReviewStatus(snapshot)
 
   sections.push({
     heading: '关键结果',
@@ -27,10 +30,27 @@ export function buildEnhancedReport({ snapshot, sensitivity, primaryMetric }) {
   })
 
   const passRow = [
-    { label: '整体判定', value: snapshot.pass ? '通过 ✓' : '不通过 ✗' },
+    {
+      label: '整体判定',
+      value:
+        reviewStatus === 'pass'
+          ? '满足当前校核条件（非正式放行，仍需工程复核）'
+          : reviewStatus === 'review'
+            ? snapshot.releaseBlocked
+              ? '未放行（关键输入待确认）'
+              : '数值结果可参考（估算/待复核）'
+            : '未满足校核条件 ✗',
+    },
     { label: '计算模式', value: snapshot.calcMode ?? '-' },
   ]
   sections.push({ heading: '判定汇总', rows: passRow })
+
+  if (snapshot.unconfirmedCriticalInputs?.length) {
+    sections.push({
+      heading: '未确认关键输入',
+      text: formatUnconfirmedLabels(snapshot.unconfirmedCriticalInputs, 'zh').join('、'),
+    })
+  }
 
   if (snapshot.standards?.length) {
     sections.push({
@@ -73,11 +93,19 @@ export function buildEnhancedReport({ snapshot, sensitivity, primaryMetric }) {
       heading: '建议',
       text: snapshot.suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n'),
     })
-  } else if (snapshot.pass) {
+  } else if (reviewStatus === 'pass') {
     sections.push({
       heading: '建议',
       text:
-        '当前输入在简化模型下满足校核条件。结果仅供工程辅助判断，须结合完整标准、制造条件与持证工程师复核后方可用于生产放行。',
+        '当前输入在当前计算模型下满足校核条件。结果仅供工程辅助判断，须结合完整标准、制造条件与持证工程师复核后方可用于生产放行。',
+    })
+  } else if (reviewStatus === 'review') {
+    sections.push({
+      heading: '建议',
+      text:
+        snapshot.releaseBlocked
+          ? '当前结果处于未放行状态。请先确认关键输入，再复核结论是否满足工程要求。'
+          : '当前结果仅供估算或工程预判使用。正式设计决策前请补充完整输入并按标准复核。',
     })
   }
 

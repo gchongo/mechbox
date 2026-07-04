@@ -41,7 +41,8 @@
               </el-tag>
             </div>
             <div class="flex items-center gap-1 text-[10px] text-gray-400">
-              <el-tag v-if="s.pass" size="small" type="success" effect="plain">✓</el-tag>
+              <el-tag v-if="s.reviewStatus === 'pass'" size="small" type="success" effect="plain">✓</el-tag>
+              <el-tag v-else-if="s.reviewStatus === 'review'" size="small" type="warning" effect="plain">复核</el-tag>
               <el-tag v-else size="small" type="danger" effect="plain">✗</el-tag>
               <el-button link type="danger" size="small" @click="onRemove(s.id)">
                 {{ dt('remove') }}
@@ -134,7 +135,7 @@ function formatDiff(p) {
 }
 
 function statusClass(col) {
-  if (col.status === 'pass') return 'text-success'
+  if (col.status === 'pass') return col.reviewStatus === 'review' ? 'text-warning' : 'text-success'
   if (col.status === 'fail') return 'text-error'
   return ''
 }

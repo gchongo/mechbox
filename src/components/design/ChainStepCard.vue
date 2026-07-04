@@ -18,7 +18,7 @@
           <FormMathLabel :text="m.label" class="shrink-0 text-xs text-gray-500" />
           <span
             class="font-mono text-sm"
-            :class="m.status === 'pass' ? 'text-success' : m.status === 'fail' ? 'text-error' : ''"
+            :class="metricClass(m)"
           >
             {{ formatValue(m.value) }}
             <span v-if="m.unit" class="text-xs text-gray-400"> {{ m.unit }}</span>
@@ -69,6 +69,7 @@ import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DECISION_PRESETS, runPresetInverse } from '@/utils/decision-presets'
 import { buildStepInputs, CHAIN_INVERSE_APPLY, resolveInverseApply } from '@/utils/chain-snapshots'
+import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useDecisionI18n } from '@/composables/useDecisionI18n'
 import FormMathLabel from '@/components/common/FormMathLabel.vue'
 
@@ -86,15 +87,20 @@ const solving = ref(false)
 const inverseHint = ref('')
 
 const topMetrics = computed(() => (props.snapshot?.keyMetrics ?? []).slice(0, 4))
+const reviewStatus = computed(() => getCalcReviewStatus(props.snapshot))
 
 const statusLabel = computed(() => {
   if (!props.snapshot) return dt('notEvaluated')
-  return props.snapshot.pass ? dt('stepPass') : dt('stepFail')
+  if (reviewStatus.value === 'pass') return dt('stepPass')
+  if (reviewStatus.value === 'review') return dt('stepReview')
+  return dt('stepFail')
 })
 
 const statusType = computed(() => {
   if (!props.snapshot) return 'info'
-  return props.snapshot.pass ? 'success' : 'danger'
+  if (reviewStatus.value === 'pass') return 'success'
+  if (reviewStatus.value === 'review') return 'warning'
+  return 'danger'
 })
 
 async function runQuickInverse() {
@@ -141,5 +147,11 @@ function formatValue(v) {
   if (!Number.isFinite(v)) return '∞'
   const abs = Math.abs(v)
   return abs >= 1000 ? v.toFixed(0) : abs >= 10 ? v.toFixed(1) : v.toFixed(3)
+}
+
+function metricClass(metric) {
+  if (metric?.status === 'pass') return reviewStatus.value === 'review' ? 'text-warning' : 'text-success'
+  if (metric?.status === 'fail') return 'text-error'
+  return ''
 }
 </script>

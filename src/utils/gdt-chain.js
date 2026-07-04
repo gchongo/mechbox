@@ -7,7 +7,10 @@ import {
   rssMethod,
   modifiedRssMethod,
   sigma6RssMethod,
+  ringSign,
 } from './size-chain-math'
+import { resolveComponentRingTypes } from './ring-direction'
+import { validateComponentRingTolerances } from '@/utils/ring-tolerance'
 import { findAnalysisType } from '@/constants/analysis-types'
 
 /** GD&T / 2D 计算模式 */
@@ -93,7 +96,11 @@ function splitXY(rings) {
   const y = []
   const other = []
   for (const ring of rings) {
-    const dir = ring.direction ?? 'right'
+    const dir = ring.direction
+    if (!dir) {
+      other.push(ring)
+      continue
+    }
     if (dir === 'left' || dir === 'right') x.push(ring)
     else if (dir === 'up' || dir === 'down') y.push(ring)
     else other.push(ring)
@@ -101,7 +108,7 @@ function splitXY(rings) {
   return { x, y, other }
 }
 
-/** 2D 位置度：T_pos ≈ 2√(RSS_x² + RSS_y²) */
+/** 2D 位置度：T_pos = 2√((T_x/2)² + (T_y/2)²)，T_x/T_y 为各轴全公差 RSS 合成 */
 function calc2dPositionTolerance(rings, method, options) {
   const { x, y, other } = splitXY(rings)
   const allX = [...x, ...other]
@@ -131,11 +138,36 @@ function aggregateTolerance(rings, method, options) {
   return rssMethod(mapped)
 }
 
-function buildLimitsFromTolerance(nominal, totalTolerance, closedRing) {
+/** 形位公差预算 [0, T_spec]：合成 T 须落在封闭环内（非对称偏差带） */
+export function shouldUseToleranceBudget(closedRing, nominal = 0) {
+  return closedRing.min >= 0 && Math.abs(nominal) < 1e-6
+}
+
+/** 判定 pass；passMode=budget 用于位置度/形位公差，band 用于 1D 尺寸链 */
+export function evaluateTolerancePass(totalTolerance, closedRing, { passMode, nominal = 0 } = {}) {
+  const mode = passMode ?? (shouldUseToleranceBudget(closedRing, nominal) ? 'budget' : 'band')
+  if (mode === 'budget') {
+    const pass = totalTolerance >= closedRing.min && totalTolerance <= closedRing.max
+    return {
+      nominal: 0,
+      upper: totalTolerance,
+      lower: closedRing.min,
+      totalTolerance,
+      pass,
+      passMode: 'budget',
+    }
+  }
   const upper = nominal + totalTolerance / 2
   const lower = nominal - totalTolerance / 2
   const pass = lower >= closedRing.min && upper <= closedRing.max
-  return { nominal, upper, lower, totalTolerance, pass, calcMode: 'gdt' }
+  return { nominal, upper, lower, totalTolerance, pass, passMode: 'band' }
+}
+
+function buildLimitsFromTolerance(nominal, totalTolerance, closedRing, options = {}) {
+  return {
+    ...evaluateTolerancePass(totalTolerance, closedRing, { ...options, nominal }),
+    calcMode: 'gdt',
+  }
 }
 
 /** 组成环尺寸公差（es−ei 或显式 sizeTolerance） */
@@ -211,19 +243,19 @@ export function resolveBonusTolerance(rings, options = {}) {
 export function applyToleranceModifier(totalTolerance, options = {}) {
   const bonus = options.bonusTolerance ?? 0
   const mod = options.toleranceModifier ?? 'RFS'
-  if (!bonus || mod === 'RFS') return totalTolerance
-  if (mod === 'MMC') return totalTolerance + bonus
-  if (mod === 'LMC') return totalTolerance + bonus * 0.5
-  return totalTolerance
+  if (!bonus || mod === 'RFS') return 0
+  if (mod === 'MMC') return bonus
+  if (mod === 'LMC') return bonus * 0.5
+  return 0
 }
 
 function withModifier(result, closedRing, options, rings = []) {
   const resolved = resolveBonusTolerance(rings, options)
-  const adjusted = applyToleranceModifier(result.totalTolerance, {
+  const allowance = applyToleranceModifier(result.totalTolerance, {
     ...options,
     bonusTolerance: resolved.bonus,
   })
-  if (adjusted === result.totalTolerance) {
+  if (!allowance || (options.toleranceModifier ?? 'RFS') === 'RFS') {
     return {
       ...result,
       bonusApplied: 0,
@@ -232,12 +264,26 @@ function withModifier(result, closedRing, options, rings = []) {
       toleranceModifier: options.toleranceModifier ?? 'RFS',
     }
   }
-  const next = buildLimitsFromTolerance(result.nominal ?? 0, adjusted, closedRing)
+  const passMode = result.passMode ?? 'band'
+  // Bonus should expand allowable tolerance zone, not increase predicted stack error.
+  // For GD&T budget mode this maps to an increased upper allowance.
+  const next =
+    passMode === 'budget'
+      ? evaluateTolerancePass(result.totalTolerance, { ...closedRing, max: closedRing.max + allowance }, { passMode: 'budget' })
+      : {
+          ...result,
+          pass:
+            (result.lower ?? 0) >= closedRing.min - allowance / 2 &&
+            (result.upper ?? 0) <= closedRing.max + allowance / 2,
+        }
   return {
     ...result,
     ...next,
-    effectiveTolerance: adjusted,
-    bonusApplied: adjusted - result.totalTolerance,
+    effectiveTolerance:
+      passMode === 'budget'
+        ? closedRing.max + allowance
+        : (result.totalTolerance ?? 0) + allowance,
+    bonusApplied: allowance,
     bonusSource: resolved.source,
     bonusBreakdown: resolved.items,
     toleranceModifier: options.toleranceModifier ?? 'MMC',
@@ -247,7 +293,8 @@ function withModifier(result, closedRing, options, rings = []) {
 /** 仅公差叠加（form 类环，名义值为形位误差基准） */
 function calcFormStackLimits(rings, closedRing, method, options) {
   const nominal = rings.reduce((s, r) => {
-    const sign = r.type === 'increasing' ? 1 : -1
+    const sign = ringSign(r)
+    if (sign == null) return s
     return s + sign * (r.size ?? 0) * (r.factor ?? 1)
   }, 0)
 
@@ -265,34 +312,61 @@ function calcFormStackLimits(rings, closedRing, method, options) {
   return buildLimitsFromTolerance(nominal, totalTolerance, closedRing)
 }
 
+function chainValidationFailure(error) {
+  return {
+    nominal: null,
+    upper: null,
+    lower: null,
+    totalTolerance: null,
+    pass: false,
+    validationError: error.errorKey,
+    validationRing: error.ringName,
+  }
+}
+
+/** 解析并校验组成环；返回 resolved rings 或 validation 错误对象 */
+function prepareComponentRings(componentRings, options = {}) {
+  const resolved = resolveComponentRingTypes(componentRings, options.closedDirection)
+  if (!resolved.valid) return { error: resolved }
+  const tolCheck = validateComponentRingTolerances(resolved.rings)
+  if (!tolCheck.valid) {
+    return { error: { errorKey: tolCheck.errorKey, ringName: tolCheck.ringName } }
+  }
+  return { rings: resolved.rings }
+}
+
 /** GD&T / 2D / 3D 专用尺寸链计算 */
 export function calculateGdtChain(closedRing, componentRings, method = 'rss', options = {}) {
+  const prep = prepareComponentRings(componentRings, options)
+  if (prep.error) return chainValidationFailure(prep.error)
+  const rings = prep.rings
+
   const mode = options.mode ?? getGdtCalcMode(options.typeId)
   if (!mode) {
-    return calculateRssLimits(componentRings)
+    return calculateRssLimits(rings)
   }
 
   switch (mode.stack) {
     case '2d-position': {
-      const nominal = calcSignedNominalSum(componentRings)
-      const totalTolerance = calc2dPositionTolerance(componentRings, method, options)
+      const totalTolerance = calc2dPositionTolerance(rings, method, options)
       return {
-        ...buildLimitsFromTolerance(nominal, totalTolerance, closedRing),
+        ...buildLimitsFromTolerance(0, totalTolerance, closedRing, { passMode: 'budget' }),
         modeLabel: mode.label,
-        formulaNote: 'T_{pos} \\approx 2\\sqrt{RSS_x^2 + RSS_y^2}',
+        formulaNote: 'T_{pos} = 2\\sqrt{(T_x/2)^2 + (T_y/2)^2}',
+        positionNominalOmitted: true,
       }
     }
     case 'radial': {
-      const mapped = componentRings.map((r) => ({
+      const mapped = rings.map((r) => ({
         tolerance: r.tolerance * (r.factor ?? 1),
       }))
-      const nominal = calcSignedNominalSum(componentRings)
+      const nominal = calcSignedNominalSum(rings)
       let totalTolerance
       if (method === 'worst') totalTolerance = worstCaseMethod(mapped)
       else if (method === 'modified-rss') {
         totalTolerance = modifiedRssMethod(mapped, options.distribution ?? 'normal', options.skewness ?? 0)
       } else if (method === 'sigma6-rss') {
-        totalTolerance = sigma6RssMethod(componentRings, options.distribution ?? 'normal')
+        totalTolerance = sigma6RssMethod(rings, options.distribution ?? 'normal')
       } else {
         totalTolerance = rssMethod(mapped)
       }
@@ -307,7 +381,7 @@ export function calculateGdtChain(closedRing, componentRings, method = 'rss', op
     case '1d-weighted':
     default: {
       if (method === 'worst') {
-        const limits = calculateWorstCaseLimits(componentRings)
+        const limits = calculateWorstCaseLimits(rings)
         return {
           ...limits,
           pass: limits.lower >= closedRing.min && limits.upper <= closedRing.max,
@@ -316,7 +390,7 @@ export function calculateGdtChain(closedRing, componentRings, method = 'rss', op
       }
       if (method === 'modified-rss') {
         const limits = calculateModifiedRssLimits(
-          componentRings,
+          rings,
           options.distribution ?? 'normal',
           options.skewness ?? 0,
         )
@@ -327,10 +401,10 @@ export function calculateGdtChain(closedRing, componentRings, method = 'rss', op
         }
       }
       if (method === 'sigma6-rss') {
-        const base = calcFormStackLimits(componentRings, closedRing, method, options)
+        const base = calcFormStackLimits(rings, closedRing, method, options)
         return { ...base, modeLabel: mode.label, formulaNote: 'T = 6\\sqrt{\\sum (T_i/K)^2}' }
       }
-      const limits = calculateRssLimits(componentRings)
+      const limits = calculateRssLimits(rings)
       return {
         ...limits,
         pass: limits.lower >= closedRing.min && limits.upper <= closedRing.max,
@@ -342,32 +416,33 @@ export function calculateGdtChain(closedRing, componentRings, method = 'rss', op
 
 /** 统一入口：自动选择 1D 或 GD&T 引擎 */
 export function calculateChainResult(closedRing, componentRings, method, options = {}) {
+  const prep = prepareComponentRings(componentRings, options)
+  if (prep.error) return chainValidationFailure(prep.error)
+  const rings = prep.rings
+
   const typeId = options.typeId
   const mode = getGdtCalcMode(typeId)
   if (mode && isExtendedAnalysisType(typeId)) {
-    const result = calculateGdtChain(closedRing, componentRings, method, { ...options, mode, typeId })
-    return withModifier(result, closedRing, options, componentRings)
+    const result = calculateGdtChain(closedRing, rings, method, { ...options, mode, typeId })
+    return withModifier(result, closedRing, options, rings)
   }
   if (method === 'worst') {
-    const limits = calculateWorstCaseLimits(componentRings)
+    const limits = calculateWorstCaseLimits(rings)
     return { ...limits, pass: limits.lower >= closedRing.min && limits.upper <= closedRing.max }
   }
   if (method === 'modified-rss') {
     const limits = calculateModifiedRssLimits(
-      componentRings,
+      rings,
       options.distribution ?? 'normal',
       options.skewness ?? 0,
     )
     return { ...limits, pass: limits.lower >= closedRing.min && limits.upper <= closedRing.max }
   }
   if (method === 'sigma6-rss') {
-    const nominal = componentRings.reduce((sum, ring) => {
-      const sign = ring.type === 'increasing' ? 1 : -1
-      return sum + sign * ring.size * (ring.factor ?? 1)
-    }, 0)
-    const totalTolerance = sigma6RssMethod(componentRings, options.distribution ?? 'normal')
+    const nominal = calcSignedNominalSum(rings)
+    const totalTolerance = sigma6RssMethod(rings, options.distribution ?? 'normal')
     return buildLimitsFromTolerance(nominal, totalTolerance, closedRing)
   }
-  const limits = calculateRssLimits(componentRings)
+  const limits = calculateRssLimits(rings)
   return { ...limits, pass: limits.lower >= closedRing.min && limits.upper <= closedRing.max }
 }

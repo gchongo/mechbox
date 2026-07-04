@@ -83,7 +83,7 @@ const pagesZh = {
       title: '液压 / 气缸计算',
       subtitle: '缸径、压力、推力/拉力、速度、流量',
       hintSimple: '力、速度、流量换算。',
-      hintComplete: '外载校核、活塞杆屈曲。',
+      hintComplete: '外载校核、活塞杆屈曲（Le=K·L，须选边界条件）。',
       hintProfessional: '动态载荷、行程时间、缓冲压力。',
     },
     thread: {
@@ -112,7 +112,7 @@ const pagesZh = {
       subtitle: '圆柱螺旋压缩弹簧刚度与切应力',
       hintSimple: '刚度 k、切应力 τ 校核。',
       hintComplete: '稳定性、疲劳、最小/最大载荷。',
-      hintProfessional: '应力幅、疲劳寿命与安全系数。',
+      hintProfessional: 'GB/T 23935 式(30) 脉动疲劳、τu0 表9 分档、安全系数 S。',
     },
     'interference-fit': {
       title: '过盈配合计算',
@@ -147,7 +147,7 @@ const pagesZh = {
       subtitle: '线膨胀与配合尺寸随温度变化估算，适用于高温装配与过盈/间隙设计',
       hintSimple: '单材料线膨胀 ΔL。',
       hintComplete: '双材料配合过盈随温度变化。',
-      hintProfessional: '装配/服役两阶段温度链与过盈裕度。',
+      hintProfessional: '装配/服役两阶段温度链；α(T) 线性温变修正。',
     },
     structural: {
       title: '结构/流体估算',
@@ -264,8 +264,8 @@ const pagesEn = {
     },
     bearing: {
       title: 'Bearing rating life',
-      subtitle: 'ISO 281 L10 with automatic X/Y lookup (deep groove, angular contact, roller, thrust)',
-      hintSimple: 'L10 only; P = X·Fr + Y·Fa.',
+      subtitle: 'ISO 281 L₁₀ with automatic X/Y lookup (deep groove, angular contact, roller, thrust)',
+      hintSimple: 'L₁₀ only; P = X·Fr + Y·Fa.',
       hintComplete: 'Reliability a₁, aISO life adjustment, static S₀.',
       hintProfessional: 'Temperature factor a₂ and limiting speed check.',
     },
@@ -287,7 +287,7 @@ const pagesEn = {
       title: 'Hydraulic / pneumatic cylinder',
       subtitle: 'Bore, pressure, extend/retract force, speed, and flow',
       hintSimple: 'Force, speed, and flow conversion.',
-      hintComplete: 'External load check and rod buckling.',
+      hintComplete: 'External load check and rod buckling (Le = K·L — select end restraints).',
       hintProfessional: 'Dynamic load, stroke time, cushion pressure.',
     },
     thread: {
@@ -316,7 +316,7 @@ const pagesEn = {
       subtitle: 'Helical compression spring rate and shear stress',
       hintSimple: 'Rate k and shear stress τ check.',
       hintComplete: 'Stability, fatigue, min/max load.',
-      hintProfessional: 'Stress amplitude, fatigue life, safety factor.',
+      hintProfessional: 'GB/T 23935 Eq.(30) pulsating fatigue, Table 9 τu0 tiers, safety factor S.',
     },
     'interference-fit': {
       title: 'Interference fit',
@@ -351,7 +351,7 @@ const pagesEn = {
       subtitle: 'Linear expansion and fit size change with temperature for high-temperature assembly',
       hintSimple: 'Single-material linear expansion ΔL.',
       hintComplete: 'Two-material fit interference change with temperature.',
-      hintProfessional: 'Assembly/service two-stage temperature chain and interference margin.',
+      hintProfessional: 'Assembly/service temperature chain; optional linear α(T) correction.',
     },
     structural: {
       title: 'Structure / fluid estimates',

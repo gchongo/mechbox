@@ -48,9 +48,13 @@
         <el-alert v-if="result?.errorKey" :title="resultError(result)" type="warning" show-icon />
         <template v-else-if="result">
           <div class="mb-4 flex items-center gap-3">
+            <el-tag :type="overallStatusType">{{ fc('check') }}: {{ overallStatusLabel }}</el-tag>
             <el-tag :type="fitTagType">{{ fitTypeLabel }}</el-tag>
             <span class="text-sm text-gray-500">{{ presetUse }}</span>
           </div>
+          <p v-if="statusHint" class="mb-3 text-xs" :class="overallStatus === 'fail' ? 'text-error' : 'text-warning'">
+            {{ statusHint }}
+          </p>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxClearance')" />
               <dd class="font-mono">{{ (result.maxClearance * 1000).toFixed(1) }} μm</dd>
@@ -78,8 +82,8 @@
               <ResultLabel :text="pr('thermalShift')" />
               <dd class="font-mono">{{ (result.thermalShift * 1000).toFixed(1) }} μm</dd>
             </div>
-            <div v-if="result.thermalRisk" class="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/20">
-              {{ result.thermalRisk }}
+            <div v-if="thermalRiskLabel" class="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/20">
+              {{ thermalRiskLabel }}
             </div>
           </dl>
           <FitDiagram :fit="result" class="mx-auto mt-4" />
@@ -99,27 +103,32 @@
       <SaveHistoryButton
         tool="fit"
         :title="historyTitle"
-        :status="result?.fitType === 'interference' ? 'fail' : 'pass'"
+        :status="saveStatus"
         :summary="historySummary"
-        :input="{ nominal: nominal, holeCode, shaftCode }"
-        :result="result"
+        :input="{ nominal: nominal, holeCode, shaftCode, calcMode, deltaT }"
+        :result="snapshot"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { analyzeFit, COMMON_FITS, generateToleranceBandData, SUPPORTED_HOLE_LETTERS, SUPPORTED_SHAFT_LETTERS } from '@/utils/iso-286-calc'
 import FitDiagram from '@/components/fit/FitDiagram.vue'
 import FitToleranceBand from '@/components/fit/FitToleranceBand.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { exportToolReportPdf } from '@/utils/export'
+import { buildEnhancedReport } from '@/utils/enhanced-report'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { adaptFit } from '@/utils/calc-adapters'
+import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
+import { getToolReplayRecord } from '@/utils/calc-history'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('fit')
 const { exportFilename } = useContentI18n()
@@ -133,6 +142,8 @@ const calcMode = ref('simple')
 const deltaT = ref(80)
 const presetIndex = ref(0)
 const resultRef = ref(null)
+const route = useRoute()
+const router = useRouter()
 const holeLetters = SUPPORTED_HOLE_LETTERS
 const shaftLetters = SUPPORTED_SHAFT_LETTERS
 
@@ -151,7 +162,33 @@ const result = computed(() =>
     deltaT: deltaT.value,
   }),
 )
+const snapshot = computed(() =>
+  adaptFit({
+    nominal: nominal.value,
+    holeCode: holeCode.value,
+    shaftCode: shaftCode.value,
+    calcMode: calcMode.value,
+    deltaT: deltaT.value,
+  }),
+)
 const bandData = computed(() => generateToleranceBandData(nominal.value, holeCode.value, shaftCode.value))
+const overallStatus = computed(() => getCalcReviewStatus(snapshot.value))
+const saveStatus = overallStatus
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const thermalRiskLabel = computed(() => {
+  const key = result.value?.thermalRiskKey
+  return key ? rm('fit', key) : ''
+})
+const statusHint = computed(() => snapshot.value?.warnings?.[0]?.message ?? snapshot.value?.assumptions?.[0] ?? '')
 
 const historySummary = computed(() => {
   const r = result.value
@@ -169,7 +206,7 @@ const historyTitle = computed(() => {
 
 const fitTagType = computed(() => {
   if (!result.value || result.value.errorKey) return 'info'
-  return { clearance: 'success', interference: 'danger', transition: 'warning' }[result.value.fitType]
+  return { clearance: 'success', interference: 'info', transition: 'warning' }[result.value.fitType]
 })
 
 function applyPreset(i) {
@@ -181,24 +218,39 @@ function applyPreset(i) {
 
 async function exportPdf() {
   const r = result.value
-  if (!r || r.errorKey) return
+  const snap = snapshot.value
+  if (!r || r.errorKey || !snap) return
+  const report = buildEnhancedReport({ snapshot: snap })
   await exportToolReportPdf({
-    title: `${pt('title')} — ${fc('exportPdfReport')}`,
-    subtitle: `Ø${r.nominal} ${r.hole.designation}/${r.shaft.designation}`,
-    sections: [
-      {
-        heading: ct('results'),
-        rows: [
-          { label: pf('fitType'), value: fitTypeLabel.value },
-          { label: pr('maxClearance'), value: (r.maxClearance * 1000).toFixed(1) },
-          { label: pr('minClearance'), value: (r.minClearance * 1000).toFixed(1) },
-          { label: pr('holeLimits'), value: `${r.hole.minSize} ~ ${r.hole.maxSize}` },
-          { label: pr('shaftLimits'), value: `${r.shaft.minSize} ~ ${r.shaft.maxSize}` },
-        ],
-      },
-    ],
+    title: report.title,
+    subtitle: report.subtitle,
+    sections: report.sections,
     element: resultRef.value,
     filename: exportFilename('fitPdf', { nominal: r.nominal, ts: Date.now() }),
   })
 }
+
+function applyReplayInput(input) {
+  if (!input || typeof input !== 'object') return
+  if (Number.isFinite(Number(input.nominal))) nominal.value = Number(input.nominal)
+  if (typeof input.holeCode === 'string') holeCode.value = input.holeCode
+  if (typeof input.shaftCode === 'string') shaftCode.value = input.shaftCode
+  if (typeof input.calcMode === 'string') calcMode.value = input.calcMode
+  if (Number.isFinite(Number(input.deltaT))) deltaT.value = Number(input.deltaT)
+}
+
+function consumeHistoryReplay() {
+  const historyId = route.query.historyId
+  if (!historyId) return
+  const record = getToolReplayRecord(historyId, 'fit')
+  if (!record) return
+  applyReplayInput(record.data?.input)
+  const nextQuery = { ...route.query }
+  delete nextQuery.historyId
+  delete nextQuery.replay
+  router.replace({ query: nextQuery })
+}
+
+onMounted(() => consumeHistoryReplay())
+watch(() => route.query.historyId, () => consumeHistoryReplay())
 </script>

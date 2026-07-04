@@ -22,15 +22,15 @@
             </el-button>
           </CalcFormItem>
           <CalcFormItem :label="pf('grade')">
-            <el-select v-model="form.grade" class="w-full">
+            <el-select v-model="form.grade" class="w-full" @change="markConfirmed('grade')">
               <el-option v-for="(g, k) in grades" :key="k" :label="g.label" :value="k" />
             </el-select>
           </CalcFormItem>
           <CalcFormItem :label="pf('axialForce')">
-            <el-input-number v-model="form.axialForce" :min="0" :step="500" />
+            <el-input-number v-model="form.axialForce" :min="0" :step="500" @change="markConfirmed('axialForce')" />
           </CalcFormItem>
           <CalcFormItem :label="pf('engagedLength')">
-            <el-input-number v-model="form.engagedLength" :min="1" :precision="1" />
+            <el-input-number v-model="form.engagedLength" :min="1" :precision="1" @change="markConfirmed('engagedLength')" />
           </CalcFormItem>
           <template v-if="form.calcMode === 'simple'">
             <CalcFormItem :label="pf('frictionCoeff')">
@@ -48,10 +48,10 @@
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerVdi') }}</el-divider>
             <CalcFormItem :label="pf('muG')">
-              <el-input-number v-model="form.muG" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
+              <el-input-number v-model="form.muG" :min="0.05" :max="0.5" :precision="2" :step="0.02" @change="markConfirmed('muG')" />
             </CalcFormItem>
             <CalcFormItem :label="pf('muK')">
-              <el-input-number v-model="form.muK" :min="0.05" :max="0.5" :precision="2" :step="0.02" />
+              <el-input-number v-model="form.muK" :min="0.05" :max="0.5" :precision="2" :step="0.02" @change="markConfirmed('muK')" />
             </CalcFormItem>
             <CalcFormItem :label="pf('dKm')">
               <el-input-number v-model="form.dKm" :min="5" :max="80" :precision="2" :step="0.5" />
@@ -71,6 +71,14 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-alert
+          v-if="result.releaseBlocked"
+          type="warning"
+          :closable="false"
+          show-icon
+          class="mb-3"
+          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
+        />
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('stressArea')" />
@@ -84,14 +92,14 @@
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('tensileStress')" />
-            <dd class="font-mono" :class="result.tensilePass ? 'text-success' : 'text-error'">
-              {{ result.tensileStress.toFixed(1) }} MPa {{ result.tensilePass ? '✓' : '✗' }}
+            <dd class="font-mono" :class="reviewAwareCheckClass(result.tensilePass, result)">
+              {{ result.tensileStress.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.tensilePass, result) }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('shearStress')" />
-            <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
-              {{ result.shearStress.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
+            <dd class="font-mono" :class="reviewAwareCheckClass(result.shearPass, result)">
+              {{ result.shearStress.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.shearPass, result) }}
             </dd>
           </div>
           <template v-if="form.calcMode !== 'simple'">
@@ -104,9 +112,9 @@
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel label-class="text-gray-500" :text="pr('minEngagement')" />
-              <dd class="font-mono" :class="result.engagementPass ? 'text-success' : 'text-error'">
+              <dd class="font-mono" :class="reviewAwareCheckClass(result.engagementPass, result)">
                 {{ result.minEngagementLength?.toFixed(1) }} mm
-                {{ result.engagementPass ? '✓' : '✗' }}
+                {{ reviewAwareCheckMark(result.engagementPass, result) }}
               </dd>
             </div>
           </template>
@@ -129,8 +137,9 @@
           </template>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('overall')" />
-            <dd class="font-mono" :class="result.pass ? 'text-success' : 'text-error'">
-              {{ result.pass ? fc('passOk') : fc('passFail') }}
+            <dd class="font-mono" :class="reviewOnly ? 'text-warning' : result.pass ? 'text-success' : 'text-error'">
+              {{ reviewOnly ? overallReviewText : result.pass ? fc('passOk') : fc('passFail') }}
+              <span v-if="result.estimateOnly" class="text-xs text-amber-600">（估算/未放行）</span>
             </dd>
           </div>
         </dl>
@@ -148,7 +157,7 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue'
+import { reactive, computed, toRef } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import {
   analyzeThreadStrength,
@@ -159,8 +168,11 @@ import ThreadDiagram from '@/components/thread/ThreadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
+import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
+import { isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 
-const { pt, ct, pf, pr, fc } = useCalcPage('thread')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('thread')
 const { optionMap } = useOptionsI18n()
 
 const grades = computed(() => optionMap(THREAD_GRADES, 'threadGrades'))
@@ -179,10 +191,20 @@ const form = reactive({
   dKm: 17.4,
 })
 
+const { markConfirmed, withConfirmed } = useCriticalInputConfirm(toRef(form, 'calcMode'))
+
 const suggestedPitch = computed(() => suggestPitch(form.diameter))
-const result = computed(() => analyzeThreadStrength(form))
+const result = computed(() => analyzeThreadStrength(withConfirmed(form)))
+const reviewOnly = computed(() => isReviewOnlyResult(result.value))
+const overallReviewText = computed(() => (locale.value === 'en' ? 'Review / Not released' : '需复核 / 未放行'))
+const unconfirmedLabelText = computed(() =>
+  formatUnconfirmedLabels(result.value.unconfirmedCriticalInputs ?? [], locale.value).join(
+    locale.value === 'en' ? ', ' : '、',
+  ),
+)
 
 function onDiameterChange() {
+  markConfirmed('diameter')
   const p = suggestPitch(form.diameter)
   if (p) form.pitch = p
   form.engagedLength = form.diameter * 1.5

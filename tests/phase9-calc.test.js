@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   analyzeThreadStrength,
   calcExternalThreadShearArea,
+  calcInternalThreadShearArea,
   calcMinEngagementLength,
 } from '@/utils/thread-calc'
 import {
@@ -10,7 +11,27 @@ import {
 } from '@/utils/bolt-group-calc'
 import { analyzeInterferenceFit } from '@/utils/interference-fit-calc'
 import { analyzeShaftTorsion } from '@/utils/shaft-calc'
-import { analyzeSpring } from '@/utils/spring-calc'
+import {
+  analyzeSpring,
+  calcBucklingCheck,
+  calcLoadsFromHeights,
+  calcSpringNaturalFrequency,
+  calcSpringResonanceCheck,
+  calcSpringCharacteristicCheck,
+  calcSpringFatigueCheck,
+  calcHotCoiledCompressionTestShearStress,
+  calcSpringTestShearStress,
+  calcSpringTestLoad,
+  getPulsatingFatigueLimit,
+  lookupBucklingCoefficient,
+  resolveSpringTestLoad,
+  hasSpringLoadFallback,
+  resolveSpringFatigueLoadRange,
+  resolveSpringSolidLoadFromGeometry,
+  lookupSpringRmByWireDiameter,
+  validateSpringHeights,
+} from '@/utils/spring-calc'
+import { adaptSpring } from '@/utils/calc-adapters'
 import { analyzeBearingLife } from '@/utils/bearing-calc'
 import { analyzeFilletWeld } from '@/utils/weld-calc'
 import { analyzeBeam } from '@/utils/beam-calc'
@@ -19,7 +40,7 @@ import { analyzeORingSeal } from '@/utils/o-ring-calc'
 import { analyzeClutch } from '@/utils/clutch-calc'
 import { analyzeBeltDrive } from '@/utils/belt-calc'
 import { analyzeChainDrive } from '@/utils/chain-calc'
-import { analyzeHydraulicCylinder } from '@/utils/hydraulic-calc'
+import { analyzeHydraulicCylinder, analyzePneumaticCylinder } from '@/utils/hydraulic-calc'
 import {
   analyzeFatigue,
   getStressAmplitudeBounds,
@@ -91,6 +112,12 @@ describe('thread-calc modes', () => {
     const a2 = calcExternalThreadShearArea(12, 1.75, 20)
     expect(a2).toBeGreaterThan(a1)
   })
+
+  it('internal shear area increases with engagement length', () => {
+    const a1 = calcInternalThreadShearArea(12, 1.75, 10)
+    const a2 = calcInternalThreadShearArea(12, 1.75, 20)
+    expect(a2).toBeGreaterThan(a1)
+  })
 })
 
 describe('bolt-group-calc modes', () => {
@@ -105,6 +132,8 @@ describe('bolt-group-calc modes', () => {
     expect(r.calcMode).toBe('simple')
     expect(r.maxBoltForce).toBeGreaterThan(0)
     expect(r.bolts).toBeUndefined()
+    expect(r.estimateOnly).toBe(true)
+    expect(r.pass).toBe(false)
   })
 
   it('complete mode returns per-bolt table', () => {
@@ -200,7 +229,8 @@ describe('spring-calc modes', () => {
     const r = analyzeSpring({ ...base, calcMode: 'simple', load: 100, allowableShear: 700 })
     expect(r.springRate).toBeGreaterThan(0)
     expect(r.shearStress).toBeGreaterThan(0)
-    expect(r.pass).toBe(true)
+    expect(r.estimateOnly).toBe(true)
+    expect(r.pass).toBe(false)
   })
 
   it('complete mode checks buckling and index', () => {
@@ -298,7 +328,7 @@ describe('spring-calc modes', () => {
     expect(r.tauInstall).toBeCloseTo(506.1, 1)
     expect(r.tauWorking).toBeCloseTo(759.2, 1)
     expect(r.unwindLength).toBeCloseTo(118.8, 1)
-    expect(r.allowableShear).toBe(529)
+    expect(r.allowableShear).toBeCloseTo(529, 0)
     expect(r.shearPass).toBe(false)
     expect(r.pass).toBe(false)
   })
@@ -320,11 +350,560 @@ describe('spring-calc modes', () => {
       targetCycles: 1e6,
     })
     expect(r.fatigueFromHeights).toBe(true)
+    expect(r.fatigueIssue).toBeNull()
     expect(r.loadMin).toBeCloseTo(37.19, 1)
     expect(r.loadMax).toBeCloseTo(55.79, 1)
     expect(r.shearAmplitude).toBeLessThan(200)
     expect(r.fatigueSafetyFactor).toBeCloseTo(1.33, 1)
     expect(r.fatiguePass).toBe(true)
+  })
+
+  it('fatigue blocks partial height when no load range is provided', () => {
+    const r = analyzeSpring({
+      calcMode: 'professional',
+      wireDiameter: 2,
+      meanDiameter: 16,
+      activeCoils: 8,
+      freeLength: 35,
+      workingHeight: 30,
+      targetCycles: 1e6,
+    })
+    expect(r.fatigueIssue).toBe('fatigue_partial_heights')
+    expect(r.fatigueFromHeights).toBe(false)
+    expect(r.fatiguePass).toBe(false)
+    expect(r.loadMin).toBeNull()
+    expect(r.loadMax).toBeNull()
+  })
+
+  it('fatigue uses loadMin/loadMax when only one height is given but load range is complete', () => {
+    const r = analyzeSpring({
+      calcMode: 'professional',
+      wireDiameter: 2,
+      meanDiameter: 16,
+      activeCoils: 8,
+      freeLength: 35,
+      workingHeight: 30,
+      loadMin: 50,
+      loadMax: 250,
+      targetCycles: 1e6,
+    })
+    expect(r.fatigueIssue).toBeNull()
+    expect(r.fatigueLoadsFallback).toBe(true)
+    expect(r.fatigueFromHeights).toBe(false)
+    expect(r.loadMin).toBe(50)
+    expect(r.loadMax).toBe(250)
+    expect(r.fatigueSafetyFactor).toBeGreaterThan(0)
+  })
+
+  it('fatigue falls back to loadMin/loadMax when height order is invalid', () => {
+    const r = analyzeSpring({
+      calcMode: 'professional',
+      wireDiameter: 2,
+      meanDiameter: 16,
+      activeCoils: 8,
+      freeLength: 35,
+      installHeight: 33,
+      workingHeight: 34,
+      loadMin: 50,
+      loadMax: 250,
+      targetCycles: 1e6,
+      endType: 'fixed',
+      allowableShear: 700,
+    })
+    expect(r.heightLoadsFallback).toBe(true)
+    expect(r.fatigueLoadsFallback).toBe(true)
+    expect(r.fatigueIssue).toBeNull()
+    expect(r.loadMin).toBe(50)
+    expect(r.loadMax).toBe(250)
+    expect(r.fatigueSafetyFactor).toBeGreaterThan(0)
+    expect(r.shearStress).toBeGreaterThan(0)
+  })
+
+  it('resolveSpringFatigueLoadRange prefers height pair over loadMin/loadMax', () => {
+    const range = resolveSpringFatigueLoadRange(
+      { installHeight: 13, workingHeight: 12, loadMin: 1, loadMax: 9999 },
+      {
+        heightsValid: true,
+        heightLoads: { install: 37.19, working: 55.79 },
+        designForce: 55.79,
+      },
+    )
+    expect(range.fromHeights).toBe(true)
+    expect(range.loadsFallback).toBe(false)
+    expect(range.fMin).toBeCloseTo(37.19, 2)
+    expect(range.fMax).toBeCloseTo(55.79, 2)
+    expect(range.issue).toBeNull()
+  })
+
+  it('resolveSpringFatigueLoadRange falls back to load range when heights invalid', () => {
+    const range = resolveSpringFatigueLoadRange(
+      { installHeight: 13, workingHeight: 14, loadMin: 50, loadMax: 250 },
+      {
+        heightsValid: false,
+        heightLoads: { install: 10, working: 5 },
+        designForce: 250,
+      },
+    )
+    expect(range.loadsFallback).toBe(true)
+    expect(range.fMin).toBe(50)
+    expect(range.fMax).toBe(250)
+    expect(range.issue).toBeNull()
+  })
+
+  it('table9 tauU0 uses 0.32·Rm at 1e7 and 0.30·Rm at 1e8', () => {
+    expect(getPulsatingFatigueLimit(1e7, 1810)).toBeCloseTo(579.2, 1)
+    expect(getPulsatingFatigueLimit(1e8, 1810)).toBeCloseTo(543, 1)
+    expect(getPulsatingFatigueLimit(1e6, 1810)).toBeCloseTo(633.5, 1)
+  })
+
+  it('GB/T 23935 appendix C.2.12 fatigue example', () => {
+    const check = calcSpringFatigueCheck({
+      tauMin: 362.6,
+      tauMax: 728.6,
+      tensileStrength: 1810,
+      targetCycles: 1e7,
+      minSafety: 1.1,
+    })
+    expect(check.tauU0).toBeCloseTo(579.2, 1)
+    expect(check.safetyFactor).toBeCloseTo(1.17, 2)
+    expect(check.fatiguePass).toBe(true)
+  })
+
+  it('calcLoadsFromHeights does not clamp negative compression', () => {
+    const loads = calcLoadsFromHeights({
+      springRate: 10,
+      freeLength: 15,
+      workingHeight: 20,
+    })
+    expect(loads.working).toBe(-50)
+  })
+
+  it('invalid H2 > H1 blocks height-based loads and fails pass', () => {
+    const v = validateSpringHeights({
+      freeLength: 15,
+      installHeight: 13,
+      workingHeight: 14,
+      solidHeight: 7.7,
+    })
+    expect(v.valid).toBe(false)
+    expect(v.issues).toContain('h2_gt_h1')
+    const r = analyzeSpring({
+      calcMode: 'complete',
+      wireDiameter: 1.1,
+      outerDiameter: 6.5,
+      activeCoils: 5,
+      totalCoils: 7,
+      freeLength: 15,
+      installHeight: 13,
+      workingHeight: 14,
+      endType: 'fixed',
+    })
+    expect(r.heightLoadBlocked).toBe(true)
+    expect(r.usesHeightLoads).toBe(false)
+    expect(r.pass).toBe(false)
+  })
+
+  it('invalid height order falls back to loadMax for stress and buckling in professional mode', () => {
+    const r = analyzeSpring({
+      calcMode: 'professional',
+      wireDiameter: 2,
+      meanDiameter: 16,
+      activeCoils: 8,
+      freeLength: 35,
+      installHeight: 33,
+      workingHeight: 34,
+      loadMax: 250,
+      loadMin: 50,
+      targetCycles: 1e6,
+      endType: 'fixed',
+      allowableShear: 700,
+    })
+    expect(r.heightLoadsFallback).toBe(true)
+    expect(r.heightLoadBlocked).toBeFalsy()
+    expect(r.usesHeightLoads).toBe(false)
+    expect(r.workingLoad).toBe(250)
+    expect(r.shearStress).toBeGreaterThan(0)
+    expect(r.buckling?.maxWorkingLoad).toBe(250)
+    expect(r.solidPass).toBe(r.deflection <= r.maxDeflection)
+    expect(hasSpringLoadFallback({ loadMax: 250 }, 'professional')).toBe(true)
+    const snap = adaptSpring({
+      calcMode: 'professional',
+      wireDiameter: 2,
+      meanDiameter: 16,
+      activeCoils: 8,
+      freeLength: 35,
+      installHeight: 33,
+      workingHeight: 34,
+      loadMax: 250,
+      loadMin: 50,
+      targetCycles: 1e6,
+      endType: 'fixed',
+      allowableShear: 700,
+    })
+    expect(snap.assumptions.some((a) => a.includes('F_max/load'))).toBe(true)
+  })
+
+  it('C > 16 is recommendation warning only, not hard fail', () => {
+    const r = analyzeSpring({
+      calcMode: 'complete',
+      wireDiameter: 1,
+      meanDiameter: 20,
+      activeCoils: 8,
+      load: 50,
+      allowableShear: 900,
+      freeLength: 30,
+      endType: 'fixed',
+    })
+    expect(r.springIndex).toBe(20)
+    expect(r.indexPass).toBe(true)
+    expect(r.indexRecommend).toBe(false)
+  })
+
+  it('lookupBucklingCoefficient interpolates GB/T 23935 figure 3', () => {
+    expect(lookupBucklingCoefficient(5.3, 'fixed').coefficient).toBeCloseTo(2.78, 2)
+    const mid = lookupBucklingCoefficient(5.65, 'fixed').coefficient
+    expect(mid).toBeGreaterThan(2.13)
+    expect(mid).toBeLessThan(2.78)
+    expect(lookupBucklingCoefficient(15, 'fixed').inTableRange).toBe(false)
+  })
+
+  it('calcBucklingCheck uses Fc=CB·P\'·H₀ when b exceeds limit', () => {
+    const k = 4.88
+    const H0 = 90
+    const D = 16
+    const b = H0 / D
+    const cb = lookupBucklingCoefficient(b, 'fixed').coefficient
+    const r = calcBucklingCheck(H0, D, 'fixed', { springRate: k, maxWorkingLoad: 80 })
+    expect(r.checkMode).toBe('critical_load')
+    expect(r.criticalLoad).toBeCloseTo(cb * k * H0, 0)
+    expect(r.bucklingPass).toBe(r.criticalLoad > 80)
+  })
+
+  it('calcBucklingCheck fails when b exceeds CB table range', () => {
+    const r = calcBucklingCheck(200, 16, 'fixed', { springRate: 5, maxWorkingLoad: 100 })
+    expect(r.cbOutOfRange).toBe(true)
+    expect(r.bucklingPass).toBe(false)
+    expect(r.criticalLoad).toBeNull()
+  })
+
+  it('calcSpringTestLoad matches GB/T 23935 formula (14) without K', () => {
+    const fs = calcSpringTestLoad({
+      wireDiameter: 1.1,
+      meanDiameter: 5.4,
+      testShearStress: 0.55 * 1810,
+    })
+    expect(fs).toBeCloseTo(96.36, 1)
+  })
+
+  it('appendix C.2.7 nominal Fs = 886.3 N before solid cap', () => {
+    const rm = 1810
+    const fs = calcSpringTestLoad({
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      testShearStress: 0.55 * rm,
+    })
+    expect(fs).toBeCloseTo(886.3, 0)
+  })
+
+  it('appendix F.4 lookup gives VDCrV-A Rm lower limit by wire diameter', () => {
+    expect(lookupSpringRmByWireDiameter(1.1, 'VDCrV-A').rm).toBe(1700)
+    expect(lookupSpringRmByWireDiameter(4.1, 'VDCrV-A').rm).toBe(1520)
+    expect(lookupSpringRmByWireDiameter(4.1, 'VDCrSi').rm).toBe(1810)
+  })
+
+  it('analyzeSpring uses appendix F Rm for test shear unless manually overridden', () => {
+    const auto = analyzeSpring({
+      calcMode: 'complete',
+      material: '50CrVA',
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      totalCoils: 6,
+      freeLength: 53.9,
+      endType: 'fixed',
+      allowableShear: 900,
+    })
+    expect(auto.rmFromAppendixF).toBe(true)
+    expect(auto.rmGrade).toBe('VDCrV-A')
+    expect(auto.tensileStrength).toBe(1520)
+    expect(auto.testShearStressNominal).toBeCloseTo(0.55 * 1520, 0)
+
+    const manual = analyzeSpring({
+      calcMode: 'complete',
+      material: '50CrVA',
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      totalCoils: 6,
+      freeLength: 53.9,
+      endType: 'fixed',
+      allowableShear: 900,
+      tensileStrength: 1810,
+      tensileStrengthManual: true,
+    })
+    expect(manual.tensileStrength).toBe(1810)
+    expect(manual.testShearStressNominal).toBeCloseTo(0.55 * 1810, 0)
+  })
+
+  it('resolveSpringTestLoad caps at solid load Fb per appendix C.2.7', () => {
+    const resolved = resolveSpringTestLoad({
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      testShearStress: 0.55 * 1810,
+      springRate: 24.67,
+      solidLoad: 722.8,
+      solidDeflection: 29.3,
+    })
+    expect(resolved.cappedAtSolid).toBe(true)
+    expect(resolved.testLoad).toBeCloseTo(722.8, 0)
+    expect(resolved.testDeflection).toBeCloseTo(29.3, 1)
+    expect(resolved.effectiveTestShearStress).toBeCloseTo(811.9, 0)
+  })
+
+  it('resolveSpringSolidLoadFromGeometry is independent of height order validation', () => {
+    const geom = resolveSpringSolidLoadFromGeometry({
+      springRate: 24.67,
+      freeLength: 53.9,
+      solidHeight: 24.6,
+    })
+    expect(geom.solidDeflection).toBeCloseTo(29.3, 1)
+    expect(geom.solidLoad).toBeCloseTo(722.8, 0)
+  })
+
+  it('appendix C.2.7 Fs caps at Fb even when H₁/H₂ order is invalid', () => {
+    const input = {
+      calcMode: 'complete',
+      material: '50CrVA',
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      totalCoils: 6,
+      freeLength: 53.9,
+      installHeight: 43,
+      workingHeight: 45,
+      endType: 'fixed',
+      allowableShear: 900,
+    }
+    const r = analyzeSpring(input)
+    const nominalFsHandbook = calcSpringTestLoad({
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      testShearStress: 0.55 * 1810,
+    })
+    const nominalFsTable = calcSpringTestLoad({
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      testShearStress: 0.55 * r.tensileStrength,
+    })
+    const geom = resolveSpringSolidLoadFromGeometry({
+      springRate: r.springRate,
+      freeLength: r.freeLength,
+      solidHeight: r.solidHeight,
+    })
+    expect(r.heightLoadBlocked).toBe(true)
+    expect(nominalFsHandbook).toBeCloseTo(886.3, 0)
+    expect(r.tensileStrength).toBe(1520)
+    expect(r.testLoadCappedAtSolid).toBe(true)
+    expect(r.testLoad).toBeCloseTo(geom.solidLoad, 0)
+    expect(r.testLoad).toBeLessThan(nominalFsTable)
+    expect(r.testLoad).toBeLessThan(nominalFsHandbook)
+    expect(r.testDeflection).toBeCloseTo(geom.solidDeflection, 1)
+    const snap = adaptSpring(input)
+    expect(snap.assumptions.some((a) => a.includes('Fs 已按附录限制为压并负荷 Fb'))).toBe(true)
+  })
+
+  it('characteristic check enforces 0.2fs–0.8fs and F₂≤Fs', () => {
+    expect(calcSpringCharacteristicCheck({ deflection: 3, testDeflection: 5.18 }).pass).toBe(true)
+    expect(calcSpringCharacteristicCheck({ deflection: 0.5, testDeflection: 5.18 }).pass).toBe(false)
+    expect(calcSpringCharacteristicCheck({ deflection: 4.5, testDeflection: 5.18 }).pass).toBe(false)
+    expect(
+      calcSpringCharacteristicCheck({
+        deflection: 3,
+        testDeflection: 5.18,
+        workingLoad: 900,
+        testLoad: 800,
+      }).pass,
+    ).toBe(false)
+  })
+
+  it('handbook reference case passes characteristic f/fs with appendix F Rm', () => {
+    const r = analyzeSpring({
+      calcMode: 'complete',
+      material: '50CrVA',
+      wireDiameter: 1.1,
+      outerDiameter: 6.5,
+      activeCoils: 5,
+      totalCoils: 7,
+      freeLength: 15,
+      installHeight: 13,
+      workingHeight: 12,
+      endType: 'fixed',
+    })
+    expect(r.tensileStrength).toBe(1700)
+    expect(r.rmFromAppendixF).toBe(true)
+    expect(r.characteristic?.ratio).toBeCloseTo(0.62, 2)
+    expect(r.characteristicPass).toBe(true)
+  })
+
+  it('professional without heights uses loadMax for F₂ buckling and characteristic', () => {
+    const r = analyzeSpring({
+      calcMode: 'professional',
+      wireDiameter: 2,
+      meanDiameter: 16,
+      activeCoils: 8,
+      loadMin: 50,
+      loadMax: 250,
+      freeLength: 35,
+      endType: 'fixed',
+      allowableShear: 700,
+      targetCycles: 1e6,
+    })
+    expect(r.maxWorkingLoad).toBe(250)
+    expect(r.workingLoad).toBe(250)
+    expect(r.buckling?.maxWorkingLoad).toBe(250)
+    expect(r.loadMax).toBe(250)
+  })
+
+  it('adaptSpring criticalLoad metric includes pass status', () => {
+    const snap = adaptSpring({
+      calcMode: 'complete',
+      wireDiameter: 2,
+      meanDiameter: 16,
+      activeCoils: 8,
+      freeLength: 90,
+      load: 5000,
+      endType: 'fixed',
+      allowableShear: 900,
+    })
+    const fc = snap.keyMetrics.find((m) => m.key === 'criticalLoad')
+    expect(fc?.status).toBe('fail')
+    expect(fc?.utilization).toBeGreaterThan(1)
+  })
+
+  it('rotating support uses b≤2.6 stability limit without fake CB extrapolation', () => {
+    const ok = calcBucklingCheck(25, 10, 'rotating', { springRate: 10, maxWorkingLoad: 10 })
+    const fail = calcBucklingCheck(30, 10, 'rotating', { springRate: 10, maxWorkingLoad: 10 })
+    expect(ok.criticalSlenderness).toBe(2.6)
+    expect(ok.bucklingPass).toBe(true)
+    expect(fail.checkMode).toBe('critical_load')
+    expect(fail.cbOutOfRange).toBe(true)
+    expect(fail.bucklingPass).toBe(false)
+  })
+
+  it('test shear stress follows cold table factors, d<1 correction, and hot-coiled lower bound', () => {
+    expect(calcSpringTestShearStress(1810, 0.55, 1.1, { process: 'cold' })).toBeCloseTo(995.5, 1)
+    expect(calcSpringTestShearStress(1810, 0.55, 0.8, { process: 'cold' })).toBeCloseTo(895.95, 1)
+    expect(calcSpringTestShearStress(1810, 0.45, 1.1, { process: 'cold' })).toBeCloseTo(814.5, 1)
+    expect(calcSpringTestShearStress(1810, 0.55, 4.1, { process: 'hot' })).toBe(710)
+  })
+
+  it('hot-coiled table 5 interpolates compression test shear by 42-52 HRC hardness', () => {
+    expect(calcHotCoiledCompressionTestShearStress(42)).toBe(710)
+    expect(calcHotCoiledCompressionTestShearStress(47)).toBe(800)
+    expect(calcHotCoiledCompressionTestShearStress(52)).toBe(890)
+    expect(calcHotCoiledCompressionTestShearStress(41)).toBeNull()
+    expect(calcSpringTestShearStress(1810, 0.55, 4.1, {
+      process: 'hot',
+      hotCoilHardnessHrc: 47,
+    })).toBe(800)
+    expect(calcSpringTestShearStress(1810, 0.55, 4.1, {
+      process: 'hot',
+      hotCoilHardnessHrc: 55,
+    })).toBe(0)
+  })
+
+  it('hot-coiled analyzeSpring uses hardness-derived test shear and rejects out-of-range hardness', () => {
+    const valid = analyzeSpring({
+      calcMode: 'complete',
+      springProcess: 'hot',
+      hotCoilHardnessHrc: 52,
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      totalCoils: 6,
+      freeLength: 53.9,
+      installHeight: 43,
+      workingHeight: 32,
+      endType: 'fixed',
+      allowableShear: 900,
+    })
+    expect(valid.testShearStressNominal).toBe(890)
+
+    const invalid = analyzeSpring({
+      calcMode: 'complete',
+      springProcess: 'hot',
+      hotCoilHardnessHrc: 55,
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      totalCoils: 6,
+      freeLength: 53.9,
+      installHeight: 43,
+      workingHeight: 32,
+      endType: 'fixed',
+      allowableShear: 900,
+    })
+    expect(invalid.inputValidation.valid).toBe(false)
+    expect(invalid.inputValidation.issues).toContain('hot_hardness_out_of_range')
+    expect(invalid.pass).toBe(false)
+  })
+
+  it('natural frequency matches GB/T 23935 appendix C.2.12 formula (12)', () => {
+    const fe = calcSpringNaturalFrequency({
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      shearModulus: 78500,
+      density: 7.85e-6,
+    })
+    expect(fe).toBeCloseTo(394.8, 0)
+  })
+
+  it('resonance check requires fe/fr > 10 when excitation frequency is provided', () => {
+    expect(calcSpringResonanceCheck({ naturalFrequency: 394.8, excitationFrequency: 25 }).pass).toBe(true)
+    const fail = calcSpringResonanceCheck({ naturalFrequency: 394.8, excitationFrequency: 50 })
+    expect(fail.checked).toBe(true)
+    expect(fail.pass).toBe(false)
+  })
+
+  it('professional mode fails pass when resonance ratio is unsafe', () => {
+    const r = analyzeSpring({
+      calcMode: 'professional',
+      material: '50CrVA',
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      totalCoils: 6,
+      freeLength: 53.9,
+      installHeight: 43,
+      workingHeight: 32,
+      endType: 'fixed',
+      allowableShear: 900,
+      targetCycles: 1e4,
+      excitationFrequency: 50,
+    })
+    expect(r.naturalFrequency).toBeGreaterThan(0)
+    expect(r.resonance?.checked).toBe(true)
+    expect(r.resonancePass).toBe(false)
+    expect(r.pass).toBe(false)
+  })
+
+  it('adaptSpring exports resonance ratio status', () => {
+    const snap = adaptSpring({
+      calcMode: 'professional',
+      wireDiameter: 4.1,
+      meanDiameter: 30.4,
+      activeCoils: 4,
+      totalCoils: 6,
+      freeLength: 53.9,
+      installHeight: 43,
+      workingHeight: 32,
+      endType: 'fixed',
+      excitationFrequency: 50,
+    })
+    const resonance = snap.keyMetrics.find((m) => m.key === 'resonanceRatio')
+    expect(resonance?.status).toBe('fail')
+    expect(snap.standards.some((s) => s.includes('6.5.3'))).toBe(true)
   })
 })
 
@@ -439,6 +1018,9 @@ describe('weld-calc modes', () => {
     expect(r.calcMode).toBe('simple')
     expect(r.standards).toHaveLength(1)
     expect(r.standard).toContain('GB')
+    expect(r.estimateOnly).toBe(true)
+    expect(r.pass).toBe(false)
+    expect(r.shearPass).toBe(true)
   })
 
   it('complete mode compares three standards', () => {
@@ -522,6 +1104,10 @@ describe('key-calc modes', () => {
     })
     expect(r.tangentialForce).toBeGreaterThan(0)
     expect(r.shearStress).toBeGreaterThan(0)
+    expect(r.shearPass).toBe(true)
+    expect(r.crushPass).toBe(true)
+    expect(r.estimateOnly).toBe(true)
+    expect(r.pass).toBe(false)
   })
 
   it('complete mode suggests standard key', () => {
@@ -566,6 +1152,9 @@ describe('clutch-calc modes', () => {
   it('simple torque from force', () => {
     const r = analyzeClutch({ calcMode: 'simple', frictionCoeff: 0.15, force: 5000, radius: 80, surfaces: 2 })
     expect(r.torque).toBeGreaterThan(0)
+    expect(r.estimateOnly).toBe(true)
+    expect(r.pass).toBe(false)
+    expect(r.torquePass).toBe(true)
   })
 
   it('complete uses effective radius', () => {
@@ -669,6 +1258,28 @@ describe('hydraulic-calc modes', () => {
     })
     expect(r.dynamicLoad).toBeGreaterThan(0)
     expect(r.cycleTimeExtend).toBeGreaterThan(0)
+  })
+
+  it('pneumatic efficiency updates load pass with derated force', () => {
+    const hydraulic = analyzeHydraulicCylinder({
+      ...base,
+      calcMode: 'complete',
+      pressure: 1.0,
+      externalLoad: 1500,
+      strokeLength: 300,
+    })
+    const pneumatic = analyzePneumaticCylinder({
+      ...base,
+      calcMode: 'complete',
+      pressure: 1.0,
+      externalLoad: 1500,
+      strokeLength: 300,
+      efficiency: 0.5,
+    })
+    expect(hydraulic.loadPass).toBe(true)
+    expect(pneumatic.extendForce).toBeLessThan(hydraulic.extendForce)
+    expect(pneumatic.loadPass).toBe(false)
+    expect(pneumatic.pass).toBe(false)
   })
 })
 
@@ -779,6 +1390,11 @@ describe('thermal-expansion modes', () => {
       alpha2: 11.5e-6,
       shaftDiameter: 50,
       holeDiameter: 49.95,
+      confirmedFields: {
+        shaftDiameter: true,
+        holeDiameter: true,
+        deltaT: true,
+      },
     })
     expect(r.fit).toBeTruthy()
     expect(r.fit.interferenceChange).toBeDefined()
@@ -793,9 +1409,31 @@ describe('thermal-expansion modes', () => {
       holeDiameter: 49.95,
       assemblyDeltaT: 80,
       serviceDeltaT: 120,
+      confirmedFields: {
+        shaftDiameter: true,
+        holeDiameter: true,
+        assemblyDeltaT: true,
+        serviceDeltaT: true,
+      },
     })
     expect(r.assemblyFit).toBeTruthy()
     expect(r.pass).toBeDefined()
+  })
+
+  it('professional pass follows service fit instead of initial fit', () => {
+    const r = analyzeThermalExpansion({
+      calcMode: 'professional',
+      alpha: 11.5e-6,
+      alpha2: 23.6e-6,
+      shaftDiameter: 50,
+      holeDiameter: 49.95,
+      assemblyDeltaT: 20,
+      serviceDeltaT: 220,
+    })
+    expect(r.fit).toBeTruthy()
+    expect(r.serviceFit).toBeTruthy()
+    expect(r.serviceFit.becomesClearance).toBe(true)
+    expect(r.pass).toBe(false)
   })
 })
 
@@ -925,6 +1563,9 @@ describe('butt-weld modes', () => {
     const r = analyzeButtWeld({ ...base, calcMode: 'simple' })
     expect(r.gb).toBeTruthy()
     expect(r.eurocode).toBeUndefined()
+    expect(r.estimateOnly).toBe(true)
+    expect(r.pass).toBe(false)
+    expect(r.stressPass).toBe(true)
   })
 
   it('complete three standards', () => {

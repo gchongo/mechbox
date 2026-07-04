@@ -128,6 +128,9 @@
 
       <section ref="resultPanelRef" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag class="mb-3" :type="overallStatusType">
+          {{ pr('overall') }}: {{ overallStatusLabel }}
+        </el-tag>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('stressArea')" />
@@ -173,9 +176,9 @@
             <template v-if="result.jointLoad?.externalAxialLoad > 0">
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <ResultLabel label-class="text-gray-500" :text="pr('clampingForceRemaining')" />
-                <dd class="font-mono" :class="result.jointLoad.separationPass ? 'text-success' : 'text-error'">
+                <dd class="font-mono" :class="reviewAwareCheckClass(result.jointLoad.separationPass, snapshot)">
                   {{ result.jointLoad.clampingForceRemaining.toFixed(0) }} N
-                  {{ result.jointLoad.separationPass ? '✓' : '✗' }}
+                  {{ reviewAwareCheckMark(result.jointLoad.separationPass, snapshot, reviewMarkText) }}
                 </dd>
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -197,8 +200,8 @@
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('tensileStress')" />
-            <dd class="font-mono" :class="result.pass ? 'text-success' : 'text-error'">
-              {{ result.stress.toFixed(1) }} MPa {{ result.pass ? '✓' : '✗' }}
+            <dd class="font-mono" :class="reviewAwareCheckClass(result.stressPass, snapshot)">
+              {{ result.stress.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.stressPass, snapshot, reviewMarkText) }}
             </dd>
           </div>
           <div
@@ -206,8 +209,8 @@
             class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
           >
             <ResultLabel label-class="text-gray-500" :text="pr('stressResidual')" />
-            <dd class="font-mono" :class="result.passResidual ? 'text-success' : 'text-error'">
-              {{ result.stressResidual.toFixed(1) }} MPa {{ result.passResidual ? '✓' : '✗' }}
+            <dd class="font-mono" :class="reviewAwareCheckClass(result.stressResidualPass, snapshot)">
+              {{ result.stressResidual.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.stressResidualPass, snapshot, reviewMarkText) }}
             </dd>
           </div>
           <div
@@ -215,8 +218,8 @@
             class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
           >
             <ResultLabel label-class="text-gray-500" :text="pr('stressUnderLoad')" />
-            <dd class="font-mono" :class="result.pass ? 'text-success' : 'text-error'">
-              {{ result.stressUnderLoad.toFixed(1) }} MPa
+            <dd class="font-mono" :class="reviewAwareCheckClass(result.stressUnderLoadPass, snapshot)">
+              {{ result.stressUnderLoad.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.stressUnderLoadPass, snapshot, reviewMarkText) }}
             </dd>
           </div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -224,6 +227,10 @@
             <dd class="font-mono">{{ result.maxPreload.toFixed(0) }} N</dd>
           </div>
         </dl>
+
+        <p v-if="reviewOnly" class="mt-3 text-xs text-warning">
+          {{ pt('hintSimple') }}
+        </p>
 
         <div v-if="result.breakdown" class="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
           <p class="mb-2 font-medium">{{ pr('torqueBreakdown') }}</p>
@@ -346,10 +353,12 @@ import {
 } from '@/utils/bolt-preload-calc'
 import { runVdi2230Wizard, TIGHTENING_METHODS, buildWizardReportText, localizeVdiWizard } from '@/utils/vdi2230-wizard'
 import { exportToolReportPdf } from '@/utils/export'
+import { buildEnhancedReport } from '@/utils/enhanced-report'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptBoltPreload } from '@/utils/calc-adapters'
+import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
@@ -430,6 +439,19 @@ const result = computed(() => analyzeBoltPreload({ ...form }))
 const decisionPreset = DECISION_PRESETS['bolt-preload']
 const baseInputs = computed(() => ({ ...form }))
 const snapshot = computed(() => adaptBoltPreload({ ...form }))
+const overallStatus = computed(() => getCalcReviewStatus(snapshot.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const reviewOnly = computed(() => isReviewOnlyResult(snapshot.value))
+const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {
@@ -472,20 +494,19 @@ function stepStatusLabel(s) {
 
 async function exportCalcPdf() {
   const r = result.value
+  const report = buildEnhancedReport({ snapshot: snapshot.value })
+  const keySection = {
+    heading: ct('results'),
+    rows: [
+      { label: `${pf('preload')} (N)`, value: r.preload.toFixed(0) },
+      { label: `${pf('torque')} (N·m)`, value: r.torque.toFixed(2) },
+      { label: `${pr('tensileStress')} (MPa)`, value: r.stress.toFixed(1) },
+    ],
+  }
   await exportToolReportPdf({
     title: pt('title'),
     subtitle: `M${form.diameter} · ${form.grade} · ${form.calcMode}`,
-    sections: [
-      {
-        heading: ct('results'),
-        rows: [
-          { label: `${pf('preload')} (N)`, value: r.preload.toFixed(0) },
-          { label: `${pf('torque')} (N·m)`, value: r.torque.toFixed(2) },
-          { label: `${pr('tensileStress')} (MPa)`, value: r.stress.toFixed(1) },
-          { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
-        ],
-      },
-    ],
+    sections: [keySection, ...report.sections],
     element: resultPanelRef.value,
     filename: `bolt-preload_M${form.diameter}_${Date.now()}.pdf`,
   })

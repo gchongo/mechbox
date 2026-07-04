@@ -3,6 +3,7 @@ import {
   resolveSeriesFromModel,
   BEARING_SERIES,
 } from '@/constants/bearing-xy-tables'
+import { auditCriticalInputsWithKeys, applyReleaseGate } from '@/utils/critical-input-guard'
 
 /** 轴承额定寿命 L10（百万转） ISO 281 */
 export function calcL10MillionRevolutions(dynamicLoad, equivalentLoad, bearingType = 'ball') {
@@ -186,6 +187,7 @@ export function analyzeBearingLife(input) {
 
   if (calcMode === 'simple') {
     x = input.x ?? 1
+    const yExplicit = input.y != null
     y = input.y ?? 0
     const mounted = applyMountingAndPreload({
       radialLoad: input.radialLoad,
@@ -195,10 +197,27 @@ export function analyzeBearingLife(input) {
       y,
       arrangement,
     })
-    const p =
-      input.simpleEquivalentLoad != null
-        ? input.simpleEquivalentLoad
-        : mounted.equivalentLoad
+    const axialPresent = mounted.effectiveAxialLoad > 0
+    const usingExplicitEquivalent = input.simpleEquivalentLoad != null
+
+    if (!usingExplicitEquivalent && axialPresent && !yExplicit) {
+      return {
+        calcMode,
+        estimateOnly: true,
+        errorKey: 'bearing_simple_xy_required',
+        radialLoad: input.radialLoad,
+        axialLoad: input.axialLoad,
+        effectiveAxialLoad: mounted.effectiveAxialLoad,
+        x: mounted.x,
+        y: mounted.y,
+        mountingArrangement: arrangement,
+        mountingLabel: mounting.label,
+        bearingType,
+        pass: false,
+      }
+    }
+
+    const p = usingExplicitEquivalent ? input.simpleEquivalentLoad : mounted.equivalentLoad
     const l10 = calcL10MillionRevolutions(dynamicLoad, p, bearingType)
     const hours = calcLifeHours(l10, input.rpm)
     const targetHours = input.targetHours ?? 10000
@@ -210,6 +229,7 @@ export function analyzeBearingLife(input) {
     const staticPass = staticSafety == null ? true : staticSafety >= minStaticSafety
     return {
       calcMode,
+      estimateOnly: true,
       equivalentLoad: p,
       x: mounted.x,
       y: mounted.y,
@@ -229,7 +249,7 @@ export function analyzeBearingLife(input) {
       staticSafetyFactor: staticSafety,
       staticPass,
       lifePass,
-      pass: lifePass && staticPass,
+      pass: false,
       bearingType,
     }
   }
@@ -278,7 +298,7 @@ export function analyzeBearingLife(input) {
     ? estimateRadialStiffness(dynamicLoad, arrangement)
     : null
 
-  return {
+  const result = {
     calcMode,
     equivalentLoad: p,
     x: mounted.x,
@@ -311,6 +331,19 @@ export function analyzeBearingLife(input) {
     bearingType,
     seriesId: input.seriesId ?? xyInfo?.series,
   }
+
+  if (input.enforceCriticalConfirm) {
+    const lookupKeys =
+      input.autoLookup !== false
+        ? ['seriesId']
+        : ['bearingType', 'x', 'y']
+    applyReleaseGate(
+      result,
+      auditCriticalInputsWithKeys('bearing', calcMode, input, lookupKeys),
+    )
+  }
+
+  return result
 }
 
 export { lookupBearingXY, resolveSeriesFromModel, BEARING_SERIES, listBearingSeries } from '@/constants/bearing-xy-tables'

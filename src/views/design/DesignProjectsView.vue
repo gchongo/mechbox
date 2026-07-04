@@ -135,10 +135,18 @@ const linkedChains = computed(() => {
     const summary = chainSummary(chain)
     const statusLabel = summary.status === 'pass'
       ? t('calc.decision.overallPass')
+      : summary.status === 'review'
+        ? t('calc.decision.overallReview')
       : summary.status === 'fail'
         ? t('calc.decision.overallFail')
         : t('calc.decision.overallIncomplete')
-    const statusType = summary.status === 'pass' ? 'success' : summary.status === 'fail' ? 'danger' : 'info'
+    const statusType = summary.status === 'pass'
+      ? 'success'
+      : summary.status === 'review'
+        ? 'warning'
+        : summary.status === 'fail'
+          ? 'danger'
+          : 'info'
     return {
       chainId: ref.chainId,
       chainType: ref.chainType,

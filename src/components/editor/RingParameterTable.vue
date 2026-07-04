@@ -71,6 +71,7 @@
               :controls="true"
               controls-position="right"
               class="ring-num-input"
+              :class="{ 'ring-error': invalid(row, 'es_ei') }"
               @change="onEsEiChange(row)"
             />
           </template>
@@ -85,8 +86,14 @@
               :controls="true"
               controls-position="right"
               class="ring-num-input"
+              :class="{ 'ring-error': invalid(row, 'es_ei') }"
               @change="onEsEiChange(row)"
             />
+          </template>
+        </el-table-column>
+        <el-table-column :label="pt('ringTable.toleranceT')" min-width="88">
+          <template #default="{ row }">
+            <span class="font-mono text-xs">{{ formatTolerance(row) }}</span>
           </template>
         </el-table-column>
         <el-table-column :label="pt('ringTable.type')" min-width="108">
@@ -187,7 +194,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { calcRingContributions, syncToleranceFromEsEi } from '@/utils/ring-tolerance'
+import { calcRingContributions, syncToleranceFromEsEi, resolveRingToleranceBounds } from '@/utils/ring-tolerance'
 import { sizeToleranceOfRing } from '@/utils/gdt-chain'
 import { useCalcPage } from '@/composables/useCalcPage'
 
@@ -215,6 +222,9 @@ function invalid(row, field) {
   if (!props.showValidation) return false
   if (field === 'name') return !row.name?.trim()
   if (field === 'size') return row.size == null
+  if (field === 'es_ei') {
+    return row.es != null && row.ei != null && row.es < row.ei
+  }
   return false
 }
 
@@ -223,6 +233,11 @@ function onEsEiChange(row) {
   if (row.featureKind) {
     row.sizeTolerance = sizeToleranceOfRing(row)
   }
+}
+
+function formatTolerance(row) {
+  const t = resolveRingToleranceBounds(row).tolerance
+  return Number.isFinite(t) ? t.toFixed(3) : '—'
 }
 
 function onFeatureKindChange(row) {

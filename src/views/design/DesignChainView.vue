@@ -171,28 +171,26 @@ function refreshCurrent() {
 }
 
 const currentSummary = computed(() => {
-  const snaps = stepSnapshots.value
-  const keys = Object.keys(snaps)
-  if (!keys.length) return chainSummary(activeChain.value)
-  const passCount = keys.filter((k) => snaps[k]?.pass).length
-  const failCount = keys.length - passCount
-  return {
-    status: failCount === 0 ? 'pass' : 'fail',
-    passCount,
-    total: keys.length,
-    failCount,
-  }
+  if (!activeChain.value) return chainSummary(activeChain.value)
+  return chainSummary({
+    ...activeChain.value,
+    steps: activeChain.value.steps.map((step) => ({
+      ...step,
+      snapshot: stepSnapshots.value[step.key] ?? step.snapshot ?? null,
+    })),
+  })
 })
 const overallLabel = computed(() => {
   const s = currentSummary.value.status
   if (s === 'pass') return t('calc.decision.overallPass')
+  if (s === 'review') return t('calc.decision.overallReview')
   if (s === 'fail') return t('calc.decision.overallFail')
   if (s === 'incomplete') return t('calc.decision.overallIncomplete')
   return '-'
 })
 const statusTagType = computed(() => {
   const s = currentSummary.value.status
-  return s === 'pass' ? 'success' : s === 'fail' ? 'danger' : 'info'
+  return s === 'pass' ? 'success' : s === 'review' ? 'warning' : s === 'fail' ? 'danger' : 'info'
 })
 
 function chainStatusLabel(c) {

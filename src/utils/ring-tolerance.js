@@ -25,6 +25,40 @@ export function getRingEi(ring) {
   return ring.ei != null ? ring.ei : -(ring.tolerance ?? 0) / 2
 }
 
+/** 组成环名义值 + ES/EI 偏差界（含传递系数） */
+export function resolveRingToleranceBounds(ring) {
+  const factor = ring.factor ?? 1
+  const es = getRingEs(ring) * factor
+  const ei = getRingEi(ring) * factor
+  return {
+    es,
+    ei,
+    tolerance: es - ei,
+    meanDev: (es + ei) / 2,
+    nominal: (ring.size ?? 0) * factor,
+  }
+}
+
+/** 校验单环 ES/EI：ES ≥ EI，带宽非负 */
+export function validateRingToleranceBounds(ring) {
+  if (ring.es != null && ring.ei != null && ring.es < ring.ei) {
+    return { valid: false, errorKey: 'es_lt_ei', ringName: ring.name }
+  }
+  const bounds = resolveRingToleranceBounds(ring)
+  if (bounds.tolerance < 0 || !Number.isFinite(bounds.tolerance)) {
+    return { valid: false, errorKey: 'negative_tolerance', ringName: ring.name }
+  }
+  return { valid: true, bounds }
+}
+
+export function validateComponentRingTolerances(rings = []) {
+  for (const ring of rings) {
+    const check = validateRingToleranceBounds(ring)
+    if (!check.valid) return check
+  }
+  return { valid: true }
+}
+
 /** 封闭环名义尺寸：Σ增 − Σ减 */
 export function calcNominalClosed(rings) {
   return rings.reduce((sum, ring) => {
@@ -36,7 +70,7 @@ export function calcNominalClosed(rings) {
 /** RSS 方差贡献度 (%) */
 export function calcRingContributions(rings) {
   const squares = rings.map((r) => {
-    const t = (r.tolerance ?? 0) * (r.factor ?? 1)
+    const t = resolveRingToleranceBounds(r).tolerance
     return t * t
   })
   const total = squares.reduce((a, b) => a + b, 0) || 1

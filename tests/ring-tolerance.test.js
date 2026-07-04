@@ -5,6 +5,8 @@ import {
   closedRingAsDesign,
   ensureRingEsEi,
   syncToleranceFromEsEi,
+  validateRingToleranceBounds,
+  validateComponentRingTolerances,
 } from '@/utils/ring-tolerance'
 
 describe('ring-tolerance', () => {
@@ -44,5 +46,20 @@ describe('ring-tolerance', () => {
     const d = closedRingAsDesign({ min: 9.95, max: 10.25 })
     expect(d.target).toBeCloseTo(10.1)
     expect(d.tolerance).toBeCloseTo(0.3)
+  })
+
+  it('validateRingToleranceBounds accepts symmetric band', () => {
+    const check = validateRingToleranceBounds({ name: 'R', tolerance: 0.1 })
+    expect(check.valid).toBe(true)
+    expect(check.bounds.tolerance).toBeCloseTo(0.1)
+  })
+
+  it('validateComponentRingTolerances stops at first invalid ring', () => {
+    const check = validateComponentRingTolerances([
+      { name: 'OK', es: 0.05, ei: -0.05 },
+      { name: 'Bad', es: -0.01, ei: 0.02 },
+    ])
+    expect(check.valid).toBe(false)
+    expect(check.ringName).toBe('Bad')
   })
 })

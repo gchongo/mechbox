@@ -48,7 +48,7 @@
       </el-table-column>
       <el-table-column :label="ct('history.colStatus')" width="80">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'pass' ? 'success' : row.status === 'fail' ? 'danger' : 'info'" size="small">
+          <el-tag :type="historyStatusType(row.status)" size="small">
             {{ formatHistoryStatus(row.status, locale) }}
           </el-tag>
         </template>
@@ -75,7 +75,13 @@ import * as XLSX from 'xlsx'
 import { getHistory, deleteAnalysis } from '@/utils/storage'
 import { isFavorite, toggleFavorite, removeFavorite } from '@/utils/favorites'
 import { exportMergedHistoryPdf } from '@/utils/export'
-import { formatHistorySource, formatHistoryStatus, formatHistoryTitle, formatHistoryType, getToolRoute } from '@/utils/calc-history'
+import {
+  buildToolReplayRoute,
+  formatHistorySource,
+  formatHistoryStatus,
+  formatHistoryTitle,
+  formatHistoryType,
+} from '@/utils/calc-history'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { ensureLoggedIn } from '@/utils/auth-guard'
 
@@ -107,9 +113,9 @@ function formatDate(iso) {
 
 function openRecord(row) {
   if (row.source === 'tool' && row.tool) {
-    const route = getToolRoute(row.tool)
-    if (route) {
-      router.push(route)
+    const replayRoute = buildToolReplayRoute(row)
+    if (replayRoute) {
+      router.push(replayRoute)
       return
     }
   }
@@ -170,6 +176,13 @@ async function exportExcel() {
 
 function onSelectionChange(rows) {
   selectedIds.value = rows.map((r) => r.id)
+}
+
+function historyStatusType(status) {
+  if (status === 'pass') return 'success'
+  if (status === 'review') return 'warning'
+  if (status === 'fail') return 'danger'
+  return 'info'
 }
 
 async function exportMergedPdf() {

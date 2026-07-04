@@ -12,7 +12,7 @@
         <h2 class="mb-4 font-semibold">{{ pf('materialAndStress') }}</h2>
         <el-form label-width="120px">
           <CalcFormItem :label="pf('material')">
-            <el-select v-model="material" class="w-full">
+            <el-select v-model="material" class="w-full" @change="markConfirmed('material')">
               <el-option v-for="(m, k) in snMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </CalcFormItem>
@@ -23,6 +23,7 @@
               :max="saBounds.saMax"
               :precision="1"
               class="fatigue-sa-input"
+              @change="markConfirmed('stressAmplitude')"
             />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
             <p class="mt-1 text-xs text-gray-400">
@@ -31,10 +32,10 @@
           </CalcFormItem>
           <template v-if="calcMode === 'professional'">
             <CalcFormItem :label="pf('meanStress')">
-              <el-input-number v-model="meanStress" :min="0" :precision="1" />
+              <el-input-number v-model="meanStress" :min="0" :precision="1" @change="markConfirmed('meanStress')" />
             </CalcFormItem>
             <CalcFormItem :label="pf('surfaceSizeFactor')">
-              <el-input-number v-model="surfaceFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="w-28" />
+              <el-input-number v-model="surfaceFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="w-28" @change="markConfirmed('surfaceFactor')" />
               <el-input-number v-model="sizeFactor" :min="0.5" :max="1" :step="0.05" :precision="2" class="ml-2 w-28" />
             </CalcFormItem>
           </template>
@@ -70,6 +71,14 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ calcMode === 'simple' ? pr('lifeTitle') : pr('minerTitle') }}</h2>
+        <el-alert
+          v-if="result.releaseBlocked"
+          type="warning"
+          :closable="false"
+          show-icon
+          class="mb-3"
+          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
+        />
         <template v-if="calcMode === 'simple'">
           <div class="rounded bg-gray-50 p-4 text-sm dark:bg-gray-900">
             <p>{{ pr('effectiveAmplitude') }}: <span class="font-mono">{{ result.effectiveAmplitude?.toFixed(1) ?? stressAmplitude }}</span> MPa</p>
@@ -80,13 +89,13 @@
           <div class="mb-4 grid grid-cols-2 gap-3 text-sm">
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel label-class="text-gray-500" :text="pr('totalDamage')" />
-              <dd class="font-mono text-xl" :class="result.miner.pass ? 'text-success' : 'text-error'">
+              <dd class="font-mono text-xl" :class="reviewAwareCheckClass(result.miner.pass, result)">
                 {{ result.miner.totalDamage?.toFixed(4) }}
               </dd>
             </div>
             <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel label-class="text-gray-500" :text="pr('status')" />
-              <dd class="mt-1">{{ rm('fatigue', `status_${result.miner.statusKey}`) }}</dd>
+              <dd class="mt-1">{{ minerStatusText }}</dd>
             </div>
           </div>
           <el-table :data="result.miner.details" size="small" border>
@@ -126,6 +135,9 @@ import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useChartI18n } from '@/composables/useChartI18n'
+import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
+import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
+import { isReviewOnlyResult, reviewAwareCheckClass } from '@/utils/calc-result'
 
 const { pt, ct, pf, pr, locale } = useCalcPage('fatigue')
 const { optionMap } = useOptionsI18n()
@@ -148,21 +160,36 @@ const surfaceFactor = ref(0.9)
 const sizeFactor = ref(0.85)
 const loadText = ref('')
 const chartRef = ref(null)
+const { markConfirmed, withConfirmed } = useCriticalInputConfirm(calcMode)
 let plotly = null
 
 const loads = computed(() => parseLoadSpectrum(loadText.value))
 
 const result = computed(() =>
-  analyzeFatigue({
-    calcMode: calcMode.value,
-    material: material.value,
-    stressAmplitude: stressAmplitude.value,
-    meanStress: meanStress.value,
-    surfaceFactor: surfaceFactor.value,
-    sizeFactor: sizeFactor.value,
-    loads: loads.value,
-  }),
+  analyzeFatigue(
+    withConfirmed({
+      calcMode: calcMode.value,
+      material: material.value,
+      stressAmplitude: stressAmplitude.value,
+      meanStress: meanStress.value,
+      surfaceFactor: surfaceFactor.value,
+      sizeFactor: sizeFactor.value,
+      loads: loads.value,
+    }),
+  ),
 )
+
+const reviewOnly = computed(() => isReviewOnlyResult(result.value))
+const unconfirmedLabelText = computed(() =>
+  formatUnconfirmedLabels(result.value.unconfirmedCriticalInputs ?? [], locale.value).join(
+    locale.value === 'en' ? ', ' : '、',
+  ),
+)
+const minerStatusText = computed(() => {
+  if (!result.value.miner) return ''
+  if (reviewOnly.value) return locale.value === 'en' ? 'Review / Not released' : '需复核 / 未放行'
+  return rm('fatigue', `status_${result.value.miner.statusKey}`)
+})
 
 /** 示意图用材料原始 S-N 曲线寿命（不含 Goodman） */
 const diagramLife = computed(() => {

@@ -104,6 +104,9 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag v-if="mode === 'simple'" class="mb-3" :type="simpleOverallType">
+          {{ pr('overall') }}: {{ simpleOverallLabel }}
+        </el-tag>
         <template v-if="mode === 'agma'">
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -221,17 +224,18 @@
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel label-class="text-gray-500" :text="pr('bendingStress')" />
-              <dd class="font-mono" :class="simpleResult.bendingPass ? 'text-success' : 'text-error'">
-                {{ simpleResult.bendingStress.toFixed(1) }} MPa {{ simpleResult.bendingPass ? '✓' : '✗' }}
+              <dd class="font-mono" :class="reviewAwareCheckClass(simpleResult.bendingPass, simpleResult)">
+                {{ simpleResult.bendingStress.toFixed(1) }} MPa {{ reviewAwareCheckMark(simpleResult.bendingPass, simpleResult, reviewMarkText) }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel label-class="text-gray-500" :text="pr('contactStress')" />
-              <dd class="font-mono" :class="simpleResult.contactPass ? 'text-success' : 'text-error'">
-                {{ simpleResult.contactStress.toFixed(1) }} MPa {{ simpleResult.contactPass ? '✓' : '✗' }}
+              <dd class="font-mono" :class="reviewAwareCheckClass(simpleResult.contactPass, simpleResult)">
+                {{ simpleResult.contactStress.toFixed(1) }} MPa {{ reviewAwareCheckMark(simpleResult.contactPass, simpleResult, reviewMarkText) }}
               </dd>
             </div>
           </dl>
+          <p v-if="simpleReviewOnly" class="mt-4 text-xs text-warning">{{ pt('hintSimple') }}</p>
         </template>
       </section>
     </div>
@@ -250,6 +254,7 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { enrichMathText } from '@/utils/math-label'
 
 const { pt, ct, pf, pr, locale } = useCalcPage('gear')
@@ -330,4 +335,17 @@ const simpleResult = computed(() =>
     gearRatio: form.gearTeeth / form.pinionTeeth,
   }),
 )
+const simpleOverallStatus = computed(() => getCalcReviewStatus(simpleResult.value))
+const simpleOverallType = computed(() => {
+  if (simpleOverallStatus.value === 'pass') return 'success'
+  if (simpleOverallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const simpleOverallLabel = computed(() => {
+  if (simpleOverallStatus.value === 'pass') return fc('overallPass')
+  if (simpleOverallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const simpleReviewOnly = computed(() => isReviewOnlyResult(simpleResult.value))
+const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 </script>

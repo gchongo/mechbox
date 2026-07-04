@@ -72,17 +72,24 @@
         <el-alert v-if="torsionResult.errorKey && mode === 'torsion'" :title="re(torsionResult.errorKey)" type="warning" show-icon class="mb-3" />
         <el-alert v-if="combinedResult.errorKey && mode === 'combined'" :title="re(combinedResult.errorKey)" type="warning" show-icon class="mb-3" />
         <dl v-if="mode === 'torsion' && !torsionResult.errorKey" class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress')" /><dd class="font-mono" :class="torsionResult.pass?'text-success':'text-error'">{{ torsionResult.shearStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('twistAngle')" /><dd class="font-mono">{{ torsionResult.twistAngle.toFixed(4) }}°</dd></div>
+          <el-tag class="mb-3" :type="overallStatusType">
+            {{ pr('overall') }}: {{ overallStatusLabel }}
+          </el-tag>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress')" /><dd class="font-mono" :class="localCheckClass(torsionResult.torsionPass ?? torsionResult.pass)">{{ torsionResult.shearStress.toFixed(2) }} MPa {{ localCheckMark(torsionResult.torsionPass ?? torsionResult.pass) }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('twistAngle')" /><dd class="font-mono" :class="localCheckClass(torsionResult.anglePass)">{{ torsionResult.twistAngle.toFixed(4) }}° {{ localCheckMark(torsionResult.anglePass) }}</dd></div>
           <div v-if="form.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('minDiameter')" /><dd class="font-mono">{{ torsionResult.minDiameter?.toFixed(1) }} mm</dd></div>
-          <div v-if="form.calcMode === 'professional' && torsionResult.peakShearStress" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('peakShear')" /><dd class="font-mono">{{ torsionResult.peakShearStress.toFixed(2) }} MPa</dd></div>
-          <div v-if="torsionResult.fatigueAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueAmp')" /><dd class="font-mono">{{ torsionResult.fatigueAmplitude?.toFixed(1) }} / {{ torsionResult.fatigueEndurance?.toFixed(0) }} MPa</dd></div>
+          <div v-if="form.calcMode === 'professional' && torsionResult.peakShearStress" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('peakShear')" /><dd class="font-mono" :class="localCheckClass(torsionResult.peakPass)">{{ torsionResult.peakShearStress.toFixed(2) }} MPa {{ localCheckMark(torsionResult.peakPass) }}</dd></div>
+          <div v-if="torsionResult.fatigueAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueAmp')" /><dd class="font-mono" :class="localCheckClass(torsionResult.fatiguePass)">{{ torsionResult.fatigueAmplitude?.toFixed(1) }} / {{ torsionResult.fatigueEndurance?.toFixed(0) }} MPa {{ localCheckMark(torsionResult.fatiguePass) }}</dd></div>
         </dl>
         <dl v-else-if="!combinedResult.errorKey" class="space-y-3 text-sm">
+          <el-tag class="mb-3" :type="overallStatusType">
+            {{ pr('overall') }}: {{ overallStatusLabel }}
+          </el-tag>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('bendingStress')" /><dd class="font-mono">{{ combinedResult.bendingStress.toFixed(2) }} MPa</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torsionStress')" /><dd class="font-mono">{{ combinedResult.torsionStress.toFixed(2) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('equivalentStress')" /><dd class="font-mono" :class="combinedResult.pass?'text-success':'text-error'">{{ combinedResult.equivalentStress.toFixed(2) }} MPa {{ combinedResult.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('equivalentStress')" /><dd class="font-mono" :class="localCheckClass(combinedResult.combinedPass ?? combinedResult.pass)">{{ combinedResult.equivalentStress.toFixed(2) }} MPa {{ localCheckMark(combinedResult.combinedPass ?? combinedResult.pass) }}</dd></div>
           <div v-if="combinedResult.utilization" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('utilization')" /><dd class="font-mono">{{ (combinedResult.utilization * 100).toFixed(1) }}%</dd></div>
+          <div v-if="combinedResult.fatigueAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueAmp')" /><dd class="font-mono" :class="localCheckClass(combinedResult.fatiguePass)">{{ combinedResult.fatigueAmplitude?.toFixed(1) }} / {{ combinedResult.fatigueEndurance?.toFixed(0) }} MPa {{ localCheckMark(combinedResult.fatiguePass) }}</dd></div>
         </dl>
         <div class="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
           <MathTex v-if="mode === 'combined'" expr="\sigma_{eq} = \sqrt{\sigma^2 + 3\tau^2}" block />
@@ -111,7 +118,8 @@ import ShaftDiagram from '@/components/shaft/ShaftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
-import { adaptShaftTorsion } from '@/utils/calc-adapters'
+import { adaptShaftCombined, adaptShaftTorsion } from '@/utils/calc-adapters'
+import { getCalcReviewStatus, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
@@ -186,7 +194,35 @@ const baseInputs = computed(() => ({
   ...form,
   allowableShear: form.calcMode === 'simple' ? form.allowable : undefined,
 }))
-const snapshot = computed(() => adaptShaftTorsion(baseInputs.value))
+const torsionSnapshot = computed(() => adaptShaftTorsion(baseInputs.value))
+const combinedSnapshot = computed(() =>
+  adaptShaftCombined({
+    ...form,
+    allowableStress: form.calcMode === 'simple' ? form.allowable : undefined,
+  }),
+)
+const snapshot = computed(() => torsionSnapshot.value)
+const currentSnapshot = computed(() => (mode.value === 'combined' ? combinedSnapshot.value : torsionSnapshot.value))
+const overallStatus = computed(() => getCalcReviewStatus(currentSnapshot.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
+
+function localCheckClass(passFlag) {
+  return typeof passFlag === 'boolean' ? reviewAwareCheckClass(passFlag, currentSnapshot.value) : ''
+}
+
+function localCheckMark(passFlag) {
+  return typeof passFlag === 'boolean' ? reviewAwareCheckMark(passFlag, currentSnapshot.value, reviewMarkText.value) : ''
+}
 
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {

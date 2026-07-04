@@ -20,10 +20,12 @@ import { runToleranceAllocation, compareAllocationMethods } from '@/utils/tolera
 import { calcSpringEffectiveAmplitude, analyzeSpring } from '@/utils/spring-calc'
 import { calcJointUnderAxialLoad, analyzeBoltPreload } from '@/utils/bolt-preload-calc'
 import { analyzeButtWeld } from '@/utils/weld-calc'
+import { analyzeShaftTorsion } from '@/utils/shaft-calc'
 import { analyzeShaftCombined } from '@/utils/shaft-combined'
 import { assessComponentFatigue } from '@/utils/fatigue-calc'
 import { analyzeBoltGroup, calcSlipResistance } from '@/utils/bolt-group-calc'
 import { analyzeBearingLife } from '@/utils/bearing-calc'
+import { adaptBeam } from '@/utils/calc-adapters'
 
 describe('process-capability', () => {
   it('detects off-center process as low yield', () => {
@@ -108,19 +110,21 @@ describe('hydraulic rod buckling', () => {
     const d = 20
     const L = 50
     const Fy = 235
-    const p = calcRodBucklingLoad(d, L, Fy, 0.5)
+    const r = calcRodBucklingLoad(d, L, Fy, 'fixed_fixed')
     const A = (Math.PI * d ** 2) / 4
-    expect(p).toBeLessThanOrEqual(A * Fy * 1.01)
-    expect(p).toBeGreaterThan(1000)
+    expect(r.criticalLoad).toBeLessThanOrEqual(A * Fy * 1.01)
+    expect(r.criticalLoad).toBeGreaterThan(1000)
+    expect(r.effectiveLengthFactor).toBe(0.5)
   })
 
   it('euler governs long slender rod', () => {
     const d = 12
     const L = 800
-    const p = calcRodBucklingLoad(d, L, 235, 1)
+    const r = calcRodBucklingLoad(d, L, 235, 1)
     const I = (Math.PI * d ** 4) / 64
     const pEuler = (Math.PI ** 2 * 210000 * I) / (L ** 2)
-    expect(p).toBeCloseTo(pEuler, -1)
+    expect(r.criticalLoad).toBeCloseTo(pEuler, -1)
+    expect(r.effectiveLengthFactor).toBe(1)
   })
 })
 
@@ -207,6 +211,27 @@ describe('beam material binding', () => {
     })
     expect(r.allowableStress).toBe(157)
     expect(r.materialName).toContain('Q235')
+  })
+
+  it('keeps slenderness warning visible in simple mode', () => {
+    const input = {
+      calcMode: 'simple',
+      materialId: 'q235',
+      caseId: 'simply_center',
+      sectionType: 'solid_round',
+      diameter: 20,
+      spanLength: 900,
+      load: 50,
+    }
+    const raw = analyzeBeam(input)
+    expect(raw.pass).toBe(true)
+    expect(raw.spanRatio).toBeCloseTo(45, 6)
+    expect(raw.slendernessWarning).toBe(true)
+
+    const snapshot = adaptBeam(input)
+    expect(snapshot.pass).toBe(true)
+    expect(snapshot.estimateOnly).toBe(true)
+    expect(snapshot.warnings.some((w) => w.key === 'slenderness')).toBe(true)
   })
 })
 
@@ -306,6 +331,20 @@ describe('tolerance allocation', () => {
 })
 
 describe('shaft combined strength', () => {
+  it('keeps torsion stress check separate from twist-angle failure', () => {
+    const r = analyzeShaftTorsion({
+      calcMode: 'complete',
+      diameter: 30,
+      torque: 200,
+      length: 4000,
+      yieldStrength: 235,
+      maxTwistAngle: 0.5,
+    })
+    expect(r.torsionPass).toBe(true)
+    expect(r.anglePass).toBe(false)
+    expect(r.pass).toBe(false)
+  })
+
   it('von Mises check uses user allowable in simple mode', () => {
     const r = analyzeShaftCombined({
       calcMode: 'simple',
@@ -326,6 +365,24 @@ describe('shaft combined strength', () => {
       yieldStrength: 235,
     })
     expect(r.allowableStress).toBeCloseTo(235, 1)
+  })
+
+  it('keeps equivalent stress check separate from fatigue failure', () => {
+    const r = analyzeShaftCombined({
+      calcMode: 'professional',
+      materialId: '45',
+      diameter: 40,
+      torque: 20,
+      bendingMoment: 20,
+      yieldStrength: 355,
+      stressConcentrationBending: 1,
+      stressConcentrationTorsion: 1,
+      bendingAmplitude: 2000,
+      targetCycles: 1e6,
+    })
+    expect(r.combinedPass).toBe(true)
+    expect(r.fatiguePass).toBe(false)
+    expect(r.pass).toBe(false)
   })
 })
 

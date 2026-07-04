@@ -36,6 +36,9 @@
       </section>
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag class="mb-3" :type="overallStatusType">
+          {{ pr('overall') }}: {{ overallStatusLabel }}
+        </el-tag>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torque')" /><dd class="font-mono text-lg">{{ result.torque.toFixed(2) }} N·m</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('power')" /><dd class="font-mono">{{ result.power.toFixed(2) }} kW</dd></div>
@@ -43,6 +46,7 @@
           <div v-if="result.contactPressure" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('contactPressure')" /><dd class="font-mono">{{ result.contactPressure?.toFixed(3) }} MPa</dd></div>
           <div v-if="result.deratedTorque" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deratedTorque')" /><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.deratedTorque?.toFixed(2) }} N·m</dd></div>
         </dl>
+        <p v-if="reviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
           <MathTex expr="T = \mu F R n / 1000" />
           <MathTex expr="P = \frac{T \cdot 2\pi n}{60000}" />
@@ -57,9 +61,10 @@ import MathTex from '@/components/common/MathTex.vue'
 import { analyzeClutch } from '@/utils/clutch-calc'
 import ClutchDiagram from '@/components/clutch/ClutchDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { getCalcReviewStatus, isReviewOnlyResult } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct, pf, pr } = useCalcPage('clutch')
+const { pt, ct, pf, pr, fc } = useCalcPage('clutch')
 
 const form = reactive({
   calcMode: 'simple',
@@ -75,6 +80,18 @@ const form = reactive({
 })
 
 const result = computed(() => analyzeClutch(form))
+const overallStatus = computed(() => getCalcReviewStatus(result.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const reviewOnly = computed(() => isReviewOnlyResult(result.value))
 
 const clutchInnerD = computed(() =>
   form.calcMode === 'simple' ? form.radius * 2 - 20 : form.innerDiameter,

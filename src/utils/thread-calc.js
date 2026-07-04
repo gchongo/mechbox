@@ -1,3 +1,5 @@
+import { auditCriticalInputs, applyReleaseGate } from '@/utils/critical-input-guard'
+
 /** 小径 d1 */
 export function calcMinorDiameter(diameter, pitch) {
   return diameter - 1.0825 * pitch
@@ -6,17 +8,17 @@ export function calcMinorDiameter(diameter, pitch) {
 /** 外螺纹剪切面积 (ISO 螺纹牙剪切, 完整模型) */
 export function calcExternalThreadShearArea(diameter, pitch, engagedLength) {
   const d1 = calcMinorDiameter(diameter, pitch)
-  const P = pitch
   if (!engagedLength || !d1) return 0
-  return Math.PI * d1 * engagedLength * (0.5 * P + 0.57735 * (diameter - 0.6495 * P))
+  // Shear area must be in mm^2.
+  // Use standard simplified flank shear ring area: A ~= 0.5 * pi * d_eff * L_e
+  return 0.5 * Math.PI * d1 * engagedLength
 }
 
 /** 内螺纹剪切面积 (完整模型, 内螺纹较弱侧) */
 export function calcInternalThreadShearArea(diameter, pitch, engagedLength) {
   const d2 = calcPitchDiameter(diameter, pitch)
-  const P = pitch
   if (!engagedLength || !d2) return 0
-  return Math.PI * d2 * engagedLength * (0.5 * P + 0.57735 * (diameter - 0.6495 * P))
+  return 0.5 * Math.PI * d2 * engagedLength
 }
 
 /** VDI 2230 / DIN 推荐最小旋合长度 m_eff (mm) */
@@ -172,6 +174,13 @@ export function analyzeThreadStrength(input) {
     result.tensilePass &&
     result.shearPass &&
     (calcMode === 'complete' || calcMode === 'professional' ? result.engagementPass !== false : true)
+
+  if (calcMode === 'simple') {
+    result.estimateOnly = true
+    result.pass = false
+  } else if (input.enforceCriticalConfirm) {
+    applyReleaseGate(result, auditCriticalInputs('thread', calcMode, input))
+  }
 
   return result
 }

@@ -1,4 +1,5 @@
 /** 液压缸 / 气缸计算 */
+import { auditCriticalInputs, applyReleaseGate } from '@/utils/critical-input-guard'
 
 export function calcCylinderArea(diameter, rodDiameter = 0) {
   const D = diameter
@@ -17,31 +18,96 @@ export function calcFlowRate(area, velocity) {
   return (area * velocity * 60) / 1e6
 }
 
-/** 活塞杆柱屈曲 — Euler（弹性）与 Johnson（弹塑性）取较小值，返回临界载荷 (N) */
-export function calcRodBucklingLoad(rodDiameter, length, yieldStrength = 235, endFixity = 0.5) {
+/**
+ * Euler 等效长度系数 K：L_e = K·L
+ * 非“约束度分数”；须与两端边界条件一一对应
+ */
+export const END_FIXITY_PRESETS = {
+  fixed_fixed: { K: 0.5, labelKey: 'fixedFixed' },
+  fixed_pinned: { K: 1 / Math.sqrt(2), labelKey: 'fixedPinned' },
+  pinned_pinned: { K: 1.0, labelKey: 'pinnedPinned' },
+  fixed_free: { K: 2.0, labelKey: 'fixedFree' },
+}
+
+export const END_FIXITY_DEFINITION =
+  'Le = K·L (Euler effective length); K maps to end restraints — not a generic fixity fraction'
+
+/** @returns {{ K: number, preset: string|null, custom?: boolean, fallback?: boolean }} */
+export function resolveEffectiveLengthFactor(endFixity = 'pinned_pinned') {
+  if (typeof endFixity === 'string' && END_FIXITY_PRESETS[endFixity]) {
+    return { K: END_FIXITY_PRESETS[endFixity].K, preset: endFixity }
+  }
+  const K = Number(endFixity)
+  if (Number.isFinite(K) && K > 0) {
+    return { K, preset: null, custom: true }
+  }
+  return { K: END_FIXITY_PRESETS.pinned_pinned.K, preset: 'pinned_pinned', fallback: true }
+}
+
+/** 活塞杆柱屈曲 — Euler（弹性）与 Johnson（弹塑性）取较小值 */
+export function calcRodBucklingLoad(
+  rodDiameter,
+  length,
+  yieldStrength = 235,
+  endFixity = 'pinned_pinned',
+) {
   const d = rodDiameter
   const L = length
-  if (!d || !L) return 0
+  if (!d || !L) {
+    return {
+      criticalLoad: 0,
+      effectiveLengthFactor: null,
+      effectiveLength: null,
+      slenderness: null,
+      governingMode: null,
+    }
+  }
 
+  const { K, preset } = resolveEffectiveLengthFactor(endFixity)
   const A = (Math.PI * d ** 2) / 4
   const I = (Math.PI * d ** 4) / 64
   const r = Math.sqrt(I / A)
   const E = 210000
   const Fy = yieldStrength
-  const Le = endFixity * L
-  if (!Le || !r) return 0
+  const Le = K * L
+  if (!Le || !r) {
+    return {
+      criticalLoad: 0,
+      effectiveLengthFactor: K,
+      effectiveLength: Le,
+      slenderness: null,
+      governingMode: null,
+      endFixityPreset: preset,
+    }
+  }
 
   const P_euler = (Math.PI ** 2 * E * I) / (Le ** 2)
   const P_yield = A * Fy
   const slenderness = Le / r
 
+  let criticalLoad
+  let governingMode
   if (P_euler <= P_yield) {
-    return P_euler
+    criticalLoad = P_euler
+    governingMode = 'euler'
+  } else {
+    const sigmaJohnson = Fy - (Fy ** 2 / (4 * Math.PI ** 2 * E)) * slenderness ** 2
+    const P_johnson = A * Math.max(0, sigmaJohnson)
+    criticalLoad = Math.min(P_yield, P_johnson)
+    governingMode = P_johnson <= P_yield ? 'johnson' : 'yield'
   }
 
-  const sigmaJohnson = Fy - (Fy ** 2 / (4 * Math.PI ** 2 * E)) * slenderness ** 2
-  const P_johnson = A * Math.max(0, sigmaJohnson)
-  return Math.min(P_yield, P_johnson)
+  return {
+    criticalLoad,
+    effectiveLengthFactor: K,
+    effectiveLength: Le,
+    slenderness,
+    governingMode,
+    eulerLoad: P_euler,
+    yieldLoad: P_yield,
+    endFixityPreset: preset,
+    endFixityDefinition: END_FIXITY_DEFINITION,
+  }
 }
 
 export function analyzeHydraulicCylinder(input) {
@@ -75,15 +141,31 @@ export function analyzeHydraulicCylinder(input) {
     result.extendMargin = extendForce - load
     result.retractMargin = retractForce - load
     result.loadPass = extendForce >= load && retractForce >= load
+
     if (input.rodDiameter && input.strokeLength) {
       const buckling = calcRodBucklingLoad(
         input.rodDiameter,
         input.strokeLength,
         input.yieldStrength ?? 235,
-        input.endFixity ?? 0.5,
+        input.endFixity ?? 'pinned_pinned',
       )
-      result.bucklingLoad = buckling
-      result.bucklingPass = load <= buckling
+      // 杆屈曲仅对压缩载荷；默认外载在缩回工况使杆受压（可显式覆盖）
+      const compressiveLoad =
+        input.rodCompressiveLoad ??
+        (input.compressOnRetract !== false ? Math.max(0, load) : 0)
+      result.rodCompressiveLoad = compressiveLoad
+      result.bucklingLoad = buckling.criticalLoad
+      result.buckling = {
+        ...buckling,
+        compressiveLoad,
+        bucklingPass:
+          compressiveLoad <= 0
+            ? null
+            : compressiveLoad <= buckling.criticalLoad,
+        checkSkipped: compressiveLoad <= 0,
+      }
+      result.bucklingPass =
+        result.buckling.bucklingPass === null ? true : result.buckling.bucklingPass
       result.pass = result.loadPass && result.bucklingPass
     } else {
       result.pass = result.loadPass
@@ -105,9 +187,16 @@ export function analyzeHydraulicCylinder(input) {
     result.cushionPressure = cushion
     result.cushionForce = calcCylinderForce(cushion, areas.bore)
     result.pass =
-      (result.pass !== false) &&
+      result.pass !== false &&
       extendForce >= dynamicLoad &&
       (result.bucklingPass !== false)
+  }
+
+  if (calcMode === 'simple') {
+    result.estimateOnly = true
+    result.pass = false
+  } else if (input.enforceCriticalConfirm) {
+    applyReleaseGate(result, auditCriticalInputs('cylinder', calcMode, input))
   }
 
   return result
@@ -116,11 +205,37 @@ export function analyzeHydraulicCylinder(input) {
 export function analyzePneumaticCylinder(input) {
   const efficiency = input.efficiency ?? 0.85
   const result = analyzeHydraulicCylinder({ ...input, calcMode: input.calcMode ?? 'simple' })
-  return {
+  const extendForce = result.extendForce * efficiency
+  const retractForce = result.retractForce * efficiency
+  const calcMode = result.calcMode ?? input.calcMode ?? 'simple'
+  const updated = {
     ...result,
-    extendForce: result.extendForce * efficiency,
-    retractForce: result.retractForce * efficiency,
+    extendForce,
+    retractForce,
     efficiency,
     type: 'pneumatic',
   }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    const load = result.externalLoad ?? input.externalLoad ?? 0
+    updated.extendMargin = extendForce - load
+    updated.retractMargin = retractForce - load
+    updated.loadPass = extendForce >= load && retractForce >= load
+
+    const bucklingPass = updated.bucklingPass !== false
+    updated.pass = updated.loadPass && bucklingPass
+
+    if (calcMode === 'professional') {
+      const dynamicLoad =
+        updated.dynamicLoad ?? ((input.loadMass ?? 0) * 9.81 + (input.loadMass ?? 0) * (input.acceleration ?? 0))
+      updated.dynamicLoad = dynamicLoad
+      updated.pass = updated.pass && extendForce >= dynamicLoad && bucklingPass
+    }
+  }
+
+  if (updated.releaseBlocked) {
+    updated.pass = false
+  }
+
+  return updated
 }

@@ -1,6 +1,20 @@
-/**
- * ISO 286 轴孔配合 — 公差带与间隙/过盈计算（常用范围简化查表）
- */
+/** ISO 286 轴孔配合 — 公差带与间隙/过盈计算（常用范围简化查表） */
+import { calcDiameterExpansion } from '@/utils/thermal-expansion-calc'
+
+/** 查表覆盖的名义尺寸上限 (mm) — 超出须人工复核或扩展全表 */
+export const ISO286_NOMINAL_MAX = 500
+
+export function validateIso286Nominal(nominalMm) {
+  if (!(nominalMm > 0)) return { valid: false, errorKey: 'nominal_positive' }
+  if (nominalMm > ISO286_NOMINAL_MAX) {
+    return {
+      valid: false,
+      errorKey: 'nominal_out_of_table_range',
+      maxNominal: ISO286_NOMINAL_MAX,
+    }
+  }
+  return { valid: true }
+}
 
 /** 标准公差因子 i (μm) */
 export function calcToleranceUnit(nominalMm) {
@@ -113,6 +127,9 @@ export function parseToleranceDesignation(code) {
 
 /** 计算孔或轴的极限尺寸 (mm) */
 export function calcToleranceLimits(nominalMm, designation, kind) {
+  const rangeCheck = validateIso286Nominal(nominalMm)
+  if (!rangeCheck.valid) return rangeCheck
+
   const parsed = typeof designation === 'string' ? parseToleranceDesignation(designation) : designation
   if (parsed.errorKey) return parsed
 
@@ -201,10 +218,20 @@ export function analyzeFit(nominalMm, holeCode, shaftCode, calcModeOrOpts = 'sim
     const deltaT = typeof calcModeOrOpts === 'object' ? calcModeOrOpts.deltaT ?? 0 : 0
     const alphaHole = typeof calcModeOrOpts === 'object' ? calcModeOrOpts.alphaHole ?? 11.5e-6 : 11.5e-6
     const alphaShaft = typeof calcModeOrOpts === 'object' ? calcModeOrOpts.alphaShaft ?? 11.5e-6 : 11.5e-6
-    const thermalShaft = alphaShaft * nominalMm * deltaT
-    const thermalHole = alphaHole * nominalMm * deltaT
+    const useAlphaT =
+      typeof calcModeOrOpts === 'object'
+        ? calcModeOrOpts.useAlphaTemperature ?? Math.abs(deltaT) >= 100
+        : Math.abs(deltaT) >= 100
+    const thermalOpts = {
+      referenceTemp: 20,
+      alphaTempCoeff: 2.4e-5,
+      useAlphaTemperature: useAlphaT,
+    }
+    const thermalShaft = calcDiameterExpansion(nominalMm, alphaShaft, deltaT, thermalOpts)
+    const thermalHole = calcDiameterExpansion(nominalMm, alphaHole, deltaT, thermalOpts)
     const clearanceShift = thermalHole - thermalShaft
     result.thermalShift = round(clearanceShift, 5)
+    result.alphaTemperatureUsed = useAlphaT
     result.minClearanceHot = round(minClearance + clearanceShift, 5)
     result.maxClearanceHot = round(maxClearance + clearanceShift, 5)
     const thermal = evaluateFitThermal(fitType, result.minClearanceHot, result.maxClearanceHot, deltaT)

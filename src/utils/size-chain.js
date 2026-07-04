@@ -28,9 +28,15 @@ function cdfNormal(x) {
   return x > 0 ? 1 - p : p
 }
 
-export function calculateSigmaLevel(tolerance, sigma) {
+/** Cp 等价：T/(6σ) — 全公差带除以 6σ 过程 spread；居中时 C = Cp，≠ 3·Cpk（除非居中） */
+export function calculateToleranceOver6Sigma(tolerance, sigma) {
   if (!sigma) return 0
   return tolerance / (6 * sigma)
+}
+
+/** @alias calculateToleranceOver6Sigma — RSS 链常用 T/(6σ) 粗估过程 σ */
+export function calculateSigmaLevel(tolerance, sigma) {
+  return calculateToleranceOver6Sigma(tolerance, sigma)
 }
 
 export function calculateCpk(upperSpec, lowerSpec, mean, sigma) {
@@ -62,6 +68,9 @@ export {
   calculateRssLimits,
   calculateModifiedRssLimits,
   modifiedRssMethod,
+  getModifiedRssBreakdown,
+  MODIFIED_RSS_DISCLAIMER,
+  RSS_CORRECTION_META,
   RSS_CORRECTION,
   calculateSizeChain,
   buildFormulaLines,

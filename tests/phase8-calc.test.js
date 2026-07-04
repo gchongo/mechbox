@@ -4,9 +4,19 @@ import {
   deserializeGdtStackPayload,
   GDT_STACK_STORAGE_KEY,
 } from '@/constants/editor-bridge'
-import { saveToolHistory, formatHistorySource, getToolRoute, TOOL_META } from '@/utils/calc-history'
-import { getHistory, deleteAnalysis } from '@/utils/storage'
+import {
+  buildToolReplayRoute,
+  buildSummaryRows,
+  formatHistorySource,
+  formatHistoryStatus,
+  getToolRoute,
+  getToolReplayRecord,
+  saveToolHistory,
+  TOOL_META,
+} from '@/utils/calc-history'
+import { getHistory, deleteAnalysis, saveAnalysis } from '@/utils/storage'
 import { analyzeWeldFatigue, analyzeHAZ } from '@/utils/weld-calc'
+import { pickMergedMethodResult } from '@/utils/export'
 
 describe('editor-bridge gdt', () => {
   it('serializes editor to gdt stack payload', () => {
@@ -83,6 +93,65 @@ describe('calc-history', () => {
     expect(getToolRoute('gdt-stack')).toBe('/gdt-stack')
     expect(TOOL_META.weld.label).toBe('焊缝强度')
   })
+
+  it('builds replay route and fetches matching tool record', () => {
+    const entry = saveToolHistory({
+      tool: 'fit',
+      title: 'H7/g6 回放',
+      status: 'review',
+      input: { nominal: 25, holeCode: 'H7', shaftCode: 'g6' },
+    })
+    savedIds.push(entry.id)
+    const replayRoute = buildToolReplayRoute(entry)
+    expect(replayRoute.path).toBe('/fit')
+    expect(replayRoute.query.historyId).toBe(entry.id)
+    const replay = getToolReplayRecord(entry.id, 'fit')
+    expect(replay?.id).toBe(entry.id)
+    expect(getToolReplayRecord(entry.id, 'weld')).toBe(null)
+  })
+
+  it('preserves review status and snapshot warnings in tool history', () => {
+    const entry = saveToolHistory({
+      tool: 'beam',
+      title: '细长梁复核',
+      status: 'review',
+      summary: [{ label: '整体判定', value: '需复核' }],
+      result: {
+        warnings: [{ key: 'slenderness', level: 'warn', message: '长径比 45.0 > 40，需复核剪切/失稳' }],
+        assumptions: ['Euler-Bernoulli 梁；忽略动载荷、应力集中'],
+      },
+    })
+    savedIds.push(entry.id)
+
+    const found = getHistory().find((h) => h.id === entry.id)
+    expect(found.status).toBe('review')
+    expect(formatHistoryStatus(found.status)).toBe('需复核')
+
+    const rows = buildSummaryRows(found)
+    expect(rows.some((row) => row.label === '警告' && String(row.value).includes('长径比 45.0 > 40'))).toBe(true)
+    expect(rows.some((row) => row.label === '假设与简化' && String(row.value).includes('Euler-Bernoulli'))).toBe(true)
+  })
+
+  it('buildSummaryRows includes editor snapshot warnings and assumptions', () => {
+    const entry = saveAnalysis({
+      source: 'editor',
+      title: '尺寸链统计复核',
+      status: 'review',
+      data: {
+        closedRing: { name: 'L0', min: -0.1, max: 0.1 },
+        method: 'rss',
+        snapshot: {
+          warnings: [{ key: 'rss_pass_worst_fail', level: 'critical', message: 'RSS 通过但 worst 不通过' }],
+          assumptions: ['RSS 仅用于统计评估，不能替代 worst 封闭性放行'],
+        },
+      },
+    })
+    savedIds.push(entry.id)
+    const found = getHistory().find((h) => h.id === entry.id)
+    const rows = buildSummaryRows(found)
+    expect(rows.some((row) => row.label === '警告' && String(row.value).includes('RSS 通过但 worst 不通过'))).toBe(true)
+    expect(rows.some((row) => row.label === '假设与简化' && String(row.value).includes('RSS 仅用于统计评估'))).toBe(true)
+  })
 })
 
 describe('weld fatigue/haz', () => {
@@ -100,5 +169,33 @@ describe('weld fatigue/haz', () => {
     const r = analyzeHAZ({ heatInput: 2, plateThickness: 10, force: 8000, legSize: 6, weldLength: 80 })
     expect(r.hazWidthMm).toBeGreaterThan(0)
     expect(r.hazAllowShear).toBeLessThan(r.baseAllowShear)
+  })
+})
+
+describe('export history release gate', () => {
+  it('uses worst method when snapshot is review', () => {
+    const data = {
+      method: 'rss',
+      methodResults: [
+        { method: 'worst', tolerance: 0.12, pass: false },
+        { method: 'rss', tolerance: 0.08, pass: true },
+      ],
+    }
+    const picked = pickMergedMethodResult(data, 'review')
+    expect(picked?.method).toBe('worst')
+    expect(picked?.pass).toBe(false)
+  })
+
+  it('uses active/passing method when snapshot is pass', () => {
+    const data = {
+      method: 'rss',
+      methodResults: [
+        { method: 'worst', tolerance: 0.12, pass: false },
+        { method: 'rss', tolerance: 0.08, pass: true },
+      ],
+    }
+    const picked = pickMergedMethodResult(data, 'pass')
+    expect(picked?.method).toBe('rss')
+    expect(picked?.pass).toBe(true)
   })
 })

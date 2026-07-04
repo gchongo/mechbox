@@ -93,7 +93,9 @@ export function analyzeButtWeld(input) {
       area,
       normalStress: sigma,
       gb,
-      pass: gb.pass,
+      stressPass: gb.pass,
+      pass: false,
+      estimateOnly: true,
     }
   }
 
@@ -127,7 +129,14 @@ export function analyzeFilletWeld(input) {
   const calcMode = input.calcMode ?? 'simple'
   if (calcMode === 'simple') {
     const gb = analyzeFilletWeldGB(input)
-    return { calcMode, ...gb, standards: [{ id: 'gb', ...gb }] }
+    return {
+      calcMode,
+      ...gb,
+      shearPass: gb.pass,
+      pass: false,
+      estimateOnly: true,
+      standards: [{ id: 'gb', ...gb }],
+    }
   }
   if (calcMode === 'complete') {
     const cmp = compareWeldStandards(input)

@@ -314,7 +314,7 @@ export const diagramEn = {
     titleCombined: 'Combined bending-torsion',
     hintTorsion: 'Diameter $d${inner}, torque $T$',
     hintCombined: 'Diameter $d${inner}, moment $M$ + torque $T$',
-    innerSuffix: ', bore $d_i$',
+    innerSuffix: ', inner diameter $d_i$',
     aria: 'Shaft strength diagram',
   },
   bearing: {
@@ -366,7 +366,7 @@ export const diagramEn = {
   },
   interference: {
     title: 'Interference fit section',
-    hint: 'Radial: shaft $d$, bore $D$, hub OD $D_A$, length $L$',
+    hint: 'Radial: shaft $d$, hub bore $D$, hub OD $D_A$, length $L$',
     aria: 'Interference fit diagram',
   },
   boltPreload: {

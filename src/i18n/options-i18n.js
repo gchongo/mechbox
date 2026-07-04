@@ -92,6 +92,12 @@ export const optionsZh = {
     scsc: { label: '对边简支/对边固支' },
     sscc: { label: '长边简支/短边固支' },
   },
+  endFixityPresets: {
+    fixed_fixed: { label: '两端固定' },
+    fixed_pinned: { label: '一端固定一端铰支' },
+    pinned_pinned: { label: '两端铰支（默认）' },
+    fixed_free: { label: '悬臂（一端固定）' },
+  },
   modalCases: {
     sdof: { label: '单自由度弹簧-质量' },
     beam_ss: { label: '简支梁一阶' },
@@ -360,6 +366,12 @@ export const optionsEn = {
     cccc: { label: 'All edges clamped' },
     scsc: { label: 'Opposite edges SS / clamped' },
     sscc: { label: 'Long edges SS / short edges clamped' },
+  },
+  endFixityPresets: {
+    fixed_fixed: { label: 'Fixed–fixed' },
+    fixed_pinned: { label: 'Fixed–pinned' },
+    pinned_pinned: { label: 'Pinned–pinned (default)' },
+    fixed_free: { label: 'Cantilever (fixed–free)' },
   },
   modalCases: {
     sdof: { label: 'SDOF spring–mass' },

@@ -69,18 +69,24 @@
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <el-alert v-if="result.errorKey" :title="re(result.errorKey)" type="error" show-icon />
         <template v-else>
+          <el-tag class="mb-3" :type="overallStatusType">
+            {{ pr('overall') }}: {{ overallStatusLabel }}
+          </el-tag>
+          <p v-if="statusHint" class="mb-3 text-xs" :class="overallStatus === 'fail' ? 'text-error' : 'text-warning'">
+            {{ statusHint }}
+          </p>
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('moment')" />
               <dd class="font-mono">{{ result.moment?.toFixed(0) }} N·mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('stress')" />
-              <dd class="font-mono" :class="result.stressPass ? 'text-success' : 'text-error'">
-                {{ result.stress?.toFixed(1) }} MPa {{ result.stressPass ? '✓' : '✗' }}
+              <dd class="font-mono" :class="reviewAwareCheckClass(result.stressPass, snapshot)">
+                {{ result.stress?.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.stressPass, snapshot, reviewMarkText) }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" />
-              <dd class="font-mono" :class="result.deflectionPass ? 'text-success' : 'text-error'">
-                {{ result.deflection?.toFixed(4) }} mm {{ result.deflectionPass ? '✓' : '✗' }}
+              <dd class="font-mono" :class="reviewAwareCheckClass(result.deflectionPass, snapshot)">
+                {{ result.deflection?.toFixed(4) }} mm {{ reviewAwareCheckMark(result.deflectionPass, snapshot, reviewMarkText) }}
               </dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('inertia')" />
@@ -93,16 +99,13 @@
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('utilization')" />
                 <dd class="font-mono">{{ ((result.stressUtilization ?? 0) * 100).toFixed(1) }}% / {{ ((result.deflectionUtilization ?? 0) * 100).toFixed(1) }}%</dd>
               </div>
-              <div v-if="result.slendernessWarning" class="text-xs text-amber-600">{{ pr('slendernessWarning') }}</div>
             </template>
+            <div v-if="result.slendernessWarning" class="text-xs text-amber-600">{{ pr('slendernessWarning') }}</div>
             <div v-if="result.stressAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('stressAmplitude')" />
               <dd class="font-mono">{{ result.stressAmplitude?.toFixed(1) }} MPa</dd>
             </div>
           </dl>
-          <el-tag class="mt-4" :type="result.pass ? 'success' : 'danger'">
-            {{ result.pass ? pr('passTag') : pr('failTag') }}
-          </el-tag>
         </template>
       </section>
     </div>
@@ -125,6 +128,7 @@ import BeamDiagram from '@/components/beam/BeamDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import { adaptBeam } from '@/utils/calc-adapters'
+import { getCalcReviewStatus, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
@@ -202,6 +206,19 @@ const result = computed(() => analyzeBeam(form))
 const decisionPreset = DECISION_PRESETS.beam
 const baseInputs = computed(() => ({ ...form }))
 const snapshot = computed(() => adaptBeam(form))
+const overallStatus = computed(() => getCalcReviewStatus(snapshot.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const statusHint = computed(() => snapshot.value?.warnings?.[0]?.message ?? '')
+const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {

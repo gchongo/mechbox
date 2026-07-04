@@ -2,11 +2,13 @@ import * as XLSX from 'xlsx'
 import { t } from '@/i18n'
 import { ensureLoggedIn } from '@/utils/auth-guard'
 import {
+  buildSummaryRows,
   formatHistorySource,
   formatHistoryStatus,
   formatHistoryTitle,
   formatHistoryType,
 } from '@/utils/calc-history'
+import { getCalcReviewStatus } from '@/utils/calc-result'
 
 const PDF_MARGIN = 14
 const PDF_FOOTER_RESERVE = 14
@@ -286,15 +288,17 @@ export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
         value: `${data.closedRing.name ?? '-'} [${data.closedRing.min} ~ ${data.closedRing.max}]`,
       })
     }
-    if (data.results?.length) {
-      const best = data.results.find((x) => x.pass) ?? data.results[0]
+    const snapshotStatus = getCalcReviewStatus(data.snapshot ?? data.result)
+    const preferred = pickMergedMethodResult(data, snapshotStatus)
+    if (preferred) {
       rows.push({
         label: ex('mergeResult', locale),
-        value: `${best.method ?? '-'} T=${best.tolerance ?? '-'} ${best.pass ? ex('pass', locale) : ex('fail', locale)}`,
+        value: `${preferred.method ?? '-'} T=${preferred.tolerance ?? '-'} ${formatHistoryStatus(snapshotStatus, locale)}`,
       })
     }
-    if (data.summary?.length) {
-      for (const s of data.summary) {
+    const summaryRows = buildSummaryRows(r, locale)
+    if (summaryRows.length) {
+      for (const s of summaryRows) {
         rows.push({ label: s.label, value: String(s.value ?? '') })
       }
     }
@@ -317,6 +321,33 @@ export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
     filename,
     meta: { locale },
   })
+}
+
+export function pickMergedMethodResult(data, snapshotStatus = 'draft') {
+  const methodResults = Array.isArray(data?.methodResults)
+    ? data.methodResults
+    : Array.isArray(data?.results)
+      ? data.results
+      : data?.results && typeof data.results === 'object'
+        ? [
+            data.results.worst ? { method: 'worst', ...data.results.worst } : null,
+            data.results.rss ? { method: 'rss', ...data.results.rss } : null,
+            data.results.modifiedRss ? { method: 'modified-rss', ...data.results.modifiedRss } : null,
+            data.results.sigma6Rss ? { method: 'sigma6-rss', ...data.results.sigma6Rss } : null,
+          ].filter(Boolean)
+        : []
+  if (!methodResults.length) return null
+  const worst = methodResults.find((x) => x.method === 'worst') ?? methodResults[0]
+  const methodKey =
+    data?.method === 'modifiedRss'
+      ? 'modified-rss'
+      : data?.method === 'sigma6Rss'
+        ? 'sigma6-rss'
+        : data?.method
+  if (snapshotStatus === 'pass') {
+    return methodResults.find((x) => x.method === methodKey) ?? methodResults.find((x) => x.pass) ?? worst
+  }
+  return worst
 }
 
 export async function exportResultPdf(element, filename, meta = {}) {

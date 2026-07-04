@@ -117,11 +117,14 @@
         <el-alert v-if="result?.errorKey" :title="resultError(result)" type="warning" show-icon />
         <template v-else-if="result">
           <div class="mb-4 flex items-center gap-2">
-            <el-tag :type="result.pass ? 'success' : 'danger'">
-              {{ result.pass ? pt('passTag') : pt('failTag') }}
+            <el-tag :type="overallStatusType">
+              {{ fc('check') }}: {{ overallStatusLabel }}
             </el-tag>
             <span class="text-sm text-gray-500">{{ modeLabel }}</span>
           </div>
+          <p v-if="statusHint" class="mb-3 text-xs" :class="overallStatus === 'fail' ? 'text-error' : 'text-warning'">
+            {{ statusHint }}
+          </p>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between rounded bg-primary/5 p-3">
               <ResultLabel :text="pr('stackedTolerance')" />
@@ -188,10 +191,10 @@
       <SaveHistoryButton
         tool="gdt-stack"
         :title="`GD&T ${form.typeId}`"
-        :status="result?.pass ? 'pass' : 'fail'"
+        :status="saveStatus"
         :summary="historySummary"
         :input="form"
-        :result="result"
+        :result="snapshot"
       />
       <router-link to="/editor">
         <el-button plain>{{ pt('openEditor') }}</el-button>
@@ -201,8 +204,8 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   analyzeGdtStack,
   GDT_STACK_PRESETS,
@@ -210,16 +213,21 @@ import {
   buildGdtStackReportText,
 } from '@/utils/gdt-stack-calc'
 import { exportToolReportPdf } from '@/utils/export'
+import { buildEnhancedReport } from '@/utils/enhanced-report'
 import { GDT_STACK_STORAGE_KEY, deserializeGdtStackPayload } from '@/constants/editor-bridge'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import { adaptGdtStack } from '@/utils/calc-adapters'
+import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { localizedAnalysisType } from '@/i18n'
+import { getToolReplayRecord } from '@/utils/calc-history'
 
 const route = useRoute()
+const router = useRouter()
 const { pt, pf, pr, fc, locale } = useCalcPage('gdt-stack')
 const { exportFilename } = useContentI18n()
 const { resultError } = useResultI18n()
@@ -262,6 +270,20 @@ const result = computed(() =>
     autoBonus: form.autoBonus,
   }),
 )
+const snapshot = computed(() => adaptGdtStack({ ...form }))
+const overallStatus = computed(() => getCalcReviewStatus(snapshot.value))
+const saveStatus = overallStatus
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const statusHint = computed(() => snapshot.value?.warnings?.[0]?.message ?? '')
 
 const historySummary = computed(() => {
   const r = result.value
@@ -269,7 +291,7 @@ const historySummary = computed(() => {
   return [
     { label: pr('type'), value: modeLabel.value },
     { label: pr('toleranceMm'), value: r.chainResult.totalTolerance?.toFixed(4) },
-    { label: pr('qualified'), value: r.pass ? fc('yes') : fc('no') },
+    { label: fc('check'), value: overallStatusLabel.value },
   ]
 })
 
@@ -289,7 +311,36 @@ function applyEditorPayload(payload) {
     : (payload.typeName ?? payload.typeId)
 }
 
+function applyHistoryInput(input) {
+  if (!input || typeof input !== 'object') return
+  form.calcMode = input.calcMode ?? form.calcMode
+  form.typeId = input.typeId ?? form.typeId
+  form.method = input.method ?? form.method
+  form.closedMax = Number.isFinite(Number(input.closedMax)) ? Number(input.closedMax) : form.closedMax
+  form.toleranceModifier = input.toleranceModifier ?? form.toleranceModifier
+  form.autoBonus = input.autoBonus ?? form.autoBonus
+  form.bonusTolerance = Number.isFinite(Number(input.bonusTolerance)) ? Number(input.bonusTolerance) : form.bonusTolerance
+  form.rings = Array.isArray(input.rings)
+    ? input.rings.map((r) => ({ featureKind: '', sizeTolerance: 0, ...r }))
+    : form.rings
+  form.datums = Array.isArray(input.datums) ? input.datums.map((d) => ({ ...d })) : form.datums
+}
+
+function consumeHistoryReplay() {
+  const historyId = route.query.historyId
+  if (!historyId) return false
+  const record = getToolReplayRecord(historyId, 'gdt-stack')
+  if (!record) return false
+  applyHistoryInput(record.data?.input)
+  const nextQuery = { ...route.query }
+  delete nextQuery.historyId
+  delete nextQuery.replay
+  router.replace({ query: nextQuery })
+  return true
+}
+
 onMounted(() => {
+  if (consumeHistoryReplay()) return
   if (route.query.from === 'editor') {
     try {
       const raw = sessionStorage.getItem(GDT_STACK_STORAGE_KEY)
@@ -304,6 +355,7 @@ onMounted(() => {
     }
   }
 })
+watch(() => route.query.historyId, () => consumeHistoryReplay())
 
 function loadPreset(key) {
   const p = GDT_STACK_PRESETS[key]
@@ -340,19 +392,14 @@ function addDatum() {
 
 async function exportPdf() {
   const r = result.value
-  if (!r || r.errorKey) return
+  const snap = snapshot.value
+  if (!r || r.errorKey || !snap) return
+  const report = buildEnhancedReport({ snapshot: snap })
   await exportToolReportPdf({
-    title: pt('pdfTitle'),
-    subtitle: modeLabel.value,
+    title: report.title,
+    subtitle: report.subtitle,
     sections: [
-      {
-        heading: pt('pdfResults'),
-        rows: [
-          { label: pr('stackedTolerance') + ' (mm)', value: r.chainResult.totalTolerance?.toFixed(4) },
-          { label: pr('qualified'), value: r.pass ? fc('yes') : fc('no') },
-          { label: pr('topContributor'), value: r.topContributor ?? '-' },
-        ],
-      },
+      ...report.sections,
       { heading: pt('pdfDetail'), text: buildGdtStackReportText(r, locale.value) },
     ],
     element: resultRef.value,

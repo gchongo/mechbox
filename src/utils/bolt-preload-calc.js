@@ -165,7 +165,11 @@ export function buildProfessionalJoint(input, d, As) {
   const deltaP = calcPlateCompliance(gripLength, holeDiameter, outerDiameter, ePlate)
   const kS = deltaS ? 1 / deltaS : 0
   const kP = deltaP ? 1 / deltaP : 0
-  const loadFactor = kS + kP ? kP / (kS + kP) : 0
+  // phi is the bolt-side load share under external axial load.
+  // Equivalent forms:
+  // - stiffness form: phi = kS / (kS + kP)
+  // - compliance form: phi = deltaP / (deltaS + deltaP)
+  const loadFactor = kS + kP ? kS / (kS + kP) : 0
 
   const embedmentLoss = calcEmbedmentLossForce(embedmentMm, deltaS, deltaP)
   const thermalDelta = calcThermalPreloadChange({
@@ -296,18 +300,27 @@ export function analyzeBoltPreload(input) {
     ? calcThreadTensileStress(jointLoad.maxBoltForce, As)
     : null
 
-  let pass = stress <= grade.allowStress
-  let passResidual = stressResidual <= grade.allowStress
+  const stressPass = stress <= grade.allowStress
+  const stressResidualPass = stressResidual <= grade.allowStress
+  const stressUnderLoadPass = stressUnderLoad != null ? stressUnderLoad <= grade.allowStress : null
+
+  let pass = stressPass
+  let passResidual = stressResidualPass
   if (jointLoad?.externalAxialLoad > 0) {
-    pass = pass && jointLoad.separationPass && (stressUnderLoad ?? 0) <= grade.allowStress
+    pass = pass && jointLoad.separationPass && !!stressUnderLoadPass
     passResidual =
       passResidual &&
       jointLoad.separationPass &&
-      (stressUnderLoad ?? 0) <= grade.allowStress
+      !!stressUnderLoadPass
   }
+
+  const estimateOnly = calcMode === 'simple'
+  if (estimateOnly) pass = false
 
   return {
     calcMode,
+    estimateOnly,
+    stressPass,
     stressArea: As,
     pitch: P,
     pitchDiameter: calcPitchDiameter(d, P),
@@ -316,7 +329,9 @@ export function analyzeBoltPreload(input) {
     preloadResidual,
     torque,
     stress,
+    stressResidualPass,
     stressResidual,
+    stressUnderLoadPass,
     stressUnderLoad,
     allowStress: grade.allowStress,
     grade: grade.label,

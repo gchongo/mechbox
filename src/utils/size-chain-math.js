@@ -1,4 +1,7 @@
 /** 6σ RSS：T = 6√Σ(Tᵢ/Kᵢ)² */
+import { resolveComponentRingTypes } from '@/utils/ring-direction'
+import { resolveRingToleranceBounds, validateComponentRingTolerances } from '@/utils/ring-tolerance'
+
 const SIGMA6_K = {
   normal: 6.0,
   uniform: 3.46,
@@ -10,7 +13,12 @@ const SIGMA6_K = {
 export function sigma6RssMethod(rings, distribution = 'normal') {
   const k = SIGMA6_K[distribution] ?? 6
   const sumSq = rings.reduce((s, ring) => {
-    const t = (ring.tolerance ?? 0) * (ring.factor ?? 1)
+    let t
+    if (ring.size != null || ring.es != null || ring.ei != null) {
+      t = resolveRingToleranceBounds(ring).tolerance
+    } else {
+      t = (ring.tolerance ?? 0) * (ring.factor ?? 1)
+    }
     return s + (t / k) ** 2
   }, 0)
   return 6 * Math.sqrt(sumSq)
@@ -30,7 +38,7 @@ export function rssMethod(rings) {
   return Math.sqrt(sumSquares)
 }
 
-/** 分布修正系数（相对正态 RSS） */
+/** 分布修正系数（相对正态 RSS）— 除 normal 外均为经验值，非国家标准 */
 export const RSS_CORRECTION = {
   normal: 1.0,
   uniform: 1.15,
@@ -39,30 +47,60 @@ export const RSS_CORRECTION = {
   skewed: 1.12,
 }
 
-/** 修正 RSS */
-export function modifiedRssMethod(rings, distribution = 'normal', skewness = 0) {
-  const base = rssMethod(rings)
-  const distFactor = RSS_CORRECTION[distribution] ?? 1
-  const skewFactor = 1 + Math.min(Math.abs(skewness) / 6, 0.2)
-  return base * distFactor * skewFactor
+export const MODIFIED_RSS_DISCLAIMER =
+  '修正 RSS 采用经验分布/偏态系数，非 GB/ISO 标准算法；正式工程请优先 6σ RSS 或 Monte Carlo'
+
+export const RSS_CORRECTION_META = {
+  normal: { factor: 1.0, empirical: false, note: '正态 RSS 基准' },
+  uniform: { factor: 1.15, empirical: true, note: '均匀分布经验系数（相对正态 RSS）' },
+  rectangular: { factor: 1.15, empirical: true, note: '矩形分布经验系数' },
+  triangular: { factor: 1.05, empirical: true, note: '三角分布经验系数' },
+  skewed: { factor: 1.12, empirical: true, note: '偏态分布经验系数' },
 }
 
-/** 极值法：分别叠加上/下限 */
+/** 修正 RSS 明细 — 便于 UI/报告标注经验假设 */
+export function getModifiedRssBreakdown(rings, distribution = 'normal', skewness = 0) {
+  const mapped = rings.map((r) => {
+    if (r.es != null || r.ei != null || r.tolerance != null) {
+      return { tolerance: resolveRingToleranceBounds(r).tolerance }
+    }
+    return { tolerance: (r.tolerance ?? 0) * (r.factor ?? 1) }
+  })
+  const base = rssMethod(mapped)
+  const meta = RSS_CORRECTION_META[distribution] ?? RSS_CORRECTION_META.normal
+  const distFactor = meta.factor
+  const skewFactor = 1 + Math.min(Math.abs(skewness) / 6, 0.2)
+  return {
+    total: base * distFactor * skewFactor,
+    base,
+    distFactor,
+    skewFactor,
+    distribution,
+    empirical: meta.empirical || Math.abs(skewness) > 0,
+    disclaimer: MODIFIED_RSS_DISCLAIMER,
+    note: meta.note,
+  }
+}
+
+/** 修正 RSS */
+export function modifiedRssMethod(rings, distribution = 'normal', skewness = 0) {
+  return getModifiedRssBreakdown(rings, distribution, skewness).total
+}
+
+/** 极值法：分别叠加上/下限（支持非对称 ES/EI） */
 export function calculateWorstCaseLimits(componentRings) {
   let upper = 0
   let lower = 0
 
   for (const ring of componentRings) {
-    const factor = ring.factor ?? 1
-    const half = (ring.tolerance * factor) / 2
-    const nominal = ring.size * factor
+    const { es, ei, nominal } = resolveRingToleranceBounds(ring)
 
     if (ring.type === 'increasing') {
-      upper += nominal + half
-      lower += nominal - half
+      upper += nominal + es
+      lower += nominal + ei
     } else {
-      upper -= nominal - half
-      lower -= nominal + half
+      upper -= nominal + ei
+      lower -= nominal + es
     }
   }
 
@@ -74,15 +112,17 @@ export function calculateWorstCaseLimits(componentRings) {
   }
 }
 
-/** RSS 法：公差均布在名义值两侧 */
+/** RSS 法：名义值含 (ES+EI)/2 偏移，公差带宽度为 ES−EI */
 export function calculateRssLimits(componentRings) {
   const nominal = componentRings.reduce((sum, ring) => {
-    const sign = ring.type === 'increasing' ? 1 : -1
-    return sum + sign * ring.size * (ring.factor ?? 1)
+    const sign = ringSign(ring)
+    if (sign == null) return sum
+    const bounds = resolveRingToleranceBounds(ring)
+    return sum + sign * (bounds.nominal + bounds.meanDev)
   }, 0)
 
   const tolerances = componentRings.map((r) => ({
-    tolerance: r.tolerance * (r.factor ?? 1),
+    tolerance: resolveRingToleranceBounds(r).tolerance,
   }))
   const totalTolerance = rssMethod(tolerances)
 
@@ -101,12 +141,14 @@ export function calculateModifiedRssLimits(
   skewness = 0,
 ) {
   const nominal = componentRings.reduce((sum, ring) => {
-    const sign = ring.type === 'increasing' ? 1 : -1
-    return sum + sign * ring.size * (ring.factor ?? 1)
+    const sign = ringSign(ring)
+    if (sign == null) return sum
+    const bounds = resolveRingToleranceBounds(ring)
+    return sum + sign * (bounds.nominal + bounds.meanDev)
   }, 0)
 
   const tolerances = componentRings.map((r) => ({
-    tolerance: r.tolerance * (r.factor ?? 1),
+    tolerance: resolveRingToleranceBounds(r).tolerance,
   }))
   const totalTolerance = modifiedRssMethod(tolerances, distribution, skewness)
 
@@ -118,35 +160,56 @@ export function calculateModifiedRssLimits(
   }
 }
 
-/** 带符号名义尺寸和 — L₀ = Σ(增环) − Σ(减环) */
+/** 增/减环符号；type 非法时返回 null（禁止静默当减环） */
+export function ringSign(ring) {
+  if (ring.type === 'increasing') return 1
+  if (ring.type === 'decreasing') return -1
+  return null
+}
+
+/** 带符号名义尺寸和 — L₀ = Σ(增环) − Σ(减环)；环 type 须已校验 */
 export function calcSignedNominalSum(componentRings) {
   return componentRings.reduce((sum, ring) => {
-    const sign = ring.type === 'increasing' ? 1 : -1
+    const sign = ringSign(ring)
+    if (sign == null) return sum
     return sum + sign * (ring.size ?? 0) * (ring.factor ?? 1)
   }, 0)
 }
 
+function chainValidationFailure(error) {
+  return {
+    nominal: null,
+    upper: null,
+    lower: null,
+    totalTolerance: null,
+    pass: false,
+    validationError: error.errorKey,
+    validationRing: error.ringName,
+  }
+}
+
 /** 计算尺寸链结果 */
 export function calculateSizeChain(closedRing, componentRings, method = 'rss', options = {}) {
+  const resolved = resolveComponentRingTypes(componentRings, options.closedDirection)
+  if (!resolved.valid) return chainValidationFailure(resolved)
+  const rings = resolved.rings
+  const tolCheck = validateComponentRingTolerances(rings)
+  if (!tolCheck.valid) {
+    return chainValidationFailure({ errorKey: tolCheck.errorKey, ringName: tolCheck.ringName })
+  }
+
   let limits
   if (method === 'worst') {
-    limits = calculateWorstCaseLimits(componentRings)
+    limits = calculateWorstCaseLimits(rings)
   } else if (method === 'modified-rss') {
     limits = calculateModifiedRssLimits(
-      componentRings,
+      rings,
       options.distribution ?? 'normal',
       options.skewness ?? 0,
     )
   } else if (method === 'sigma6-rss') {
-    const nominal = componentRings.reduce((sum, ring) => {
-      const sign = ring.type === 'increasing' ? 1 : -1
-      return sum + sign * ring.size * (ring.factor ?? 1)
-    }, 0)
-    const tolerances = componentRings.map((r) => ({
-      tolerance: r.tolerance,
-      factor: r.factor ?? 1,
-    }))
-    const totalTolerance = sigma6RssMethod(tolerances, options.distribution ?? 'normal')
+    const nominal = calcSignedNominalSum(rings)
+    const totalTolerance = sigma6RssMethod(rings, options.distribution ?? 'normal')
     limits = {
       nominal,
       upper: nominal + totalTolerance / 2,
@@ -154,7 +217,7 @@ export function calculateSizeChain(closedRing, componentRings, method = 'rss', o
       totalTolerance,
     }
   } else {
-    limits = calculateRssLimits(componentRings)
+    limits = calculateRssLimits(rings)
   }
 
   const pass = limits.lower >= closedRing.min && limits.upper <= closedRing.max
@@ -164,11 +227,16 @@ export function calculateSizeChain(closedRing, componentRings, method = 'rss', o
 
 /** 生成公式展示行 */
 export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm', options = {}) {
-  const rings = componentRings
-  if (!rings.length) return ['请添加组成环']
+  if (!componentRings?.length) return ['请添加组成环']
+
+  const resolved = resolveComponentRingTypes(componentRings, options.closedDirection)
+  if (!resolved.valid) {
+    return [`[校验失败: ${resolved.errorKey}] ${resolved.ringName ?? ''}`]
+  }
+  const rings = resolved.rings
 
   const inc = rings.filter((r) => r.type === 'increasing')
-  const dec = rings.filter((r) => r.type !== 'increasing')
+  const dec = rings.filter((r) => r.type === 'decreasing')
   const incExpr = inc.map((r) => r.name).join(' + ') || '0'
   const decExpr = dec.map((r) => r.name).join(' + ') || '0'
   const incSum = inc.reduce((s, r) => s + r.size * (r.factor ?? 1), 0)
@@ -200,9 +268,13 @@ export function buildFormulaLines(closedRing, componentRings, method, unit = 'mm
     `总公差 (RSS 法) = ${rss.totalTolerance.toFixed(3)} ${unit}  →  [${rss.lower.toFixed(3)}, ${rss.upper.toFixed(3)}]`,
   ]
   if (method === 'modified-rss') {
+    const mod = getModifiedRssBreakdown(rings, options?.distribution ?? 'normal', options?.skewness ?? 0)
     lines.push(
       `总公差 (修正 RSS) = ${modified.totalTolerance.toFixed(3)} ${unit}  →  [${modified.lower.toFixed(3)}, ${modified.upper.toFixed(3)}]${passMark}`,
     )
+    if (mod.empirical) {
+      lines.push(`  ※ ${MODIFIED_RSS_DISCLAIMER}`)
+    }
   } else if (method === 'sigma6-rss') {
     lines.push(
       `总公差 (6σ RSS) = ${sigma6.totalTolerance.toFixed(3)} ${unit}  →  [${sigma6.lower.toFixed(3)}, ${sigma6.upper.toFixed(3)}]${passMark}`,
@@ -225,11 +297,21 @@ export function buildFormulaLatex(
   unit = 'mm',
   options = {},
 ) {
-  const rings = componentRings
-  if (!rings.length) return [{ latex: '\\text{请添加组成环}', block: true }]
+  if (!componentRings?.length) return [{ latex: '\\text{请添加组成环}', block: true }]
+
+  const resolved = resolveComponentRingTypes(componentRings, options.closedDirection)
+  if (!resolved.valid) {
+    return [
+      {
+        latex: `\\text{[${resolved.errorKey}] ${String(resolved.ringName ?? '').replace(/_/g, '\\_')}}`,
+        block: true,
+      },
+    ]
+  }
+  const rings = resolved.rings
 
   const inc = rings.filter((r) => r.type === 'increasing')
-  const dec = rings.filter((r) => r.type !== 'increasing')
+  const dec = rings.filter((r) => r.type === 'decreasing')
   const incTex = inc.map((r) => texLabel(r.name)).join(' + ') || '0'
   const decTex = dec.map((r) => texLabel(r.name)).join(' + ') || '0'
   const incSum = inc.reduce((s, r) => s + r.size * (r.factor ?? 1), 0)
@@ -302,7 +384,10 @@ export function buildSigmaSummary(closedRing, rssResult) {
   const lsl = closedRing.min
   const processSigma = rssResult.processSigma ?? rssResult.totalTolerance / 6
   const mean = rssResult.nominal ?? (usl + lsl) / 2
-  return formatCapabilitySummary(
-    calcProcessCapability({ lsl, usl, mean, sigma: processSigma }),
-  )
+  const cap = calcProcessCapability({ lsl, usl, mean, sigma: processSigma })
+  return {
+    ...formatCapabilitySummary(cap),
+    processSigmaFromRss: processSigma,
+    rssTolerance: rssResult.totalTolerance,
+  }
 }

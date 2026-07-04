@@ -438,7 +438,7 @@ const en = {
       'Online tolerance stack-up analysis, statistical tools, and mechanical engineering calculators. RSS/worst-case/GD&T, Monte Carlo, gears, bearings, bolts, and more.',
     pageDescription: '{page} — Online tolerance stack and mechanical engineering calculator.',
     keywords:
-      'MechBox,tolerance stack,stack-up analysis,RSS,worst-case,GD&T,geometric dimensioning,Monte Carlo,Cpk,gear strength,ISO 6336,bearing life L10,thread strength,bolt preload,shaft strength,keyway,weld strength,spring design,mechanical engineering calculator',
+      'MechBox,tolerance stack,stack-up analysis,RSS,worst-case,GD&T,geometric dimensioning,Monte Carlo,Cpk,gear strength,ISO 6336,bearing life L₁₀,L10,thread strength,bolt preload,shaft strength,keyway,weld strength,spring design,mechanical engineering calculator',
     routes: seoRoutesEn,
   },
   calc: {

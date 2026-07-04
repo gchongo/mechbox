@@ -66,15 +66,20 @@ export function analyzeKeyConnection(input) {
     keyCount,
     shearStress: tau,
     crushStress: sigmaC,
+    shearPass: tau <= allowTau,
+    crushPass: sigmaC <= allowCrush,
     pass: tau <= allowTau && sigmaC <= allowCrush,
     allowShear: allowTau,
     allowCrush: allowCrush,
   }
 
+  if (calcMode === 'simple') {
+    result.estimateOnly = true
+    result.pass = false
+  }
+
   if (calcMode === 'complete' || calcMode === 'professional') {
     result.standardKey = stdKey
-    result.shearPass = tau <= allowTau
-    result.crushPass = sigmaC <= allowCrush
     result.shearUtilization = allowTau ? tau / allowTau : 0
     result.crushUtilization = allowCrush ? sigmaC / allowCrush : 0
     result.minKeyLengthShear = allowTau ? forcePerKey / (keyWidth * allowTau) : 0

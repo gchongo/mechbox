@@ -1,3 +1,5 @@
+import { getCalcReviewStatus } from '@/utils/calc-result'
+
 /**
  * 设计链上下文 —— 一个"设计链"贯穿多个工具，共享输入并沉淀各步的 CalcResult
  *
@@ -162,12 +164,15 @@ export function deleteChain(id) {
 export function chainSummary(chain) {
   if (!chain) return { status: 'unknown', passCount: 0, total: 0 }
   const evaluated = chain.steps.filter((s) => s.snapshot)
-  const passCount = evaluated.filter((s) => s.snapshot.pass).length
-  const failCount = evaluated.length - passCount
+  const statuses = evaluated.map((s) => getCalcReviewStatus(s.snapshot))
+  const passCount = statuses.filter((s) => s === 'pass').length
+  const reviewCount = statuses.filter((s) => s === 'review').length
+  const failCount = statuses.filter((s) => s === 'fail').length
   const total = chain.steps.length
   let status
   if (evaluated.length < total) status = 'incomplete'
-  else if (failCount === 0) status = 'pass'
-  else status = 'fail'
-  return { status, passCount, total, failCount }
+  else if (failCount > 0) status = 'fail'
+  else if (reviewCount > 0) status = 'review'
+  else status = 'pass'
+  return { status, passCount, reviewCount, total, failCount, evaluatedCount: evaluated.length }
 }

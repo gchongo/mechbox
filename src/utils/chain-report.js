@@ -4,6 +4,7 @@
 
 import { CHAIN_TYPES, chainSummary } from '@/utils/design-context'
 import { buildEnhancedReport } from '@/utils/enhanced-report'
+import { getCalcReviewStatus } from '@/utils/calc-result'
 
 export function buildChainReport(chain) {
   if (!chain) return { title: '设计链报告', sections: [] }
@@ -18,7 +19,9 @@ export function buildChainReport(chain) {
       { label: '链名', value: chain.name },
       { label: '类型', value: meta.label },
       { label: '整体判定', value: statusLabel(summary.status) },
-      { label: '通过步骤', value: `${summary.passCount}/${summary.total}` },
+      { label: '正式通过步骤', value: `${summary.passCount}/${summary.total}` },
+      { label: '待复核步骤', value: String(summary.reviewCount ?? 0) },
+      { label: '未通过步骤', value: String(summary.failCount ?? 0) },
       { label: '更新时间', value: new Date(chain.updatedAt).toLocaleString('zh-CN') },
     ],
   })
@@ -33,9 +36,10 @@ export function buildChainReport(chain) {
 
   for (const step of chain.steps) {
     const stepMeta = meta.steps.find((s) => s.key === step.key)
+    const stepStatus = getCalcReviewStatus(step.snapshot)
     sections.push({
       heading: `— ${stepMeta?.label ?? step.key} —`,
-      rows: [{ label: '状态', value: step.snapshot ? (step.snapshot.pass ? '通过 ✓' : '不通过 ✗') : '未评估' }],
+      rows: [{ label: '状态', value: statusLabel(stepStatus) }],
     })
     if (!step.snapshot) continue
     const stepReport = buildEnhancedReport({ snapshot: step.snapshot })
@@ -53,14 +57,16 @@ export function buildChainReport(chain) {
 
   return {
     title: `${meta.label} · ${chain.name}`,
-    subtitle: `整体判定：${statusLabel(summary.status)} · 通过 ${summary.passCount}/${summary.total}`,
+    subtitle: `整体判定：${statusLabel(summary.status)} · 正式通过 ${summary.passCount}/${summary.total} · 待复核 ${summary.reviewCount ?? 0}`,
     sections,
   }
 }
 
 function statusLabel(s) {
   if (s === 'pass') return '通过 ✓'
+  if (s === 'review') return '需复核 / 未放行'
   if (s === 'fail') return '不通过 ✗'
   if (s === 'incomplete') return '未完成'
+  if (s === 'unknown') return '未评估'
   return '-'
 }

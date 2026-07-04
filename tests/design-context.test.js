@@ -54,6 +54,7 @@ import {
 } from '@/utils/chain-snapshots'
 import { buildChainReport } from '@/utils/chain-report'
 import { adaptShaftTorsion, adaptBearing, adaptKeyConnection } from '@/utils/calc-adapters'
+import { buildCalcResult } from '@/utils/calc-result'
 
 function resetStorage() {
   if (typeof localStorage !== 'undefined') localStorage.clear()
@@ -89,45 +90,28 @@ describe('design-context', () => {
     expect(updated.steps.find((s) => s.key === 'shaft').notes).toBe('basic')
   })
 
-  it('chainSummary reports pass/fail/incomplete correctly', () => {
+  it('chainSummary reports review when a step is estimate-only', () => {
     const c = createChain({ type: 'powertrain' })
     expect(chainSummary(c).status).toBe('incomplete')
 
-    // Fill all 3 with pass snapshots
-    const shared = c.sharedInputs
     saveStep(c.id, 'shaft', {
-      snapshot: adaptShaftTorsion({
-        calcMode: 'complete',
-        diameter: shared.shaftDiameter,
-        torque: shared.torque,
-        yieldStrength: shared.yieldStrength,
-      }),
+      snapshot: buildCalcResult({ toolId: 'shaft', toolLabel: '轴强度', pass: true }),
     })
     saveStep(c.id, 'bearing', {
-      snapshot: adaptBearing({
-        calcMode: 'simple',
-        dynamicLoad: 50000,
-        radialLoad: shared.radialLoad,
-        rpm: shared.rpm,
-        x: 1,
-        y: 0,
-        targetHours: shared.targetHours,
+      snapshot: buildCalcResult({
+        toolId: 'bearing',
+        toolLabel: '轴承寿命',
+        pass: false,
+        estimateOnly: true,
       }),
     })
     saveStep(c.id, 'key', {
-      snapshot: adaptKeyConnection({
-        calcMode: 'complete',
-        torque: shared.torque,
-        shaftDiameter: shared.shaftDiameter,
-        keyWidth: 8,
-        keyHeight: 7,
-        keyLength: 40,
-        hubLength: 40,
-      }),
+      snapshot: buildCalcResult({ toolId: 'key', toolLabel: '平键连接', pass: true }),
     })
     const summary = chainSummary(getChain(c.id))
     expect(summary.total).toBe(3)
-    expect(summary.status === 'pass' || summary.status === 'fail').toBe(true)
+    expect(summary.reviewCount).toBe(1)
+    expect(summary.status).toBe('review')
   })
 
   it('rename and delete', () => {
@@ -288,5 +272,29 @@ describe('chain-report', () => {
     expect(headings).toContain('共享输入')
     expect(headings.some((h) => h.includes('轴强度'))).toBe(true)
     expect(headings).toContain('免责声明')
+  })
+
+  it('buildChainReport separates review from fail in overview and step status', () => {
+    const c = createChain({ type: 'powertrain' })
+    saveStep(c.id, 'shaft', {
+      snapshot: buildCalcResult({ toolId: 'shaft', toolLabel: '轴强度', pass: true }),
+    })
+    saveStep(c.id, 'bearing', {
+      snapshot: buildCalcResult({
+        toolId: 'bearing',
+        toolLabel: '轴承寿命',
+        pass: false,
+        estimateOnly: true,
+      }),
+    })
+    saveStep(c.id, 'key', {
+      snapshot: buildCalcResult({ toolId: 'key', toolLabel: '平键连接', pass: true }),
+    })
+    const report = buildChainReport(getChain(c.id))
+    const overview = report.sections.find((s) => s.heading === '链概览')
+    expect(overview.rows.find((r) => r.label === '整体判定').value).toContain('需复核')
+    expect(overview.rows.find((r) => r.label === '待复核步骤').value).toBe('1')
+    const bearingSection = report.sections.find((s) => s.heading?.includes('轴承寿命'))
+    expect(bearingSection.rows[0].value).toContain('需复核')
   })
 })

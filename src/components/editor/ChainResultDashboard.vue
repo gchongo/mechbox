@@ -115,6 +115,7 @@
         <p class="mt-2 text-xs text-gray-500">
           {{ pt('dashboard.cpkCurrent', { cpk: sigmaSummary.cpk, sigma: sigmaSummary.sigmaLevel }) }}
         </p>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ pt('sigma.sigmaNote') }}</p>
       </div>
 
       <div class="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">

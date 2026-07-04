@@ -1,7 +1,7 @@
 /**
  * 全局计算历史 — 各工具页结果写入统一历史存储
  */
-import { saveAnalysis } from '@/utils/storage'
+import { getAnalysisById, saveAnalysis } from '@/utils/storage'
 import { t, localizedToolLabel, localizedAnalysisType } from '@/i18n'
 
 export const TOOL_META = {
@@ -15,13 +15,18 @@ export const TOOL_META = {
   beam: { label: '梁挠度', route: '/beam' },
 }
 
+export function normalizeHistoryStatus(status) {
+  if (status === 'pass' || status === 'review' || status === 'fail') return status
+  return 'draft'
+}
+
 export function saveToolHistory({ tool, title, status = 'pass', summary = [], input = {}, result = {} }) {
   const meta = TOOL_META[tool] ?? { label: tool, route: '/' }
   return saveAnalysis({
     source: 'tool',
     tool,
     title: title ?? `${meta.label} 计算`,
-    status,
+    status: normalizeHistoryStatus(status),
     data: {
       tool,
       toolLabel: meta.label,
@@ -36,6 +41,23 @@ export function getToolRoute(tool) {
   return TOOL_META[tool]?.route ?? null
 }
 
+export function buildToolReplayRoute(record) {
+  const route = getToolRoute(record?.tool)
+  if (!route || !record?.id) return null
+  return {
+    path: route,
+    query: { historyId: String(record.id), replay: 'history' },
+  }
+}
+
+export function getToolReplayRecord(historyId, tool) {
+  if (!historyId) return null
+  const record = getAnalysisById(String(historyId))
+  if (!record || record.source !== 'tool') return null
+  if (tool && record.tool !== tool) return null
+  return record
+}
+
 export function formatHistorySource(record, locale = 'zh') {
   if (record.source === 'tool') {
     const route = getToolRoute(record.tool)
@@ -47,6 +69,7 @@ export function formatHistorySource(record, locale = 'zh') {
 
 export function formatHistoryStatus(status, locale = 'zh') {
   if (status === 'pass') return t('content.history.statusPass', locale)
+  if (status === 'review') return t('content.history.statusReview', locale)
   if (status === 'fail') return t('content.history.statusFail', locale)
   return t('content.history.statusDraft', locale)
 }
@@ -81,11 +104,27 @@ export function formatHistoryType(record, locale = 'zh') {
 
 export function buildSummaryRows(record, locale = 'zh') {
   const data = record.data ?? {}
-  if (record.source === 'tool' && data.summary?.length) {
-    return data.summary
+  if (record.source === 'tool') {
+    const rows = Array.isArray(data.summary) ? [...data.summary] : []
+    const result = data.result
+    if (Array.isArray(result?.warnings) && result.warnings.length) {
+      rows.push({
+        label: t('content.history.summaryWarnings', locale),
+        value: result.warnings
+          .map((w) => `[${(w.level ?? 'info').toUpperCase()}] ${w.message ?? w.key}`)
+          .join('；'),
+      })
+    }
+    if (Array.isArray(result?.assumptions) && result.assumptions.length) {
+      rows.push({
+        label: t('content.history.summaryAssumptions', locale),
+        value: result.assumptions.join('；'),
+      })
+    }
+    return rows
   }
   if (data.closedRing) {
-    return [
+    const rows = [
       { label: t('calc.pages.editor.export.closedRing', locale), value: data.closedRing.name },
       {
         label: t('calc.pages.editor.dashboard.range', locale),
@@ -93,6 +132,22 @@ export function buildSummaryRows(record, locale = 'zh') {
       },
       { label: t('calc.pages.editor.export.colMethod', locale), value: data.method ?? '-' },
     ]
+    const snapshot = data.snapshot
+    if (Array.isArray(snapshot?.warnings) && snapshot.warnings.length) {
+      rows.push({
+        label: t('content.history.summaryWarnings', locale),
+        value: snapshot.warnings
+          .map((w) => `[${(w.level ?? 'info').toUpperCase()}] ${w.message ?? w.key}`)
+          .join('；'),
+      })
+    }
+    if (Array.isArray(snapshot?.assumptions) && snapshot.assumptions.length) {
+      rows.push({
+        label: t('content.history.summaryAssumptions', locale),
+        value: snapshot.assumptions.join('；'),
+      })
+    }
+    return rows
   }
   return []
 }

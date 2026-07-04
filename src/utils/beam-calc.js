@@ -138,6 +138,10 @@ export function analyzeBeam(input) {
     pass: stress <= allowStress && deflection <= allowDeflection,
   }
 
+  const charDim = input.diameter ?? input.height ?? 30
+  result.spanRatio = charDim > 0 ? L / charDim : null
+  result.slendernessWarning = (result.spanRatio ?? 0) > 40
+
   if (calcMode === 'complete' || calcMode === 'professional') {
     result.stressUtilization = allowStress ? stress / allowStress : 0
     result.deflectionUtilization = allowDeflection ? deflection / allowDeflection : 0
@@ -155,9 +159,6 @@ export function analyzeBeam(input) {
       default:
         result.minInertiaDeflection = (P * L ** 3) / (48 * E * allowDeflection)
     }
-    const charDim = input.diameter ?? input.height ?? 30
-    result.spanRatio = L / charDim
-    result.slendernessWarning = result.spanRatio > 40
   }
 
   if (calcMode === 'professional') {

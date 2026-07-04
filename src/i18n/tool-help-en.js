@@ -510,12 +510,12 @@ export const toolHelpEnById = {
     summary:
       'Estimate contact pressure and transmissible torque from interference using thick-cylinder theory (DIN 7190 approach).',
     steps: [
-      'Enter bore/shaft diameters, interference, elastic moduli and Poisson ratios, and engagement length.',
+      'Enter shaft diameter, hub bore diameter, hub OD, elastic moduli/Poisson ratios, and fit length.',
       'Review contact pressure, stresses, and transmissible torque.',
       'Compare with design torque to judge whether interference is adequate or excessive (assembly difficulty/plasticity risk).',
     ],
     principle:
-      'Interference creates radial pressure at the interface; friction transmits torque or axial force. Larger interference raises pressure but also assembly force and bore stress.',
+      'Interference creates radial pressure at the interface; friction transmits torque or axial force. Larger interference raises pressure but also assembly force and hub hoop stress.',
     formulas: [
       { latex: 'T = \\pi p \\mu d^2 L / 2', note: 'Friction transmissible torque (illustrative)' },
     ],
@@ -695,16 +695,16 @@ export const toolHelpEnById = {
   bearing: {
     title: 'Bearing Life',
     summary:
-      'Calculate equivalent dynamic load and L10 life per ISO 281; supports X/Y lookup, reliability factor, preload, and duplex mounting.',
+      'Calculate equivalent dynamic load and L₁₀ life per ISO 281; supports X/Y lookup, reliability factor, preload, and duplex mounting.',
     steps: [
       'Choose mode: simplified (manual X/Y) or full (auto lookup by series).',
-      'Enter C, C0, Fr, Fa, speed, and target life.',
+      'Enter C, C₀, Fr, Fa, speed, and target life.',
       'Full mode: optional bearing series/model, aISO life adjustment, reliability.',
-      'Optional mounting (single / DB / DF / DT) and axial preload F0.',
+      'Optional mounting (single / DB / DF / DT) and axial preload F₀.',
       'Review equivalent load P, life in hours, and static safety factor.',
     ],
     principle:
-      'Rolling bearing life follows a power law with load. Equivalent dynamic load combines radial and axial load into one value comparable to rated dynamic load C. L10 is basic rating life at 90% reliability.',
+      'Rolling bearing life follows a power law with load. Equivalent dynamic load combines radial and axial load into one value comparable to rated dynamic load C. L₁₀ is basic rating life at 90% reliability.',
     formulas: [
       { latex: 'P = X F_r + Y F_a', note: 'Equivalent dynamic load' },
       { latex: 'L_{10} = (C/P)^\\varepsilon', note: 'Life in million revolutions; ε=3 for ball bearings, 10/3 for roller bearings' },
@@ -723,7 +723,7 @@ export const toolHelpEnById = {
     ],
     inputs: [
       {
-        name: 'C / C0',
+        name: 'C / C₀',
         meaning: 'Rated dynamic and static loads—basis for life and static safety.',
         source: 'Bearing catalog, manufacturer tables, or standard listings.',
       },
@@ -755,14 +755,14 @@ export const toolHelpEnById = {
         judgement: 'Higher P sharply reduces life—verify load direction and X/Y first.',
       },
       {
-        name: 'L10 / L10h',
+        name: 'L₁₀ / L₁₀h',
         meaning: 'Basic rating life at 90% reliability—in million rev or hours.',
-        judgement: 'Pass when L10h ≥ target life; higher reliability requirements reduce adjusted life.',
+        judgement: 'Pass when L₁₀h ≥ target life; higher reliability requirements reduce adjusted life.',
       },
       {
-        name: 'S0 static safety',
-        meaning: 'Ratio of C0 to static equivalent load.',
-        judgement: 'Do not rely on life alone for shock or slow heavy load—check S0.',
+        name: 'S₀ static safety',
+        meaning: 'Ratio of C₀ to static equivalent load.',
+        judgement: 'Do not rely on life alone for shock or slow heavy load—check S₀.',
       },
       {
         name: 'Stiffness estimate',
@@ -773,9 +773,9 @@ export const toolHelpEnById = {
     reliability: [
       'Life follows ISO 281 rating models; actual life also depends on lubrication, contamination, mounting error, temperature, shock, and sealing.',
       'X/Y lookup and series selection must be correct; consult catalogs for angular-contact pairs, preload, and load direction.',
-      'L10 is statistical—not every bearing will reach that hour count.',
+      'L₁₀ is statistical—not every bearing will reach that hour count.',
     ],
-    keywords: ['bearing', 'L10', 'ISO281'],
+    keywords: ['bearing', 'L₁₀', 'L10', 'ISO281'],
   },
 
   beam: {

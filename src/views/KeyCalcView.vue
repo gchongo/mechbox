@@ -48,13 +48,17 @@
       </section>
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag class="mb-3" :type="overallStatusType">
+          {{ pr('overall') }}: {{ overallStatusLabel }}
+        </el-tag>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('tangentialForce')" /><dd class="font-mono">{{ result.tangentialForce.toFixed(0) }} N</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress')" /><dd class="font-mono" :class="result.pass?'text-success':'text-error'">{{ result.shearStress.toFixed(1) }} MPa</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('crushStress')" /><dd class="font-mono">{{ result.crushStress.toFixed(1) }} MPa {{ result.pass?'✓':'✗' }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress')" /><dd class="font-mono" :class="reviewAwareCheckClass(result.shearPass, snapshot)">{{ result.shearStress.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.shearPass, snapshot, reviewMarkText) }}</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('crushStress')" /><dd class="font-mono" :class="reviewAwareCheckClass(result.crushPass, snapshot)">{{ result.crushStress.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.crushPass, snapshot, reviewMarkText) }}</dd></div>
           <div v-if="result.recommendedLength" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('recommendedLength')" /><dd class="font-mono">{{ result.recommendedLength.toFixed(1) }} mm</dd></div>
           <div v-if="result.shearAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
         </dl>
+        <p v-if="reviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
       </section>
     </div>
 
@@ -75,11 +79,12 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptKeyConnection } from '@/utils/calc-adapters'
+import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 
-const { pt, ct, pf, pr, fc } = useCalcPage('key')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('key')
 
 const form = reactive({
   calcMode: 'simple',
@@ -111,6 +116,19 @@ function applyStdKey() {
 const decisionPreset = DECISION_PRESETS.key
 const baseInputs = computed(() => ({ ...form }))
 const snapshot = computed(() => adaptKeyConnection(form))
+const overallStatus = computed(() => getCalcReviewStatus(snapshot.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+const reviewOnly = computed(() => isReviewOnlyResult(snapshot.value))
+const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {

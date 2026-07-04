@@ -63,8 +63,14 @@ export function analyzeClutch(input) {
     clampForce: force,
     effectiveRadius: radius,
     power,
+    torquePass: torque <= allow,
     pass: torque <= allow,
     allowableTorque: allow,
+  }
+
+  if (calcMode === 'simple') {
+    result.estimateOnly = true
+    result.pass = false
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
@@ -77,7 +83,7 @@ export function analyzeClutch(input) {
     result.maxPressure = input.maxPressure ?? 1.5
     result.pressurePass = !result.contactPressure || result.contactPressure <= result.maxPressure
     result.utilization = allow !== Infinity ? torque / allow : 0
-    result.pass = result.pass && result.pressurePass
+    result.pass = result.torquePass && result.pressurePass
   }
 
   if (calcMode === 'professional') {

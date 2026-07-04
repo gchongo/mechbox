@@ -78,11 +78,12 @@ export function analyzeGearStrength(input) {
     pitchLineVelocity: velocity,
     bendingPass: sigmaF <= allowBend,
     contactPass: sigmaH <= allowContact,
+    strengthPass: sigmaF <= allowBend && sigmaH <= allowContact,
     allowBending: allowBend,
     allowContact: allowContact,
     material: matKey,
     materialLabel: mat.label,
-    pass: sigmaF <= allowBend && sigmaH <= allowContact,
+    pass: false,
     estimateOnly: true,
   }
 }

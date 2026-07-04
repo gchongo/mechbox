@@ -45,6 +45,7 @@ export const decisionZh = {
   baseValue: '基准值',
 
   overallPass: '通过',
+  overallReview: '需复核 / 未放行',
   overallFail: '不通过',
   overallIncomplete: '未完成',
 
@@ -53,6 +54,7 @@ export const decisionZh = {
   notesPlaceholder: '笔记（可选）',
   notEvaluated: '未评估',
   stepPass: '通过 ✓',
+  stepReview: '需复核 / 未放行',
   stepFail: '不通过 ✗',
   handoffApplied: '已从设计链载入参数',
   handoffSynced: '已同步回设计链',
@@ -168,6 +170,7 @@ export const decisionEn = {
   baseValue: 'Base value',
 
   overallPass: 'Pass',
+  overallReview: 'Review / Not released',
   overallFail: 'Fail',
   overallIncomplete: 'Incomplete',
 
@@ -176,6 +179,7 @@ export const decisionEn = {
   notesPlaceholder: 'Notes (optional)',
   notEvaluated: 'Not evaluated',
   stepPass: 'Pass ✓',
+  stepReview: 'Review / Not released',
   stepFail: 'Fail ✗',
   handoffApplied: 'Loaded parameters from design chain',
   handoffSynced: 'Synced back to design chain',

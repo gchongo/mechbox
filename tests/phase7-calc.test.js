@@ -41,6 +41,20 @@ describe('gdt-stack-calc', () => {
     ])
     expect(r.total).toBeGreaterThan(0)
   })
+
+  it('overall pass fails when datum accumulation exceeds closed ring', () => {
+    const r = analyzeGdtStack({
+      calcMode: 'complete',
+      typeId: 'position',
+      method: 'rss',
+      closedRing: { min: 0, max: 0.04 },
+      rings: [{ name: 'X定位', tolerance: 0.001, factor: 1, type: 'increasing', direction: 'right' }],
+      datums: [{ label: 'A', priority: 'primary', tolerance: 0.05 }],
+    })
+    expect(r.chainResult.pass).toBe(true)
+    expect(r.passWithDatum).toBe(false)
+    expect(r.pass).toBe(false)
+  })
 })
 
 describe('weld-calc standards', () => {

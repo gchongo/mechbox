@@ -21,6 +21,7 @@
         </span>
       </div>
     </div>
+    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ pt('sigma.sigmaNote') }}</p>
   </div>
 </template>
 
@@ -33,7 +34,7 @@ const props = defineProps({
   summary: { type: Object, required: true },
 })
 
-const { pt, locale } = useCalcPage('editor')
+const { pt } = useCalcPage('editor')
 
 const rows = computed(() => {
   const s = props.summary
@@ -44,7 +45,6 @@ const rows = computed(() => {
   const excellent = pt('sigma.excellent')
   const average = pt('sigma.average')
   const needsImprove = pt('sigma.needsImprove')
-  const sigmaLatex = locale.value === 'en' ? '\\sigma_{\\text{level}}' : '\\sigma_{\\text{水平}}'
   return [
     {
       latex: 'C = \\frac{T}{6\\sigma}',
@@ -59,7 +59,7 @@ const rows = computed(() => {
       ok: cpk > 1.33,
     },
     {
-      latex: sigmaLatex,
+      latex: '3 \\cdot C_{pk}',
       value: `${s.sigmaLevel}σ`,
       status: sigma >= 4 ? pt('sigma.sigma4') : needsImprove,
       ok: sigma >= 4,

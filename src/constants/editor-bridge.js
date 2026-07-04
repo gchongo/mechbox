@@ -26,15 +26,22 @@ export function serializeEditorForMonteCarlo({
 
 /** 将 MC 参数还原为表单字段 */
 export function deserializeMonteCarloPayload(payload) {
-  const rings = payload.componentRings ?? []
+  const rings = (payload.componentRings ?? []).map((r) => ({
+    ...r,
+    es: r.es ?? (r.tolerance != null ? r.tolerance / 2 : undefined),
+    ei: r.ei ?? (r.tolerance != null ? -r.tolerance / 2 : undefined),
+  }))
   return {
     closedMin: payload.closedMin ?? payload.closedRing?.min ?? 0,
     closedMax: payload.closedMax ?? payload.closedRing?.max ?? 0,
+    componentRings: rings.length ? rings : null,
     toleranceList: rings.map((r) => r.tolerance).join(','),
     sizeList: rings.map((r) => r.size).join(','),
     typeList: rings
-      .map((r) => (r.type === 'increasing' ? 'inc' : 'dec'))
+      .map((r) => (r.type === 'increasing' ? 'inc' : r.type === 'decreasing' ? 'dec' : 'unknown'))
       .join(','),
+    esList: rings.map((r) => r.es).join(','),
+    eiList: rings.map((r) => r.ei).join(','),
     distribution: payload.distribution ?? 'normal',
     customK: payload.customK ?? 0,
     iterations: payload.iterations ?? 10000,

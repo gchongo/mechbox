@@ -37,9 +37,8 @@ describe('gdt-chain', () => {
       bonusTolerance: 0.02,
       autoBonus: false,
     })
-    expect(withBonus.effectiveTolerance ?? withBonus.totalTolerance).toBeGreaterThanOrEqual(
-      base.totalTolerance,
-    )
+    expect(withBonus.totalTolerance).toBeCloseTo(base.totalTolerance, 8)
+    expect(withBonus.effectiveTolerance).toBeCloseTo(base.totalTolerance + 0.02, 8)
   })
 
   it('sizeToleranceOfRing prefers explicit sizeTolerance then es-ei', () => {
@@ -93,7 +92,36 @@ describe('gdt-chain', () => {
     })
     expect(mmc.bonusSource).toBe('auto')
     expect(mmc.bonusApplied).toBeCloseTo(0.03)
-    expect(mmc.effectiveTolerance).toBeCloseTo(base.totalTolerance + 0.03)
+    expect(mmc.totalTolerance).toBeCloseTo(base.totalTolerance, 8)
+    expect(mmc.effectiveTolerance).toBeCloseTo(0.23)
+  })
+
+  it('MMC bonus can turn budget check from fail to pass', () => {
+    const rings = [
+      {
+        name: '孔',
+        tolerance: 0.11,
+        direction: 'right',
+        factor: 1,
+        type: 'increasing',
+        featureKind: 'hole',
+        sizeTolerance: 0.03,
+      },
+    ]
+    const closed = { min: 0, max: 0.1 }
+    const base = calculateChainResult(closed, rings, 'rss', {
+      typeId: 'position',
+      toleranceModifier: 'RFS',
+    })
+    const mmc = calculateChainResult(closed, rings, 'rss', {
+      typeId: 'position',
+      toleranceModifier: 'MMC',
+      autoBonus: true,
+    })
+    expect(base.pass).toBe(false)
+    expect(base.totalTolerance).toBeCloseTo(0.11, 6)
+    expect(mmc.pass).toBe(true)
+    expect(mmc.effectiveTolerance).toBeCloseTo(0.13, 6)
   })
 
   it('analyzeGdtStack exposes bonus breakdown', () => {

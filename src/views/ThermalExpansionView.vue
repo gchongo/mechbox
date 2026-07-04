@@ -21,7 +21,7 @@
             <span class="ml-2 text-sm text-gray-500">mm</span>
           </CalcFormItem>
           <CalcFormItem :label="pf('deltaT')">
-            <el-input-number v-model="form.deltaT" :min="-300" :max="800" :step="10" />
+            <el-input-number v-model="form.deltaT" :min="-300" :max="800" :step="10" @change="markConfirmed('deltaT')" />
             <span class="ml-2 text-sm text-gray-500">°C</span>
           </CalcFormItem>
           <CalcFormItem :label="pf('alpha1')">
@@ -42,11 +42,25 @@
         <div class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
           <ResultLabel label-class="text-gray-500" :text="pf('deltaL1')" />
           <dd class="mt-1 font-mono text-lg">{{ linearResult.linearExpansion?.toFixed(4) }} mm</dd>
+          <p v-if="calcMode === 'professional' && linearResult.alphaTemperatureUsed" class="mt-2 text-xs text-amber-700 dark:text-amber-300">
+            {{ pf('alphaTempNote') }}
+          </p>
+          <p v-else-if="calcMode !== 'professional'" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            {{ pf('alphaTempNote') }}
+          </p>
         </div>
       </section>
 
       <section v-if="calcMode !== 'simple'" class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pf('fitChange') }}</h2>
+        <el-alert
+          v-if="linearResult.releaseBlocked"
+          type="warning"
+          :closable="false"
+          show-icon
+          class="mb-3"
+          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
+        />
         <el-form label-width="148px">
           <CalcFormItem :label="pf('material2')">
             <el-select v-model="mat2" class="w-full" @change="onMat2">
@@ -54,10 +68,10 @@
             </el-select>
           </CalcFormItem>
           <CalcFormItem :label="pf('shaftDiameter')">
-            <el-input-number v-model="form.shaftDiameter" :min="1" :max="500" :precision="2" />
+            <el-input-number v-model="form.shaftDiameter" :min="1" :max="500" :precision="2" @change="markConfirmed('shaftDiameter')" />
           </CalcFormItem>
           <CalcFormItem :label="pf('holeDiameter')">
-            <el-input-number v-model="form.holeDiameter" :min="1" :max="500" :precision="2" />
+            <el-input-number v-model="form.holeDiameter" :min="1" :max="500" :precision="2" @change="markConfirmed('holeDiameter')" />
           </CalcFormItem>
           <CalcFormItem :label="pf('alpha2')">
             <el-input-number v-model="form.alpha2" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
@@ -65,11 +79,11 @@
           </CalcFormItem>
           <template v-if="calcMode === 'professional'">
             <CalcFormItem :label="pf('assemblyDeltaT')">
-              <el-input-number v-model="form.assemblyDeltaT" :min="-200" :max="400" :step="10" />
+              <el-input-number v-model="form.assemblyDeltaT" :min="-200" :max="400" :step="10" @change="markConfirmed('assemblyDeltaT')" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
             </CalcFormItem>
             <CalcFormItem :label="pf('serviceDeltaT')">
-              <el-input-number v-model="form.serviceDeltaT" :min="-200" :max="800" :step="10" />
+              <el-input-number v-model="form.serviceDeltaT" :min="-200" :max="800" :step="10" @change="markConfirmed('serviceDeltaT')" />
               <span class="ml-2 text-xs text-gray-500">°C</span>
             </CalcFormItem>
           </template>
@@ -83,7 +97,7 @@
               <dd class="font-mono">{{ linearResult.fit.interferenceChange?.toFixed(4) }} mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('finalInterference')" />
-              <dd class="font-mono" :class="linearResult.fit.becomesClearance ? 'text-warning' : 'text-success'">
+              <dd class="font-mono" :class="finalInterferenceClass">
                 {{ linearResult.fit.finalInterference?.toFixed(4) }} mm
               </dd>
             </div>
@@ -99,8 +113,8 @@
           <router-link to="/interference-fit" class="mt-3 inline-block text-xs text-primary hover:underline">
             {{ pr('linkInterferenceFit') }}
           </router-link>
-          <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="linearResult.pass ? 'success' : 'danger'">
-            {{ linearResult.pass ? pr('serviceSafe') : pr('mayLoosen') }}
+          <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="fitVerdictType">
+            {{ fitVerdictLabel }}
           </el-tag>
         </template>
       </section>
@@ -115,8 +129,10 @@ import ThermalExpansionDiagram from '@/components/thermal/ThermalExpansionDiagra
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
+import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 
-const { pt, ct, pf, pr } = useCalcPage('thermal-expansion')
+const { pt, ct, pf, pr, locale } = useCalcPage('thermal-expansion')
 const { optionMap } = useOptionsI18n()
 
 const thermalMaterials = computed(() => optionMap(THERMAL_MATERIALS, 'thermalMaterials'))
@@ -136,6 +152,8 @@ const form = reactive({
   serviceDeltaT: 100,
 })
 
+const { markConfirmed, withConfirmed } = useCriticalInputConfirm(calcMode)
+
 function onMat1(k) {
   form.alpha = THERMAL_MATERIALS[k].alpha * 1e6
 }
@@ -144,16 +162,39 @@ function onMat2(k) {
 }
 
 const linearResult = computed(() =>
-  analyzeThermalExpansion({
-    calcMode: calcMode.value,
-    length: form.length,
-    deltaT: form.deltaT,
-    alpha: form.alpha * 1e-6,
-    alpha2: form.alpha2 * 1e-6,
-    shaftDiameter: calcMode.value === 'simple' ? undefined : form.shaftDiameter,
-    holeDiameter: calcMode.value === 'simple' ? undefined : form.holeDiameter,
-    assemblyDeltaT: form.assemblyDeltaT,
-    serviceDeltaT: form.serviceDeltaT,
-  }),
+  analyzeThermalExpansion(
+    withConfirmed({
+      calcMode: calcMode.value,
+      length: form.length,
+      deltaT: form.deltaT,
+      alpha: form.alpha * 1e-6,
+      alpha2: form.alpha2 * 1e-6,
+      shaftDiameter: calcMode.value === 'simple' ? undefined : form.shaftDiameter,
+      holeDiameter: calcMode.value === 'simple' ? undefined : form.holeDiameter,
+      assemblyDeltaT: form.assemblyDeltaT,
+      serviceDeltaT: form.serviceDeltaT,
+    }),
+  ),
 )
+
+const unconfirmedLabelText = computed(() =>
+  formatUnconfirmedLabels(linearResult.value.unconfirmedCriticalInputs ?? [], locale.value).join(
+    locale.value === 'en' ? ', ' : '、',
+  ),
+)
+
+const finalInterferenceClass = computed(() => {
+  if (linearResult.value.releaseBlocked || linearResult.value.estimateOnly) return 'text-warning'
+  return linearResult.value.fit?.becomesClearance ? 'text-warning' : 'text-success'
+})
+
+const fitVerdictType = computed(() => {
+  if (linearResult.value.releaseBlocked || linearResult.value.estimateOnly) return 'warning'
+  return linearResult.value.pass ? 'success' : 'danger'
+})
+
+const fitVerdictLabel = computed(() => {
+  if (linearResult.value.releaseBlocked || linearResult.value.estimateOnly) return pr('reviewPending')
+  return linearResult.value.pass ? pr('serviceSafe') : pr('mayLoosen')
+})
 </script>
