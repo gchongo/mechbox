@@ -368,16 +368,20 @@ export function adaptBeam(input) {
 /** ---------------- Spring (helical compression) ---------------- */
 export function adaptSpring(input) {
   const r = analyzeSpring(input)
+  const stressVal = r.tauWorking ?? r.shearStress
   const keyMetrics = [
-    metric('shearStress', '剪切应力 τ', r.shearStress, 'MPa', {
+    metric('shearStress', '剪切应力 τ', stressVal, 'MPa', {
       status: r.shearPass ? 'pass' : 'fail',
-      utilization: r.allowableShear ? r.shearStress / r.allowableShear : null,
+      utilization: r.allowableShear ? stressVal / r.allowableShear : null,
     }),
-    metric('springRate', '刚度 k', r.springRate, 'N/mm'),
+    metric('springRate', '刚度 P\'', r.springRate, 'N/mm'),
     metric('deflection', '压缩量 δ', r.deflection, 'mm'),
     metric('springIndex', '旋绕比 C', r.springIndex, ''),
     metric('wahlFactor', 'Wahl 系数 K', r.wahlFactor, ''),
   ]
+  if (r.workingLoad != null) {
+    keyMetrics.push(metric('workingLoad', '工作负荷 F₂', r.workingLoad, 'N'))
+  }
   if (r.buckling) {
     keyMetrics.push(
       metric('slenderness', '长径比', r.buckling.slenderness, '', {

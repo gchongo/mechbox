@@ -1,14 +1,37 @@
-/** 圆柱螺旋压缩弹簧设计 (GB/T 1239 简化) */
+/** 圆柱螺旋压缩弹簧设计 (GB/T 1239 / 机械设计手册) */
 import { calcLifeFromStress, SN_MATERIALS } from '@/utils/fatigue-calc'
 
+/** G 默认 80000 MPa（手册弹簧钢丝）；[τ] 为许用切应力 MPa */
 export const SPRING_MATERIALS = {
-  music_wire: { label: '琴钢丝', allowableShear: 900 },
-  oil_tempered: { label: '油淬火弹簧钢', allowableShear: 700 },
-  stainless: { label: '不锈钢', allowableShear: 550 },
-  custom: { label: '自定义', allowableShear: 600 },
+  '50CrVA': { label: '50CrVA', allowableShear: 529, shearModulus: 80000 },
+  '60Si2CrA': { label: '60Si2CrA', allowableShear: 684, shearModulus: 80000 },
+  '65Mn': { label: '65Mn', allowableShear: 540, shearModulus: 80000 },
+  '60Si2CrVA': { label: '60Si2CrVA', allowableShear: 671, shearModulus: 80000 },
+  music_wire: { label: '琴钢丝', allowableShear: 900, shearModulus: 80000 },
+  oil_tempered: { label: '油淬火弹簧钢', allowableShear: 700, shearModulus: 80000 },
+  stainless: { label: '不锈钢', allowableShear: 550, shearModulus: 80000 },
+  custom: { label: '自定义', allowableShear: 600, shearModulus: 80000 },
 }
 
-export function calcSpringRate({ shearModulus = 79000, wireDiameter, meanDiameter, activeCoils }) {
+export const DEFAULT_SPRING_SHEAR_MODULUS = 80000
+
+export function resolveMeanDiameter({ meanDiameter, outerDiameter, wireDiameter }) {
+  if (outerDiameter != null && wireDiameter) return outerDiameter - wireDiameter
+  return meanDiameter
+}
+
+export function resolveOuterDiameter({ meanDiameter, outerDiameter, wireDiameter }) {
+  if (outerDiameter != null) return outerDiameter
+  if (meanDiameter != null && wireDiameter) return meanDiameter + wireDiameter
+  return null
+}
+
+export function calcSpringRate({
+  shearModulus = DEFAULT_SPRING_SHEAR_MODULUS,
+  wireDiameter,
+  meanDiameter,
+  activeCoils,
+}) {
   const d = wireDiameter
   const D = meanDiameter
   const na = activeCoils
@@ -29,6 +52,24 @@ export function calcSpringShearStress(force, wireDiameter, meanDiameter) {
 
 export function calcSpringIndex(wireDiameter, meanDiameter) {
   return meanDiameter / wireDiameter
+}
+
+/** 由高度求各工况载荷：F = P' × (H₀ − H) */
+export function calcLoadsFromHeights({ springRate, freeLength, installHeight, workingHeight, solidHeight }) {
+  const k = springRate
+  const h0 = freeLength
+  const loads = {}
+  if (!(k > 0) || !(h0 > 0)) return loads
+  if (installHeight != null) loads.install = k * (h0 - installHeight)
+  if (workingHeight != null) loads.working = k * (h0 - workingHeight)
+  if (solidHeight != null) loads.solid = k * (h0 - solidHeight)
+  return loads
+}
+
+/** 展开长度（按总圈数） */
+export function calcUnwindLength(meanDiameter, totalCoils) {
+  if (!meanDiameter || !totalCoils) return 0
+  return Math.PI * meanDiameter * totalCoils
 }
 
 /** 弹簧切应力幅值 + 平均应力 → Goodman/Soderberg 等效幅值 */
@@ -67,26 +108,62 @@ export function calcSolidHeight({ wireDiameter, activeCoils, totalCoils, endType
 
 export function analyzeSpring(input) {
   const calcMode = input.calcMode ?? 'simple'
-  const k = calcSpringRate(input)
-  const force = input.load ?? k * (input.deflection ?? 0)
-  const deflection = input.deflection ?? (input.load != null && k > 0 ? input.load / k : 0)
-  const tau = calcSpringShearStress(force, input.wireDiameter, input.meanDiameter)
-  const C = calcSpringIndex(input.wireDiameter, input.meanDiameter)
-  const K = calcWahlFactor(input.wireDiameter, input.meanDiameter)
+  const d = input.wireDiameter
+  const D2 = resolveMeanDiameter(input)
+  const outerDiameter = resolveOuterDiameter({ ...input, meanDiameter: D2 })
 
   const matKey = input.material ?? 'custom'
   const mat = SPRING_MATERIALS[matKey] ?? SPRING_MATERIALS.custom
+  const G = input.shearModulus ?? mat.shearModulus ?? DEFAULT_SPRING_SHEAR_MODULUS
   const allow = input.allowableShear ?? mat.allowableShear ?? 600
-  const shearPass = tau <= allow
+
+  const k = calcSpringRate({
+    shearModulus: G,
+    wireDiameter: d,
+    meanDiameter: D2,
+    activeCoils: input.activeCoils,
+  })
+  const C = calcSpringIndex(d, D2)
+  const K = calcWahlFactor(d, D2)
 
   const endType = input.endType ?? 'fixed'
   const totalCoils = input.totalCoils ?? calcSolidCoils(input.activeCoils, endType)
   const solidHeight = calcSolidHeight({
-    wireDiameter: input.wireDiameter,
+    wireDiameter: d,
     totalCoils,
   })
-  const freeLength = input.freeLength ?? solidHeight + deflection + 3 * input.wireDiameter
-  const marginD = input.solidMargin ?? input.wireDiameter
+  const freeLength = input.freeLength ?? solidHeight + 3 * d
+
+  const heightLoads = calcLoadsFromHeights({
+    springRate: k,
+    freeLength,
+    installHeight: input.installHeight,
+    workingHeight: input.workingHeight,
+    solidHeight,
+  })
+  const usesHeightLoads = heightLoads.working != null
+
+  let force
+  let deflection
+  if (usesHeightLoads) {
+    force = heightLoads.working
+    deflection = input.workingHeight != null ? freeLength - input.workingHeight : force / k
+  } else {
+    force = input.load ?? k * (input.deflection ?? 0)
+    deflection = input.deflection ?? (input.load != null && k > 0 ? input.load / k : 0)
+  }
+
+  const tau = calcSpringShearStress(force, d, D2)
+  const tauInstall =
+    heightLoads.install != null ? calcSpringShearStress(heightLoads.install, d, D2) : null
+  const tauWorking = usesHeightLoads ? tau : null
+  const tauSolid =
+    heightLoads.solid != null ? calcSpringShearStress(heightLoads.solid, d, D2) : null
+
+  const checkTau = usesHeightLoads ? tauWorking : tau
+  const shearPass = checkTau <= allow
+
+  const marginD = input.solidMargin ?? d
   const geometryPass = freeLength >= solidHeight
   const maxDeflection = geometryPass ? freeLength - solidHeight - marginD : 0
   const solidPass = geometryPass && deflection <= maxDeflection
@@ -94,7 +171,11 @@ export function analyzeSpring(input) {
 
   const result = {
     calcMode,
+    wireDiameter: d,
+    meanDiameter: D2,
+    outerDiameter,
     springRate: k,
+    shearModulus: G,
     force,
     deflection,
     shearStress: tau,
@@ -103,15 +184,30 @@ export function analyzeSpring(input) {
     solidHeight,
     freeLength,
     totalCoils,
+    unwindLength: calcUnwindLength(D2, totalCoils),
     shearPass,
     allowableShear: allow,
     materialLabel: mat.label,
     pass: shearPass,
+    usesHeightLoads,
+  }
+
+  if (heightLoads.install != null) {
+    result.installLoad = heightLoads.install
+    result.tauInstall = tauInstall
+  }
+  if (heightLoads.working != null) {
+    result.workingLoad = heightLoads.working
+    result.tauWorking = tauWorking
+  }
+  if (heightLoads.solid != null) {
+    result.solidLoad = heightLoads.solid
+    result.tauSolid = tauSolid
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
     const indexPass = C >= 4 && C <= 16
-    const buckling = calcBucklingCheck(freeLength, input.meanDiameter, endType)
+    const buckling = calcBucklingCheck(freeLength, D2, endType)
     result.indexPass = indexPass
     result.indexWarning = C < 4 ? '旋绕比过小' : C > 16 ? '旋绕比过大' : null
     result.buckling = buckling
@@ -123,10 +219,10 @@ export function analyzeSpring(input) {
   }
 
   if (calcMode === 'professional') {
-    const fMin = input.loadMin ?? 0
-    const fMax = input.loadMax ?? force
-    const tauMin = calcSpringShearStress(fMin, input.wireDiameter, input.meanDiameter)
-    const tauMax = calcSpringShearStress(fMax, input.wireDiameter, input.meanDiameter)
+    const fMin = input.loadMin ?? heightLoads.install ?? 0
+    const fMax = input.loadMax ?? heightLoads.working ?? force
+    const tauMin = calcSpringShearStress(fMin, d, D2)
+    const tauMax = calcSpringShearStress(fMax, d, D2)
     const tauAmp = (tauMax - tauMin) / 2
     const tauMean = (tauMax + tauMin) / 2
     const meanMethod = input.meanStressMethod ?? 'goodman'

@@ -14,14 +14,35 @@
               <el-option v-for="(m, k) in materials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </el-form-item>
-          <CalcFormItem :label="pf('wireDiameter')"><el-input-number v-model="form.wireDiameter" :min="0.5" :precision="2" :step="0.1" /></CalcFormItem>
-          <CalcFormItem :label="pf('meanDiameter')"><el-input-number v-model="form.meanDiameter" :min="2" :precision="1" /></CalcFormItem>
+          <CalcFormItem :label="pf('wireDiameter')"><el-input-number v-model="form.wireDiameter" :min="0.2" :precision="2" :step="0.1" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('meanDiameter')">
+            <el-input-number v-model="form.meanDiameter" :min="1" :precision="2" />
+          </CalcFormItem>
+          <template v-else>
+            <CalcFormItem :label="pf('outerDiameter')">
+              <el-input-number v-model="form.outerDiameter" :min="1" :precision="2" @change="syncMeanFromOuter" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('meanDiameter')">
+              <el-input-number v-model="form.meanDiameter" :min="1" :precision="2" disabled />
+            </CalcFormItem>
+          </template>
           <CalcFormItem :label="pf('activeCoils')"><el-input-number v-model="form.activeCoils" :min="1" :step="0.5" :precision="1" /></CalcFormItem>
-          <CalcFormItem :label="pf('load')"><el-input-number v-model="form.load" :min="0" :precision="1" /></CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('totalCoils')">
+            <el-input-number v-model="form.totalCoils" :min="form.activeCoils + 1" :step="1" :precision="0" />
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('load')">
+            <el-input-number v-model="form.load" :min="0" :precision="1" />
+          </CalcFormItem>
           <CalcFormItem :label="pf('allowableShear')"><el-input-number v-model="form.allowableShear" :min="100" /></CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
             <CalcFormItem :label="pf('freeLength')">
-              <el-input-number v-model="form.freeLength" :min="5" :precision="1" />
+              <el-input-number v-model="form.freeLength" :min="1" :precision="1" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('installHeight')">
+              <el-input-number v-model="form.installHeight" :min="0" :precision="1" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('workingHeight')">
+              <el-input-number v-model="form.workingHeight" :min="0" :precision="1" />
             </CalcFormItem>
             <CalcFormItem :label="pf('endType')">
               <el-select v-model="form.endType" class="w-full">
@@ -68,14 +89,28 @@
           </el-tag>
         </div>
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springRate')" /><dd class="font-mono">{{ result.springRate.toFixed(2) }} N/mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" /><dd class="font-mono">{{ result.deflection.toFixed(2) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel :text="pr('shearStress')" />
-            <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
-              {{ result.shearStress.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
-            </dd>
-          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springRate')" /><dd class="font-mono">{{ result.springRate.toFixed(4) }} N/mm</dd></div>
+          <template v-if="result.usesHeightLoads">
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('installLoad')" /><dd class="font-mono">{{ result.installLoad?.toFixed(2) }} N</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('workingLoad')" /><dd class="font-mono">{{ result.workingLoad?.toFixed(2) }} N</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('solidLoad')" /><dd class="font-mono">{{ result.solidLoad?.toFixed(2) }} N</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('tauInstall')" /><dd class="font-mono">{{ result.tauInstall?.toFixed(1) }} MPa</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('tauWorking')" />
+              <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
+                {{ result.tauWorking?.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
+              </dd>
+            </div>
+          </template>
+          <template v-else>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" /><dd class="font-mono">{{ result.deflection.toFixed(2) }} mm</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('shearStress')" />
+              <dd class="font-mono" :class="result.shearPass ? 'text-success' : 'text-error'">
+                {{ result.shearStress.toFixed(1) }} MPa {{ result.shearPass ? '✓' : '✗' }}
+              </dd>
+            </div>
+          </template>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel :text="pr('springIndex')" />
             <dd class="font-mono" :class="form.calcMode === 'simple' || result.indexPass ? '' : 'text-error'">
@@ -87,6 +122,10 @@
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('solidHeight')" />
               <dd class="font-mono">{{ result.solidHeight.toFixed(2) }} mm</dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('unwindLength')" />
+              <dd class="font-mono">{{ result.unwindLength.toFixed(1) }} mm</dd>
             </div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('buckling')" />
@@ -150,25 +189,54 @@ const { optionMap } = useOptionsI18n()
 const materials = computed(() => optionMap(SPRING_MATERIALS, 'springMaterials'))
 const form = reactive({
   calcMode: 'simple',
-  material: 'oil_tempered',
-  wireDiameter: 2,
-  meanDiameter: 16,
-  activeCoils: 8,
+  material: '50CrVA',
+  wireDiameter: 1.1,
+  outerDiameter: 6.5,
+  meanDiameter: 5.4,
+  activeCoils: 5,
+  totalCoils: 7,
   load: 150,
-  allowableShear: 600,
-  freeLength: 40,
+  allowableShear: 529,
+  freeLength: 15,
+  installHeight: 13,
+  workingHeight: 12,
   endType: 'fixed',
   loadMin: 50,
   loadMax: 200,
   targetCycles: 1e6,
 })
 
+function syncMeanFromOuter() {
+  if (form.wireDiameter != null && form.outerDiameter != null) {
+    form.meanDiameter = Number((form.outerDiameter - form.wireDiameter).toFixed(2))
+  }
+}
+
+watch(
+  () => form.wireDiameter,
+  () => syncMeanFromOuter(),
+)
+
+watch(
+  () => form.endType,
+  (endType) => {
+    if (form.totalCoils == null) return
+    const expected = endType === 'free' ? form.activeCoils + 1 : form.activeCoils + 2
+    if (Math.abs(form.totalCoils - expected) <= 1) {
+      form.totalCoils = expected
+    }
+  },
+)
+
 watch(
   () => form.material,
   (m) => {
     const mat = SPRING_MATERIALS[m]
-    if (mat && m !== 'custom') form.allowableShear = mat.allowableShear
+    if (mat && m !== 'custom') {
+      form.allowableShear = mat.allowableShear
+    }
   },
+  { immediate: true },
 )
 
 const result = computed(() => analyzeSpring(form))

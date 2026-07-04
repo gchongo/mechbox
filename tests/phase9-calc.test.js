@@ -273,6 +273,35 @@ describe('spring-calc modes', () => {
     expect(r.buckling?.bucklingPass).toBe(true)
     expect(r.pass).toBe(true)
   })
+
+  it('matches mechanical design handbook reference case', () => {
+    const r = analyzeSpring({
+      calcMode: 'complete',
+      material: '50CrVA',
+      wireDiameter: 1.1,
+      outerDiameter: 6.5,
+      activeCoils: 5,
+      totalCoils: 7,
+      freeLength: 15,
+      installHeight: 13,
+      workingHeight: 12,
+      endType: 'fixed',
+    })
+    expect(r.meanDiameter).toBeCloseTo(5.4, 2)
+    expect(r.springIndex).toBeCloseTo(4.91, 2)
+    expect(r.wahlFactor).toBeCloseTo(1.3171, 3)
+    expect(r.springRate).toBeCloseTo(18.596, 3)
+    expect(r.solidHeight).toBeCloseTo(7.7, 2)
+    expect(r.installLoad).toBeCloseTo(37.19, 2)
+    expect(r.workingLoad).toBeCloseTo(55.79, 2)
+    expect(r.solidLoad).toBeCloseTo(135.75, 2)
+    expect(r.tauInstall).toBeCloseTo(506.1, 1)
+    expect(r.tauWorking).toBeCloseTo(759.2, 1)
+    expect(r.unwindLength).toBeCloseTo(118.8, 1)
+    expect(r.allowableShear).toBe(529)
+    expect(r.shearPass).toBe(false)
+    expect(r.pass).toBe(false)
+  })
 })
 
 describe('bearing-calc modes', () => {

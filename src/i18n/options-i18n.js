@@ -51,6 +51,10 @@ export const optionsZh = {
     hydraulic: { label: '液压拉伸' },
   },
   springMaterials: {
+    '50CrVA': { label: '50CrVA' },
+    '60Si2CrA': { label: '60Si2CrA' },
+    '65Mn': { label: '65Mn' },
+    '60Si2CrVA': { label: '60Si2CrVA' },
     music_wire: { label: '琴钢丝' },
     oil_tempered: { label: '油淬火弹簧钢' },
     stainless: { label: '不锈钢' },
@@ -316,6 +320,10 @@ export const optionsEn = {
     hydraulic: { label: 'Hydraulic tensioning' },
   },
   springMaterials: {
+    '50CrVA': { label: '50CrVA' },
+    '60Si2CrA': { label: '60Si2CrA' },
+    '65Mn': { label: '65Mn' },
+    '60Si2CrVA': { label: '60Si2CrVA' },
     music_wire: { label: 'Music wire' },
     oil_tempered: { label: 'Oil-tempered spring steel' },
     stainless: { label: 'Stainless steel' },
