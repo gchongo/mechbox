@@ -29,6 +29,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // 勿把 /api 登录跳转交给 SPA 离线回退，否则会白屏
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],
