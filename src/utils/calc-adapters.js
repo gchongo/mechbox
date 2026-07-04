@@ -408,7 +408,7 @@ export function adaptSpring(input) {
   if (!r.shearPass) suggestions.push('切应力超过许用值：增大线径/中径或减小载荷')
   if (!r.indexPass) suggestions.push('旋绕比不在 [4, 16] 范围，调整线径/中径')
   if (r.buckling && !r.buckling.bucklingPass) suggestions.push('存在失稳风险：缩短自由高度或改端形')
-  if (r.geometryPass === false) suggestions.push('自由高度小于并圈高度：增大 L₀ 或减少有效圈数')
+  if (r.geometryPass === false) suggestions.push('自由高度小于并圈高度：增大 H₀ 或减少有效圈数')
   else if (r.solidPass === false) suggestions.push('工作压缩量接近并圈：加长自由高度或减小载荷')
   return buildCalcResult({
     toolId: 'spring',

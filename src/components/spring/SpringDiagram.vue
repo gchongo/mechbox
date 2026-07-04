@@ -2,12 +2,12 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint"><MathContent :text="dm(freeLength ? dt('hintWithL0') : dt('hint'))" /></p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(freeLength ? dt('hintWithH0') : dt('hint'))" /></p>
     </header>
 
     <svg
       class="mech-diagram__svg"
-      viewBox="0 0 480 220"
+      viewBox="0 0 480 240"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       :aria-label="dt('aria')"
@@ -21,11 +21,11 @@
         </marker>
       </defs>
 
-      <rect x="90" y="168" width="300" height="10" rx="2" class="end-plate" />
-      <rect x="90" y="42" width="300" height="10" rx="2" class="end-plate" />
+      <rect x="100" y="34" width="280" height="8" rx="1" class="end-plate" />
+      <rect x="100" y="178" width="280" height="8" rx="1" class="end-plate" />
 
       <path
-        d="M 150 52 Q 330 68 150 84 Q 330 100 150 116 Q 330 132 150 148 Q 330 164 150 168"
+        d="M 178 48 Q 302 61 178 74 Q 302 87 178 100 Q 302 113 178 126 Q 302 139 178 152 Q 302 165 178 174"
         fill="none"
         stroke="#409eff"
         stroke-width="3"
@@ -33,26 +33,38 @@
         stroke-linejoin="round"
       />
 
-      <line x1="240" y1="18" x2="240" y2="38" stroke="#8b5cf6" stroke-width="2" marker-end="url(#spr-arr-blue)" />
-      <text x="248" y="28" class="lbl-force">F</text>
+      <line x1="240" y1="12" x2="240" y2="32" stroke="#8b5cf6" stroke-width="2" marker-end="url(#spr-arr-blue)" />
+      <text x="248" y="22" class="lbl-force">F</text>
 
-      <text x="358" y="58" class="lbl-muted">n</text>
+      <line x1="162" y1="48" x2="162" y2="174" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
+      <line x1="168" y1="48" x2="156" y2="48" class="ext-line" />
+      <line x1="168" y1="174" x2="156" y2="174" class="ext-line" />
+      <text x="148" y="115" class="lbl-muted" text-anchor="middle">n</text>
 
-      <circle cx="358" cy="108" r="7" class="wire-sample" />
-      <line x1="372" y1="108" x2="388" y2="108" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
-      <text x="392" y="112" class="lbl-muted">d</text>
+      <circle cx="302" cy="113" r="5.5" class="wire-sample" />
+      <line x1="314" y1="113" x2="326" y2="113" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
+      <line x1="307" y1="113" x2="314" y2="113" class="ext-line" />
+      <text x="332" y="117" class="lbl-muted">d</text>
 
-      <line x1="150" y1="192" x2="330" y2="192" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
-      <text x="228" y="210" class="lbl-primary">D2</text>
+      <line x1="178" y1="111" x2="178" y2="196" class="ext-line" />
+      <line x1="302" y1="111" x2="302" y2="196" class="ext-line" />
+      <line x1="178" y1="196" x2="302" y2="196" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
+      <text x="240" y="212" class="lbl-primary" text-anchor="middle">D2</text>
 
-      <line x1="408" y1="52" x2="408" y2="168" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
-      <text x="416" y="114" class="lbl-primary">L0</text>
+      <line x1="178" y1="48" x2="328" y2="48" class="ext-line" />
+      <line x1="178" y1="174" x2="328" y2="174" class="ext-line" />
+      <line x1="328" y1="48" x2="328" y2="174" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
+      <text x="340" y="115" class="lbl-primary">H0</text>
     </svg>
 
     <dl class="mech-diagram__params">
       <div class="mech-diagram__param">
         <dt><MathContent text="$d$" /></dt>
         <dd>{{ formatMm(wireDiameter) }}</dd>
+      </div>
+      <div v-if="outerDiameter" class="mech-diagram__param">
+        <dt><MathContent text="$D$" /></dt>
+        <dd>{{ formatMm(outerDiameter) }}</dd>
       </div>
       <div class="mech-diagram__param">
         <dt><MathContent text="$D_2$" /></dt>
@@ -62,13 +74,21 @@
         <dt><MathContent text="$n$" /></dt>
         <dd>{{ formatCoils(activeCoils) }}</dd>
       </div>
+      <div v-if="totalCoils" class="mech-diagram__param">
+        <dt><MathContent text="$n_t$" /></dt>
+        <dd>{{ formatCoils(totalCoils) }}</dd>
+      </div>
       <div v-if="freeLength" class="mech-diagram__param">
-        <dt><MathContent text="$L_0$" /></dt>
+        <dt><MathContent text="$H_0$" /></dt>
         <dd>{{ formatMm(freeLength) }}</dd>
       </div>
-      <div v-if="outerDiameter" class="mech-diagram__param">
-        <dt><MathContent text="$D$" /></dt>
-        <dd>{{ formatMm(outerDiameter) }}</dd>
+      <div v-if="installHeight" class="mech-diagram__param">
+        <dt><MathContent text="$H_1$" /></dt>
+        <dd>{{ formatMm(installHeight) }}</dd>
+      </div>
+      <div v-if="workingHeight" class="mech-diagram__param">
+        <dt><MathContent text="$H_2$" /></dt>
+        <dd>{{ formatMm(workingHeight) }}</dd>
       </div>
     </dl>
   </div>
@@ -85,7 +105,10 @@ defineProps({
   meanDiameter: { type: Number, default: 24 },
   outerDiameter: { type: Number, default: 0 },
   activeCoils: { type: Number, default: 8 },
+  totalCoils: { type: Number, default: 0 },
   freeLength: { type: Number, default: 0 },
+  installHeight: { type: Number, default: 0 },
+  workingHeight: { type: Number, default: 0 },
 })
 
 function formatMm(value) {
@@ -142,6 +165,12 @@ function formatCoils(value) {
 .mech-diagram__svg .dim-primary {
   stroke: #409eff;
   stroke-width: 1.5;
+  fill: none;
+}
+
+.mech-diagram__svg .ext-line {
+  stroke: #94a3b8;
+  stroke-width: 1;
   fill: none;
 }
 

@@ -70,7 +70,10 @@
           :mean-diameter="result.meanDiameter ?? form.meanDiameter"
           :outer-diameter="form.calcMode !== 'simple' ? form.outerDiameter : 0"
           :active-coils="form.activeCoils"
+          :total-coils="form.calcMode !== 'simple' ? form.totalCoils : 0"
           :free-length="form.calcMode !== 'simple' ? form.freeLength : 0"
+          :install-height="form.calcMode !== 'simple' ? form.installHeight : 0"
+          :working-height="form.calcMode !== 'simple' ? form.workingHeight : 0"
         />
       </section>
       <section class="card-panel">
@@ -82,7 +85,7 @@
           :closable="false"
           show-icon
           :title="pr('geometryBad')"
-          :description="pr('geometryBadDesc', { l0: result.freeLength.toFixed(1), ls: result.solidHeight.toFixed(1) })"
+          :description="pr('geometryBadDesc', { h0: result.freeLength.toFixed(1), ls: result.solidHeight.toFixed(1) })"
         />
         <div class="mb-4 flex items-center gap-2">
           <el-tag :type="result.pass ? 'success' : 'danger'" effect="plain">
