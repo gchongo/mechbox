@@ -110,16 +110,16 @@
         </el-form-item>
         <CalcFormItem :label="pf('direction')">
           <el-radio-group v-model="closedRing.direction" @change="syncAllRingTypes">
-            <el-radio-button label="left">←</el-radio-button>
-            <el-radio-button label="up">↑</el-radio-button>
-            <el-radio-button label="right">→</el-radio-button>
-            <el-radio-button label="down">↓</el-radio-button>
+            <el-radio-button value="left">←</el-radio-button>
+            <el-radio-button value="up">↑</el-radio-button>
+            <el-radio-button value="right">→</el-radio-button>
+            <el-radio-button value="down">↓</el-radio-button>
           </el-radio-group>
         </CalcFormItem>
         <CalcFormItem :label="pf('unit')">
           <el-radio-group v-model="closedRing.unit" @change="onUnitChange">
-            <el-radio label="mm">mm</el-radio>
-            <el-radio label="inch">inch</el-radio>
+            <el-radio value="mm">mm</el-radio>
+            <el-radio value="inch">inch</el-radio>
           </el-radio-group>
         </CalcFormItem>
       </el-form>
@@ -439,7 +439,7 @@ import { casesEn, localizeEditorRingNames, translateRingName, translateClosedRin
 
 const route = useRoute()
 const router = useRouter()
-const { pt, pf, pr, t } = useCalcPage('editor')
+const { pt, pf, pr, fc, t } = useCalcPage('editor')
 const { ol } = useOptionsI18n()
 const { exportFilename, locale } = useContentI18n()
 

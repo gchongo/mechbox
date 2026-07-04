@@ -46,9 +46,9 @@
           </CalcFormItem>
           <CalcFormItem :label="pf('materialCondition')">
             <el-radio-group v-model="form.toleranceModifier">
-              <el-radio label="RFS">RFS</el-radio>
-              <el-radio label="MMC">MMC</el-radio>
-              <el-radio label="LMC">LMC</el-radio>
+              <el-radio value="RFS">RFS</el-radio>
+              <el-radio value="MMC">MMC</el-radio>
+              <el-radio value="LMC">LMC</el-radio>
             </el-radio-group>
           </CalcFormItem>
           <CalcFormItem v-if="form.toleranceModifier !== 'RFS'" :label="pf('autoBonus')">

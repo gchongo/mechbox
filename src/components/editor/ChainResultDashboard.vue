@@ -120,11 +120,15 @@
 
       <div class="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <ChainDistributionChart
+          v-if="hasSpecRange"
           :mean="rss.nominal"
           :process-sigma="rss.processSigma"
           :spec-min="closedRing.min"
           :spec-max="closedRing.max"
         />
+        <p v-else class="py-10 text-center text-xs text-gray-500 dark:text-gray-400">
+          请先输入封闭环上下限以生成分布图
+        </p>
       </div>
     </div>
 
@@ -202,6 +206,8 @@ const stackAdviceHintClass = computed(() => {
   }
   return 'bg-primary/5 text-gray-600 dark:text-gray-400'
 })
+
+const hasSpecRange = computed(() => Number.isFinite(props.closedRing?.min) && Number.isFinite(props.closedRing?.max))
 
 function fmt(v) {
   if (v == null || Number.isNaN(v)) return '—'
