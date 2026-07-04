@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220" role="img" aria-label="Compression spring schematic">
   <defs>
     <marker id="arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
@@ -8,32 +9,25 @@
     </marker>
   </defs>
 
-  <!-- ï§ -->
   <rect x="90" y="168" width="300" height="10" rx="2" fill="#94a3b8" fill-opacity="0.55" stroke="#64748b"/>
   <rect x="90" y="42" width="300" height="10" rx="2" fill="#94a3b8" fill-opacity="0.55" stroke="#64748b"/>
 
-  <!-- '«úš:	 -->
   <path
     d="M 150 52 Q 330 68 150 84 Q 330 100 150 116 Q 330 132 150 148 Q 330 164 150 168"
     fill="none" stroke="#409eff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- F -->
   <line x1="240" y1="18" x2="240" y2="38" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr-blue)"/>
   <text x="248" y="28" font-family="system-ui,sans-serif" font-size="13" fill="#8b5cf6">F</text>
 
-  <!-- n -->
   <text x="358" y="58" font-family="system-ui,sans-serif" font-size="13" fill="#475569">n</text>
 
-  <!-- d : -->
   <circle cx="358" cy="108" r="7" fill="rgba(64,158,255,0.25)" stroke="#409eff" stroke-width="1.5"/>
   <line x1="372" y1="108" x2="388" y2="108" stroke="#64748b" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>
   <text x="392" y="112" font-family="system-ui,sans-serif" font-size="13" fill="#475569">d</text>
 
-  <!-- D‚ -->
   <line x1="150" y1="192" x2="330" y2="192" stroke="#409eff" stroke-width="1.5" marker-start="url(#arr-blue)" marker-end="url(#arr-blue)"/>
-  <text x="232" y="210" font-family="system-ui,sans-serif" font-size="13" fill="#409eff">D‚</text>
+  <text x="228" y="210" font-family="system-ui,sans-serif" font-size="13" fill="#409eff">D<tspan font-size="10" baseline-shift="sub">2</tspan></text>
 
-  <!-- L€ -->
   <line x1="408" y1="52" x2="408" y2="168" stroke="#409eff" stroke-width="1.5" marker-start="url(#arr-blue)" marker-end="url(#arr-blue)"/>
-  <text x="416" y="114" font-family="system-ui,sans-serif" font-size="13" fill="#409eff">L€</text>
+  <text x="416" y="114" font-family="system-ui,sans-serif" font-size="13" fill="#409eff">L<tspan font-size="10" baseline-shift="sub">0</tspan></text>
 </svg>
