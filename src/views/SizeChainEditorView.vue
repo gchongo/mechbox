@@ -881,7 +881,8 @@ function onUnitChange(newUnit) {
 }
 
 function updateRingType(ring) {
-  ring.type = inferRingType(ring.direction, closedRing.value.direction)
+  const t = inferRingType(ring.direction, closedRing.value.direction)
+  if (t) ring.type = t
 }
 
 function syncAllRingTypes() {

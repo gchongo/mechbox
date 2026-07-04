@@ -76,7 +76,8 @@ export function buildEnhancedReport({ snapshot, sensitivity, primaryMetric }) {
   } else if (snapshot.pass) {
     sections.push({
       heading: '建议',
-      text: '当前设计满足所有校核，可作为基线方案。',
+      text:
+        '当前输入在简化模型下满足校核条件。结果仅供工程辅助判断，须结合完整标准、制造条件与持证工程师复核后方可用于生产放行。',
     })
   }
 

@@ -118,6 +118,14 @@ export function calculateModifiedRssLimits(
   }
 }
 
+/** 带符号名义尺寸和 — L₀ = Σ(增环) − Σ(减环) */
+export function calcSignedNominalSum(componentRings) {
+  return componentRings.reduce((sum, ring) => {
+    const sign = ring.type === 'increasing' ? 1 : -1
+    return sum + sign * (ring.size ?? 0) * (ring.factor ?? 1)
+  }, 0)
+}
+
 /** 计算尺寸链结果 */
 export function calculateSizeChain(closedRing, componentRings, method = 'rss', options = {}) {
   let limits

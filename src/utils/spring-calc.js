@@ -21,8 +21,7 @@ const TAU_U0_RM_LEVELS = [
   { cycles: 1e4, factor: 0.45 },
   { cycles: 1e5, factor: 0.4 },
   { cycles: 1e6, factor: 0.35 },
-  { cycles: 1e7, factor: 0.32 },
-  { cycles: 1e8, factor: 0.3 },
+  { cycles: 1e7, factor: 0.3 },
 ]
 
 export function resolveMeanDiameter({ meanDiameter, outerDiameter, wireDiameter }) {
@@ -100,7 +99,7 @@ export function getPulsatingFatigueLimit(targetCycles, tensileStrength) {
 }
 
 /**
- * GB/T 23935 公式 (30)：S = τu0 / (τmax − 0.75·τmin) ≥ Smin
+ * GB/T 23935 公式 (30)：S = (τu0 + 0.75·τmin) / τmax ≥ Smin
  * @returns {{ safetyFactor, fatiguePass, tauU0, minSafety }}
  */
 export function calcSpringFatigueCheck({
@@ -111,28 +110,25 @@ export function calcSpringFatigueCheck({
   minSafety = DEFAULT_FATIGUE_SAFETY,
 }) {
   const tauU0 = getPulsatingFatigueLimit(targetCycles, tensileStrength)
-  const denom = tauMax - 0.75 * tauMin
-  if (denom <= 0 || tauU0 <= 0) {
-    return { safetyFactor: 0, fatiguePass: false, tauU0, minSafety, stressRange: denom }
+  if (tauMax <= 0 || tauU0 <= 0 || !Number.isFinite(tauMax)) {
+    return { safetyFactor: 0, fatiguePass: false, tauU0, minSafety }
   }
-  const safetyFactor = tauU0 / denom
+  const safetyFactor = (tauU0 + 0.75 * (tauMin ?? 0)) / tauMax
   return {
     safetyFactor,
     fatiguePass: safetyFactor >= minSafety,
     tauU0,
     minSafety,
-    stressRange: denom,
   }
 }
 
 /** 估算满足公式 (30) 的最高循环档次 */
 export function estimateSpringFatigueLife({ tauMin, tauMax, tensileStrength, minSafety = DEFAULT_FATIGUE_SAFETY }) {
-  const denom = tauMax - 0.75 * tauMin
-  if (denom <= 0 || !tensileStrength) return 0
+  if (tauMax <= 0 || !tensileStrength) return 0
   let passed = null
   for (const level of TAU_U0_RM_LEVELS) {
     const tauU0 = level.factor * tensileStrength
-    if (tauU0 / denom >= minSafety) passed = level.cycles
+    if ((tauU0 + 0.75 * (tauMin ?? 0)) / tauMax >= minSafety) passed = level.cycles
   }
   if (passed === TAU_U0_RM_LEVELS[TAU_U0_RM_LEVELS.length - 1].cycles) return Infinity
   return passed ?? 0

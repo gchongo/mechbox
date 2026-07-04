@@ -323,7 +323,7 @@ describe('spring-calc modes', () => {
     expect(r.loadMin).toBeCloseTo(37.19, 1)
     expect(r.loadMax).toBeCloseTo(55.79, 1)
     expect(r.shearAmplitude).toBeLessThan(200)
-    expect(r.fatigueSafetyFactor).toBeGreaterThan(1)
+    expect(r.fatigueSafetyFactor).toBeCloseTo(1.33, 1)
     expect(r.fatiguePass).toBe(true)
   })
 })

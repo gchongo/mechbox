@@ -335,26 +335,21 @@ describe('spring mean stress fatigue', () => {
     expect(eff).toBeGreaterThan(100)
   })
 
-  it('professional spring fatigue uses mean stress correction', () => {
-    const lowMean = analyzeSpring({
+  it('professional spring fatigue uses GB/T (30) mean stress term', () => {
+    const base = {
       calcMode: 'professional',
       wireDiameter: 4,
       meanDiameter: 28,
       activeCoils: 8,
-      loadMin: 100,
-      loadMax: 500,
       targetCycles: 1e6,
-    })
-    const highMean = analyzeSpring({
-      calcMode: 'professional',
-      wireDiameter: 4,
-      meanDiameter: 28,
-      activeCoils: 8,
-      loadMin: 400,
-      loadMax: 800,
-      targetCycles: 1e6,
-    })
-    expect(highMean.effectiveShearAmplitude).toBeGreaterThan(lowMean.effectiveShearAmplitude)
+    }
+    const lowMean = analyzeSpring({ ...base, loadMin: 100, loadMax: 500 })
+    const highMean = analyzeSpring({ ...base, loadMin: 300, loadMax: 700 })
+    expect(highMean.shearAmplitude).toBeCloseTo(lowMean.shearAmplitude, 1)
+    expect(highMean.shearMean).toBeGreaterThan(lowMean.shearMean)
+    expect(highMean.fatigueSafetyFactor).toBeGreaterThan(0)
+    expect(highMean.fatigueTauU0).toBe(lowMean.fatigueTauU0)
+    expect(highMean.fatigueSafetyFactor).toBeLessThan(lowMean.fatigueSafetyFactor)
   })
 })
 

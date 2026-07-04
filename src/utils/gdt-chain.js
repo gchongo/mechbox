@@ -2,6 +2,7 @@ import {
   calculateWorstCaseLimits,
   calculateRssLimits,
   calculateModifiedRssLimits,
+  calcSignedNominalSum,
   worstCaseMethod,
   rssMethod,
   modifiedRssMethod,
@@ -273,7 +274,7 @@ export function calculateGdtChain(closedRing, componentRings, method = 'rss', op
 
   switch (mode.stack) {
     case '2d-position': {
-      const nominal = componentRings.reduce((s, r) => s + (r.size ?? 0) * (r.factor ?? 1), 0)
+      const nominal = calcSignedNominalSum(componentRings)
       const totalTolerance = calc2dPositionTolerance(componentRings, method, options)
       return {
         ...buildLimitsFromTolerance(nominal, totalTolerance, closedRing),
@@ -285,7 +286,7 @@ export function calculateGdtChain(closedRing, componentRings, method = 'rss', op
       const mapped = componentRings.map((r) => ({
         tolerance: r.tolerance * (r.factor ?? 1),
       }))
-      const nominal = componentRings.reduce((s, r) => s + (r.size ?? 0) * (r.factor ?? 1), 0)
+      const nominal = calcSignedNominalSum(componentRings)
       let totalTolerance
       if (method === 'worst') totalTolerance = worstCaseMethod(mapped)
       else if (method === 'modified-rss') {

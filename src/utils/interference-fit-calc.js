@@ -3,20 +3,21 @@
  */
 import { calcFitChange } from '@/utils/thermal-expansion-calc'
 
+/** 轮毂径向柔度 — 厚壁圆筒平面应力：C_h = (1/E)[(r_o²+r_i²)/(r_o²-r_i²) + ν] */
 function hubCompliance(ri, ro, E, nu) {
   if (ro <= ri) return 0
-  return ((1 - nu) / E) * ((ro * ro + ri * ri) / (ro * ro - ri * ri))
+  return (1 / E) * ((ro * ro + ri * ri) / (ro * ro - ri * ri) + nu)
 }
 
+/** 实心轴径向柔度 — C_s = (1−ν)/E */
 function shaftComplianceSolid(E, nu) {
   return (1 - nu) / E
 }
 
-/** 空心轴径向柔度 (外半径 ro, 内半径 ri) */
+/** 空心轴径向柔度（外表面受径向压装） */
 function shaftComplianceHollow(ri, ro, E, nu) {
-  if (ro <= ri) return shaftComplianceSolid(E, nu)
-  if (ri <= 0) return shaftComplianceSolid(E, nu)
-  return ((1 - nu) / E) * ((ro * ro + ri * ri) / (ro * ro - ri * ri))
+  if (ro <= ri || ri <= 0) return shaftComplianceSolid(E, nu)
+  return (1 / E) * ((ro * ro + ri * ri) / (ro * ro - ri * ri) + nu)
 }
 
 /** 径向接触压力 (MPa) — 实心轴 + 厚壁轮毂 */
@@ -125,11 +126,12 @@ export function analyzeInterferenceFit(input) {
 
   const shaftAllow = input.shaftAllowHoop ?? 350
   const hubAllow = input.hubAllowHoop ?? 350
-  const stressPass =
-    calcMode === 'simple' ? true : contact.hoopShaft <= shaftAllow && contact.hoopHub <= hubAllow
+  const stressPass = contact.hoopShaft <= shaftAllow && contact.hoopHub <= hubAllow
+  const estimateOnly = calcMode === 'simple'
 
   return {
     calcMode,
+    estimateOnly,
     interference,
     nominalInterference: input.interference ?? shaftDiameter - (input.holeDiameter ?? shaftDiameter),
     shaftDiameter,
