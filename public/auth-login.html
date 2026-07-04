@@ -17,9 +17,10 @@
     </style>
   </head>
   <body>
-    <p>正在跳转 CAX 论坛登录…</p>
+    <p id="msg">正在跳转 CAX 论坛登录…</p>
     <script>
       ;(async function () {
+        var STEP_KEY = 'mechbox_auth_login_ready'
         var params = new URLSearchParams(location.search)
         var ret = params.get('return') || '/account'
         if (!ret.startsWith('/') || ret.startsWith('//')) ret = '/account'
@@ -34,6 +35,13 @@
           }
         }
 
+        // 旧 SW 控制当前页时，注销后须重载一次才能真正走网络
+        if (sessionStorage.getItem(STEP_KEY) !== '1') {
+          sessionStorage.setItem(STEP_KEY, '1')
+          location.reload()
+          return
+        }
+        sessionStorage.removeItem(STEP_KEY)
         location.replace(target)
       })()
     </script>

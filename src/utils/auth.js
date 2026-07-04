@@ -40,6 +40,10 @@ export async function fetchCurrentUser({ force = false } = {}) {
 
   inflight = fetch(`${API_BASE}/auth/me`, { credentials: 'include' })
     .then(async (res) => {
+      if (res.status === 401) {
+        cachedUser = null
+        return null
+      }
       if (!res.ok) {
         cachedUser = null
         return null

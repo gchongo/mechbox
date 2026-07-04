@@ -7,7 +7,9 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 登录 /api 跳转不能被 SW 拦截；停止注册 SW，并下发自毁脚本清理旧缓存
+      injectRegister: false,
+      selfDestroying: true,
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'MechBox 机械工具箱',
@@ -29,10 +31,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        // 关闭 SW 导航回退：/api 登录跳转不能被 index.html 接管（会白屏）
-        // 在线时由 Nginx try_files 处理 SPA 路由即可
         navigateFallback: null,
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/auth-login\.html$/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
