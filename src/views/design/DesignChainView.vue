@@ -34,13 +34,18 @@
     <template v-else>
       <section class="card-panel mb-6">
         <h2 class="mb-4 font-semibold">{{ ct('sharedInputs') }}</h2>
-        <el-form label-width="160px" class="grid gap-3 lg:grid-cols-2">
-          <el-form-item v-for="(spec, key) in sharedSchema" :key="key" :label="spec.label">
+        <el-form label-width="160px" class="grid gap-3 lg:grid-cols-2 design-chain-form">
+          <el-form-item v-for="(spec, key) in sharedSchema" :key="key">
+            <template #label>
+              <FormMathLabel :text="spec.label" />
+            </template>
             <el-input-number
+              class="design-chain-input"
               :model-value="activeChain.sharedInputs[key]"
               :min="spec.min ?? 0"
               :step="spec.step ?? 1"
               :precision="spec.precision"
+              controls-position="right"
               @change="updateShared(key, $event)"
             />
           </el-form-item>
@@ -85,6 +90,7 @@ import { writeChainHandoff } from '@/utils/chain-handoff'
 import { buildChainReport } from '@/utils/chain-report'
 import { exportToolReportPdf } from '@/utils/export'
 import ChainStepCard from '@/components/design/ChainStepCard.vue'
+import FormMathLabel from '@/components/common/FormMathLabel.vue'
 import { useLocale } from '@/composables/useLocale'
 
 const props = defineProps({

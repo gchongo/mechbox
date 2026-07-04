@@ -35,6 +35,35 @@
     font-size: 1.05em;
   }
 
+  /* 数字输入框：避免长数值被截断 */
+  .el-input-number {
+    min-width: 132px;
+  }
+
+  .el-input-number .el-input__inner {
+    text-align: left;
+  }
+
+  .el-input-number.numeric-wide {
+    min-width: 148px;
+    width: 148px;
+  }
+
+  .el-input-number.numeric-narrow {
+    min-width: 108px;
+    width: 108px;
+  }
+
+  .el-input-number.design-chain-input {
+    min-width: 168px;
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .fatigue-sa-input {
+    min-width: 140px;
+  }
+
   /* 行内公式勿用块级 katex-display 布局 */
   .math-content:not(.math-content-block) .katex-display {
     display: inline;

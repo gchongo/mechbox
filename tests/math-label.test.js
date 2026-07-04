@@ -86,4 +86,16 @@ describe('math-label enrichMathText', () => {
       expect(enrichMathText(`标签 ${id}`)).not.toMatch(/\$\$/)
     }
   })
+
+  it('keeps bolt-group formula intact', () => {
+    const hint = enrichMathText('各螺栓坐标矢量合成 F_i = F/n + M×r/I_p，专业模式')
+    expect(hint).toContain('$F_i = F/n + M \\times r / I_p$')
+    expect(hint).not.toMatch(/F_i\$/)
+  })
+
+  it('converts bolt preload symbols', () => {
+    expect(enrichMathText('残余预紧力 F_M')).toContain('$F_M$')
+    expect(enrichMathText('拧紧预紧力 F_V')).toContain('$F_V$')
+    expect(enrichMathText('屈服强度 σs')).toContain('\\sigma_s')
+  })
 })

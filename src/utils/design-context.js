@@ -45,7 +45,7 @@ export const CHAIN_TYPES = {
       torque: { label: '扭矩 T (N·m)', default: 200, min: 0 },
       rpm: { label: '转速 n (rpm)', default: 1500, min: 1 },
       shaftDiameter: { label: '轴径 d (mm)', default: 30, min: 5 },
-      yieldStrength: { label: '屈服强度 σs (MPa)', default: 235, min: 100 },
+      yieldStrength: { label: '屈服强度 σ_s (MPa)', default: 235, min: 100 },
       targetHours: { label: '目标寿命 (h)', default: 10000, min: 100 },
       radialLoad: { label: '径向载荷 Fr (N)', default: 5000, min: 0 },
       axialLoad: { label: '轴向载荷 Fa (N)', default: 500, min: 0 },

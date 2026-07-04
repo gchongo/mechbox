@@ -65,6 +65,8 @@ const props = defineProps({
   sf: { type: Number, default: 900 },
   b: { type: Number, default: -0.085 },
   cycleLimit: { type: Number, default: 1e6 },
+  /** 材料峰值应力上限，用于固定纵轴刻度 */
+  stressMax: { type: Number, default: null },
 })
 
 function nToX(N) {
@@ -87,10 +89,11 @@ const opN = computed(() => {
 
 const sMax = computed(() => {
   const peak = props.sf * N_MIN ** props.b
+  const cap = props.stressMax ?? peak * 1.15
   const atLife = opN.value != null && props.stressAmplitude > props.enduranceLimit
     ? stressAtN(opN.value)
     : 0
-  return Math.max(peak * 1.05, props.stressAmplitude * 1.08, atLife * 1.05, props.enduranceLimit * 1.15, 1)
+  return Math.max(peak * 1.05, cap, atLife * 1.05, props.stressAmplitude * 1.02, props.enduranceLimit * 1.15, 1)
 })
 
 function sToY(S) {

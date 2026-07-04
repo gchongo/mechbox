@@ -12,6 +12,15 @@ const REPLACEMENTS = [
   ['σ水平', '$\\sigma_{\\text{水平}}$'],
   ['L₁…Lₙ', '$L_1 \\ldots L_n$'],
   ['F_i = F/n + M×r/I_p', '$F_i = F/n + M \\times r / I_p$'],
+  ['F_i = F/n + M*r/I_p', '$F_i = F/n + M \\times r / I_p$'],
+  ['F_M', '$F_M$'],
+  ['F_V', '$F_V$'],
+  ['F_A', '$F_A$'],
+  ['F_Z', '$F_Z$'],
+  ['ΔF_VT', '$\\Delta F_{VT}$'],
+  ['σs', '$\\sigma_s$'],
+  ['l_K', '$l_K$'],
+  ['h_f', '$h_f$'],
   ['T = μFRn', '$T = \\mu F R n$'],
   ['T = K·F·d', '$T = K \\cdot F \\cdot d$'],
   ['T=μdF', '$T = \\mu d F$'],
@@ -109,8 +118,6 @@ const REPLACEMENTS = [
   ['ΔL', '$\\Delta L$'],
   ['Δi', '$\\Delta i$'],
   ['Δτ', '$\\Delta \\tau$'],
-  ['I_p', '$I_p$'],
-  ['F_i', '$F_i$'],
   ['A_s', '$A_s$'],
   ['6σ', '$6\\sigma$'],
   ['6σ RSS', '$6\\sigma$ RSS'],
@@ -136,6 +143,16 @@ const REPLACEMENTS = [
   ['π', '$\\pi$'],
   ['ρ', '$\\rho$'],
 ]
+
+/** 长匹配优先，避免 F_i 等子串被提前替换破坏整段公式 */
+const SORTED_REPLACEMENTS = [...REPLACEMENTS].sort((a, b) => b[0].length - a[0].length)
+
+function normalizeEngineeringText(text) {
+  return String(text)
+    .replace(/\u00d7/g, '×')
+    .replace(/\u2212/g, '-')
+    .replace(/(\d)\s*[xX]\s*([A-Za-z_/])/g, '$1×$2')
+}
 
 const GREEK_SUB = {
   alpha: '\\alpha',
@@ -227,20 +244,28 @@ function bindCjkToSymbol(text) {
   return text.replace(/([\u4e00-\u9fff])\s+(?=[A-Za-z_$ΔΦΣ])/g, '$1\u00a0')
 }
 
-function enrichPlainSegment(text) {
-  let out = bindCjkToSymbol(text)
-  for (const [from, to] of REPLACEMENTS) {
+function applySymbolReplacements(plain) {
+  let out = plain
+  for (const [from, to] of SORTED_REPLACEMENTS) {
     if (to == null) continue
     out = out.split(from).join(to)
   }
-  return bindCjkToSymbol(
-    splitMathSegments(out)
-      .map((seg) => {
-        if (seg.math) return seg.content
-        return autoEnrichSymbols(seg.content)
-      })
-      .join(''),
-  )
+  return out
+}
+
+function enrichPlainSegment(text) {
+  const normalized = bindCjkToSymbol(normalizeEngineeringText(text))
+  return splitMathSegments(normalized)
+    .map((seg) => {
+      if (seg.math) return seg.content
+      const replaced = applySymbolReplacements(seg.content)
+      return bindCjkToSymbol(
+        splitMathSegments(replaced)
+          .map((s) => (s.math ? s.content : autoEnrichSymbols(s.content)))
+          .join(''),
+      )
+    })
+    .join('')
 }
 
 /**

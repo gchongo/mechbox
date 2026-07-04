@@ -40,6 +40,48 @@ async function loadPdfLibs() {
   return { html2canvas, jsPDF }
 }
 
+function fixExportCloneStyles(root) {
+  if (!root) return
+  root.style.background = '#ffffff'
+  root.querySelectorAll('.design-pass-badge--ok').forEach((el) => {
+    el.style.display = 'inline-block'
+    el.style.overflow = 'visible'
+    el.style.lineHeight = '1.5'
+    el.style.padding = '4px 10px'
+    el.style.color = '#529b2e'
+    el.style.backgroundColor = '#f0f9eb'
+    el.style.border = '1px solid #b3e19d'
+    el.style.borderRadius = '4px'
+  })
+  root.querySelectorAll('.design-pass-badge--fail').forEach((el) => {
+    el.style.display = 'inline-block'
+    el.style.overflow = 'visible'
+    el.style.lineHeight = '1.5'
+    el.style.padding = '4px 10px'
+    el.style.color = '#c45656'
+    el.style.backgroundColor = '#fef0f0'
+    el.style.border = '1px solid #fab6b6'
+    el.style.borderRadius = '4px'
+  })
+  root.querySelectorAll('.el-tag').forEach((tag) => {
+    tag.style.display = 'inline-block'
+    tag.style.overflow = 'visible'
+    tag.style.lineHeight = '1.5'
+    tag.style.padding = '2px 8px'
+    tag.style.borderRadius = '4px'
+    tag.style.border = '1px solid transparent'
+    if (tag.classList.contains('el-tag--success')) {
+      tag.style.color = '#529b2e'
+      tag.style.backgroundColor = '#f0f9eb'
+      tag.style.borderColor = '#b3e19d'
+    } else if (tag.classList.contains('el-tag--danger')) {
+      tag.style.color = '#c45656'
+      tag.style.backgroundColor = '#fef0f0'
+      tag.style.borderColor = '#fab6b6'
+    }
+  })
+}
+
 async function captureElement(element, html2canvas) {
   return html2canvas(element, {
     scale: 2,
@@ -51,7 +93,7 @@ async function captureElement(element, html2canvas) {
     height: element.scrollHeight,
     width: element.scrollWidth || element.offsetWidth,
     onclone: (_doc, cloned) => {
-      cloned.style.background = '#ffffff'
+      fixExportCloneStyles(cloned)
     },
   })
 }

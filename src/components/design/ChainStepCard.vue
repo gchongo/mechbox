@@ -15,7 +15,7 @@
           :key="m.key"
           class="flex items-baseline justify-between gap-2 rounded bg-gray-50 p-2 dark:bg-gray-900"
         >
-          <span class="text-xs text-gray-500">{{ m.label }}</span>
+          <FormMathLabel :text="m.label" class="shrink-0 text-xs text-gray-500" />
           <span
             class="font-mono text-sm"
             :class="m.status === 'pass' ? 'text-success' : m.status === 'fail' ? 'text-error' : ''"
@@ -70,6 +70,7 @@ import { ElMessage } from 'element-plus'
 import { DECISION_PRESETS, runPresetInverse } from '@/utils/decision-presets'
 import { buildStepInputs, CHAIN_INVERSE_APPLY, resolveInverseApply } from '@/utils/chain-snapshots'
 import { useDecisionI18n } from '@/composables/useDecisionI18n'
+import FormMathLabel from '@/components/common/FormMathLabel.vue'
 
 const props = defineProps({
   step: { type: Object, required: true },

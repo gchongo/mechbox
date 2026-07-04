@@ -18,15 +18,25 @@
           {{ t('nav.analysis', locale) }}
         </router-link>
 
-        <router-link
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          class="hidden rounded-md px-3 py-2 text-sm font-medium transition-colors md:inline-block"
-          :class="navLinkClass(item.path)"
-        >
-          {{ item.label }}
-        </router-link>
+        <template v-for="item in navItems" :key="item.path">
+          <a
+            v-if="item.external"
+            :href="item.path"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white md:inline-block"
+          >
+            {{ item.label }}
+          </a>
+          <router-link
+            v-else
+            :to="item.path"
+            class="hidden rounded-md px-3 py-2 text-sm font-medium transition-colors md:inline-block"
+            :class="navLinkClass(item.path)"
+          >
+            {{ item.label }}
+          </router-link>
+        </template>
 
         <el-dropdown
           trigger="click"
@@ -126,8 +136,8 @@ const navItems = computed(() => [
   { path: '/editor', label: t('nav.editor', locale.value) },
   { path: '/statistics', label: t('nav.stats', locale.value) },
   { path: '/monte-carlo', label: t('nav.mc', locale.value) },
-  { path: '/cases', label: t('nav.cases', locale.value) },
-  { path: '/manual', label: t('nav.manual', locale.value) },
+  { path: '/help', label: t('nav.help', locale.value) },
+  { path: FORUM_URL, label: t('nav.forum', locale.value), external: true },
 ])
 
 const toolsPopperOptions = {
@@ -175,13 +185,13 @@ const allTools = computed(() => [
 
 const moreItems = computed(() => [
   { path: '/tools', label: t('tools.tool-map', locale.value) },
-  { path: '/help', label: t('nav.help', locale.value) },
+  { path: '/cases', label: t('nav.cases', locale.value) },
+  { path: '/manual', label: t('nav.manual', locale.value) },
   { path: '/tutorial', label: t('nav.tutorial', locale.value) },
   { path: '/glossary', label: t('nav.glossary', locale.value) },
   { path: '/faq', label: t('nav.faq', locale.value) },
   { path: '/quiz', label: t('nav.quiz', locale.value) },
   { path: '/history', label: t('tools.history', locale.value) },
-  { path: FORUM_URL, label: t('nav.forum', locale.value), external: true },
 ])
 
 const allToolPaths = computed(() => [
@@ -190,7 +200,7 @@ const allToolPaths = computed(() => [
   ...toolGroups.value.material,
 ].map((item) => item.path))
 
-const morePaths = ['/tools', '/help', '/tutorial', '/glossary', '/faq', '/quiz', '/history']
+const morePaths = ['/tools', '/cases', '/manual', '/tutorial', '/glossary', '/faq', '/quiz', '/history']
 
 const toolsActive = computed(() => allToolPaths.value.some((p) => route.path.startsWith(p)))
 const moreActive = computed(() => morePaths.some((p) => route.path.startsWith(p)))

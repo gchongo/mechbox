@@ -40,12 +40,12 @@
           </CalcFormItem>
           <el-divider content-position="left">{{ pf('dividerMaterials') }}</el-divider>
           <CalcFormItem :label="pf('shaftEv')">
-            <el-input-number v-model="form.shaftE" :min="50000" :step="10000" class="w-28" />
-            <el-input-number v-model="form.shaftNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 w-24" />
+            <el-input-number v-model="form.shaftE" :min="50000" :step="10000" class="numeric-wide" />
+            <el-input-number v-model="form.shaftNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 numeric-narrow" />
           </CalcFormItem>
           <CalcFormItem :label="pf('hubEv')">
-            <el-input-number v-model="form.hubE" :min="50000" :step="10000" class="w-28" />
-            <el-input-number v-model="form.hubNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 w-24" />
+            <el-input-number v-model="form.hubE" :min="50000" :step="10000" class="numeric-wide" />
+            <el-input-number v-model="form.hubNu" :min="0.2" :max="0.4" :precision="2" :step="0.01" class="ml-2 numeric-narrow" />
           </CalcFormItem>
           <template v-if="form.calcMode === 'complete' || form.calcMode === 'professional'">
             <CalcFormItem :label="pf('allowHoop')">

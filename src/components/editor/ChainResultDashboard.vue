@@ -25,13 +25,12 @@
                 <dd class="font-mono text-xs">{{ fmt(worst.lower) }} ~ {{ fmt(worst.upper) }}</dd>
               </div>
             </dl>
-            <el-tag
-              class="mt-2"
-              size="small"
-              :type="worst.pass ? 'success' : 'danger'"
+            <span
+              class="design-pass-badge mt-2"
+              :class="worst.pass ? 'design-pass-badge--ok' : 'design-pass-badge--fail'"
             >
               {{ worst.pass ? pt('dashboard.passDesign') : pt('dashboard.failDesign') }}
-            </el-tag>
+            </span>
           </div>
 
           <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
@@ -54,13 +53,12 @@
                 <dd class="font-mono text-xs">{{ fmt(rss.lower) }} ~ {{ fmt(rss.upper) }}</dd>
               </div>
             </dl>
-            <el-tag
-              class="mt-2"
-              size="small"
-              :type="rss.pass ? 'success' : 'danger'"
+            <span
+              class="design-pass-badge mt-2"
+              :class="rss.pass ? 'design-pass-badge--ok' : 'design-pass-badge--fail'"
             >
               {{ rss.pass ? pt('dashboard.passDesign') : pt('dashboard.failDesign') }}
-            </el-tag>
+            </span>
           </div>
         </div>
         <div
@@ -223,5 +221,27 @@ function fmtSigned(v) {
 
 .cpk-ref-table :deep(.el-table__cell) {
   padding: 6px 8px;
+}
+
+.design-pass-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 4px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.design-pass-badge--ok {
+  color: #529b2e;
+  background-color: #f0f9eb;
+  border-color: #b3e19d;
+}
+
+.design-pass-badge--fail {
+  color: #c45656;
+  background-color: #fef0f0;
+  border-color: #fab6b6;
 }
 </style>

@@ -314,7 +314,7 @@
                   </template>
                   <p class="text-sm">{{ s.summary }}</p>
                   <p v-if="s.detail" class="text-xs text-gray-500">{{ s.detail }}</p>
-                  <p v-if="s.formula" class="mt-1 font-mono text-xs text-primary">{{ s.formula }}</p>
+                  <p v-if="s.formula" class="mt-1 text-xs text-primary"><MathContent :text="enrichMathText(s.formula)" /></p>
                 </el-collapse-item>
               </el-collapse>
             </template>
@@ -329,6 +329,8 @@
 <script setup>
 import { reactive, computed, ref } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import { enrichMathText } from '@/utils/math-label'
 import BoltPreloadDiagram from '@/components/bolt/BoltPreloadDiagram.vue'
 import {
   analyzeBoltPreload,

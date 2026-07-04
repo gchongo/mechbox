@@ -241,6 +241,7 @@ export const fieldsZh = {
       fields: {
         materialAndStress: '材料与应力',
         stressAmplitude: '应力幅 Sa',
+        stressAmplitudeRange: '建议范围 {min}–{max} MPa（随材料 S-N 曲线）',
         meanStress: '平均应力 Sm',
         surfaceSizeFactor: '表面 / 尺寸系数',
         minerSpectrum: 'Miner 载荷谱',
@@ -1056,6 +1057,7 @@ export const fieldsEn = {
       fields: {
         materialAndStress: 'Material & stress',
         stressAmplitude: 'Stress amplitude Sa',
+        stressAmplitudeRange: 'Suggested {min}–{max} MPa (from material S-N curve)',
         meanStress: 'Mean stress Sm',
         surfaceSizeFactor: 'Surface / size factors',
         minerSpectrum: 'Miner load spectrum',

@@ -20,7 +20,7 @@ import { analyzeClutch } from '@/utils/clutch-calc'
 import { analyzeBeltDrive } from '@/utils/belt-calc'
 import { analyzeChainDrive } from '@/utils/chain-calc'
 import { analyzeHydraulicCylinder } from '@/utils/hydraulic-calc'
-import { analyzeFatigue } from '@/utils/fatigue-calc'
+import { analyzeFatigue, getStressAmplitudeBounds } from '@/utils/fatigue-calc'
 import { calcPlateBucklingStress } from '@/utils/plate-buckling-calc'
 import { analyzeGearStrength } from '@/utils/gear-calc'
 import { analyzeThermalExpansion } from '@/utils/thermal-expansion-calc'
@@ -588,6 +588,14 @@ describe('fatigue-calc modes', () => {
     })
     expect(r.adjustedEndurance).toBeDefined()
     expect(r.goodmanPass).toBeDefined()
+  })
+
+  it('stress amplitude bounds scale with material', () => {
+    const cast = getStressAmplitudeBounds('cast_iron')
+    const steel = getStressAmplitudeBounds('steel_45')
+    expect(cast.saMax).toBeLessThan(steel.saMax)
+    expect(cast.suggest).toBeLessThanOrEqual(cast.saMax)
+    expect(cast.suggest).toBeGreaterThanOrEqual(cast.saMin)
   })
 })
 

@@ -55,8 +55,8 @@ const pagesZh = {
       title: '螺栓组受力',
       subtitle: '剪力与弯矩作用下螺栓组载荷分配（简化均分 / 矢量分解 / 逐栓校核）',
       hintSimple: '均分剪力 + 极惯性矩近似扭剪叠加。',
-      hintComplete: '各螺栓坐标矢量合成 F_i = F/n + M×r/I_p，专业模式输出逐栓表格与许用校核。',
-      hintProfessional: '各螺栓坐标矢量合成 F_i = F/n + M×r/I_p，专业模式输出逐栓表格与许用校核。',
+      hintComplete: '各螺栓坐标矢量合成 $F_i = F/n + M \\times r / I_p$，专业模式输出逐栓表格与许用校核。',
+      hintProfessional: '各螺栓坐标矢量合成 $F_i = F/n + M \\times r / I_p$，专业模式输出逐栓表格与许用校核。',
     },
     bearing: {
       title: '轴承寿命计算',
@@ -259,8 +259,8 @@ const pagesEn = {
       title: 'Bolt group loading',
       subtitle: 'Load sharing under shear and bending (uniform split / vector superposition / per-bolt check)',
       hintSimple: 'Uniform direct shear + polar-moment torsion component.',
-      hintComplete: 'Per-bolt vector sum F_i = F/n + M×r/I_p; advanced mode adds per-bolt table and allowable check.',
-      hintProfessional: 'Per-bolt vector sum F_i = F/n + M×r/I_p; advanced mode adds per-bolt table and allowable check.',
+      hintComplete: 'Per-bolt vector sum $F_i = F/n + M \\times r / I_p$; advanced mode adds per-bolt table and allowable check.',
+      hintProfessional: 'Per-bolt vector sum $F_i = F/n + M \\times r / I_p$; advanced mode adds per-bolt table and allowable check.',
     },
     bearing: {
       title: 'Bearing rating life',

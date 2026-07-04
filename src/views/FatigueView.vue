@@ -17,8 +17,17 @@
             </el-select>
           </CalcFormItem>
           <CalcFormItem :label="pf('stressAmplitude')">
-            <el-input-number v-model="stressAmplitude" :min="0" :precision="1" />
+            <el-input-number
+              v-model="stressAmplitude"
+              :min="saBounds.saMin"
+              :max="saBounds.saMax"
+              :precision="1"
+              class="fatigue-sa-input"
+            />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
+            <p class="mt-1 text-xs text-gray-400">
+              {{ pf('stressAmplitudeRange', { min: saBounds.saMin, max: saBounds.saMax }) }}
+            </p>
           </CalcFormItem>
           <template v-if="calcMode === 'professional'">
             <CalcFormItem :label="pf('meanStress')">
@@ -38,6 +47,7 @@
           :sf="currentMaterial.sf"
           :b="currentMaterial.b"
           :cycle-limit="currentMaterial.cycleLimit ?? 1e6"
+          :stress-max="saBounds.saMax"
         />
 
         <div v-if="stressAmplitude > 0" class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
@@ -101,6 +111,7 @@ import {
   SN_MATERIALS,
   analyzeFatigue,
   parseLoadSpectrum,
+  getStressAmplitudeBounds,
 } from '@/utils/fatigue-calc'
 import FatigueDiagram from '@/components/fatigue/FatigueDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
@@ -118,9 +129,11 @@ const snMaterials = computed(() => optionMap(SN_MATERIALS, 'snMaterials'))
 
 const currentMaterial = computed(() => SN_MATERIALS[material.value] ?? SN_MATERIALS.steel_45)
 
+const saBounds = computed(() => getStressAmplitudeBounds(material.value))
+
 const calcMode = ref('complete')
 const material = ref('steel_45')
-const stressAmplitude = ref(350)
+const stressAmplitude = ref(getStressAmplitudeBounds('steel_45').suggest)
 const meanStress = ref(100)
 const surfaceFactor = ref(0.9)
 const sizeFactor = ref(0.85)
@@ -200,6 +213,13 @@ async function renderChart() {
 }
 
 watch([result, material, stressAmplitude, locale], renderChart)
+
+watch(material, (key) => {
+  const b = getStressAmplitudeBounds(key)
+  if (stressAmplitude.value < b.saMin || stressAmplitude.value > b.saMax) {
+    stressAmplitude.value = b.suggest
+  }
+})
 
 function loadSample() {
   loadText.value = `350,10000
