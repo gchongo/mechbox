@@ -990,7 +990,7 @@ function saveResult() {
 async function handleExportPdf() {
   if (!resultPanelRef.value) return
   const date = new Date().toISOString().slice(0, 10)
-  await exportResultPdf(
+  const ok = await exportResultPdf(
     resultPanelRef.value,
     exportFilename('stackPdf', { date }),
     {
@@ -998,14 +998,13 @@ async function handleExportPdf() {
       locale: locale.value,
     },
   )
-  ElMessage.success(pt('msgPdfOk'))
+  if (ok) ElMessage.success(pt('msgPdfOk'))
 }
 
-function handleExportExcel() {
+async function handleExportExcel() {
   const date = new Date().toISOString().slice(0, 10)
-  void exportExcel(buildExportPayload(), exportFilename('stackXlsx', { date }), locale.value).then(() => {
-    ElMessage.success(pt('msgExcelOk'))
-  })
+  const ok = await exportExcel(buildExportPayload(), exportFilename('stackXlsx', { date }), locale.value)
+  if (ok) ElMessage.success(pt('msgExcelOk'))
 }
 
 function handleExportPng() {

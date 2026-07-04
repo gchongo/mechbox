@@ -245,7 +245,7 @@ async function renderSectionsCanvas(html2canvas, sections) {
 
 export async function exportToolReportPdf({ title, sections = [], element, filename, meta = {} }) {
   const locale = meta.locale ?? 'zh'
-  if (!(await ensureLoggedIn(locale))) return
+  if (!(await ensureLoggedIn(locale))) return false
   const { html2canvas, jsPDF } = await loadPdfLibs()
 
   const headerLines = [`${title ?? ex('defaultReport', locale)}`, `${ex('date', locale)}: ${dateStamp()}`]
@@ -264,11 +264,12 @@ export async function exportToolReportPdf({ title, sections = [], element, filen
   addCanvasPaginated(pdf, stackCanvases(canvases))
   await addFootersToPdf(pdf, html2canvas, locale)
   pdf.save(filename ?? `MechBox报告_${dateStamp()}.pdf`)
+  return true
 }
 
 /** 从历史记录合并导出 PDF */
 export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
-  if (!(await ensureLoggedIn(locale))) return
+  if (!(await ensureLoggedIn(locale))) return false
   const dateLoc = locale === 'en' ? 'en-US' : 'zh-CN'
   const sections = records.map((r, i) => {
     const data = r.data ?? {}
@@ -309,7 +310,7 @@ export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
     }
   })
 
-  await exportToolReportPdf({
+  return exportToolReportPdf({
     title: ex('mergeTitle', locale),
     subtitle: ex('mergeSubtitle', locale, { n: records.length, date: dateStamp() }),
     sections,
@@ -320,7 +321,7 @@ export async function exportMergedHistoryPdf(records, filename, locale = 'zh') {
 
 export async function exportResultPdf(element, filename, meta = {}) {
   const locale = meta.locale ?? 'zh'
-  if (!(await ensureLoggedIn(locale))) return
+  if (!(await ensureLoggedIn(locale))) return false
   const { html2canvas, jsPDF } = await loadPdfLibs()
 
   const headerLines = [
@@ -340,6 +341,7 @@ export async function exportResultPdf(element, filename, meta = {}) {
   addCanvasPaginated(pdf, combined)
   await addFootersToPdf(pdf, html2canvas, locale)
   pdf.save(filename ?? `尺寸链分析_${dateStamp()}.pdf`)
+  return true
 }
 
 export async function exportResultPng(element, filename, locale = 'zh') {
@@ -379,7 +381,7 @@ export function exportCanvasPng(canvas, filename) {
 }
 
 export async function exportExcel(payload, filename, locale = 'zh') {
-  if (!(await ensureLoggedIn(locale))) return
+  if (!(await ensureLoggedIn(locale))) return false
   const wb = XLSX.utils.book_new()
 
   const summary = [
@@ -424,6 +426,7 @@ export async function exportExcel(payload, filename, locale = 'zh') {
   ]
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), ex('sheetName', locale))
   XLSX.writeFile(wb, filename ?? `尺寸链分析_${dateStamp()}.xlsx`)
+  return true
 }
 
 export async function copyResultText(text) {

@@ -153,7 +153,8 @@ function exportJson() {
   ElMessage.success(ct('history.jsonDownloaded'))
 }
 
-function exportExcel() {
+async function exportExcel() {
+  if (!(await ensureLoggedIn(locale.value))) return
   const rows = records.value.map((r) => ({
     [ct('history.excelColTitle')]: formatHistoryTitle(r, locale.value),
     [ct('history.excelColSource')]: formatHistorySource(r, locale.value),
@@ -174,7 +175,7 @@ function onSelectionChange(rows) {
 async function exportMergedPdf() {
   const picked = records.value.filter((r) => selectedIds.value.includes(r.id))
   if (!picked.length) return
-  await exportMergedHistoryPdf(picked, undefined, locale.value)
-  ElMessage.success(ct('history.pdfExported', { n: picked.length }))
+  const ok = await exportMergedHistoryPdf(picked, undefined, locale.value)
+  if (ok) ElMessage.success(ct('history.pdfExported', { n: picked.length }))
 }
 </script>

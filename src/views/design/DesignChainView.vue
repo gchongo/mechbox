@@ -287,11 +287,11 @@ async function exportChain() {
     })),
   }
   const report = buildChainReport(chainForReport)
-  await exportToolReportPdf({
+  const ok = await exportToolReportPdf({
     title: report.title,
     subtitle: report.subtitle,
     sections: report.sections,
   })
-  ElMessage.success(ct('reportDone'))
+  if (ok) ElMessage.success(ct('reportDone'))
 }
 </script>
