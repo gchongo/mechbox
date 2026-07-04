@@ -67,7 +67,7 @@
 
         <SpringDiagram
           :wire-diameter="form.wireDiameter"
-          :mean-diameter="form.meanDiameter"
+          :mean-diameter="result.meanDiameter ?? form.meanDiameter"
           :active-coils="form.activeCoils"
           :free-length="form.calcMode !== 'simple' ? form.freeLength : 0"
         />
