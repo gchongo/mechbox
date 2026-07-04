@@ -20,7 +20,13 @@ import { analyzeClutch } from '@/utils/clutch-calc'
 import { analyzeBeltDrive } from '@/utils/belt-calc'
 import { analyzeChainDrive } from '@/utils/chain-calc'
 import { analyzeHydraulicCylinder } from '@/utils/hydraulic-calc'
-import { analyzeFatigue, getStressAmplitudeBounds } from '@/utils/fatigue-calc'
+import {
+  analyzeFatigue,
+  getStressAmplitudeBounds,
+  calcFatigueStrength,
+  calcLifeFromStress,
+  SN_MATERIALS,
+} from '@/utils/fatigue-calc'
 import { calcPlateBucklingStress } from '@/utils/plate-buckling-calc'
 import { analyzeGearStrength } from '@/utils/gear-calc'
 import { analyzeThermalExpansion } from '@/utils/thermal-expansion-calc'
@@ -596,6 +602,22 @@ describe('fatigue-calc modes', () => {
     expect(cast.saMax).toBeLessThan(steel.saMax)
     expect(cast.suggest).toBeLessThanOrEqual(cast.saMax)
     expect(cast.suggest).toBeGreaterThanOrEqual(cast.saMin)
+  })
+
+  it('stress amplitude bounds endpoints lie on S-N curve for all materials', () => {
+    for (const key of Object.keys(SN_MATERIALS)) {
+      const m = SN_MATERIALS[key]
+      const bounds = getStressAmplitudeBounds(key)
+      expect(bounds.saMin).toBe(m.enduranceLimit)
+      expect(bounds.saMax).toBeCloseTo(calcFatigueStrength(key, 1e2), 5)
+      expect(calcLifeFromStress(key, bounds.saMax)).toBeCloseTo(1e2, -1)
+      expect(calcLifeFromStress(key, bounds.saMin)).toBe(Infinity)
+      const mid = (bounds.saMin + bounds.saMax) / 2
+      const nMid = calcLifeFromStress(key, mid)
+      expect(nMid).toBeGreaterThan(1e2)
+      expect(nMid).toBeLessThan(m.cycleLimit ?? 1e6)
+      expect(calcFatigueStrength(key, nMid)).toBeCloseTo(mid, 4)
+    }
   })
 })
 

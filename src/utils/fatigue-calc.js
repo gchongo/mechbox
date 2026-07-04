@@ -53,17 +53,19 @@ export const SN_MATERIALS = {
 
 const SN_N_MIN = 1e2
 
-/** 材料 S-N 曲线示意与应力幅输入的合理范围 */
+/** 材料 S-N 曲线示意与应力幅输入的合理范围（端点落在曲线上） */
 export function getStressAmplitudeBounds(materialKey) {
   const m = SN_MATERIALS[materialKey] ?? SN_MATERIALS.steel_45
-  const peak = m.sf * SN_N_MIN ** m.b
-  const saMax = Math.max(Math.ceil(peak * 1.1), Math.ceil(m.enduranceLimit * 1.5), 10)
-  const saMin = Math.max(1, Math.round(m.enduranceLimit * 0.05))
-  const suggest = Math.min(
+  const saMax = calcFatigueStrength(materialKey, SN_N_MIN)
+  const saMin = m.enduranceLimit
+  const suggest = Math.round((saMin + saMax) / 2)
+  return {
+    saMin,
     saMax,
-    Math.max(saMin, Math.round((m.enduranceLimit + peak) / 2)),
-  )
-  return { saMin, saMax, peakStress: peak, suggest }
+    peakStress: saMax,
+    suggest,
+    cycleLimit: m.cycleLimit ?? 1e6,
+  }
 }
 
 /** 材料库 id → S-N 曲线键 */

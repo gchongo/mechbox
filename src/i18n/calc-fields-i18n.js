@@ -241,7 +241,8 @@ export const fieldsZh = {
       fields: {
         materialAndStress: '材料与应力',
         stressAmplitude: '应力幅 Sa',
-        stressAmplitudeRange: '建议范围 {min}–{max} MPa（随材料 S-N 曲线）',
+        stressAmplitudeRange: '曲线范围 {min}–{max} MPa（σ₋₁ ~ N=10² 端点）',
+        goodmanDiagramNote: '示意图为材料 S-N 曲线（输入 Sa={input} MPa）；专业模式寿命按 Goodman 等效幅 {effective} MPa 计算',
         meanStress: '平均应力 Sm',
         surfaceSizeFactor: '表面 / 尺寸系数',
         minerSpectrum: 'Miner 载荷谱',
@@ -1057,7 +1058,8 @@ export const fieldsEn = {
       fields: {
         materialAndStress: 'Material & stress',
         stressAmplitude: 'Stress amplitude Sa',
-        stressAmplitudeRange: 'Suggested {min}–{max} MPa (from material S-N curve)',
+        stressAmplitudeRange: 'On-curve range {min}–{max} MPa (σ₋₁ to N=10² endpoint)',
+        goodmanDiagramNote: 'Diagram shows material S-N (input Sa={input} MPa); professional life uses Goodman effective {effective} MPa',
         meanStress: 'Mean stress Sm',
         surfaceSizeFactor: 'Surface / size factors',
         minerSpectrum: 'Miner load spectrum',

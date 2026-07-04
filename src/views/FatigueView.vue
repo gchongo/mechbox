@@ -26,7 +26,7 @@
             />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
             <p class="mt-1 text-xs text-gray-400">
-              {{ pf('stressAmplitudeRange', { min: saBounds.saMin, max: saBounds.saMax }) }}
+              {{ pf('stressAmplitudeRange', { min: saBounds.saMin, max: displaySaMax }) }}
             </p>
           </CalcFormItem>
           <template v-if="calcMode === 'professional'">
@@ -41,14 +41,20 @@
         </el-form>
 
         <FatigueDiagram
-          :stress-amplitude="result.effectiveAmplitude ?? stressAmplitude"
-          :endurance-limit="result.enduranceLimit"
-          :life="result.life"
+          :stress-amplitude="stressAmplitude"
+          :endurance-limit="currentMaterial.enduranceLimit"
+          :life="diagramLife"
           :sf="currentMaterial.sf"
           :b="currentMaterial.b"
           :cycle-limit="currentMaterial.cycleLimit ?? 1e6"
-          :stress-max="saBounds.saMax"
         />
+
+        <p
+          v-if="calcMode === 'professional' && result.effectiveAmplitude > stressAmplitude"
+          class="mt-2 text-xs text-gray-500"
+        >
+          {{ pf('goodmanDiagramNote', { input: stressAmplitude, effective: result.effectiveAmplitude?.toFixed(1) }) }}
+        </p>
 
         <div v-if="stressAmplitude > 0" class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
           <ResultLabel label-class="text-gray-500" :text="pf('estimatedLife')" />
@@ -112,6 +118,7 @@ import {
   analyzeFatigue,
   parseLoadSpectrum,
   getStressAmplitudeBounds,
+  calcLifeFromStress,
 } from '@/utils/fatigue-calc'
 import FatigueDiagram from '@/components/fatigue/FatigueDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
@@ -130,6 +137,8 @@ const snMaterials = computed(() => optionMap(SN_MATERIALS, 'snMaterials'))
 const currentMaterial = computed(() => SN_MATERIALS[material.value] ?? SN_MATERIALS.steel_45)
 
 const saBounds = computed(() => getStressAmplitudeBounds(material.value))
+
+const displaySaMax = computed(() => Math.round(saBounds.value.saMax * 10) / 10)
 
 const calcMode = ref('complete')
 const material = ref('steel_45')
@@ -154,6 +163,15 @@ const result = computed(() =>
     loads: loads.value,
   }),
 )
+
+/** 示意图用材料原始 S-N 曲线寿命（不含 Goodman） */
+const diagramLife = computed(() => {
+  const Sa = stressAmplitude.value
+  const el = currentMaterial.value.enduranceLimit
+  if (Sa <= el) return currentMaterial.value.cycleLimit ?? 1e6
+  const n = calcLifeFromStress(material.value, Sa)
+  return n === Infinity ? currentMaterial.value.cycleLimit ?? 1e6 : n
+})
 
 const lifeDisplay = computed(() => {
   locale.value
@@ -187,15 +205,21 @@ async function renderChart() {
     },
   ]
 
-  if (stressAmplitude.value > 0 && result.value.life !== Infinity) {
-    traces.push({
-      x: [result.value.life],
-      y: [stressAmplitude.value],
-      type: 'scatter',
-      mode: 'markers',
-      name: ch('currentPoint'),
-      marker: { color: '#f39c12', size: 12 },
-    })
+  if (stressAmplitude.value > 0) {
+    const Sa = stressAmplitude.value
+    const el = result.value.enduranceLimit
+    const pointY = Sa <= el ? el : Sa
+    const pointX = Sa <= el ? (currentMaterial.value.cycleLimit ?? 1e6) : diagramLife.value
+    if (Sa > el || pointX !== Infinity) {
+      traces.push({
+        x: [pointX],
+        y: [pointY],
+        type: 'scatter',
+        mode: 'markers',
+        name: ch('currentPoint'),
+        marker: { color: '#f39c12', size: 12 },
+      })
+    }
   }
 
   await plotly.react(
@@ -212,13 +236,11 @@ async function renderChart() {
   )
 }
 
-watch([result, material, stressAmplitude, locale], renderChart)
+watch([result, material, stressAmplitude, diagramLife, locale], renderChart)
 
 watch(material, (key) => {
   const b = getStressAmplitudeBounds(key)
-  if (stressAmplitude.value < b.saMin || stressAmplitude.value > b.saMax) {
-    stressAmplitude.value = b.suggest
-  }
+  stressAmplitude.value = b.suggest
 })
 
 function loadSample() {

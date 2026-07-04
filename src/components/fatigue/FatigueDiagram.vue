@@ -32,13 +32,13 @@
       />
       <SvgMathText :x="X1 + 2" :y="enduranceY + 4" text="σ₋₁" color="#e6a23c" :width="32" />
 
-      <!-- 工作点（应力幅 Sa 与寿命 N 的交点，落在 S-N 曲线上） -->
+      <!-- 工作点：有限寿命在斜线段，无限寿命在膝点 -->
       <template v-if="showOperatingPoint">
         <circle :cx="opX" :cy="opY" r="6" class="stress-point" />
         <line :x1="X0" :y1="opY" :x2="opX" :y2="opY" class="dim" stroke-dasharray="3 3" />
         <line :x1="opX" :y1="opY" :x2="opX" :y2="Y1" class="dim" stroke-dasharray="3 3" />
         <SvgMathText :x="X0 + 8" :y="opY + 4" text="S_a" color="#409eff" :font-size="12" :width="24" />
-        <text :x="X0 + 8" :y="opY + 16" class="txt-sub" font-size="10">{{ stressAmplitude }} MPa</text>
+        <text :x="X0 + 8" :y="opY + 16" class="txt-sub" font-size="10">{{ displayStress }} MPa</text>
         <SvgMathText :x="opX - 12" :y="Y1 + 14" text="N" anchor="middle" class-name="txt-sub" color="#64748b" :width="16" :font-size="10" />
       </template>
     </svg>
@@ -59,14 +59,13 @@ const N_MIN = 1e2
 const N_MAX = 1e8
 
 const props = defineProps({
+  /** 输入应力幅 Sa（材料 S-N 曲线坐标，不含 Goodman 修正） */
   stressAmplitude: { type: Number, default: 300 },
   enduranceLimit: { type: Number, default: 200 },
   life: { type: Number, default: null },
   sf: { type: Number, default: 900 },
   b: { type: Number, default: -0.085 },
   cycleLimit: { type: Number, default: 1e6 },
-  /** 材料峰值应力上限，用于固定纵轴刻度 */
-  stressMax: { type: Number, default: null },
 })
 
 function nToX(N) {
@@ -81,23 +80,22 @@ function stressAtN(N) {
   return Math.max(props.sf * N ** props.b, props.enduranceLimit)
 }
 
+const isInfiniteLife = computed(() => props.stressAmplitude <= props.enduranceLimit)
+
 const opN = computed(() => {
-  if (props.stressAmplitude <= props.enduranceLimit) return props.cycleLimit
+  if (isInfiniteLife.value) return props.cycleLimit
   if (props.life != null && props.life !== Infinity && props.life > 0) return props.life
-  return null
+  return N_MIN
 })
 
+/** 纵轴上界：曲线左端峰值，固定刻度避免工作点漂移 */
 const sMax = computed(() => {
   const peak = props.sf * N_MIN ** props.b
-  const cap = props.stressMax ?? peak * 1.15
-  const atLife = opN.value != null && props.stressAmplitude > props.enduranceLimit
-    ? stressAtN(opN.value)
-    : 0
-  return Math.max(peak * 1.05, cap, atLife * 1.05, props.stressAmplitude * 1.02, props.enduranceLimit * 1.15, 1)
+  return Math.max(peak * 1.05, props.enduranceLimit * 1.1, 1)
 })
 
 function sToY(S) {
-  return Y1 - (Math.min(S, sMax.value) / sMax.value) * (Y1 - Y0)
+  return Y1 - (Math.min(Math.max(S, 0), sMax.value) / sMax.value) * (Y1 - Y0)
 }
 
 const enduranceY = computed(() => sToY(props.enduranceLimit))
@@ -116,14 +114,19 @@ const snPoints = computed(() => {
 
 const showOperatingPoint = computed(() => props.stressAmplitude > 0)
 
-const opX = computed(() => nToX(opN.value ?? props.cycleLimit))
+const displayStress = computed(() => {
+  const v = isInfiniteLife.value ? props.enduranceLimit : props.stressAmplitude
+  return Math.round(v * 10) / 10
+})
 
-/** Y 坐标：有限寿命区取曲线上该 N 对应应力，保证红点落在 S-N 线上 */
+const opX = computed(() => {
+  if (isInfiniteLife.value) return kneeX.value
+  return nToX(opN.value)
+})
+
+/** 有限寿命：Y=Sa 在斜线上；无限寿命：膝点 (N_k, σ₋₁) */
 const opY = computed(() => {
-  if (props.stressAmplitude <= props.enduranceLimit) {
-    return sToY(props.stressAmplitude)
-  }
-  if (opN.value != null) return sToY(stressAtN(opN.value))
+  if (isInfiniteLife.value) return enduranceY.value
   return sToY(props.stressAmplitude)
 })
 </script>
