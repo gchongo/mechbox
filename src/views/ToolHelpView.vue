@@ -161,6 +161,8 @@
 
         <FitHelpReference v-if="article.id === 'fit'" />
         <GdtStackHelpReference v-if="article.id === 'gdt-stack'" />
+        <InterferenceFitHelpReference v-if="article.id === 'interference-fit'" />
+        <FatigueHelpReference v-if="article.id === 'fatigue'" />
 
         <section v-if="relatedArticles.length" class="help-section">
           <h3 class="help-section__title">{{ ct('help.related') }}</h3>
@@ -191,6 +193,8 @@ import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
 import FitHelpReference from '@/components/fit/FitHelpReference.vue'
 import GdtStackHelpReference from '@/components/gdt/GdtStackHelpReference.vue'
+import InterferenceFitHelpReference from '@/components/interference/InterferenceFitHelpReference.vue'
+import FatigueHelpReference from '@/components/fatigue/FatigueHelpReference.vue'
 import {
   HELP_GROUP_ORDER,
   getHelpArticle,

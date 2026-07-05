@@ -1027,26 +1027,68 @@ export const toolHelpEnById = {
 
   fatigue: {
     title: 'Fatigue Life',
-    summary: 'Estimate life under alternating stress using S-N curves and Miner linear damage accumulation.',
+    summary:
+      'Basquin S-N curves and Miner linear damage for life and spectrum damage D. Full/Professional add critical-input gate; Professional adds Goodman mean stress and surface/size factors. For early sizing—formal parts need test or full code review.',
+    useCases: [
+      'Estimate cycles or check Miner D<1 from stress amplitude or load spectrum.',
+      'Compare multi-level duty cycles (start/steady/brake) with Miner spectrum.',
+      'Significant mean tensile stress: Professional Goodman before endurance check.',
+      'Distinct from shaft/beam/key assessComponentFatigue—this page has Miner, those do not.',
+    ],
     steps: [
-      'Enter material fatigue parameters or select approximate S-N data.',
-      'Enter stress amplitude, load spectrum levels, and cycle counts.',
-      'Review estimated life and Miner damage sum D; check D < 1.',
+      'Choose mode: Simplified (single-level, pass always false) / Full (+Miner) / Professional (+Goodman+ka,kb).',
+      'Select material (5 built-in S-N); enter Sa bounded by σ−1 and N=10² endpoint.',
+      'Full/Professional: spectrum lines «Sa(MPa), cycles»; use Load sample if needed.',
+      'Professional: mean Sm, surface ka, size kb; life uses Goodman effective amplitude.',
+      'Full/Professional: confirm material, Sa (and Pro: Sm, ka) to clear releaseBlocked.',
+      'With spectrum, **pass = Miner D<1 only**; left-panel life is reference.',
+      'Review Miner n/Nf table, D, S-N chart (chart uses input Sa, not effective).',
     ],
     principle:
-      'Fatigue failure arises from cyclic stress—even when peak stress is below static strength. S-N curves relate stress to life; multi-level loading uses Miner’s rule to accumulate damage.',
+      'Cyclic stress causes fatigue. Basquin S(N)=Sf\'·N^b for N<Nref, then endurance σ−1. Life N=(Sa/Sf\')^(1/b) or infinite if Sa≤σ−1. Miner D=Σ ni/Nf,i, require D<1 (D≥0.8 warn). Professional Goodman Sa,eff=Sa/(1−Sm/σu), adjusted endurance σ\'−1=ka·kb·σ−1. Simplified pass always false. With Miner loaded, pass decoupled from left-panel single-level life.',
     formulas: [
-      { latex: 'D = \\sum \\frac{n_i}{N_i}', note: 'Miner damage sum; typically require D < 1' },
+      { latex: 'S(N) = S_f\' \\cdot N^b \\quad (N < N_{ref})', note: 'Then S=σ−1' },
+      { latex: 'N = \\left(\\frac{S_a}{S_f\'}\\right)^{1/b}', note: 'Sa≤σ−1 → N=∞' },
+      { latex: 'D = \\sum_i \\frac{n_i}{N_{f,i}}', note: 'Miner; pass requires D<1' },
+      { latex: 'S_{a,eff} = \\frac{S_a}{1 - S_m / \\sigma_u}', note: 'Professional Goodman' },
+      { latex: "\\sigma'_{-1} = k_a k_b \\sigma_{-1}", note: 'Adjusted endurance' },
     ],
     notes: [
-      'Surface finish, stress concentration, and corrosion greatly reduce fatigue life.',
-      'Miner’s rule is simplified—safety-critical parts need larger margin or test validation.',
+      'Five built-in curves are approximations—not your part S-N data.',
+      'Miner blocks not Goodman/surface corrected—multi-level with high Sm may be optimistic.',
+      'With spectrum, pass is Miner-only—do not use left-panel life for release.',
+      'Simplified pass always false; releaseBlocked still shows Miner (unlike interference fit).',
+      'Professional mode offers Goodman / Soderberg; Miner blocks use constant Sm equivalent stress.',
+      'Size factor kb not in confirm gate—surface ka is.',
+      'No Kt—use shaft/key tools for assessComponentFatigue with concentration.',
     ],
-    useCases: COMMON_USE_CASES,
-    inputs: COMMON_INPUTS,
-    outputs: COMMON_OUTPUTS,
-    reliability: COMMON_RELIABILITY,
-    keywords: ['fatigue', 'Miner', 'S-N'],
+    example:
+      '45 steel Sa=200 MPa < σ−1=280 → infinite life. Pro Sa=200, Sm=150 → Sa,eff≈267 MPa; ka·kb=0.77 → σ\'−1≈215 MPa may fail goodmanPass. Miner sample 350/10⁴…220/2×10⁵: high levels dominate D—check n/Nf and D<1.',
+    standards: ['Basquin S-N', 'Miner (reference)', 'GB/T 3077 (material reference)'],
+    inputs: [
+      { name: 'Material', meaning: 'Five built-in Basquin sets (sf, b, σ−1, Nref).', source: 'Approximate match; use test S-N for release.' },
+      { name: 'Stress amplitude Sa', meaning: 'Alternating stress (MPa); bounded input range.', source: 'FEA, nominal×Kt, or measured loads.' },
+      { name: 'Miner spectrum', meaning: 'Full/Pro: lines Sa,n; with spectrum pass=D<1 only.', source: 'Duty cycle stats; no Goodman per block.' },
+      { name: 'Sm, ka, kb (Pro)', meaning: 'Goodman mean stress; σ\'−1=ka·kb·σ−1.', source: 'Mean stress; handbook factors.' },
+    ],
+    outputs: [
+      { name: 'Life N', meaning: 'Single-level Basquin; infinite if Sa≤σ−1.', judgement: 'Does not drive pass when Miner present.' },
+      { name: 'Miner damage D', meaning: 'Σ ni/Nf,i; D<1 pass, D≥0.8 warn.', judgement: 'Primary pass when spectrum loaded.' },
+      { name: 'Goodman / goodmanPass', meaning: 'Professional Sa,eff vs σ\'−1.', judgement: 'Merged into pass when Sm set.' },
+      { name: 'releaseBlocked', meaning: 'Unconfirmed critical inputs; Miner still visible.', judgement: 'Confirm material, Sa (Pro: Sm, ka).' },
+    ],
+    reliability: [
+      'Classic Basquin+Miner simplification—no Kt, sequence, or per-block Goodman.',
+      'Do not mix assessComponentFatigue pass with this page Miner pass.',
+      'Simplified pass always false; same confirm gate as interference fit.',
+    ],
+    professionalChecks: [
+      'With Miner spectrum, judge by D—not left-panel life alone.',
+      'High Sm: Soderberg available on this page; shaft/beam/key still use assessComponentFatigue.',
+      'D between 0.8 and 1 may still pass—treat as warning, add margin or test.',
+      'Re-confirm after switching calc mode before citing pass.',
+    ],
+    keywords: ['fatigue', 'Miner', 'S-N', 'Goodman', 'Basquin', 'releaseBlocked'],
   },
 
   gear: {

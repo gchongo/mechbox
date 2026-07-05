@@ -13,6 +13,7 @@ export const TOOL_META = {
   units: { label: '单位换算', route: '/units' },
   gear: { label: '齿轮强度', route: '/gear' },
   beam: { label: '梁挠度', route: '/beam' },
+  fatigue: { label: '疲劳寿命', route: '/fatigue' },
 }
 
 /** L1: only these tools restore saved inputs from historyId query */

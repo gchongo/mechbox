@@ -558,22 +558,46 @@ export const TOOL_HELP_ARTICLES = [
     groupId: 'chain',
     level: 'intermediate',
     title: '疲劳寿命',
-    summary: '基于 S-N 曲线与 Miner 线性损伤累积，估算交变应力下的寿命。',
+    summary:
+      '基于 Basquin S-N 曲线与 Miner 线性累积损伤，估算交变应力下的寿命与载荷谱损伤和 D。完整/专业模式含关键输入确认；专业模式另加 Goodman 平均应力与表面/尺寸系数。用于方案初算，正式件须试验或完整规范复核。',
+    useCases: [
+      '已知应力幅或载荷谱，估算循环寿命或判断 Miner 损伤 $D$ 是否 $<1$。',
+      '多级工况（启动/稳态/制动）用 Miner 谱快速对比方案。',
+      '存在显著平均拉应力时，用专业模式 Goodman 修正后再判持久极限。',
+      '与轴/梁/键页 assessComponentFatigue 区分：本页独有 Miner，彼处无谱累积。',
+    ],
     steps: [
-      '输入材料疲劳参数或选择近似 S-N 数据。',
-      '输入应力幅/各级载荷谱与循环次数。',
-      '查看预估寿命与 Miner 损伤和 D，判断是否 D < 1。',
+      '选择模式：简化（单级寿命，pass 恒 false）/ 完整（+Miner）/ 专业（+Goodman+$k_a,k_b$）。',
+      '选择材料（5 种内置 S-N）；输入应力幅 $S_a$（范围由 $\\sigma_{-1}$ 与 $N=10^2$ 端点约束）。',
+      '完整/专业：在文本框输入载荷谱，每行「应力幅(MPa), 循环次数」；可点「加载示例」。',
+      '专业：填平均应力 $S_m$、表面系数 $k_a$、尺寸系数 $k_b$；寿命按 Goodman 等效幅计算。',
+      '完整/专业：确认材料、$S_a$（及专业的 $S_m$、$k_a$）后解除 releaseBlocked。',
+      '有载荷谱时 **pass 只看 Miner $D<1$**；左侧单级寿命仅供参考。',
+      '查看 Miner 表 n/Nf、累积损伤 D、S-N 曲线图与示意图（图用输入 $S_a$，非等效幅）。',
     ],
     principle:
-      '疲劳破坏由交变应力引起，即使最大应力低于静强度也可能断裂。S-N 曲线给出应力与寿命关系；多级载荷用 Miner 法则累加损伤。',
+      '疲劳破坏由交变应力引起。材料 Basquin：$S(N)=S_f\' N^b$（$N<N_{ref}$），$N\\ge N_{ref}$ 时为持久极限 $\\sigma_{-1}$。给定 $S_a$ 可反解寿命 $N=(S_a/S_f\')^{1/b}$；$S_a\\le\\sigma_{-1}$ 为无限寿命。多级载荷 Miner：$D=\\sum n_i/N_{f,i}$，要求 $D<1$（$D\\ge0.8$ 预警）。专业模式 Goodman：$S_{a,eff}=S_a/(1-S_m/\\sigma_u)$，持久极限修正为 $\\sigma\'_{-1}=k_a k_b \\sigma_{-1}$。简化 pass 恒 false；完整/专业须关键输入确认。有 Miner 时 pass 与左侧单级寿命 decoupled。',
     formulas: [
-      { latex: 'D = \\sum \\frac{n_i}{N_i}', note: 'Miner 损伤和，通常要求 D < 1' },
+      { latex: 'S(N) = S_f\' \\cdot N^b \\quad (N < N_{ref})', note: '$N_{ref}$=cycleLimit；之后 $S=\\sigma_{-1}$' },
+      { latex: 'N = \\left(\\frac{S_a}{S_f\'}\\right)^{1/b}', note: '$S_a \\le \\sigma_{-1}$ 时 $N=\\infty$' },
+      { latex: 'D = \\sum_i \\frac{n_i}{N_{f,i}}', note: 'Miner；pass 要求 $D<1$' },
+      { latex: 'S_{a,eff} = \\frac{S_a}{1 - S_m / \\sigma_u}', note: '专业 Goodman；$S_m\\ge\\sigma_u$ 时失效' },
+      { latex: "\\sigma'_{-1} = k_a k_b \\sigma_{-1}", note: '专业修正持久极限' },
     ],
     notes: [
-      '表面粗糙度、应力集中、腐蚀会显著降低疲劳寿命。',
-      'Miner 法则偏简化，安全件需更大裕度或试验验证。',
+      '内置 5 种材料参数为近似，非你的锻件 S-N 曲线。',
+      'Miner 各级 **不做** Goodman/表面修正；高 $S_m$ 多级谱可能偏乐观。',
+      '有载荷谱时 pass **仅 Miner**；勿用左侧单级寿命判断放行。',
+      '简化 pass 恒 false；releaseBlocked 时 Miner 表仍显示（与过盈页不同）。',
+      '专业模式可选 Goodman / Soderberg；Miner 各级在恒定 Sm 下做等效幅修正。',
+      '尺寸系数 $k_b$ 不在确认门禁；须确认的是表面系数 $k_a$。',
+      '无 $K_t$ 应力集中；轴/键疲劳请用对应工具 assessComponentFatigue。',
     ],
-    keywords: ['疲劳', 'Miner', 'S-N'],
+    example:
+      '45 钢：$S_a=200$ MPa $< \\sigma_{-1}=280$ → 无限寿命。专业 $S_a=200,S_m=150$ → $S_{a,eff}\\approx267$ MPa；$k_a k_b=0.77$ 时 $\\sigma\'_{-1}\\approx215$ MPa 可能不满足 goodmanPass。Miner 示例谱 350/10⁴…220/2×10⁵：高应力级主导 $D$，须看表格 n/Nf 与 $D$ 是否 $<1$。',
+    standards: ['Basquin S-N', 'Miner 线性损伤（参考）', 'GB/T 3077（材料概念对照）'],
+    related: ['gear', 'shaft', 'statistics'],
+    keywords: ['疲劳', 'Miner', 'S-N', 'Goodman', 'Basquin', 'releaseBlocked'],
   },
   {
     id: 'gear',
@@ -1864,6 +1888,63 @@ const DETAIL_OVERRIDES = {
       'MMC 标注时：用实测孔/轴尺寸验证 bonus，勿盲信自动全额奖励。',
       '位置度孔组：本工具不处理 pattern / simultaneous；多孔须按标准单独分析或专用软件。',
       '优化后回到尺寸链编辑器或批量验证，确认与 1D 尺寸链预算一致。',
+    ],
+  },
+  fatigue: {
+    inputs: [
+      {
+        name: '材料',
+        meaning: '5 种内置 Basquin S-N（sf, b, σ₋₁, Nref）。',
+        source: '近似匹配零件材料；正式件用试验 S-N。',
+      },
+      {
+        name: '应力幅 Sa',
+        meaning: '交变应力幅 (MPa)；输入范围 σ₋₁～N=10² 端点。',
+        source: 'FEA、名义应力×Kt、或实测载荷换算。',
+      },
+      {
+        name: 'Miner 载荷谱',
+        meaning: '完整/专业：每行 Sa,n；有谱时 pass 只看 D<1。',
+        source: '工况循环统计；谱级不做 Goodman 修正。',
+      },
+      {
+        name: 'Sm、ka、kb（专业）',
+        meaning: 'Goodman 平均应力；修正持久极限 σ\'₋₁=ka·kb·σ₋₁。',
+        source: '静力平均应力；表面/尺寸手册系数。',
+      },
+    ],
+    outputs: [
+      {
+        name: '估算寿命 N',
+        meaning: '单级 Basquin 寿命；Sa≤σ₋₁ 为无限。',
+        judgement: '有 Miner 时不驱动 pass；仅供左栏参考。',
+      },
+      {
+        name: 'Miner 损伤 D',
+        meaning: 'Σ nᵢ/Nf,i；D<1 通过，D≥0.8 预警。',
+        judgement: '有载荷谱时 **pass 主判据**。',
+      },
+      {
+        name: 'Goodman / goodmanPass',
+        meaning: '专业：Sa,eff 与 σ\'₋₁ 比较。',
+        judgement: '填 Sm 时并入 pass。',
+      },
+      {
+        name: 'releaseBlocked',
+        meaning: '未确认关键输入；Miner 表仍可见，状态待复核。',
+        judgement: '确认材料、Sa（及专业 Sm、ka）后解除。',
+      },
+    ],
+    reliability: [
+      'Basquin + Miner 为经典简化；无 Kt、无加载次序、谱级无 Goodman。',
+      'assessComponentFatigue（轴/梁/键）与本页 analyzeFatigue 勿混用 pass。',
+      '简化 pass 恒 false；关键输入门禁与过盈模块同机制。',
+    ],
+    professionalChecks: [
+      '有 Miner 谱时以 D 为准，勿只看左侧单级寿命。',
+      '高 Sm：本页专业模式可选 Soderberg；轴/梁/键仍走 assessComponentFatigue。',
+      'D 在 0.8～1 之间仍可能 pass，但应视为预警并加安全系数或试验。',
+      '确认门禁字段后再引用 pass；切换模式重新确认。',
     ],
   },
   'monte-carlo': {

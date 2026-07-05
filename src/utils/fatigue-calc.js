@@ -184,7 +184,7 @@ export function assessComponentFatigue(input = {}) {
     fatigueLife =
       effectiveAmplitude <= adjustedEndurance
         ? Infinity
-        : calcLifeFromStress(snKey, basquinStress)
+        : calcLifeFromStress(snKey, basquinStress, { enduranceLimit: adjustedEndurance })
   }
   const fatiguePass =
     amp <= 0
@@ -221,11 +221,15 @@ export function calcFatigueStrength(material, cycles) {
   return Math.max(S, m.enduranceLimit)
 }
 
-/** 给定应力幅，求寿命 (cycles) */
-export function calcLifeFromStress(material, stressAmplitude) {
+/** 给定应力幅，求寿命 (cycles)
+ * @param {Object} [options]
+ * @param {number} [options.enduranceLimit] 持久极限 (MPa)，默认材料 σ₋₁；专业模式传 Se′=ka·kb·σ₋₁
+ */
+export function calcLifeFromStress(material, stressAmplitude, options = {}) {
   const m = SN_MATERIALS[material] ?? SN_MATERIALS.steel_45
   const Sa = stressAmplitude
-  if (Sa <= m.enduranceLimit) return Infinity
+  const enduranceLimit = options.enduranceLimit ?? m.enduranceLimit
+  if (Sa <= enduranceLimit) return Infinity
 
   // Sa = sf * N^b  =>  N = (Sa/sf)^(1/b)
   const N = (Sa / m.sf) ** (1 / m.b)
@@ -249,41 +253,94 @@ export function generateSNCurve(material, points = 40) {
 /**
  * Miner 累积损伤
  * loads: [{ stress, cycles }]  stress 为应力幅 (MPa)
+ * @param {Object} [options]
+ * @param {number} [options.enduranceFactor=1]  ka·kb，修正持久极限 Se′=σ₋₁·factor
+ * @param {number|null} [options.meanStress] 全局平均应力 Sm；各级 Sa 做 Goodman/Soderberg（恒定 Sm 假设）
+ * @param {'goodman'|'soderberg'} [options.meanStressMethod='goodman']
  */
-export function calcMinerDamage(material, loads) {
+export function calcMinerDamage(material, loads, options = {}) {
   if (!loads?.length) return { errorKey: 'need_load_level' }
+
+  const m = SN_MATERIALS[material] ?? SN_MATERIALS.steel_45
+  const enduranceFactor = options.enduranceFactor ?? 1
+  const adjustedEndurance = m.enduranceLimit * enduranceFactor
+  const meanStress = options.meanStress
+  const meanStressMethod = options.meanStressMethod ?? 'goodman'
 
   let damage = 0
   const details = []
+  let hasInfiniteDamage = false
 
   for (const load of loads) {
-    const Sa = load.stress ?? load.stressAmplitude
+    const rawSa = load.stress ?? load.stressAmplitude
     const n = load.cycles ?? 0
-    if (Sa <= 0 || n <= 0) continue
+    if (rawSa <= 0 || n <= 0) continue
 
-    const Nf = calcLifeFromStress(material, Sa)
+    let saEff = rawSa
+    if (meanStress != null && meanStress > 0) {
+      saEff = calcMeanStressEffectiveAmplitude(rawSa, meanStress, material, meanStressMethod)
+    }
+
+    if (!Number.isFinite(saEff)) {
+      hasInfiniteDamage = true
+      details.push({
+        stress: rawSa,
+        effectiveStress: null,
+        cycles: n,
+        lifeAtStress: 0,
+        damage: Infinity,
+        damagePct: Infinity,
+        contributionPct: 0,
+      })
+      continue
+    }
+    if (saEff <= 0) continue
+
+    const Nf =
+      saEff <= adjustedEndurance
+        ? Infinity
+        : calcLifeFromStress(material, saEff, { enduranceLimit: adjustedEndurance })
     const ni = Nf === Infinity ? 0 : n / Nf
-    damage += ni
+    if (!Number.isFinite(ni)) hasInfiniteDamage = true
+    damage += Number.isFinite(ni) ? ni : 0
     details.push({
-      stress: Sa,
+      stress: rawSa,
+      effectiveStress: Math.round(saEff * 10) / 10,
       cycles: n,
       lifeAtStress: Nf === Infinity ? '∞' : Math.round(Nf),
       damage: ni,
-      damagePct: ni * 100,
+      damagePct: Number.isFinite(ni) ? ni * 100 : Infinity,
+      contributionPct: 0,
     })
   }
 
-  const remaining = Math.max(0, 1 - damage)
+  if (!details.length) return { errorKey: 'need_load_level' }
+
+  if (hasInfiniteDamage) damage = Infinity
+
+  if (Number.isFinite(damage) && damage > 0) {
+    for (const row of details) {
+      row.contributionPct = Number.isFinite(row.damage) ? (row.damage / damage) * 100 : 0
+    }
+  } else if (!Number.isFinite(damage)) {
+    for (const row of details) {
+      row.contributionPct = row.damage === Infinity ? 100 : 0
+    }
+  }
+
+  const remaining = Number.isFinite(damage) ? Math.max(0, 1 - damage) : 0
   let statusKey = 'safe'
-  if (damage >= 1) statusKey = 'fail'
+  if (!Number.isFinite(damage) || damage >= 1) statusKey = 'fail'
   else if (damage >= 0.8) statusKey = 'warn'
 
   return {
     totalDamage: damage,
-    damagePercent: damage * 100,
+    damagePercent: Number.isFinite(damage) ? damage * 100 : Infinity,
     remainingLifeFraction: remaining,
     statusKey,
-    pass: damage < 1,
+    pass: Number.isFinite(damage) && damage < 1,
+    adjustedEndurance,
+    meanStressApplied: meanStress != null && meanStress > 0,
     details,
   }
 }
@@ -292,60 +349,81 @@ export function analyzeFatigue(input) {
   const calcMode = input.calcMode ?? 'complete'
   const material = input.material ?? 'steel_45'
   const m = SN_MATERIALS[material] ?? SN_MATERIALS.steel_45
-  let stressAmplitude = input.stressAmplitude ?? 0
+  const rawAmplitude = Math.max(0, input.stressAmplitude ?? 0)
+  let stressAmplitude = rawAmplitude
 
   if (calcMode === 'professional' && input.meanStress != null) {
-    const method = input.meanStressMethod ?? 'goodman'
-    const uts = m.uts
-    const yieldStrength = input.yieldStrength ?? m.yieldMin ?? uts * 0.6
-    const meanDenom = method === 'soderberg' ? yieldStrength : uts
-    if (meanDenom > 0 && input.meanStress < meanDenom) {
-      stressAmplitude = stressAmplitude / (1 - input.meanStress / meanDenom)
-    } else {
-      stressAmplitude = Infinity
-    }
-    stressAmplitude = Math.max(stressAmplitude, 0)
+    stressAmplitude = calcMeanStressEffectiveAmplitude(
+      rawAmplitude,
+      input.meanStress,
+      material,
+      input.meanStressMethod ?? 'goodman',
+    )
   }
 
   let life = null
-  if (stressAmplitude > 0) {
-    const Se = m.enduranceLimit * (calcMode === 'professional' ? (input.surfaceFactor ?? 1) * (input.sizeFactor ?? 1) : 1)
+  if (Number.isFinite(stressAmplitude) && stressAmplitude > 0) {
+    const Se =
+      m.enduranceLimit *
+      (calcMode === 'professional' ? (input.surfaceFactor ?? 1) * (input.sizeFactor ?? 1) : 1)
     if (stressAmplitude <= Se) {
       life = Infinity
     } else {
-      life = calcLifeFromStress(material, stressAmplitude)
+      life = calcLifeFromStress(material, stressAmplitude, { enduranceLimit: Se })
     }
   }
 
+  const targetLife = Math.max(1, Number(input.targetLife) || 1e6)
+
   let miner = null
   if (calcMode !== 'simple' && input.loads?.length) {
-    miner = calcMinerDamage(material, input.loads)
+    const minerOptions =
+      calcMode === 'professional'
+        ? {
+            enduranceFactor: (input.surfaceFactor ?? 1) * (input.sizeFactor ?? 1),
+            meanStress: input.meanStress,
+            meanStressMethod: input.meanStressMethod ?? 'goodman',
+          }
+        : {}
+    miner = calcMinerDamage(material, input.loads, minerOptions)
   }
 
   const snCurve = generateSNCurve(material)
+
+  let singleLevelPass = false
+  if (calcMode !== 'simple' && Number.isFinite(stressAmplitude) && stressAmplitude > 0 && life != null) {
+    singleLevelPass = life === Infinity || life >= targetLife
+  }
 
   const result = {
     calcMode,
     material,
     materialLabel: m.label,
-    stressAmplitude: input.stressAmplitude,
+    stressAmplitude: rawAmplitude,
     effectiveAmplitude: stressAmplitude,
     life,
     lifeFormatted: life === Infinity ? '无限寿命' : life != null ? Math.round(life) : null,
+    targetLife,
     miner,
     snCurve,
     enduranceLimit: m.enduranceLimit,
-    pass: miner ? miner.pass : life === Infinity || (life != null && life >= (input.targetLife ?? 1e6)),
+    singleLevelPass,
+    pass: miner ? miner.pass : singleLevelPass,
   }
 
   if (calcMode === 'professional') {
     result.meanStress = input.meanStress
+    result.meanStressMethod = input.meanStressMethod ?? 'goodman'
     result.surfaceFactor = input.surfaceFactor ?? 1
     result.sizeFactor = input.sizeFactor ?? 1
     result.adjustedEndurance = m.enduranceLimit * result.surfaceFactor * result.sizeFactor
-    if (input.meanStress != null && input.stressAmplitude > 0) {
+    if (input.meanStress != null && rawAmplitude > 0 && Number.isFinite(stressAmplitude)) {
       result.goodmanPass = stressAmplitude <= result.adjustedEndurance
-      result.pass = result.pass && result.goodmanPass
+      result.singleLevelPass = singleLevelPass && result.goodmanPass
+      // 有 Miner 谱时平均应力已在各级 Nf 中体现，综合 pass 不再重复 goodmanPass
+      if (!miner) {
+        result.pass = result.pass && result.goodmanPass
+      }
     }
   }
 
@@ -359,6 +437,61 @@ export function analyzeFatigue(input) {
   return result
 }
 
+/** PDF / 报告用纯文本摘要 */
+export function buildFatigueReportText(result, locale = 'zh') {
+  if (!result) return ''
+  const zh = locale !== 'en'
+  const lines = []
+  if (result.releaseBlocked) {
+    lines.push(zh ? '【未放行】关键输入未全部确认，下列数值仅供参考' : '[NOT RELEASED] Critical inputs unconfirmed — values for review only')
+  }
+  lines.push(`${zh ? '材料' : 'Material'}: ${result.materialLabel ?? result.material}`)
+  lines.push(`${zh ? '模式' : 'Mode'}: ${result.calcMode}`)
+  lines.push(`${zh ? '应力幅 Sa' : 'Sa'}: ${result.stressAmplitude} MPa`)
+  if (result.calcMode === 'professional' && result.meanStress != null) {
+    lines.push(
+      `${zh ? '平均应力 Sm' : 'Sm'}: ${result.meanStress} MPa (${result.meanStressMethod ?? 'goodman'})`,
+    )
+    lines.push(
+      `${zh ? '等效应力幅' : 'Effective Sa'}: ${result.effectiveAmplitude?.toFixed?.(1) ?? result.effectiveAmplitude} MPa`,
+    )
+    lines.push(`${zh ? '修正疲劳极限 Se′' : "Se'"}: ${result.adjustedEndurance} MPa`)
+  }
+  lines.push(`${zh ? '目标寿命' : 'Target life'}: ${result.targetLife ?? 1e6}`)
+  if (result.life != null) {
+    lines.push(
+      `${zh ? '单级估算寿命 N' : 'Single-level N'}: ${result.lifeFormatted ?? result.life}${
+        result.singleLevelPass != null
+          ? ` (${result.singleLevelPass ? (zh ? '满足目标' : 'meets target') : zh ? '未达目标' : 'below target'})`
+          : ''
+      }`,
+    )
+  }
+  if (result.miner && !result.miner.errorKey) {
+    lines.push(`${zh ? 'Miner 累积损伤 D' : 'Miner D'}: ${result.miner.totalDamage?.toFixed(4)}`)
+    lines.push(
+      `${zh ? 'Miner 判定' : 'Miner verdict'}: ${result.miner.pass ? (zh ? 'D<1 通过' : 'D<1 pass') : zh ? 'D≥1 不通过' : 'D≥1 fail'}`,
+    )
+    for (const row of result.miner.details ?? []) {
+      const saNote =
+        row.effectiveStress != null && row.effectiveStress !== row.stress
+          ? ` (Sa_eff=${row.effectiveStress} MPa)`
+          : ''
+      const dmg = Number.isFinite(row.damage) ? row.damage.toFixed(4) : '∞'
+      const share = Number.isFinite(row.contributionPct) ? row.contributionPct.toFixed(1) : '—'
+      lines.push(
+        `  Sa=${row.stress}${saNote} MPa, n=${row.cycles}, Nf=${row.lifeAtStress}, n/Nf=${dmg}, 占D=${share}%`,
+      )
+    }
+  }
+  lines.push(
+    `${zh ? '综合 pass' : 'Overall pass'}: ${result.pass ? (zh ? '是' : 'yes') : zh ? '否' : 'no'}${
+      result.releaseBlocked ? (zh ? '（未放行）' : ' (blocked)') : ''
+    }`,
+  )
+  return lines.join('\n')
+}
+
 /** 解析载荷谱文本：应力,循环次数 每行 */
 export function parseLoadSpectrum(text) {
   return String(text)
@@ -367,5 +500,5 @@ export function parseLoadSpectrum(text) {
     .map((line) => line.split(/[,，\s]+/).filter(Boolean))
     .filter((p) => p.length >= 2)
     .map(([s, n]) => ({ stress: Number(s), cycles: Number(n) }))
-    .filter((p) => !Number.isNaN(p.stress) && !Number.isNaN(p.cycles))
+    .filter((p) => !Number.isNaN(p.stress) && !Number.isNaN(p.cycles) && p.stress > 0 && p.cycles > 0)
 }
