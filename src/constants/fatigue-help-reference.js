@@ -9,19 +9,19 @@ export const FATIGUE_CALC_MODES = {
     {
       mode: '简化',
       features: '单级应力幅 $S_a$ → Basquin 寿命 $N$；无 Miner 载荷谱',
-      passRule: '**pass 恒为 false**（estimateOnly）；左侧仍显示估算寿命',
+      passRule: '**通过判定恒为否**（仅估算）；左侧仍显示估算寿命',
       caveat: '只看数量级，不能作为放行依据',
     },
     {
       mode: '完整',
       features: '单级寿命 + **Miner 多级载荷谱** $D=\\sum n_i/N_{f,i}$',
-      passRule: '有载荷谱时 **综合 pass = (D<1)**；Miner 用谱面 **原始 Sa**，$N_f$ 以材料 $\\sigma_{-1}$ 为膝点',
-      caveat: '不含 $S_m$、$k_a$、$k_b$；左侧单级与 Miner **独立**，综合 pass 不看单级',
+      passRule: '有载荷谱时 **综合通过判定 = ($D<1$)**；Miner 用谱面 **原始 $S_a$**，$N_f$ 以材料 $\\sigma_{-1}$ 为膝点',
+      caveat: '不含 $S_m$、$k_a$、$k_b$；左侧单级与 Miner **独立**，综合通过判定不看单级',
     },
     {
       mode: '专业',
       features: '完整 + Goodman/Soderberg + $k_a,k_b$；Miner 各级 $S_{a,eff,i}$ 与 $S_e\'=k_a k_b\\sigma_{-1}$',
-      passRule: '有载荷谱时 **综合 pass = (D<1)**（Miner 已含平均应力与 Se′）；单级区为 **对照**',
+      passRule: '有载荷谱时 **综合通过判定 = ($D<1$)**（Miner 已含平均应力与 $S_e\'$）；单级区为 **对照**',
       caveat: '与完整同参时 D 往往更大、更保守；$k_a k_b<1$ 时单级常 ✗ 即使 Sa 已为 UI 最小值',
     },
   ],
@@ -361,7 +361,7 @@ export const FATIGUE_MODE_COMPARE = {
       {
         scenario: '350 MPa 级 $n/N_f$',
         complete: '$N_f\\approx66924$ → $n/N_f\\approx0.15$',
-        professional: '$S_{a,eff}\\approx420$ → $N_f\\approx7835$ → $n/N_f\\approx**1.28**$',
+        professional: '$S_{a,eff}\\approx420$ → $N_f\\approx7835$ → $n/N_f\\approx1.28$',
       },
       {
         scenario: '累积损伤 D',
@@ -394,7 +394,7 @@ export const FATIGUE_MODE_COMPARE = {
       {
         scenario: '350 MPa block',
         complete: '$N_f\\approx66924$, $n/N_f\\approx0.15$',
-        professional: '$S_{a,eff}\\approx420$, $N_f\\approx7835$, $n/N_f\\approx**1.28**$',
+        professional: '$S_{a,eff}\\approx420$, $N_f\\approx7835$, $n/N_f\\approx1.28$',
       },
       {
         scenario: 'Damage D',

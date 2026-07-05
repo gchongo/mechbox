@@ -1,10 +1,6 @@
 <template>
   <section v-if="system" class="thread-system-meta">
-    <div class="mb-3 flex flex-wrap items-center gap-2">
-      <h3 class="text-base font-semibold">{{ ts('name') }}</h3>
-      <el-tag v-if="system.implemented" type="success" size="small">{{ pt('metaCatalog_yes') }}</el-tag>
-      <el-tag v-else type="info" size="small">{{ pt('metaCatalog_no') }}</el-tag>
-    </div>
+    <h3 class="mb-3 text-base font-semibold">{{ ts('name') }}</h3>
 
     <dl class="meta-dl">
       <div>

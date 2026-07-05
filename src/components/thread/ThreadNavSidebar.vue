@@ -1,7 +1,5 @@
 <template>
   <nav class="thread-nav" :aria-label="pt('navSidebarTitle')">
-    <p class="thread-nav__hint">{{ pt('navSidebarHint') }}</p>
-
     <section v-if="favoriteItems.length" class="thread-nav-favorites">
       <p class="thread-nav-favorites__title">{{ pt('favSection') }}</p>
       <ul class="thread-nav-list">
@@ -50,11 +48,6 @@
                   @click="selectCatalog(purpose, sys.id)"
                 >
                   <span class="thread-nav-item__label">{{ pt(`ts_${sys.id}_name`) }}</span>
-                  <span
-                    class="thread-nav-item__dot"
-                    :class="sys.implemented ? 'is-catalog' : 'is-ref'"
-                    :title="sys.implemented ? pt('catalogBadge_yes') : pt('catalogBadge_ref')"
-                  />
                 </button>
               </li>
             </ul>

@@ -2,6 +2,7 @@
   <component :is="block ? 'div' : 'span'" class="math-content" :class="{ 'math-content-block': block }">
     <template v-for="(part, i) in parts" :key="i">
       <MathTex v-if="part.type === 'math'" :expr="part.content" :block="part.block" />
+      <strong v-else-if="part.type === 'bold'" class="math-content-bold">{{ part.content }}</strong>
       <span v-else>{{ part.content }}</span>
     </template>
   </component>
@@ -10,43 +11,48 @@
 <script setup>
 import { computed } from 'vue'
 import MathTex from './MathTex.vue'
+import { parseMathContent } from '@/utils/parse-math-content'
+import { enrichMathText } from '@/utils/math-label'
+import { normalizeHelpText } from '@/utils/help-text-normalize'
+import { useLocale } from '@/composables/useLocale'
 
 const props = defineProps({
   text: { type: String, default: '' },
   block: { type: Boolean, default: false },
+  /** 覆盖全局 locale（帮助页一般跟随设置） */
+  locale: { type: String, default: '' },
 })
 
-/** 解析 `$...$` 行内公式与 `$$...$$` 块级公式 */
+const { locale: globalLocale } = useLocale()
+
+const activeLocale = computed(() => props.locale || globalLocale.value || 'zh')
+
+function flattenParts(segments) {
+  const out = []
+  for (const seg of segments) {
+    if (seg.type === 'math') {
+      out.push(seg)
+      continue
+    }
+    const enriched = enrichMathText(seg.content)
+    if (!/\$/.test(enriched)) {
+      out.push({ type: seg.type, content: enriched })
+      continue
+    }
+    for (const piece of parseMathContent(enriched)) {
+      if (piece.type === 'math') {
+        out.push(piece)
+      } else {
+        out.push({ type: seg.type, content: piece.content })
+      }
+    }
+  }
+  return out
+}
+
 const parts = computed(() => {
-  const input = props.text ?? ''
-  if (!input) return []
-
-  const result = []
-  const regex = /\$\$([\s\S]+?)\$\$|\$([^$]+?)\$/g
-  let lastIndex = 0
-  let match
-
-  while ((match = regex.exec(input)) !== null) {
-    if (match.index > lastIndex) {
-      result.push({ type: 'text', content: input.slice(lastIndex, match.index) })
-    }
-    if (match[1] != null) {
-      result.push({ type: 'math', content: match[1].trim(), block: true })
-    } else {
-      result.push({ type: 'math', content: match[2].trim(), block: false })
-    }
-    lastIndex = regex.lastIndex
-  }
-
-  if (lastIndex < input.length) {
-    result.push({ type: 'text', content: input.slice(lastIndex) })
-  }
-
-  if (!result.length) {
-    result.push({ type: 'text', content: input })
-  }
-
-  return result
+  const normalized = normalizeHelpText(props.text, activeLocale.value)
+  return flattenParts(parseMathContent(normalized))
 })
 </script>
 
@@ -64,5 +70,9 @@ const parts = computed(() => {
 .math-content-block {
   display: block;
   line-height: 1.8;
+}
+
+.math-content-bold {
+  font-weight: 600;
 }
 </style>

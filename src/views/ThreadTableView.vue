@@ -3,7 +3,6 @@
     <header class="thread-page-header">
       <div>
         <h1 class="page-title thread-page-title">{{ pt('title') }}</h1>
-        <p class="thread-page-subtitle">{{ pt('subtitle') }}</p>
       </div>
       <div class="thread-page-actions">
         <el-button size="small" plain @click="copyShareLink">
@@ -41,7 +40,6 @@
               </el-breadcrumb-item>
             </el-breadcrumb>
           </div>
-          <p class="thread-main-header__desc">{{ pageDesc }}</p>
         </header>
 
         <ThreadCategoryPanel
@@ -190,39 +188,6 @@ const breadcrumbs = computed(() => {
   return [pt('title')]
 })
 
-const pageDesc = computed(() => {
-  const { mode, a, b } = nav.value
-  if (mode === 'catalog') {
-    if (b) {
-      const use = pt(`ts_${b}_use`)
-      if (use !== `calc.pages.thread-table.ts_${b}_use`) return use
-    }
-    return pt(`cat_${a}_intro`)
-  }
-  if (mode === 'design') {
-    if (a === 'wizard') return pt('designFlowHint')
-    const hints = {
-      tolerance: 'devTabTolerance',
-      engagement: 'engIntro',
-      tapDrill: 'tapIntro',
-      mfg: 'mfgIntro',
-    }
-    const key = hints[a]
-    if (key) {
-      const v = pt(key)
-      if (v !== `calc.pages.thread-table.${key}`) return v
-    }
-    return pt('designFlowHint')
-  }
-  if (mode === 'tools') {
-    if (a === 'parse') return pt('parseIntro')
-    if (a === 'compare') return pt('compareIntro')
-    if (a === 'glossary') return pt('glossaryIntro')
-    return pt('toolsFlowHint')
-  }
-  return ''
-})
-
 function currentRouteQuerySlice() {
   return buildThreadTableQuery({
     navKey: navKeyFromQuery(route.query),
@@ -369,10 +334,6 @@ function onDesignOpenQuery({ system, subSeries }) {
 <style scoped>
 .thread-page-title {
   @apply mb-2;
-}
-
-.thread-page-subtitle {
-  @apply text-sm text-gray-600 dark:text-gray-400;
 }
 
 .thread-page-header {

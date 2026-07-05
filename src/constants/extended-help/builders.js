@@ -7,7 +7,7 @@ export function pickLocale(locale, map) {
 export function stdCalcModes(locale, { simpleModel, completeModel, proModel, simplePass, completePass, proPass, simpleCaveat, completeCaveat, proCaveat }) {
   const L = locale === 'en'
   return [
-    { mode: L ? 'Simplified' : '简化', model: simpleModel, passRule: simplePass ?? (L ? '**pass always false** (estimateOnly)' : '**pass 恒为 false**（estimateOnly）'), caveat: simpleCaveat ?? (L ? 'Magnitude only' : '仅看数量级') },
+    { mode: L ? 'Simplified' : '简化', model: simpleModel, passRule: simplePass ?? (L ? '**pass always false** (estimateOnly)' : '**通过判定恒为否**（仅估算）'), caveat: simpleCaveat ?? (L ? 'Magnitude only' : '仅看数量级') },
     { mode: L ? 'Full' : '完整', model: completeModel, passRule: completePass, caveat: completeCaveat },
     { mode: L ? 'Professional' : '专业', model: proModel, passRule: proPass, caveat: proCaveat },
   ]

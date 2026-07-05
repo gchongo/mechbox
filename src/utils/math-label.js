@@ -237,6 +237,13 @@ function autoEnrichSymbols(text) {
   // 带下划线的标识符（f_pt、D_A 等）
   out = out.replace(/\b([A-Za-z][A-Za-z0-9]*_[A-Za-z0-9]+)\b/g, (match) => identToLatex(match))
 
+  // 疲劳/帮助常用无下划线缩写
+  out = out.replace(/\bSa\b/g, '$S_a$')
+  out = out.replace(/\bSm\b/g, '$S_m$')
+  out = out.replace(/\bNf\b/g, '$N_f$')
+  out = out.replace(/\bSe′\b/g, '$S_e\'$')
+  out = out.replace(/\bSe'\b/g, '$S_e\'$')
+
   return out
 }
 

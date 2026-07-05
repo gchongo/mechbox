@@ -1,7 +1,5 @@
 <template>
   <div class="thread-compare-panel">
-    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">{{ pt('compareIntro') }}</p>
-
     <div class="mb-4">
       <span class="mr-2 text-sm">{{ pt('comparePresets') }}</span>
       <el-button
@@ -56,44 +54,21 @@
     />
 
     <div v-else>
-      <!-- 移动端：纵向卡片 -->
-      <div class="compare-cards md:hidden">
-        <article
-          v-for="(row, colIdx) in matrix.rows"
-          :key="row.id"
-          class="compare-card"
-        >
-          <header class="compare-card__head">{{ row.designation }}</header>
-          <dl class="compare-card__dl">
-            <div
-              v-for="field in matrix.fields"
-              :key="field.key"
-              class="compare-card__row"
-              :class="{ 'is-diff': field.isDiff }"
-            >
-              <dt>{{ pt(`cmp_${field.key}`) }}</dt>
-              <dd>{{ formatCell(field.key, field.values[colIdx]) }}</dd>
-            </div>
-          </dl>
-        </article>
-      </div>
-
-      <!-- 桌面端：并排表格（固定表头 + 竖直滚动） -->
-      <div class="compare-table-wrap hidden md:block">
-      <table class="compare-table w-full border-collapse text-sm">
-        <thead>
-          <tr>
-            <th class="compare-th">{{ pt('compareField') }}</th>
-            <th v-for="row in matrix.rows" :key="row.id" class="compare-th">{{ row.designation }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="field in matrix.fields" :key="field.key" :class="{ 'compare-diff': field.isDiff }">
-            <td class="compare-td compare-label">{{ pt(`cmp_${field.key}`) }}</td>
-            <td v-for="(val, i) in field.values" :key="i" class="compare-td">{{ formatCell(field.key, val) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="compare-table-wrap">
+        <table class="compare-table border-collapse text-sm">
+          <thead>
+            <tr>
+              <th class="compare-th compare-th--field">{{ pt('compareField') }}</th>
+              <th v-for="row in matrix.rows" :key="row.id" class="compare-th">{{ row.designation }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="field in matrix.fields" :key="field.key" :class="{ 'compare-diff': field.isDiff }">
+              <td class="compare-td compare-label compare-td--field">{{ pt(`cmp_${field.key}`) }}</td>
+              <td v-for="(val, i) in field.values" :key="i" class="compare-td">{{ formatCell(field.key, val) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <el-alert
@@ -265,6 +240,7 @@ function formatCell(key, val) {
 }
 .compare-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .compare-table thead th {
@@ -276,84 +252,55 @@ function formatCell(key, val) {
 .compare-th,
 .compare-td {
   border: 1px solid var(--el-border-color-lighter);
-  padding: 0.5rem 0.65rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   white-space: nowrap;
 }
+
+.compare-th--field,
+.compare-td--field {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  min-width: 7.5rem;
+  background: var(--el-bg-color);
+  box-shadow: 1px 0 0 var(--el-border-color-lighter);
+}
+
+.compare-table thead .compare-th--field {
+  z-index: 3;
+  background: var(--el-fill-color-light);
+}
+
 .compare-th {
   background: var(--el-fill-color-light);
   font-weight: 600;
 }
+
 .compare-label {
   color: var(--el-text-color-secondary);
+  font-weight: 500;
 }
+
 .compare-diff {
   background: rgb(255 251 230 / 0.5);
 }
+
+.compare-diff .compare-td--field {
+  background: rgb(255 251 230 / 0.85);
+}
+
 :root.dark .compare-diff {
   background: rgb(120 90 0 / 0.15);
 }
+
+:root.dark .compare-diff .compare-td--field {
+  background: rgb(120 90 0 / 0.22);
+}
+
 .compare-td {
   font-variant-numeric: tabular-nums;
-}
-
-.compare-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.compare-card {
-  border: 1px solid var(--el-border-color);
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background: var(--el-bg-color);
-}
-
-.compare-card__head {
-  padding: 0.65rem 0.85rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  background: var(--el-fill-color-light);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.compare-card__dl {
-  margin: 0;
-  padding: 0.5rem 0.85rem 0.75rem;
-}
-
-.compare-card__row {
-  display: grid;
-  grid-template-columns: 7.5rem 1fr;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
-  font-size: 0.8125rem;
-}
-
-.compare-card__row:last-child {
-  border-bottom: none;
-}
-
-.compare-card__row.is-diff {
-  background: rgb(255 251 230 / 0.45);
-  margin: 0 -0.85rem;
-  padding-left: 0.85rem;
-  padding-right: 0.85rem;
-}
-
-:root.dark .compare-card__row.is-diff {
-  background: rgb(120 90 0 / 0.12);
-}
-
-.compare-card__row dt {
-  color: var(--el-text-color-secondary);
-}
-
-.compare-card__row dd {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-  word-break: break-word;
+  min-width: 5.5rem;
 }
 </style>

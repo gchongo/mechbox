@@ -520,9 +520,9 @@ export const TOOL_HELP_ARTICLES = [
     ],
     notes: [
       '典型 ISO 过盈配合过盈量为 **μm～几十 μm**；$i$ 达 mm 级多为孔径错误或单位混用，应先核对 $D$ 是否应为 49.98 而非 45.98 等。',
-      '简化模式 **pass 恒为 false**（estimateOnly），即使 hoopPass 通过也不能放行。',
-      '完整/专业：未确认关键输入时 **releaseBlocked**，右侧不显示 $p$、$F$ 等——须逐项触发 change 确认，此为有意设计。',
-      '切换计算模式会 **清空** confirmedFields，需重新确认。',
+      '简化模式 **通过判定恒为否**（仅估算），即使环向应力校核通过也不能放行。',
+      '完整/专业：未确认关键输入时 **结果未放行**，右侧不显示 $p$、$F$ 等——须逐项变更确认，此为有意设计。',
+      '切换计算模式会 **清空** 已确认字段，需重新确认。',
       '薄壁：$(D_A-D)/2 < 0.1d$ 时 thinWallWarning；$D_A$ 过小会高估 $p$。',
       '模式说明中「粗糙度修正」尚未实现；当前专业模式仅温变修正。',
       '与 /fit、/thermal-expansion 联动：先查公差带过盈，再算压力；异种材料温升用专业 $\\alpha$。',
@@ -571,11 +571,11 @@ export const TOOL_HELP_ARTICLES = [
       '选择材料（5 种内置 S-N）；输入应力幅 $S_a$（范围由 $\\sigma_{-1}$ 与 $N=10^2$ 端点约束）。',
       '完整/专业：在文本框输入载荷谱，每行「应力幅(MPa), 循环次数」；可点「加载示例」。',
       '专业：填平均应力 $S_m$、表面系数 $k_a$、尺寸系数 $k_b$、目标循环 $N_{target}$；Miner 各级做 Goodman 并相对 $S_e\'$ 查 $N_f$。',
-      '有载荷谱时 **综合 pass 只看 Miner $D<1$**；右栏「单级 S-N 判定」不参与综合 pass。',
+      '有载荷谱时 **综合通过判定只看 Miner $D<1$**；右栏「单级 S-N 判定」不参与综合通过判定。',
       '查看 Miner 表 n/Nf、占 D 比例、累积损伤 D、S-N 曲线（图用输入 $S_a$，非等效幅）。',
     ],
     principle:
-      '疲劳破坏由交变应力引起。Basquin + Miner；专业 Goodman/Soderberg 与 $S_e\'=k_a k_b \\sigma_{-1}$。有 Miner 时 **综合 pass = D<1**；单级判定（$N\\ge N_{target}$ 且 $S_{a,eff}\\le S_e\'$）为右栏对照。完整 Miner 用原始 Sa + $\\sigma_{-1}$；专业用 $S_{a,eff,i}$ + $S_e\'$——同谱 D 可差数倍。',
+      '疲劳破坏由交变应力引起。Basquin + Miner；专业 Goodman/Soderberg 与 $S_e\'=k_a k_b \\sigma_{-1}$。有 Miner 时 **综合通过判定 = $D<1$**；单级判定（$N\\ge N_{target}$ 且 $S_{a,eff}\\le S_e\'$）为右栏对照。完整 Miner 用原始 $S_a$ + $\\sigma_{-1}$；专业用 $S_{a,eff,i}$ + $S_e\'$——同谱 $D$ 可差数倍。',
     formulas: [
       { latex: 'S(N) = S_f\' \\cdot N^b \\quad (N < N_{ref})', note: '$N_{ref}$=cycleLimit；之后 $S=\\sigma_{-1}$' },
       { latex: 'N = \\left(\\frac{S_a}{S_f\'}\\right)^{1/b}', note: '$S_a \\le \\sigma_{-1}$ 时 $N=\\infty$' },
@@ -586,8 +586,8 @@ export const TOOL_HELP_ARTICLES = [
     notes: [
       '内置 5 种材料参数为近似，非你的锻件 S-N 曲线。',
       'Miner：完整用原始 Sa；专业各级 Goodman + Se′——同参可与完整 pass 相反。',
-      '有载荷谱时综合 pass **仅 Miner**；右栏单级 ✓/✗ 可与之相反（见帮助 FAQ）。',
-      '简化 pass 恒 false；Sa 下限为 $\\sigma_{-1}$，专业单级判 Se′ 时 $k_a k_b<1$ 常无法在 UI 下限下单级 ✓。',
+      '有载荷谱时综合通过判定 **仅看 Miner**；右栏单级 ✓/✗ 可与之相反（见帮助 FAQ）。',
+      '简化通过判定恒为否；$S_a$ 下限为 $\\sigma_{-1}$，专业单级判 $S_e\'$ 时 $k_a k_b<1$ 常无法在 UI 下限下单级 ✓。',
       '专业模式可选 Goodman / Soderberg；Miner 假定恒定 $S_m$ 作用于谱中各级。',
       '无 $K_t$ 应力集中；轴/键疲劳请用对应工具 assessComponentFatigue。',
     ],
@@ -1902,7 +1902,7 @@ const DETAIL_OVERRIDES = {
       },
       {
         name: 'Miner 载荷谱',
-        meaning: '完整/专业：每行 Sa,n；有谱时 **综合 pass 只看 D<1**。',
+        meaning: '完整/专业：每行 $S_a,n$；有谱时 **综合通过判定只看 $D<1$**。',
         source: '工况循环统计；专业模式各级做 Goodman/Soderberg 并相对 Se′ 查 Nf。',
       },
       {
@@ -1920,12 +1920,12 @@ const DETAIL_OVERRIDES = {
       {
         name: 'Miner 损伤 D',
         meaning: 'Σ nᵢ/Nf,i；D<1 通过，0.8≤D<1 预警仍 pass。',
-        judgement: '有载荷谱时 **综合 pass 主判据**。',
+        judgement: '有载荷谱时 **综合通过判定主依据**。',
       },
       {
         name: '单级判定 / goodmanPass',
         meaning: '右栏：N≥N_target 且（专业）Sa,eff≤Se′；与左栏 Sa 对应。',
-        judgement: '**不驱动**有谱时的综合 pass；可与 Miner 结论相反。',
+        judgement: '**不驱动**有载荷谱时的综合通过判定；可与 Miner 结论相反。',
       },
       {
         name: '占 D 比例',

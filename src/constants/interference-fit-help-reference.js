@@ -8,7 +8,7 @@ export const INTERFERENCE_CALC_MODES = {
     {
       mode: '简化',
       model: '实心轴 + Lame 厚壁筒；不校核空心轴',
-      passRule: '仅输出 $p$、$F$、$T$、应力；**pass 恒为 false**（estimateOnly）',
+      passRule: '仅输出 $p$、$F$、$T$、应力；**通过判定恒为否**（仅估算）',
       caveat: '适合快速看数量级，不能作为放行依据',
     },
     {
