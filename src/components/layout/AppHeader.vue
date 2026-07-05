@@ -106,10 +106,10 @@
         </router-link>
       </nav>
 
-      <!-- 移动端：仅菜单按钮 -->
+      <!-- 移动端：仅菜单按钮（勿在 scoped 里写 display，否则会盖掉 md:hidden） -->
       <button
         type="button"
-        class="mobile-menu-btn md:hidden"
+        class="inline-flex items-center justify-center rounded-md p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 md:hidden"
         :aria-label="t('nav.menu', locale)"
         :aria-expanded="mobileOpen"
         @click="mobileOpen = true"
@@ -122,7 +122,7 @@
       v-model="mobileOpen"
       direction="rtl"
       size="min(300px, 88vw)"
-      class="app-header-mobile-drawer md:hidden"
+      class="app-header-mobile-drawer"
       :title="t('nav.menu', locale)"
       :append-to-body="true"
     >
@@ -352,20 +352,6 @@ function goTool(path) {
 
 .dark .app-header {
   background-color: rgba(31, 41, 55, 0.92);
-}
-
-.mobile-menu-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.375rem;
-  padding: 0.5rem;
-  color: var(--el-text-color-regular);
-  transition: background-color 0.15s;
-}
-
-.mobile-menu-btn:hover {
-  background: var(--el-fill-color-light);
 }
 
 .mobile-nav {

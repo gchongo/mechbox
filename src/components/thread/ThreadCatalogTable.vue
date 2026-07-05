@@ -47,67 +47,65 @@
         :row-class-name="rowClassName"
         @row-click="(row) => $emit('row-click', row)"
       >
-        <el-table-column prop="designation" :width="THREAD_TABLE_COL.designation">
+        <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation">
           <template #header>
             <ThreadFieldTip :label="pt('colDesignation')" :tip="pt('term_designation')" />
           </template>
         </el-table-column>
-        <el-table-column v-if="catalogSystem === 'metric'" prop="priority" :width="THREAD_TABLE_COL.priority">
+        <el-table-column v-if="catalogSystem === 'metric'" prop="priority" :min-width="THREAD_TABLE_COL.priority">
           <template #header>
             <ThreadFieldTip :label="pt('colPriority')" :tip="pt('term_priority')" />
           </template>
         </el-table-column>
-        <el-table-column :width="THREAD_TABLE_COL.pitch">
+        <el-table-column :min-width="THREAD_TABLE_COL.pitch">
           <template #header>
             <ThreadFieldTip :label="pitchColumnLabel" :tip="pitchTermTip" />
           </template>
           <template #default="{ row }">{{ formatPitchDisplay(row) }}</template>
         </el-table-column>
-        <el-table-column :width="THREAD_TABLE_COL.dim">
+        <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colMajor')" :tip="pt('term_major')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.major) }}</template>
         </el-table-column>
-        <el-table-column :width="THREAD_TABLE_COL.dim">
+        <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colPitchDia')" :tip="pt('term_pitchDia')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.pitchDiameter) }}</template>
         </el-table-column>
-        <el-table-column :width="THREAD_TABLE_COL.dim">
+        <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colMinor')" :tip="pt('term_minor')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.minor) }}</template>
         </el-table-column>
-        <el-table-column v-if="showTapCol" :width="THREAD_TABLE_COL.dim">
+        <el-table-column v-if="showTapCol" :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colTapDrill')" :tip="pt('term_tapDrill')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
         </el-table-column>
-        <el-table-column :width="THREAD_TABLE_COL.tolerancePair">
+        <el-table-column :min-width="THREAD_TABLE_COL.tolerancePair">
           <template #header>
             <ThreadFieldTip :label="pt('colTolerancePair')" :tip="pt('term_tolerancePair')" />
           </template>
           <template #default="{ row }">{{ tolerancePair(row) }}</template>
         </el-table-column>
-        <el-table-column v-if="showPipeCols" prop="taper" :width="THREAD_TABLE_COL.taper">
+        <el-table-column v-if="showPipeCols" prop="taper" :min-width="THREAD_TABLE_COL.taper">
           <template #header>
             <ThreadFieldTip :label="pt('colTaper')" :tip="pt('term_taper')" />
           </template>
         </el-table-column>
-        <el-table-column v-if="showPipeCols" :width="THREAD_TABLE_COL.sealing">
+        <el-table-column v-if="showPipeCols" :min-width="THREAD_TABLE_COL.sealing">
           <template #header>
             <ThreadFieldTip :label="pt('colSealing')" :tip="pt('term_sealing')" />
           </template>
           <template #default="{ row }">{{ sealingLabel(row.sealing) }}</template>
         </el-table-column>
-        <el-table-column :width="THREAD_TABLE_COL.actionIcon" align="center" class-name="thread-col-action">
-          <template #header>
-            <span class="thread-col-action__head" aria-hidden="true">+</span>
-          </template>
+        <el-table-column :min-width="THREAD_TABLE_COL.actionIcon" align="center" class-name="thread-col-action">
+          <template #header><span aria-hidden="true">+</span></template>
           <template #default="{ row }">
             <el-button
               size="small"
@@ -130,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { Search, Plus, Check } from '@element-plus/icons-vue'
 import { getThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
 import { filterThreadRows, formatPitchDisplay, formatDim } from '@/utils/thread-standards'
@@ -197,6 +195,8 @@ const filteredRows = computed(() =>
 )
 
 watch(filteredRows, layoutTable)
+
+onMounted(layoutTable)
 
 watch(
   () => [props.catalogSystem, props.catalogSubTab],
