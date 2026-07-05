@@ -35,6 +35,19 @@ describe('thread engagement calc', () => {
     expect(plastic.passMin).toBe(false)
   })
 
+  it('zero engaged length does not auto-pass', () => {
+    const r = analyzeThreadEngagement({
+      diameter: 10,
+      pitch: 1.5,
+      engagedLength: 0,
+      jointMaterial: 'steel',
+    })
+    expect(r.ok).toBe(true)
+    expect(r.needsLength).toBe(true)
+    expect(r.passMin).toBeNull()
+    expect(r.passRecommend).toBeNull()
+  })
+
   it('resolves metric row from catalog', () => {
     const row = getAllThreadRows().find((r) => r.designation === 'M8')
     const r = analyzeThreadEngagement({ row, engagedLength: 12, jointMaterial: 'steel' })

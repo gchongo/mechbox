@@ -48,7 +48,15 @@
       <section ref="resultRef" class="card-panel">
         <el-alert v-if="!result.ok" type="warning" show-icon :closable="false" :title="pt(result.errorKey)" />
         <template v-else>
-          <div class="mb-3 flex flex-wrap items-center gap-2">
+          <el-alert
+            v-if="result.needsLength"
+            type="info"
+            show-icon
+            :closable="false"
+            class="mb-3"
+            :title="pt('engNeedLength')"
+          />
+          <div v-else class="mb-3 flex flex-wrap items-center gap-2">
             <el-tag :type="result.passMin ? 'success' : 'danger'">
               {{ pt('engPassMin') }}: {{ result.passMin ? pt('engPass') : pt('engFail') }}
             </el-tag>
@@ -61,8 +69,8 @@
             <div><dt>{{ pt('engMinLength') }}</dt><dd>{{ fmt(result.minEngagement) }} mm</dd></div>
             <div><dt>{{ pt('engRecommendLength') }}</dt><dd>{{ fmt(result.recommendedEngagement) }} mm</dd></div>
             <div><dt>{{ pt('engMaxPractical') }}</dt><dd>{{ fmt(result.maxPracticalEngagement) }} mm</dd></div>
-            <div><dt>{{ pt('engInputLength') }}</dt><dd class="font-medium">{{ fmt(result.engagedLength) }} mm</dd></div>
-            <div><dt>{{ pt('engMargin') }}</dt><dd>{{ fmt(result.marginToMin) }} mm</dd></div>
+            <div><dt>{{ pt('engInputLength') }}</dt><dd class="font-medium">{{ result.hasLength ? `${fmt(result.engagedLength)} mm` : '—' }}</dd></div>
+            <div v-if="result.hasLength"><dt>{{ pt('engMargin') }}</dt><dd>{{ fmt(result.marginToMin) }} mm</dd></div>
             <div v-if="result.shearStress != null">
               <dt>{{ pt('engShearStress') }}</dt>
               <dd>
@@ -84,7 +92,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import ThreadRowPicker from '@/components/thread/ThreadRowPicker.vue'
 import { analyzeThreadEngagement, findThreadRowById } from '@/utils/thread-engagement-calc'
 import { THREAD_GRADES } from '@/utils/thread-calc'
@@ -104,7 +112,7 @@ const resultRef = ref(null)
 const form = reactive({
   diameter: 10,
   pitch: 1.5,
-  engagedLength: 15,
+  engagedLength: 0,
   jointMaterial: 'steel',
   axialForce: 0,
   grade: '8.8',
@@ -122,15 +130,6 @@ const result = computed(() =>
   }),
 )
 
-watch(
-  () => form.jointMaterial,
-  (m) => {
-    const d = form.diameter
-    const factors = { steel: 1.0, stainless: 1.0, cast_iron: 1.2, aluminum: 1.5, plastic: 2.0 }
-    if (!selectedRow.value) form.engagedLength = Math.round(d * (factors[m] ?? 1) * 10) / 10
-  },
-)
-
 function onRowChange(id) {
   selectedRow.value = id ? findThreadRowById(id) : null
   const row = selectedRow.value
@@ -138,17 +137,16 @@ function onRowChange(id) {
   if (row.system === 'metric' || row.system === 'tr') {
     form.diameter = row.nominal
     form.pitch = row.pitch
-    form.engagedLength = Math.round(row.nominal * 1.5 * 10) / 10
     return
   }
   if (['unc', 'unf', 'unef', 'acme'].includes(row.system) && row.nominal && row.tpi) {
     form.diameter = Math.round(row.nominal * 25.4 * 100) / 100
     form.pitch = Math.round((25.4 / row.tpi) * 1000) / 1000
-    form.engagedLength = Math.round(form.diameter * 1.5 * 10) / 10
   }
 }
 
 function fmt(n, p = 2) {
+  if (n == null) return '—'
   return Number(n).toFixed(p)
 }
 

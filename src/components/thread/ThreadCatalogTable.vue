@@ -46,7 +46,7 @@
         :row-class-name="rowClassName"
         @row-click="(row) => $emit('row-click', row)"
       >
-        <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation" fixed>
+        <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation">
           <template #header>
             <ThreadFieldTip :label="pt('colDesignation')" :tip="pt('term_designation')" />
           </template>
@@ -86,15 +86,11 @@
           </template>
           <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
         </el-table-column>
-        <el-table-column prop="toleranceExternal" :min-width="THREAD_TABLE_COL.tolerance">
+        <el-table-column :min-width="THREAD_TABLE_COL.tolerancePair">
           <template #header>
-            <ThreadFieldTip :label="pt('colToleranceExt')" :tip="pt('term_toleranceExt')" />
+            <ThreadFieldTip :label="pt('colTolerancePair')" :tip="pt('term_tolerancePair')" />
           </template>
-        </el-table-column>
-        <el-table-column prop="toleranceInternal" :min-width="THREAD_TABLE_COL.tolerance">
-          <template #header>
-            <ThreadFieldTip :label="pt('colToleranceInt')" :tip="pt('term_toleranceInt')" />
-          </template>
+          <template #default="{ row }">{{ tolerancePair(row) }}</template>
         </el-table-column>
         <el-table-column v-if="showPipeCols" prop="taper" :min-width="THREAD_TABLE_COL.taper">
           <template #header>
@@ -107,15 +103,18 @@
           </template>
           <template #default="{ row }">{{ sealingLabel(row.sealing) }}</template>
         </el-table-column>
-        <el-table-column prop="standardRef" :min-width="THREAD_TABLE_COL.standard">
-          <template #header>
-            <ThreadFieldTip :label="pt('colStandard')" :tip="pt('term_standard')" />
-          </template>
-        </el-table-column>
-        <el-table-column :label="pt('colActions')" :min-width="THREAD_TABLE_COL.actionCompare" fixed="right">
+        <el-table-column :min-width="THREAD_TABLE_COL.actionIcon" align="center">
+          <template #header><span aria-hidden="true">+</span></template>
           <template #default="{ row }">
-            <el-button size="small" link type="primary" @click.stop="$emit('toggle-compare', row)">
-              {{ compareIds.includes(row.id) ? pt('inCompare') : pt('addToCompare') }}
+            <el-button
+              size="small"
+              circle
+              :type="compareIds.includes(row.id) ? 'success' : 'primary'"
+              plain
+              :aria-label="compareIds.includes(row.id) ? pt('inCompare') : pt('addToCompare')"
+              @click.stop="$emit('toggle-compare', row)"
+            >
+              <el-icon><component :is="compareIds.includes(row.id) ? Check : Plus" /></el-icon>
             </el-button>
           </template>
         </el-table-column>
@@ -129,7 +128,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { Search, Plus, Check } from '@element-plus/icons-vue'
 import { getThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
 import { filterThreadRows, formatPitchDisplay, formatDim } from '@/utils/thread-standards'
 import { THREAD_TABLE_COL } from '@/constants/thread-table-columns'
@@ -203,6 +202,15 @@ function sealingLabel(key) {
   if (!key || key === '—') return '—'
   const v = props.pt(`sealing_${key}`)
   return v !== `calc.pages.thread-table.sealing_${key}` ? v : key
+}
+
+function tolerancePair(row) {
+  const ext = row.toleranceExternal
+  const int = row.toleranceInternal
+  if ((!ext || ext === '—') && (!int || int === '—')) return '—'
+  if (!ext || ext === '—') return int
+  if (!int || int === '—') return ext
+  return `${ext}/${int}`
 }
 
 function rowClassName({ row }) {

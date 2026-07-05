@@ -37,7 +37,9 @@ export function analyzeThreadEngagement(input = {}) {
   const { diameter, pitch, unit } = dims
   const jointMaterial = input.jointMaterial ?? 'steel'
   const mat = JOINT_MATERIALS[jointMaterial] ?? JOINT_MATERIALS.steel
-  const engagedLength = Number(input.engagedLength) || diameter * mat.recommendFactor
+  const engagedLengthRaw = Number(input.engagedLength)
+  const hasLength = Number.isFinite(engagedLengthRaw) && engagedLengthRaw > 0
+  const engagedLength = hasLength ? engagedLengthRaw : 0
 
   const minByRule = calcMinEngagementLength(diameter, mat.nutMaterial)
   const minByMaterial = diameter * mat.minFactor
@@ -54,8 +56,8 @@ export function analyzeThreadEngagement(input = {}) {
   const shearExt = axialForce > 0 ? calcExternalThreadShearArea(diameter, pitch, engagedLength) : null
   const shearInt = axialForce > 0 ? calcInternalThreadShearArea(diameter, pitch, engagedLength) : null
 
-  const passMin = engagedLength >= minEngagement
-  const passRecommend = engagedLength >= recommended
+  const passMin = hasLength ? engagedLength >= minEngagement : null
+  const passRecommend = hasLength ? engagedLength >= recommended : null
 
   return {
     ok: true,
@@ -66,12 +68,14 @@ export function analyzeThreadEngagement(input = {}) {
     designation: dims.designation,
     jointMaterial,
     engagedLength,
+    hasLength,
+    needsLength: !hasLength,
     minEngagement,
     recommendedEngagement: recommended,
     maxPracticalEngagement: maxPractical,
     passMin,
     passRecommend,
-    marginToMin: engagedLength - minEngagement,
+    marginToMin: hasLength ? engagedLength - minEngagement : null,
     stressArea,
     axialForce,
     grade: grade.label,

@@ -20,7 +20,7 @@
       stripe
       class="thread-data-table thread-sticky-header-table mb-3"
     >
-      <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation" fixed>
+      <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation">
         <template #header>
           <ThreadFieldTip :label="pt('colDesignation')" :tip="pt('term_designation')" />
         </template>
@@ -54,7 +54,7 @@
         </template>
         <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
       </el-table-column>
-      <el-table-column :label="pt('colActions')" :min-width="THREAD_TABLE_COL.actionView" fixed="right">
+      <el-table-column :label="pt('colActions')" :min-width="THREAD_TABLE_COL.actionView">
         <template #default="{ row }">
           <el-button size="small" link type="primary" @click="$emit('row-click', row)">
             {{ pt('clickRowHint') }}
