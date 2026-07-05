@@ -79,6 +79,15 @@ function ts(field) {
   gap: 0.45rem;
   font-size: 0.875rem;
 }
+
+@media (min-width: 768px) {
+  .meta-dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2rem;
+    row-gap: 0.45rem;
+  }
+}
+
 .meta-dl > div {
   display: grid;
   grid-template-columns: 7.5rem 1fr;

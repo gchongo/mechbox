@@ -1,31 +1,17 @@
 <template>
   <div class="thread-catalog-content">
     <div v-if="selectedSystem" class="thread-catalog-content__body">
-      <div class="thread-catalog-hero">
-        <div v-if="showDiagram" class="thread-catalog-hero__diagram">
-          <ThreadProfileDiagram
-            :kind="diagramKind"
-            :angle="diagramAngle"
-            :title="diagramTitle"
-            :formula="diagramFormula"
-            :aria="pt('diagramAria')"
-            :labels="{ external: pt('externalThread'), internal: pt('internalThread') }"
-            :sample="diagramSample"
-            :pt="pt"
-            :param-hint="pt('diagramParamHint')"
-          />
-        </div>
-        <div class="thread-catalog-hero__aside">
-          <el-alert
-            v-if="purposeId === 'pipe'"
-            type="warning"
-            :closable="false"
-            show-icon
-            :title="pt('pipeCompatibilityWarn')"
-          />
-          <ThreadSystemMetaPanel :system-id="selectedSystem.id" :pt="pt" />
-        </div>
-      </div>
+      <section class="thread-catalog-intro card-panel">
+        <el-alert
+          v-if="purposeId === 'pipe'"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="pt('pipeCompatibilityWarn')"
+          class="thread-catalog-intro__alert"
+        />
+        <ThreadSystemMetaPanel :system-id="selectedSystem.id" :pt="pt" />
+      </section>
 
       <section v-if="selectedSystem.implemented && selectedSystem.catalog" class="thread-catalog-table-wrap">
         <ThreadCatalogTable
@@ -81,14 +67,9 @@
 import { computed } from 'vue'
 import {
   getSystemsForPurpose,
-  getThreadSystemDef,
   getReferenceCatalogAlternatives,
   catalogAlternativeToQuery,
 } from '@/constants/thread-standards/taxonomy'
-import { getThreadRows } from '@/constants/thread-standards'
-import { formatPitchDisplay, formatDim } from '@/utils/thread-standards'
-import { resolveDiagramKind } from '@/utils/thread-profile-diagram'
-import ThreadProfileDiagram from '@/components/thread/ThreadProfileDiagram.vue'
 import ThreadSystemMetaPanel from '@/components/thread/ThreadSystemMetaPanel.vue'
 import ThreadCatalogTable from '@/components/thread/ThreadCatalogTable.vue'
 import ThreadWhitworthRefTable from '@/components/thread/ThreadWhitworthRefTable.vue'
@@ -100,7 +81,6 @@ const props = defineProps({
   pt: { type: Function, required: true },
   compareIds: { type: Array, default: () => [] },
   highlightRowId: { type: String, default: '' },
-  showDiagram: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['row-click', 'toggle-compare', 'open-catalog', 'open-compare'])
@@ -110,64 +90,6 @@ const systems = computed(() => getSystemsForPurpose(props.purposeId))
 const selectedSystem = computed(() =>
   systems.value.find((s) => s.id === props.selectedSystemId) ?? systems.value[0],
 )
-
-const activeSystemDef = computed(() =>
-  selectedSystem.value ? getThreadSystemDef(selectedSystem.value.id) : null,
-)
-
-const diagramKind = computed(() => resolveDiagramKind(activeSystemDef.value))
-
-const diagramAngle = computed(() => activeSystemDef.value?.diagramAngle ?? 60)
-
-const diagramTitle = computed(() => {
-  if (!selectedSystem.value) return ''
-  return props.pt(`ts_${selectedSystem.value.id}_name`)
-})
-
-const diagramFormula = computed(() => {
-  const kind = diagramKind.value
-  const def = activeSystemDef.value
-  if (kind === 'trapezoidal_tr') return props.pt('formulaTrapezoidal')
-  if (kind === 'trapezoidal_acme') return props.pt('formulaAcme')
-  if (kind === 'triangular_55' || kind === 'triangular_55_taper') return props.pt('formulaWhitworth')
-  if (kind === 'triangular_60_taper') return props.pt('formulaNptTaper')
-  if (kind === 'square') return props.pt('formulaSquare')
-  if (kind === 'buttress') return props.pt('formulaButtress')
-  if (kind === 'round') return props.pt('formulaRound')
-  if (kind === 'ball_screw') return props.pt('formulaBallScrew')
-  if (def?.profile === 'trapezoidal') return props.pt('formulaTrapezoidal')
-  return props.pt('formula60')
-})
-
-const diagramSample = computed(() => {
-  if (!props.highlightRowId || !selectedSystem.value?.catalog) return null
-  const rows = getThreadRows(
-    selectedSystem.value.catalog.system,
-    selectedSystem.value.catalog.subTab,
-  )
-  const row = rows.find((r) => r.id === props.highlightRowId)
-  if (!row) return null
-  const sealing =
-    row.sealing && row.sealing !== '—'
-      ? (() => {
-          const k = props.pt(`sealing_${row.sealing}`)
-          return k.includes('calc.pages.thread-table') ? row.sealing : k
-        })()
-      : null
-  return {
-    designation: row.designation,
-    pitch: formatPitchDisplay(row),
-    major: formatDim(row, row.major),
-    pitchDia: formatDim(row, row.pitchDiameter),
-    minor: formatDim(row, row.minor),
-    tapDrill: row.tapDrill != null ? formatDim(row, row.tapDrill) : null,
-    toleranceExt: row.toleranceExternal,
-    toleranceInt: row.toleranceInternal,
-    taper: row.taper && row.taper !== '—' ? row.taper : null,
-    sealing,
-    standard: row.standardRef,
-  }
-})
 
 const catalogAlternatives = computed(() =>
   selectedSystem.value && !selectedSystem.value.implemented && !isWhitworthSystem.value

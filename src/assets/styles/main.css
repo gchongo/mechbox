@@ -280,20 +280,12 @@
     @apply block rounded-md px-2 py-2 text-xs text-primary hover:bg-white/80 dark:hover:bg-gray-800/80;
   }
 
-  .thread-catalog-hero {
-    @apply mb-6 grid gap-4 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:items-center;
+  .thread-catalog-intro {
+    @apply mb-6;
   }
 
-  .thread-catalog-hero__diagram {
-    @apply flex min-w-0 max-w-[480px] flex-col justify-center self-center lg:self-center;
-  }
-
-  .thread-catalog-hero .thread-profile-diagram {
-    @apply min-w-0 w-full;
-  }
-
-  .thread-catalog-hero__aside {
-    @apply flex min-w-0 flex-col gap-4;
+  .thread-catalog-intro__alert {
+    @apply mb-4;
   }
 
   .thread-catalog-table-wrap {
