@@ -152,16 +152,16 @@ function dimH(x1, x2, y, label, opts = {}) {
   }
 }
 
-function angleMarkAt(cx, cy, halfAngleDeg, label) {
-  const r = 22
-  const a = (halfAngleDeg * Math.PI) / 180
-  const x1 = cx - r * Math.sin(a)
-  const y1 = cy - r * Math.cos(a)
-  const x2 = cx + r * Math.sin(a)
-  const y2 = cy - r * Math.cos(a)
+function angleMarkAtApex(cx, yApex, includedAngleDeg, label) {
+  const half = (includedAngleDeg / 2) * (Math.PI / 180)
+  const r = 20
+  const x1 = cx - r * Math.sin(half)
+  const y1 = yApex + r * Math.cos(half)
+  const x2 = cx + r * Math.sin(half)
+  const y2 = yApex + r * Math.cos(half)
   return {
     cx,
-    cy,
+    cy: yApex,
     r,
     x1,
     y1,
@@ -169,63 +169,89 @@ function angleMarkAt(cx, cy, halfAngleDeg, label) {
     y2,
     label,
     labelX: cx,
-    labelY: cy - r - 6,
+    labelY: yApex - 8,
+    arcSweep: 1,
   }
 }
 
-function diameterLeader(y, label) {
-  return { type: 'diameter', y, label, x1: 358, x2: 462, labelX: 468, labelY: y + 3 }
+function diameterLeader(y, label, xProfileEnd) {
+  return {
+    type: 'diameter',
+    y,
+    label,
+    xProfile: xProfileEnd,
+    x1: xProfileEnd + 4,
+    x2: xProfileEnd + 88,
+    labelX: xProfileEnd + 92,
+    labelY: y + 3,
+  }
 }
 
-function buildTriangular60(withTaper, angle) {
+/** ISO 60° / 惠氏 55° 基本牙型 */
+function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
   const P = 52
-  const H = (P * SQRT3) / 2
-  const x0 = 118
-  const teeth = 3
-  const yPitch = 148
+  const H = P * Hfactor
+  const x0 = 108
+  const teeth = 2
+  const yPitch = 152
   const cf = P / 8
+  const { crest: tCrest, root: tRoot } = trunc
 
-  const yMajor = yPitch - (3 * H) / 8
-  const yMinor = yPitch + H / 4
-  const yIntRoot = yPitch - H / 2 + H / 8
-  const yIntCrest = yPitch + H / 4
   const ySharpCrest = yPitch - H / 2
   const ySharpRoot = yPitch + H / 2
+  const yExtCrest = ySharpCrest + tCrest * H
+  const yExtRoot = ySharpRoot - tRoot * H
+  const yIntCrest = ySharpRoot - tRoot * H
+  const yIntRoot = ySharpCrest + tCrest * H
 
   const extPts = []
   const intPts = []
   for (let i = 0; i < teeth; i++) {
     const xl = x0 + i * P
+    const xc = xl + P / 2
     const xr = xl + P
-    extPts.push([xl, yMinor], [xl + P / 2 - cf / 2, yMajor], [xl + P / 2 + cf / 2, yMajor], [xr, yMinor])
-    intPts.push([xl, yIntRoot], [xl + P / 2 - cf / 2, yIntCrest], [xl + P / 2 + cf / 2, yIntCrest], [xr, yIntRoot])
+    if (i === 0) extPts.push([xl, yExtRoot])
+    extPts.push([xc - cf / 2, yExtCrest], [xc + cf / 2, yExtCrest], [xr, yExtRoot])
+    if (i === 0) intPts.push([xl, yIntRoot])
+    intPts.push([xc - cf / 2, yIntCrest], [xc + cf / 2, yIntCrest], [xr, yIntRoot])
   }
 
   const xEnd = x0 + teeth * P
-  const yBottom = yMinor + H / 3
-  const yTop = yIntRoot - H / 6
+  const xc = x0 + P / 2
+  const yBottom = yExtRoot + H / 3
+  const yTop = yIntRoot - H / 5
 
   const extProfile = ptsToPath(extPts)
   const intProfile = ptsToPath(intPts)
   const extFill = `${extProfile} L ${xEnd} ${yBottom} L ${x0} ${yBottom} Z`
   const intFill = `${intProfile} L ${xEnd} ${yTop} L ${x0} ${yTop} Z`
 
-  const xc = x0 + P * 1.5
-  const ghosts = [
-    ptsToPath([[xc - P / 2, yMinor], [xc, ySharpCrest], [xc + P / 2, yMinor]]),
-    ptsToPath([[xc - P / 2, yIntRoot], [xc, ySharpRoot], [xc + P / 2, yIntRoot]]),
-  ]
+  const ghosts = []
+  for (let i = 0; i < teeth; i++) {
+    const gx = x0 + i * P + P / 2
+    ghosts.push(
+      ptsToPath([[gx - P / 2, ySharpRoot], [gx, ySharpCrest], [gx + P / 2, ySharpRoot]]),
+    )
+  }
+
+  const dimXFull = xc - P - 18
+  const dimXPart = xc - P - 38
 
   const dims = [
-    dimV(72, ySharpCrest, ySharpRoot, 'H', { ext: 6 }),
-    dimV(52, ySharpCrest, yMajor, 'H/8', { ext: 4 }),
-    dimV(52, yPitch, ySharpCrest, 'H/2', { ext: 4 }),
-    dimV(52, yMinor, ySharpRoot, 'H/4', { ext: 4 }),
-    dimH(xc - P / 2, xc + P / 2, yMinor + H / 5, 'P'),
-    diameterLeader(yMajor, 'd / D'),
-    diameterLeader(yPitch, 'd₂ / D₂'),
-    diameterLeader(yMinor, 'd₁ / D₁'),
+    dimV(dimXFull, ySharpCrest, ySharpRoot, 'H', { ext: 6 }),
+    dimV(dimXPart, ySharpCrest, yExtCrest, 'H/8', { ext: 4 }),
+    dimV(dimXPart, ySharpCrest, yPitch, 'H/2', { ext: 4 }),
+    dimV(dimXPart, ySharpRoot, yExtRoot, 'H/4', { ext: 4 }),
+    dimH(xc - P / 2, xc + P / 2, yExtRoot + 10, 'P'),
+    diameterLeader(yExtCrest, 'd / D', xEnd),
+    diameterLeader(yPitch, 'd₂ / D₂', xEnd),
+    diameterLeader(yExtRoot, 'd₁ / D₁', xEnd),
   ]
+
+  if (includedAngle === 55) {
+    dims[1] = dimV(dimXPart, ySharpCrest, yExtCrest, 'H/6', { ext: 4 })
+    dims[3] = dimV(dimXPart, ySharpRoot, yExtRoot, 'H/6', { ext: 4 })
+  }
 
   const scene = {
     viewBox: '0 0 560 300',
@@ -238,16 +264,14 @@ function buildTriangular60(withTaper, angle) {
       { d: extProfile, stroke: '#374151', width: 1.35 },
     ],
     ghosts,
-    pitchAxis: { x1: x0 - 8, y1: yPitch, x2: xEnd + 8, y2: yPitch },
+    pitchAxis: { x1: x0 - 6, y1: yPitch, x2: xEnd + 6, y2: yPitch },
     dims,
-    angleMark: angleMarkAt(xc, yPitch, angle / 2, `${angle}°`),
+    angleMark: angleMarkAtApex(xc, ySharpCrest, includedAngle, `${includedAngle}°`),
     labels: [
-      { text: 'internal', x: x0 + P * 0.4, y: yTop + 18 },
-      { text: 'external', x: x0 + P * 0.4, y: yBottom - 8 },
+      { text: 'internal', x: x0 + P * 0.35, y: yTop + 16 },
+      { text: 'external', x: x0 + P * 0.35, y: yBottom - 6 },
     ],
     paramKeys: ['pitch', 'major', 'pitchDia', 'minor', 'tapDrill', 'toleranceExt', 'toleranceInt'],
-    heightKeys: ['H', 'H/8', 'H/2', 'H/4'],
-    diameterKeys: ['major', 'pitchDia', 'minor'],
     legacyExternalPath: extProfile,
     legacyInternalPath: intProfile,
     taper: null,
@@ -255,12 +279,12 @@ function buildTriangular60(withTaper, angle) {
 
   if (withTaper) {
     scene.taper = {
-      x1: 88,
-      y1: yBottom + 6,
-      x2: xEnd + 36,
-      y2: yTop - 4,
-      labelX: xEnd + 8,
-      labelY: yTop - 8,
+      x1: 78,
+      y1: yBottom + 4,
+      x2: xEnd + 28,
+      y2: yTop - 2,
+      labelX: xEnd + 4,
+      labelY: yTop - 6,
       label: '1:16',
     }
     scene.paramKeys.push('taper', 'sealing')
@@ -269,77 +293,12 @@ function buildTriangular60(withTaper, angle) {
   return scene
 }
 
+function buildTriangular60(withTaper, angle) {
+  return buildIsoTriangular(withTaper, angle, SQRT3 / 2, { crest: 1 / 8, root: 1 / 4 })
+}
+
 function buildTriangular55(withTaper, angle) {
-  const P = 52
-  const H = P * 0.960491
-  const x0 = 118
-  const teeth = 3
-  const yPitch = 148
-  const cf = P / 6
-
-  const yMajor = yPitch - (5 * H) / 12
-  const yMinor = yPitch + H / 3
-  const yIntRoot = yPitch - H / 2 + H / 6
-  const yIntCrest = yPitch + H / 3
-  const ySharpCrest = yPitch - H / 2
-  const ySharpRoot = yPitch + H / 2
-
-  const extPts = []
-  const intPts = []
-  for (let i = 0; i < teeth; i++) {
-    const xl = x0 + i * P
-    const xr = xl + P
-    extPts.push([xl, yMinor], [xl + P / 2 - cf / 2, yMajor], [xl + P / 2 + cf / 2, yMajor], [xr, yMinor])
-    intPts.push([xl, yIntRoot], [xl + P / 2 - cf / 2, yIntCrest], [xl + P / 2 + cf / 2, yIntCrest], [xr, yIntRoot])
-  }
-
-  const xEnd = x0 + teeth * P
-  const yBottom = yMinor + H / 3
-  const yTop = yIntRoot - H / 6
-  const xc = x0 + P * 1.5
-
-  const extProfile = ptsToPath(extPts)
-  const intProfile = ptsToPath(intPts)
-
-  const scene = {
-    viewBox: '0 0 560 300',
-    regions: [
-      { d: `${intProfile} L ${xEnd} ${yTop} L ${x0} ${yTop} Z`, fill: 'var(--thread-diagram-internal, #d8ece8)', stroke: '#5a8f88' },
-      { d: `${extProfile} L ${xEnd} ${yBottom} L ${x0} ${yBottom} Z`, fill: 'var(--thread-diagram-external, #e4e8ec)', stroke: '#6b7280' },
-    ],
-    profiles: [
-      { d: intProfile, stroke: '#2d6a62', width: 1.35 },
-      { d: extProfile, stroke: '#374151', width: 1.35 },
-    ],
-    ghosts: [
-      ptsToPath([[xc - P / 2, yMinor], [xc, ySharpCrest], [xc + P / 2, yMinor]]),
-      ptsToPath([[xc - P / 2, yIntRoot], [xc, ySharpRoot], [xc + P / 2, yIntRoot]]),
-    ],
-    pitchAxis: { x1: x0 - 8, y1: yPitch, x2: xEnd + 8, y2: yPitch },
-    dims: [
-      dimV(72, ySharpCrest, ySharpRoot, 'H', { ext: 6 }),
-      dimV(52, ySharpCrest, yMajor, 'H/6', { ext: 4 }),
-      dimV(52, yPitch, ySharpCrest, 'H/2', { ext: 4 }),
-      dimV(52, yMinor, ySharpRoot, 'H/6', { ext: 4 }),
-      dimH(xc - P / 2, xc + P / 2, yMinor + H / 5, 'P'),
-      diameterLeader(yMajor, 'd / D'),
-      diameterLeader(yPitch, 'd₂ / D₂'),
-      diameterLeader(yMinor, 'd₁ / D₁'),
-    ],
-    angleMark: angleMarkAt(xc, yPitch, angle / 2, `${angle}°`),
-    labels: [
-      { text: 'internal', x: x0 + P * 0.4, y: yTop + 18 },
-      { text: 'external', x: x0 + P * 0.4, y: yBottom - 8 },
-    ],
-    paramKeys: ['pitch', 'major', 'pitchDia', 'minor', 'tapDrill', 'toleranceExt', 'toleranceInt'],
-    legacyExternalPath: extProfile,
-    legacyInternalPath: intProfile,
-    taper: withTaper
-      ? { x1: 88, y1: yBottom + 6, x2: xEnd + 36, y2: yTop - 4, labelX: xEnd + 8, labelY: yTop - 8, label: '1:16' }
-      : null,
-  }
-  if (withTaper) scene.paramKeys.push('taper', 'sealing')
-  return scene
+  return buildIsoTriangular(withTaper, angle, 0.960491, { crest: 1 / 6, root: 1 / 6 })
 }
 
 function buildTrapezoidal(angle, variant) {
@@ -386,11 +345,11 @@ function buildTrapezoidal(angle, variant) {
     dims: [
       dimV(72, yMajor, yMinor, 'H', { ext: 6 }),
       dimH(xc - P / 2, xc + P / 2, yMinor + H / 4, 'P'),
-      diameterLeader(yMajor, 'd / D'),
-      diameterLeader(yPitch, 'd₂ / D₂'),
-      diameterLeader(yMinor, 'd₁ / D₁'),
+      diameterLeader(yMajor, 'd / D', xEnd),
+      diameterLeader(yPitch, 'd₂ / D₂', xEnd),
+      diameterLeader(yMinor, 'd₁ / D₁', xEnd),
     ],
-    angleMark: angleMarkAt(xc, yPitch, angle / 2, `${angle}°`),
+    angleMark: angleMarkAtApex(xc, yMajor, angle, `${angle}°`),
     labels: [
       { text: 'internal', x: x0 + P * 0.4, y: yTop + 18 },
       { text: 'external', x: x0 + P * 0.4, y: yBottom - 8 },
@@ -440,8 +399,8 @@ function buildSquare() {
     dims: [
       dimV(72, yPitch - H / 2, yPitch + H / 2, 'H = P/2', { ext: 6 }),
       dimH(xc - P / 2, xc + P / 2, yPitch + H / 2 + 6, 'P'),
-      diameterLeader(yPitch - H / 2, 'd / D'),
-      diameterLeader(yPitch + H / 2, 'd₁ / D₁'),
+      diameterLeader(yPitch - H / 2, 'd / D', xEnd),
+      diameterLeader(yPitch + H / 2, 'd₁ / D₁', xEnd),
     ],
     angleMark: null,
     labels: [
@@ -492,11 +451,11 @@ function buildButtress() {
     pitchAxis: { x1: x0 - 8, y1: yPitch, x2: xEnd + 8, y2: yPitch },
     dims: [
       dimH(xc - P / 2, xc + P / 2, yPitch + H / 2 + 6, 'P'),
-      diameterLeader(yPitch - H / 2, 'd / D'),
-      diameterLeader(yPitch, 'd₂ / D₂'),
-      diameterLeader(yPitch + H / 2, 'd₁ / D₁'),
+      diameterLeader(yPitch - H / 2, 'd / D', xEnd),
+      diameterLeader(yPitch, 'd₂ / D₂', xEnd),
+      diameterLeader(yPitch + H / 2, 'd₁ / D₁', xEnd),
     ],
-    angleMark: { cx: xc, cy: yPitch, r: 20, x1: xc - 14, y1: yPitch - 10, x2: xc + 10, y2: yPitch - 16, label: '7° / 45°', labelX: xc, labelY: yPitch - 28 },
+    angleMark: { cx: xc, cy: yPitch, r: 20, x1: xc - 14, y1: yPitch - 10, x2: xc + 10, y2: yPitch - 16, label: '7° / 45°', labelX: xc, labelY: yPitch - 28, arcSweep: 0 },
     labels: [
       { text: 'internal', x: x0 + P * 0.4, y: yTop + 18 },
       { text: 'external', x: x0 + P * 0.4, y: yBottom - 8 },
@@ -546,8 +505,8 @@ function buildRound() {
     dims: [
       dimH(xc - P / 2, xc + P / 2, yPitch + H / 2 + 8, 'P'),
       { type: 'linear', x1: xc + r, y1: yPitch - H / 2, x2: xc + r + 16, y2: yPitch - H / 2, label: 'R', labelX: xc + r + 20, labelY: yPitch - H / 2 + 4, anchor: 'start' },
-      diameterLeader(yPitch - H / 2, 'd / D'),
-      diameterLeader(yPitch + H / 2, 'd₁ / D₁'),
+      diameterLeader(yPitch - H / 2, 'd / D', xEnd),
+      diameterLeader(yPitch + H / 2, 'd₁ / D₁', xEnd),
     ],
     angleMark: null,
     labels: [
@@ -594,8 +553,8 @@ function buildBallScrew() {
     pitchAxis: { x1: x0 - 8, y1: yPitch, x2: xEnd + 8, y2: yPitch },
     dims: [
       dimH(x0 + P / 2, x0 + (3 * P) / 2, yBottom - 4, 'P'),
-      diameterLeader(yPitch - amp, 'd / D'),
-      diameterLeader(yPitch + 10, 'd₁ / D₁'),
+      diameterLeader(yPitch - amp, 'd / D', xEnd),
+      diameterLeader(yPitch + 10, 'd₁ / D₁', xEnd),
     ],
     angleMark: null,
     circles: balls,

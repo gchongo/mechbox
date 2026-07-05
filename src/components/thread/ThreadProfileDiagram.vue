@@ -109,6 +109,14 @@
           </text>
         </template>
         <template v-else-if="dim.type === 'diameter'">
+          <line
+            :x1="dim.xProfile ?? dim.x1 - 4"
+            :y1="dim.y"
+            :x2="dim.x1"
+            :y2="dim.y"
+            stroke="currentColor"
+            stroke-width="0.75"
+          />
           <line :x1="dim.x1" :y1="dim.y" :x2="dim.x2" :y2="dim.y" stroke="currentColor" stroke-width="0.75" />
           <text :x="dim.labelX" :y="dim.labelY" class="thread-profile-diagram__dim-text" text-anchor="start">
             {{ dim.label }}
