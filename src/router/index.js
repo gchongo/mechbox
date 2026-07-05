@@ -84,6 +84,11 @@ const routes = [
     component: () => import('@/views/ThreadCalcView.vue'),
   },
   {
+    path: '/thread-table',
+    name: 'thread-table',
+    component: () => import('@/views/ThreadTableView.vue'),
+  },
+  {
     path: '/bolt-preload',
     name: 'bolt-preload',
     component: () => import('@/views/BoltPreloadView.vue'),
@@ -269,6 +274,7 @@ const ENGINEERING_ROUTE_NAMES = new Set([
   'allocation',
   'gear',
   'thread',
+  'thread-table',
   'bolt-preload',
   'bearing',
   'shaft',
