@@ -480,24 +480,58 @@ export const TOOL_HELP_ARTICLES = [
     groupId: 'chain',
     level: 'intermediate',
     title: '过盈配合',
-    summary: '按厚壁圆筒理论估算过盈产生的接触压力与可传递扭矩（DIN 7190 思路）。',
+    summary:
+      '按厚壁圆筒 Lame 理论估算过盈产生的接触压力、切向应力、压装力与可传递扭矩（DIN 7190 思路）。完整/专业模式含许用应力校核与关键输入确认门禁；专业模式可修正温升对过盈的影响。',
+    useCases: [
+      '轴与轮毂压装/热装：判断给定过盈能否传递设计扭矩，压装力是否在设备能力内。',
+      '与 ISO 286 /fit 查得的极限过盈对照，做弹性阶段压力与应力估算。',
+      '空心轴、薄壁轮毂等几何下比较 solid vs hollow 对接触压力的影响。',
+      '服役温升或异种材料时，估算有效过盈是否减小甚至变为间隙（专业模式）。',
+    ],
     steps: [
-      '输入孔/轴直径、过盈量、材料弹性模量与泊松比、结合长度。',
-      '查看接触压力、应力与可传扭矩。',
-      '与设计扭矩比较，判断过盈是否足够或过大（装配困难/塑性风险）。',
+      '选择模式：简化（仅看数量级，pass 恒 false）/ 完整（空心轴+应力校核+确认门禁）/ 专业（+温变修正）。',
+      '输入轴径 $d$、孔径 $D$（过盈 $i=d-D$ 自动显示）、轮毂外径 $D_A$、配合长度 $L$、摩擦系数 $\\mu$。',
+      '完整/专业：填写轴内径 $d_i$（0=实心）、轴/孔 $E,\\nu$、许用切向应力；$D_A$ 可用「推荐」约 $1.8d$。',
+      '专业：输入温升 $\\Delta T$ 与轴/孔线膨胀系数 $\\alpha$（钢约 $11.5\\times10^{-6}$/°C）；$\\alpha=0$ 时温变无效。',
+      '完整/专业：逐项编辑并确认关键输入（见帮助「关键输入门禁」），否则 releaseBlocked，右侧仅警示不显示结果。',
+      '查看 $p$、切向应力 hoopPass、压装力 $F$、扭矩 $T$；与工况扭矩、压机能力比较。',
+      '过盈异常大（如 $i$ 达 mm 级而轴径仅 cm 级）时先核对孔径是否填错，再解读应力结论。',
     ],
     principle:
-      '过盈使结合面产生径向压力，靠摩擦传递扭矩或轴向力。过盈越大压力越大，但装配力与孔壁应力也升高。',
+      '过盈使轴、孔结合面产生径向干涉 $\\Delta r=i/2$，在弹性范围内按 Lame 厚壁圆筒求接触压力 $p$。轮毂柔度 $C_h$ 与轴柔度 $C_s$（实心或空心）之和决定 $p=\\Delta r/[r_i(C_h+C_s)]$。摩擦传递扭矩 $T=\\pi p d^2 L\\mu/2$，压装力 $F=\\pi p d L(\\mu+0.02)$。完整/专业模式将孔壁、轴壁切向应力与许用值比较（hoopPass）。完整/专业还须通过关键输入确认门禁才放行 pass——预填默认值不代表已核对图纸。专业模式用 $i\'=i+\\alpha_s d\\Delta T-\\alpha_h D\\Delta T$ 修正有效过盈。',
     formulas: [
-      { latex: 'T = \\pi p \\mu d^2 L / 2', note: '摩擦可传扭矩（示意）' },
+      { latex: 'i = d - D', note: '过盈量 (mm)；须 $i>0$' },
+      { latex: 'p = \\frac{i/2}{r_i(C_h+C_s)}', note: '$r_i=D/2$；$C_h,C_s$ 含 $E,\\nu$ 与内外半径' },
+      {
+        latex: 'C_h = \\frac{1}{E_h}\\left(\\frac{r_o^2+r_i^2}{r_o^2-r_i^2}+\\nu_h\\right)',
+        note: '轮毂柔度；$r_o=D_A/2$',
+      },
+      { latex: 'C_s = \\frac{1-\\nu_s}{E_s}', note: '实心轴；空心轴见帮助附表' },
+      {
+        latex: '\\sigma_{t,h} = p\\frac{r_o^2+r_i^2}{r_o^2-r_i^2},\\quad \\sigma_{t,s} \\approx p',
+        note: '切向应力校核（完整/专业）',
+      },
+      { latex: 'F = \\pi p d L(\\mu+0.02)', note: '压装力 (N)' },
+      { latex: 'T = \\frac{\\pi p d^2 L \\mu}{2}', note: '传递扭矩 (N·mm)；界面 N·m' },
+      {
+        latex: "i' = i + \\alpha_s d\\Delta T - \\alpha_h D\\Delta T",
+        note: '专业模式温变后过盈',
+      },
     ],
     notes: [
-      '实际还受表面粗糙度、润滑、温度影响。',
-      '大过盈需校核塑性与装配工艺（压装/温差装配）。',
+      '典型 ISO 过盈配合过盈量为 **μm～几十 μm**；$i$ 达 mm 级多为孔径错误或单位混用，应先核对 $D$ 是否应为 49.98 而非 45.98 等。',
+      '简化模式 **pass 恒为 false**（estimateOnly），即使 hoopPass 通过也不能放行。',
+      '完整/专业：未确认关键输入时 **releaseBlocked**，右侧不显示 $p$、$F$ 等——须逐项触发 change 确认，此为有意设计。',
+      '切换计算模式会 **清空** confirmedFields，需重新确认。',
+      '薄壁：$(D_A-D)/2 < 0.1d$ 时 thinWallWarning；$D_A$ 过小会高估 $p$。',
+      '模式说明中「粗糙度修正」尚未实现；当前专业模式仅温变修正。',
+      '与 /fit、/thermal-expansion 联动：先查公差带过盈，再算压力；异种材料温升用专业 $\\alpha$。',
     ],
-    standards: ['DIN 7190（参考）'],
+    example:
+      '例 — Ø50 压装（$d=50$，$D=49.975$，$i=0.025$ mm）：$p\\approx39$ MPa，孔/轴切向应力约 66/39 MPa（$<350$ MPa 许用），$F\\approx3.4\\times10^5$ N，$T\\approx180$ N·m（$L=40$，$\\mu=0.12$）。完整模式须确认轴径、孔径、$D_A$、$L$、许用应力后才解除 releaseBlocked。反例 — $D=45.98$ → $i=4$ mm：$p$ 达 GPa 量级，hoopPass 必败，无工程意义。',
+    standards: ['DIN 7190（参考）', 'ISO 286（过盈量来源，见 /fit）'],
     related: ['fit', 'thermal-expansion'],
-    keywords: ['过盈', '压装'],
+    keywords: ['过盈', '压装', 'Lame', '配合压力', '扭矩', 'releaseBlocked'],
   },
   {
     id: 'thermal-expansion',
@@ -1683,6 +1717,79 @@ const DETAIL_OVERRIDES = {
     reliability: [
       '焊缝计算不能代替焊接工艺评定、探伤和疲劳校核。',
       '动载、低温、厚板约束和缺陷敏感结构应按更完整规范复核。',
+    ],
+  },
+  'interference-fit': {
+    inputs: [
+      {
+        name: '轴径 d / 孔径 D',
+        meaning: '结合面尺寸；过盈 $i=d-D$ 自动计算，须为正。',
+        source: '图纸名义尺寸 + 公差；建议先用 /fit 查 H7/p6 等极限过盈（μm）。',
+      },
+      {
+        name: '轮毂外径 D_A',
+        meaning: '决定轮毂柔度与孔壁应力放大；过小 → 薄壁警告。',
+        source: '结构图；推荐约 $1.8d$（页内按钮）。',
+      },
+      {
+        name: '配合长度 L、摩擦 μ',
+        meaning: '有效结合长度与摩擦系数，直接影响 $F$、$T$。',
+        source: '轮毂轴向尺寸；μ 查 DIN 7190 或工艺经验（压装约 0.1～0.2）。',
+      },
+      {
+        name: 'E、ν 与轴内径 d_i',
+        meaning: '弹性常数；$d_i>0$ 为空心轴（完整/专业），$p$ 低于实心。',
+        source: '材料手册；钢 $E\\approx210$ GPa，$\\nu\\approx0.3$。',
+      },
+      {
+        name: '许用切向应力',
+        meaning: '完整/专业 hoopPass 判据；默认 350 MPa 需按材料屈服/安全系数调整。',
+        source: '材料强度、热处理状态、企业规范。',
+      },
+      {
+        name: 'ΔT、α（专业）',
+        meaning: '温升修正 $i\'$；异种材料 α 不同会改变有效过盈。',
+        source: '/thermal-expansion；钢 α≈$11.5\\times10^{-6}$/°C。',
+      },
+    ],
+    outputs: [
+      {
+        name: '接触压力 p',
+        meaning: '结合面径向压力 (MPa)，Lame 主结果。',
+        judgement: '过大 → 塑性/压装困难；过小 → 扭矩不足。',
+      },
+      {
+        name: '切向应力 / hoopPass',
+        meaning: '孔壁 $\\sigma_{t,h}$ / 轴 $\\sigma_{t,s}$；完整/专业显示 ✓/✗。',
+        judgement: '任一侧超许用则 hoopPass=false，pass 失败。',
+      },
+      {
+        name: '压装力 F',
+        meaning: '沿轴向压入所需力 (N)。',
+        judgement: '与压机、导向、润滑能力比较。',
+      },
+      {
+        name: '传递扭矩 T',
+        meaning: '摩擦可传扭矩 (N·m)。',
+        judgement: '须 $\\ge$ 设计工况扭矩（含安全系数）。',
+      },
+      {
+        name: 'releaseBlocked',
+        meaning: '完整/专业未确认关键输入时的流程阻断。',
+        judgement: '非算错；逐项编辑确认后解除。简化模式无此阻断但 pass 恒 false。',
+      },
+    ],
+    reliability: [
+      'Lame 平面应力弹性解，未含塑性、微动、疲劳与三维效应。',
+      'μ 为常数；粗糙度、润滑未分项建模（专业文案中的粗糙度修正尚未实现）。',
+      '关键输入门禁防止默认值未核对即放行；切换模式会清空确认状态。',
+    ],
+    professionalChecks: [
+      '过盈量与 /fit 查表对照：μm 级正常，mm 级先查孔径是否填错。',
+      '完整/专业：确认全部关键字段后再看 pass；或先用简化模式浏览数量级。',
+      '温变工况：专业模式 α 勿填 0；异种材料须分别取 α。',
+      '薄壁警告时增大 $D_A$ 或复核厚壁公式适用性。',
+      '压装力、扭矩与设备/工况比较后，仍须按企业规范做工艺试验或 DIN 7190 完整校核。',
     ],
   },
   'gdt-stack': {

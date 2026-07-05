@@ -880,27 +880,127 @@ export const toolHelpEnById = {
   'interference-fit': {
     title: 'Interference Fit',
     summary:
-      'Estimate contact pressure and transmissible torque from interference using thick-cylinder theory (DIN 7190 approach).',
+      'Estimate contact pressure, hoop stress, press force, and transmissible torque from interference using Lame thick-cylinder theory (DIN 7190 approach). Full/Professional modes add hoop checks and critical-input confirmation; Professional adds thermal interference correction.',
+    useCases: [
+      'Press/shrink fit of shaft in hub: judge if interference transmits design torque and if press force fits equipment.',
+      'Compare with ISO 286 /fit interference limits before elastic pressure/stress estimate.',
+      'Hollow shaft or thin hub: compare solid vs hollow compliance effect on pressure.',
+      'Service temperature or dissimilar materials: estimate whether effective interference shrinks or becomes clearance (Professional).',
+    ],
     steps: [
-      'Enter shaft diameter, hub bore diameter, hub OD, elastic moduli/Poisson ratios, and fit length.',
-      'Review contact pressure, stresses, and transmissible torque.',
-      'Compare with design torque to judge whether interference is adequate or excessive (assembly difficulty/plasticity risk).',
+      'Choose mode: Simplified (magnitude only, pass always false) / Full (hollow shaft + hoop + confirm gate) / Professional (+ thermal).',
+      'Enter shaft d, bore D (interference i=d−D shown), hub OD D_A, fit length L, friction μ.',
+      'Full/Professional: shaft bore d_i (0=solid), E/ν, hoop allowables; use Recommend ~1.8d for D_A.',
+      'Professional: ΔT and α for shaft/hub (steel ~11.5×10⁻⁶/°C); α=0 disables thermal correction.',
+      'Full/Professional: edit and confirm each critical field or releaseBlocked shows warning only—see help gate table.',
+      'Review p, hoopPass, press force F, torque T vs design torque and press capacity.',
+      'If i is mm-scale on cm-scale diameters, verify bore D before trusting stress results.',
     ],
     principle:
-      'Interference creates radial pressure at the interface; friction transmits torque or axial force. Larger interference raises pressure but also assembly force and hub hoop stress.',
+      'Interference creates radial overlap Δr=i/2; Lame thick-cylinder theory gives contact pressure p from hub compliance C_h and shaft compliance C_s (solid or hollow). Friction torque T=πpd²Lμ/2, press force F=πpdL(μ+0.02). Full/Professional compare hoop stress to allowables (hoopPass). Full/Professional also require critical-input confirmation before pass—prefilled defaults are not auto-confirmed. Professional adjusts i\'=i+α_s dΔT−α_h DΔT.',
     formulas: [
-      { latex: 'T = \\pi p \\mu d^2 L / 2', note: 'Friction transmissible torque (illustrative)' },
+      { latex: 'i = d - D', note: 'Interference (mm); require i>0' },
+      { latex: 'p = \\frac{i/2}{r_i(C_h+C_s)}', note: 'r_i=D/2; C_h,C_s from E, ν, radii' },
+      {
+        latex: 'C_h = \\frac{1}{E_h}\\left(\\frac{r_o^2+r_i^2}{r_o^2-r_i^2}+\\nu_h\\right)',
+        note: 'Hub compliance; r_o=D_A/2',
+      },
+      { latex: 'C_s = \\frac{1-\\nu_s}{E_s}', note: 'Solid shaft; hollow in help tables' },
+      {
+        latex: '\\sigma_{t,h} = p\\frac{r_o^2+r_i^2}{r_o^2-r_i^2},\\quad \\sigma_{t,s} \\approx p',
+        note: 'Hoop check (Full/Professional)',
+      },
+      { latex: 'F = \\pi p d L(\\mu+0.02)', note: 'Press force (N)' },
+      { latex: 'T = \\frac{\\pi p d^2 L \\mu}{2}', note: 'Torque (N·mm); UI in N·m' },
+      {
+        latex: "i' = i + \\alpha_s d\\Delta T - \\alpha_h D\\Delta T",
+        note: 'Professional thermal interference',
+      },
     ],
     notes: [
-      'Surface roughness, lubrication, and temperature also matter.',
-      'Large interference requires plasticity and assembly checks (press/shrink fit).',
+      'Typical ISO interference is **μm to tens of μm**; mm-scale i often means wrong bore (e.g. 45.98 vs 49.98).',
+      'Simplified mode **pass always false** (estimateOnly)—even if hoopPass passes.',
+      'Full/Professional: **releaseBlocked** until critical fields confirmed—right panel shows warning only; intentional design.',
+      'Switching calc mode **clears** confirmations.',
+      'Thin wall: (D_A−D)/2 < 0.1d → thinWallWarning; small D_A overestimates p.',
+      'Professional UI mentions roughness—not implemented; thermal correction only.',
+      'Use with /fit and /thermal-expansion for tolerance band and α.',
     ],
-    standards: ['DIN 7190 (reference)'],
-    useCases: COMMON_USE_CASES,
-    inputs: COMMON_INPUTS,
-    outputs: COMMON_OUTPUTS,
-    reliability: COMMON_RELIABILITY,
-    keywords: ['interference', 'press fit'],
+    example:
+      'Example — Ø50 press fit (d=50, D=49.975, i=0.025 mm): p≈39 MPa, hoop ~66/39 MPa (<350 MPa allow.), F≈3.4×10⁵ N, T≈180 N·m (L=40, μ=0.12). Full mode needs confirmed critical inputs to clear releaseBlocked. Counterexample — D=45.98 → i=4 mm: GPa-scale p, hoopPass fails—likely typo.',
+    standards: ['DIN 7190 (reference)', 'ISO 286 (interference from /fit)'],
+    inputs: [
+      {
+        name: 'Shaft d / bore D',
+        meaning: 'Interface dimensions; interference i=d−D must be positive.',
+        source: 'Drawing; use /fit for H7/p6 etc. limits (μm).',
+      },
+      {
+        name: 'Hub OD D_A',
+        meaning: 'Hub compliance and hoop amplification; too small → thin-wall warning.',
+        source: 'Structure; recommend ~1.8d.',
+      },
+      {
+        name: 'Fit length L, friction μ',
+        meaning: 'Directly scale F and T.',
+        source: 'Hub geometry; μ from DIN 7190 or shop practice (~0.1–0.2 press).',
+      },
+      {
+        name: 'E, ν, bore d_i',
+        meaning: 'Elastic constants; d_i>0 hollow shaft lowers p (Full/Professional).',
+        source: 'Handbook; steel E≈210 GPa, ν≈0.3.',
+      },
+      {
+        name: 'Hoop allowables',
+        meaning: 'Full/Professional hoopPass; default 350 MPa—adjust per material.',
+        source: 'Yield, heat treat, company standards.',
+      },
+      {
+        name: 'ΔT, α (Professional)',
+        meaning: 'Thermal correction to i\'; different α changes fit tightness.',
+        source: '/thermal-expansion; steel α≈11.5×10⁻⁶/°C.',
+      },
+    ],
+    outputs: [
+      {
+        name: 'Contact pressure p',
+        meaning: 'Interface radial pressure (MPa)—main Lame result.',
+        judgement: 'Too high → plasticity/press difficulty; too low → insufficient torque.',
+      },
+      {
+        name: 'Hoop stress / hoopPass',
+        meaning: 'Hub σ_t,h / shaft σ_t,s; ✓/✗ in Full/Professional.',
+        judgement: 'Either over allowable → hoopPass=false, pass fails.',
+      },
+      {
+        name: 'Press force F',
+        meaning: 'Axial press-in force (N).',
+        judgement: 'Compare with press, guide, lubrication capability.',
+      },
+      {
+        name: 'Torque capacity T',
+        meaning: 'Friction transmissible torque (N·m).',
+        judgement: 'Must meet design torque with safety margin.',
+      },
+      {
+        name: 'releaseBlocked',
+        meaning: 'Process gate when critical inputs unconfirmed (Full/Professional).',
+        judgement: 'Not a math error—confirm fields to clear. Simplified has no gate but pass always false.',
+      },
+    ],
+    reliability: [
+      'Lame plane-stress elastic solution—no plasticity, fretting, fatigue, or 3D effects.',
+      'Constant μ; roughness/lubrication not split out (roughness in UI not implemented).',
+      'Critical-input gate prevents release on unreviewed defaults; mode switch clears confirmations.',
+    ],
+    professionalChecks: [
+      'Cross-check i with /fit: μm normal, mm suspect wrong bore.',
+      'Full/Professional: confirm all critical fields before pass; or use Simplified to preview magnitudes.',
+      'Thermal: do not leave α=0 in Professional; use material values for dissimilar pairs.',
+      'On thin-wall warning, increase D_A or verify thick-cylinder applicability.',
+      'After F/T comparison, still follow company process or full DIN 7190 for release.',
+    ],
+    keywords: ['interference', 'press fit', 'Lame', 'contact pressure', 'torque', 'releaseBlocked'],
   },
 
   'thermal-expansion': {
