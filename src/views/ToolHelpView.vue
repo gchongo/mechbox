@@ -162,7 +162,7 @@
         <FitHelpReference v-if="article.id === 'fit'" />
         <GdtStackHelpReference v-if="article.id === 'gdt-stack'" />
         <InterferenceFitHelpReference v-if="article.id === 'interference-fit'" />
-        <FatigueHelpReference v-if="article.id === 'fatigue'" />
+        <ExtendedHelpReference v-if="extendedRef" :data="extendedRef" />
 
         <section v-if="relatedArticles.length" class="help-section">
           <h3 class="help-section__title">{{ ct('help.related') }}</h3>
@@ -194,12 +194,13 @@ import MathContent from '@/components/common/MathContent.vue'
 import FitHelpReference from '@/components/fit/FitHelpReference.vue'
 import GdtStackHelpReference from '@/components/gdt/GdtStackHelpReference.vue'
 import InterferenceFitHelpReference from '@/components/interference/InterferenceFitHelpReference.vue'
-import FatigueHelpReference from '@/components/fatigue/FatigueHelpReference.vue'
+import ExtendedHelpReference from '@/components/help/ExtendedHelpReference.vue'
 import {
   HELP_GROUP_ORDER,
   getHelpArticle,
   searchHelpArticles,
 } from '@/constants/tool-help'
+import { getExtendedHelpRef } from '@/constants/extended-help'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useLocale } from '@/composables/useLocale'
 
@@ -244,6 +245,12 @@ const groupedArticles = computed(() => {
 const article = computed(
   () => getHelpArticle(activeId.value, locale.value) ?? filtered.value[0] ?? null,
 )
+
+const extendedRef = computed(() => {
+  const id = article.value?.id
+  if (!id) return null
+  return getExtendedHelpRef(id, locale.value)
+})
 
 const relatedArticles = computed(() => {
   const ids = article.value?.related ?? []
