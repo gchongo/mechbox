@@ -41,6 +41,18 @@ describe('thread engagement calc', () => {
     expect(r.ok).toBe(true)
     expect(r.diameter).toBe(8)
   })
+
+  it('resolves Tr and UNEF rows from catalog', () => {
+    const tr = getAllThreadRows().find((r) => r.designation === 'Tr20×4')
+    const trEng = analyzeThreadEngagement({ row: tr, engagedLength: 30, jointMaterial: 'steel' })
+    expect(trEng.ok).toBe(true)
+    expect(trEng.diameter).toBe(20)
+
+    const unef = getAllThreadRows().find((r) => r.designation.startsWith('1/4-32 UNEF'))
+    const unefEng = analyzeThreadEngagement({ row: unef, engagedLength: 10, jointMaterial: 'steel' })
+    expect(unefEng.ok).toBe(true)
+    expect(unefEng.pitch).toBeCloseTo(25.4 / 32, 3)
+  })
 })
 
 describe('thread tap drill calc', () => {
@@ -58,6 +70,20 @@ describe('thread tap drill calc', () => {
     expect(r.ok).toBe(false)
     expect(r.errorKey).toBe('tap_pipe_drill_na')
   })
+
+  it('NPTF pipe thread has no tap drill', () => {
+    const row = getAllThreadRows().find((r) => r.system === 'nptf')
+    const r = analyzeTapDrill(row, { material: 'steel' })
+    expect(r.ok).toBe(false)
+    expect(r.errorKey).toBe('tap_pipe_drill_na')
+  })
+
+  it('Tr row returns tap drill with trapezoidal tip', () => {
+    const row = getAllThreadRows().find((r) => r.designation === 'Tr20×4')
+    const r = analyzeTapDrill(row, { material: 'steel' })
+    expect(r.ok).toBe(true)
+    expect(r.tipKeys).toContain('processTrapezoidalTap')
+  })
 })
 
 describe('tolerance guide', () => {
@@ -71,6 +97,12 @@ describe('tolerance guide', () => {
     const sc = getToleranceScenario('unified_commercial', 'unc')
     expect(sc?.external).toBe('2A')
   })
+
+  it('lists tr and nptf scenarios', () => {
+    expect(listScenariosForSystem('tr').some((s) => s.id === 'tr_default')).toBe(true)
+    expect(listScenariosForSystem('nptf').some((s) => s.id === 'pipe_dry')).toBe(true)
+    expect(listScenariosForSystem('unef').some((s) => s.id === 'unef_commercial')).toBe(true)
+  })
 })
 
 describe('misconfig library', () => {
@@ -78,6 +110,12 @@ describe('misconfig library', () => {
     const list = filterMisconfigEntries('', 'pipe')
     expect(list.length).toBeGreaterThan(3)
     expect(list.every((e) => e.tags.includes('pipe'))).toBe(true)
+    expect(list.some((e) => e.id === 'npt_vs_nptf')).toBe(true)
+  })
+
+  it('includes unef pitch misconfig with compare preset', () => {
+    const list = filterMisconfigEntries('unef')
+    expect(list.some((e) => e.id === 'unef_pitch_mix')).toBe(true)
   })
 })
 

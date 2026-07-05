@@ -32,6 +32,18 @@
           </el-radio-group>
         </div>
 
+        <!-- Step: power transmission system (Tr vs Acme) -->
+        <div v-else-if="currentStepId === 'powerSystem'">
+          <h3 class="mb-3 font-semibold">{{ pt('wizStep_powerSystem') }}</h3>
+          <p class="mb-4 text-xs text-gray-500">{{ pt('wizStep_powerSystem_hint') }}</p>
+          <el-radio-group v-model="answers.powerSystem" class="wiz-option-group">
+            <el-radio v-for="opt in powerSystemOptions" :key="opt" :value="opt" border class="wiz-option">
+              <span class="font-medium">{{ pt(`wiz_power_${opt}`) }}</span>
+              <span class="mt-1 block text-xs text-gray-500">{{ pt(`wiz_power_${opt}_desc`) }}</span>
+            </el-radio>
+          </el-radio-group>
+        </div>
+
         <!-- Step: unit -->
         <div v-else-if="currentStepId === 'unit'">
           <h3 class="mb-3 font-semibold">{{ pt('wizStep_unit') }}</h3>
@@ -151,6 +163,12 @@
           />
         </div>
 
+        <section v-if="result.comparePresetId" class="mb-4">
+          <el-button type="primary" plain @click="openComparePreset">
+            {{ pt('wizOpenPowerCompare') }}
+          </el-button>
+        </section>
+
         <section v-if="result.processTipKeys.length" class="mb-4">
           <h4 class="mb-2 font-semibold">{{ pt('wizResultProcess') }}</h4>
           <ul class="list-inside list-disc space-y-1 text-sm text-gray-700 dark:text-gray-300">
@@ -226,15 +244,16 @@ const props = defineProps({
   pt: { type: Function, required: true },
 })
 
-const emit = defineEmits(['open-query', 'open-row'])
+const emit = defineEmits(['open-query', 'open-row', 'open-compare'])
 
 const purposeOptions = ['fastener', 'pipe', 'leadscrew']
 const sealingOptions = ['gasket', 'thread_seal']
+const powerSystemOptions = ['auto', 'tr', 'acme', 'compare']
 const unitOptions = ['metric', 'inch_na', 'inch_legacy', 'match_existing']
 const processOptions = ['bolt_nut', 'tapped_hole', 'pipe_fitting', 'sheet_metal', 'die_cast', 'plastic_insert']
 const loadOptions = ['normal', 'vibration', 'high_load', 'frequent']
 const materialOptions = ['steel', 'aluminum', 'stainless', 'plastic']
-const knowledgeSystems = ['metric', 'unc', 'npt', 'g', 'r']
+const knowledgeSystems = ['metric', 'unc', 'unef', 'tr', 'acme', 'npt', 'nptf', 'g', 'r']
 
 const answers = reactive({ ...DEFAULT_ANSWERS })
 const stepIndex = ref(0)
@@ -258,6 +277,7 @@ watch(
     if (p !== 'pipe') answers.sealing = 'none'
     if (p === 'pipe' && answers.sealing === 'none') answers.sealing = 'thread_seal'
     if (p === 'pipe') answers.process = 'pipe_fitting'
+    if (p !== 'leadscrew') answers.powerSystem = 'auto'
   },
 )
 
@@ -295,6 +315,12 @@ function openQuery() {
     system: r.primarySystem,
     subSeries: r.subSeries,
   })
+}
+
+function openComparePreset() {
+  if (result.value.comparePresetId) {
+    emit('open-compare', result.value.comparePresetId)
+  }
 }
 
 async function exportPdf() {

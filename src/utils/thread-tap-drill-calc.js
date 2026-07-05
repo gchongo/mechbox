@@ -24,7 +24,7 @@ export const HOLE_TYPES = {
  */
 export function analyzeTapDrill(row, options = {}) {
   if (!row) return { ok: false, errorKey: 'tap_need_row' }
-  if (['npt', 'g', 'r'].includes(row.system)) {
+  if (['npt', 'nptf', 'g', 'r'].includes(row.system)) {
     return { ok: false, errorKey: 'tap_pipe_drill_na', row }
   }
   if (row.tapDrill == null) {
@@ -48,7 +48,9 @@ export function analyzeTapDrill(row, options = {}) {
   const tipKeys = [
     'processTapDrill',
     ...(row.system === 'metric' ? ['processMetricTap'] : []),
-    ...(row.system === 'unc' || row.system === 'unf' ? ['processUnifiedTap'] : []),
+    ...(row.system === 'unc' || row.system === 'unf' || row.system === 'unef' ? ['processUnifiedTap'] : []),
+    ...(row.system === 'tr' ? ['processTrapezoidalTap'] : []),
+    ...(row.system === 'acme' ? ['processAcmeTap'] : []),
     ...mat.tipKeys,
     ...hole.tipKeys,
   ]
@@ -65,7 +67,7 @@ export function analyzeTapDrill(row, options = {}) {
     engagementLength,
     chamferAngle: '90–120°',
     tipKeys: [...new Set(tipKeys)],
-    isPipe: ['npt', 'g', 'r'].includes(row.system),
+    isPipe: ['npt', 'nptf', 'g', 'r'].includes(row.system),
   }
 }
 

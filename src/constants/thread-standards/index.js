@@ -1,8 +1,14 @@
 import { METRIC_COARSE_ROWS, METRIC_FINE_ROWS } from './metric-data'
-import { UNC_ROWS, UNF_ROWS } from './unified-data'
-import { NPT_ROWS, G_ROWS, R_ROWS } from './pipe-data'
+import { UNC_ROWS, UNF_ROWS, UNEF_ROWS } from './unified-data'
+import { TR_ROWS } from './tr-data'
+import { ACME_ROWS } from './acme-data'
+import { NPT_ROWS, NPTF_ROWS, G_ROWS, R_ROWS } from './pipe-data'
+import { WHITWORTH_REF_ROWS } from './whitworth-data'
 
 export { calcMetricBasicDims } from './metric-data'
+export { calcTrapezoidalBasicDims } from './tr-data'
+export { calcAcmeBasicDims } from './acme-data'
+export { calcWhitworthBasicDims, getWhitworthReferenceRows } from './whitworth-data'
 
 /** @typedef {import('@/utils/thread-standards').ThreadRow} ThreadRow */
 
@@ -32,11 +38,39 @@ export const THREAD_SYSTEMS = [
     subTabs: [{ id: 'unf', rows: UNF_ROWS }],
   },
   {
+    id: 'unef',
+    standardRef: 'ASME B1.1',
+    angle: 60,
+    unit: 'in',
+    subTabs: [{ id: 'unef', rows: UNEF_ROWS }],
+  },
+  {
+    id: 'tr',
+    standardRef: 'ISO 290',
+    angle: 30,
+    unit: 'mm',
+    subTabs: [{ id: 'tr', rows: TR_ROWS }],
+  },
+  {
+    id: 'acme',
+    standardRef: 'ASME B1.5',
+    angle: 29,
+    unit: 'in',
+    subTabs: [{ id: 'acme', rows: ACME_ROWS }],
+  },
+  {
     id: 'npt',
     standardRef: 'ASME B1.20.1',
     angle: 60,
     unit: 'in',
     subTabs: [{ id: 'npt', rows: NPT_ROWS }],
+  },
+  {
+    id: 'nptf',
+    standardRef: 'SAE J476',
+    angle: 60,
+    unit: 'in',
+    subTabs: [{ id: 'nptf', rows: NPTF_ROWS }],
   },
   {
     id: 'g',
@@ -55,7 +89,8 @@ export const THREAD_SYSTEMS = [
 ]
 
 export function getAllThreadRows() {
-  return THREAD_SYSTEMS.flatMap((sys) => sys.subTabs.flatMap((t) => t.rows))
+  const catalog = THREAD_SYSTEMS.flatMap((sys) => sys.subTabs.flatMap((t) => t.rows))
+  return [...catalog, ...WHITWORTH_REF_ROWS]
 }
 
 export function getThreadRows(systemId, subTabId) {
@@ -67,3 +102,14 @@ export function getThreadRows(systemId, subTabId) {
   }
   return sys.subTabs[0]?.rows ?? []
 }
+
+export {
+  THREAD_PURPOSE_ORDER,
+  PURPOSE_SYSTEM_IDS,
+  THREAD_SYSTEM_REGISTRY,
+  getSystemsForPurpose,
+  getThreadSystemDef,
+  resolveTaxonomyFromCatalog,
+  countImplementedInPurpose,
+  getAllRegisteredSystems,
+} from './taxonomy'

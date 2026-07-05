@@ -9,7 +9,8 @@
             <ThreadRowPicker
               v-model="rowId"
               :pt="pt"
-              :fastener-only="true"
+              :systems="['metric', 'unc', 'unf', 'unef', 'tr', 'acme']"
+              :fastener-only="false"
               :hint="pt('tapPickHint')"
             />
           </el-form-item>

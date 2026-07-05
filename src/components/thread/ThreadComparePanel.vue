@@ -79,6 +79,22 @@
         show-icon
         :title="pt('pipeCompatibilityWarn')"
       />
+      <el-alert
+        v-if="hasNptNptfMix"
+        class="mt-4"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="pt('compareWarnNptNptf')"
+      />
+      <el-alert
+        v-if="hasUnifiedPitchMix"
+        class="mt-4"
+        type="info"
+        :closable="false"
+        show-icon
+        :title="pt('compareWarnUnifiedPitch')"
+      />
     </div>
   </div>
 </template>
@@ -128,6 +144,19 @@ const hasPipeMix = computed(() => {
   return systems.has('npt') && (systems.has('g') || systems.has('r'))
 })
 
+const hasNptNptfMix = computed(() => {
+  const systems = new Set(selectedRows.value.map((r) => r.system))
+  return systems.has('npt') && systems.has('nptf')
+})
+
+const hasUnifiedPitchMix = computed(() => {
+  const unified = selectedRows.value.filter((r) => ['unc', 'unf', 'unef'].includes(r.system))
+  if (unified.length < 2) return false
+  const nominals = new Set(unified.map((r) => r.nominal))
+  const series = new Set(unified.map((r) => r.system))
+  return nominals.size === 1 && series.size > 1
+})
+
 watch(
   () => props.modelValue,
   (ids) => {
@@ -158,7 +187,16 @@ function applyPreset(preset) {
 }
 
 function presetLabel(id) {
-  const map = { 'pipe-half': 'preset_pipeHalf', 'metric-m10': 'preset_metricM10', 'un-quarter': 'preset_unQuarter' }
+  const map = {
+    'pipe-half': 'preset_pipeHalf',
+    'metric-m10': 'preset_metricM10',
+    'un-quarter': 'preset_unQuarter',
+    'un-quarter-series': 'preset_unQuarterSeries',
+    'pipe-npt-nptf': 'preset_pipeNptNptf',
+    'tr-drive': 'preset_trDrive',
+    'power-tr-acme': 'preset_powerTrAcme',
+    'whitworth-quarter': 'preset_whitworthQuarter',
+  }
   return props.pt(map[id] ?? id)
 }
 

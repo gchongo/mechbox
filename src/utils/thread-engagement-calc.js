@@ -90,7 +90,7 @@ export function analyzeThreadEngagement(input = {}) {
 function resolveEngagementDims(input) {
   if (input.row) {
     const row = input.row
-    if (row.system === 'metric' && row.nominal && row.pitch) {
+    if ((row.system === 'metric' || row.system === 'tr') && row.nominal && row.pitch) {
       return {
         diameter: row.nominal,
         pitch: row.pitch,
@@ -99,7 +99,7 @@ function resolveEngagementDims(input) {
         isMetric: true,
       }
     }
-    if ((row.system === 'unc' || row.system === 'unf') && row.nominal && row.tpi) {
+    if ((row.system === 'unc' || row.system === 'unf' || row.system === 'unef') && row.nominal && row.tpi) {
       const pitchMm = 25.4 / row.tpi
       return {
         diameter: row.nominal * 25.4,
@@ -107,6 +107,17 @@ function resolveEngagementDims(input) {
         unit: row.unit,
         designation: row.designation,
         isMetric: false,
+      }
+    }
+    if (row.system === 'acme' && row.nominal && row.tpi) {
+      const pitchMm = 25.4 / row.tpi
+      return {
+        diameter: row.nominal * 25.4,
+        pitch: pitchMm,
+        unit: row.unit,
+        designation: row.designation,
+        isMetric: false,
+        isPower: true,
       }
     }
     return { errorKey: 'eng_unsupported_system' }

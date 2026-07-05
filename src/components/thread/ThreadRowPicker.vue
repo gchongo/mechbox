@@ -28,7 +28,7 @@ import { getAllThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
 const props = defineProps({
   modelValue: { type: String, default: '' },
   pt: { type: Function, required: true },
-  systems: { type: Array, default: () => ['metric', 'unc', 'unf'] },
+  systems: { type: Array, default: () => ['metric', 'unc', 'unf', 'unef'] },
   fastenerOnly: { type: Boolean, default: true },
   placeholder: { type: String, default: '' },
   hint: { type: String, default: '' },
@@ -41,7 +41,7 @@ const groups = computed(() => {
   return THREAD_SYSTEMS.filter((s) => props.systems.includes(s.id)).map((sys) => {
     let rows = sys.subTabs.flatMap((t) => t.rows)
     if (props.fastenerOnly) {
-      rows = rows.filter((r) => ['metric', 'unc', 'unf'].includes(r.system))
+      rows = rows.filter((r) => ['metric', 'unc', 'unf', 'unef', 'tr', 'acme'].includes(r.system))
     }
     if (sys.id === 'metric') {
       rows = rows.filter((r) => r.priority === 1 || r.priority === 2).slice(0, 80)

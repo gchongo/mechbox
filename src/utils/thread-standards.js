@@ -188,7 +188,7 @@ export function parseThreadMark(input) {
     return attachMatches(base)
   }
 
-  const unified = normalized.match(/^([\d#/.]+)\s*-\s*(\d+)\s*(UNC|UNF)(?:\s*-\s*(\d+[AB]))?/i)
+  const unified = normalized.match(/^([\d#/.]+)\s*-\s*(\d+(?:\.\d+)?)\s*(UNC|UNF|UNEF|UNS|BSW|BSF)(?:\s*-\s*(\d+[AB]))?/i)
   if (unified) {
     base.system = unified[3].toLowerCase()
     base.series = base.system
@@ -200,6 +200,42 @@ export function parseThreadMark(input) {
       else base.toleranceInternal = tol.toUpperCase()
     }
     base.segments = buildUnifiedSegments(raw, unified)
+    if (base.system === 'bsw' || base.system === 'bsf') {
+      return attachWhitworthMatches(base)
+    }
+    return attachMatches(base)
+  }
+
+  const tr = compact.match(/^tr(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/i)
+    || normalized.match(/^Tr\s*(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/i)
+  if (tr) {
+    base.system = 'tr'
+    base.series = 'tr'
+    base.nominal = Number(tr[1])
+    base.pitch = Number(tr[2])
+    base.segments = [
+      { text: `Tr${tr[1]}`, role: 'trPrefix' },
+      { text: `×${tr[2]}`, role: 'pitch' },
+    ]
+    return attachMatches(base)
+  }
+
+  const acme = normalized.match(/^([\d#/.]+)\s*-\s*(\d+)\s*ACME/i)
+  if (acme) {
+    base.system = 'acme'
+    base.series = 'acme'
+    base.tpi = Number(acme[2])
+    base.pitch = tpiToPitch(base.tpi)
+    base.segments = buildUnifiedSegments(raw, [acme[1], acme[2], 'ACME', null])
+    return attachMatches(base)
+  }
+
+  const nptf = normalized.match(/^(\d+\/\d+|\d+(?:-\d+\/\d+)?|\d+)\s*-\s*(\d+(?:\.\d+)?)\s*NPTF/i)
+  if (nptf) {
+    base.system = 'nptf'
+    base.series = 'nptf'
+    base.tpi = Number(nptf[2])
+    base.segments = [{ text: raw, role: 'pipeDrySeal' }]
     return attachMatches(base)
   }
 
@@ -261,6 +297,13 @@ function attachMatches(parsed) {
   return parsed
 }
 
+function attachWhitworthMatches(parsed) {
+  parsed.matchedRows = findMatchingRows(parsed)
+  parsed.primaryMatch = parsed.matchedRows[0] ?? null
+  parsed.referenceOnly = !parsed.primaryMatch
+  return parsed
+}
+
 /** @param {ParsedThreadMark} parsed */
 export function findMatchingRows(parsed) {
   if (!parsed.system) return searchAllRows(normalizeQuery(parsed.raw))
@@ -282,7 +325,16 @@ export function findMatchingRows(parsed) {
     return list.length ? list : all.filter((r) => designationLooseMatch(r.designation, normalizeQuery(parsed.raw)))
   }
 
-  if (parsed.system === 'unc' || parsed.system === 'unf') {
+  if (parsed.system === 'tr') {
+    let list = all
+    if (parsed.nominal != null) list = list.filter((r) => r.nominal === parsed.nominal)
+    if (parsed.pitch != null) {
+      list = list.filter((r) => r.pitch != null && Math.abs(r.pitch - parsed.pitch) < 0.001)
+    }
+    return list.length ? list : all.filter((r) => designationLooseMatch(r.designation, normalizeQuery(parsed.raw)))
+  }
+
+  if (parsed.system === 'unc' || parsed.system === 'unf' || parsed.system === 'unef') {
     const q = normalizeQuery(parsed.raw)
     const hits = all.filter((r) => designationLooseMatch(r.designation, q))
     if (hits.length) return hits
@@ -291,7 +343,21 @@ export function findMatchingRows(parsed) {
     }
   }
 
-  if (['npt', 'g', 'r'].includes(parsed.system)) {
+  if (parsed.system === 'acme') {
+    const q = normalizeQuery(parsed.raw)
+    return all.filter((r) => designationLooseMatch(r.designation, q))
+  }
+
+  if (parsed.system === 'bsw' || parsed.system === 'bsf') {
+    const q = normalizeQuery(parsed.raw)
+    const hits = all.filter((r) => r.system === parsed.system && designationLooseMatch(r.designation, q))
+    if (hits.length) return hits
+    if (parsed.tpi) {
+      return all.filter((r) => r.system === parsed.system && r.tpi === parsed.tpi)
+    }
+  }
+
+  if (['npt', 'nptf', 'g', 'r'].includes(parsed.system)) {
     const q = normalizeQuery(parsed.raw)
     return all.filter((r) => designationLooseMatch(r.designation, q))
   }
@@ -436,6 +502,43 @@ export function getComparePresets() {
       rowIds: [
         find((r) => r.designation.startsWith('1/4-20 UNC'))?.id,
         find((r) => r.designation.startsWith('1/4-28 UNF'))?.id,
+      ].filter(Boolean),
+    },
+    {
+      id: 'un-quarter-series',
+      rowIds: [
+        find((r) => r.designation.startsWith('1/4-20 UNC'))?.id,
+        find((r) => r.designation.startsWith('1/4-28 UNF'))?.id,
+        find((r) => r.designation.startsWith('1/4-32 UNEF'))?.id,
+      ].filter(Boolean),
+    },
+    {
+      id: 'pipe-npt-nptf',
+      rowIds: [
+        find((r) => r.designation === '1/2-14 NPT')?.id,
+        find((r) => r.designation === '1/2-14 NPTF')?.id,
+      ].filter(Boolean),
+    },
+    {
+      id: 'tr-drive',
+      rowIds: [
+        find((r) => r.designation === 'Tr20×4')?.id,
+        find((r) => r.designation === 'Tr24×5')?.id,
+      ].filter(Boolean),
+    },
+    {
+      id: 'power-tr-acme',
+      rowIds: [
+        find((r) => r.designation === 'Tr20×4')?.id,
+        find((r) => r.designation === '1/2-10 ACME')?.id,
+      ].filter(Boolean),
+    },
+    {
+      id: 'whitworth-quarter',
+      rowIds: [
+        find((r) => r.designation === '1/4-20 BSW')?.id,
+        find((r) => r.designation.startsWith('1/4-20 UNC'))?.id,
+        find((r) => r.designation === 'M6')?.id,
       ].filter(Boolean),
     },
   ]

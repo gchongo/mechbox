@@ -9,6 +9,8 @@
             <ThreadRowPicker
               v-model="rowId"
               :pt="pt"
+              :systems="['metric', 'unc', 'unf', 'unef', 'tr', 'acme']"
+              :fastener-only="false"
               :hint="pt('engPickHint')"
               @update:model-value="onRowChange"
             />
@@ -131,10 +133,18 @@ watch(
 
 function onRowChange(id) {
   selectedRow.value = id ? findThreadRowById(id) : null
-  if (selectedRow.value?.system === 'metric') {
-    form.diameter = selectedRow.value.nominal
-    form.pitch = selectedRow.value.pitch
-    form.engagedLength = Math.round(selectedRow.value.nominal * 1.5 * 10) / 10
+  const row = selectedRow.value
+  if (!row) return
+  if (row.system === 'metric' || row.system === 'tr') {
+    form.diameter = row.nominal
+    form.pitch = row.pitch
+    form.engagedLength = Math.round(row.nominal * 1.5 * 10) / 10
+    return
+  }
+  if (['unc', 'unf', 'unef', 'acme'].includes(row.system) && row.nominal && row.tpi) {
+    form.diameter = Math.round(row.nominal * 25.4 * 100) / 100
+    form.pitch = Math.round((25.4 / row.tpi) * 1000) / 1000
+    form.engagedLength = Math.round(form.diameter * 1.5 * 10) / 10
   }
 }
 

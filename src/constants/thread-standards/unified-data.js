@@ -1,6 +1,6 @@
 /** ASME B1.1 UNC / UNF 标准系列 — 基本尺寸由公式生成 */
 
-import { UNC_DEFINITIONS, UNF_DEFINITIONS } from './unified-definitions'
+import { UNC_DEFINITIONS, UNF_DEFINITIONS, UNEF_DEFINITIONS } from './unified-definitions'
 import { calcUnifiedBasicDims } from './thread-dim'
 
 function formatLabel(label, tpi, series) {
@@ -34,6 +34,7 @@ function buildUnifiedRows(definitions, series) {
 
 export const UNC_ROWS = buildUnifiedRows(UNC_DEFINITIONS, 'unc')
 export const UNF_ROWS = buildUnifiedRows(UNF_DEFINITIONS, 'unf')
+export const UNEF_ROWS = buildUnifiedRows(UNEF_DEFINITIONS, 'unef')
 
 /** @deprecated */
 export function buildUnifiedRowsLegacy(seriesFilter) {

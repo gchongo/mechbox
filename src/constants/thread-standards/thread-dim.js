@@ -38,6 +38,25 @@ export function calcUnifiedBasicDims(majorIn, tpi) {
 }
 
 /**
+ * BS 84 Whitworth 55° 平行螺纹基本尺寸（外螺纹参考）
+ * d2 = d - 0.6403P, d1 = d - 1.2806P
+ */
+export function calcWhitworthBasicDims(majorIn, tpi) {
+  const pitch = 1 / tpi
+  const pdCoef = 0.6403
+  const minorCoef = 1.2806
+  return {
+    major: round(majorIn, 4),
+    pitchDiameter: round(majorIn - pdCoef * pitch, 4),
+    minor: round(majorIn - minorCoef * pitch, 4),
+    pitch,
+    tpi,
+    threadAngle: 55,
+    tapDrill: round(majorIn - minorCoef * pitch, 3),
+  }
+}
+
+/**
  * 55° 惠氏管螺纹基本小径（外螺纹参考）
  * H = 0.960491P, 外螺纹小径 ≈ 大径 - 2×(5/8)H 简化基本值
  */
@@ -52,6 +71,37 @@ export function calcNptMinorFromMajor(majorIn, tpi) {
   const P = 1 / tpi
   const h = 0.8 * P
   return round(majorIn - 2 * (5 / 8) * h, 4)
+}
+
+/**
+ * ISO 290 / DIN 103 公制梯形 Tr — 30° 牙型基本尺寸（外螺纹参考）
+ * d2 = d - 0.5P, d3 = d - P
+ */
+export function calcTrapezoidalBasicDims(nominal, pitch) {
+  return {
+    major: round(nominal, 3),
+    pitchDiameter: round(nominal - 0.5 * pitch, 3),
+    minor: round(nominal - pitch, 3),
+    pitch: round(pitch, 3),
+    threadAngle: 30,
+    tapDrill: round(nominal - pitch, 2),
+  }
+}
+
+/**
+ * ASME B1.5 通用 Acme — 29° 牙型基本尺寸（简化参考）
+ */
+export function calcAcmeBasicDims(majorIn, tpi) {
+  const pitch = 1 / tpi
+  return {
+    major: round(majorIn, 4),
+    pitchDiameter: round(majorIn - 0.5 * pitch, 4),
+    minor: round(majorIn - pitch, 4),
+    pitch,
+    tpi,
+    threadAngle: 29,
+    tapDrill: round(majorIn - pitch, 3),
+  }
 }
 
 export function stripNum(n) {

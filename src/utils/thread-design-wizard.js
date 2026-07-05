@@ -1,9 +1,10 @@
 import { getThreadRows } from '@/constants/thread-standards'
 
-/** @typedef {'purpose'|'sealing'|'unit'|'process'} WizardStepId */
+/** @typedef {'purpose'|'sealing'|'powerSystem'|'unit'|'process'} WizardStepId */
 
 /** @typedef {'fastener'|'pipe'|'leadscrew'} PurposeId */
 /** @typedef {'none'|'gasket'|'thread_seal'} SealingId */
+/** @typedef {'tr'|'acme'|'auto'|'compare'} PowerSystemId */
 /** @typedef {'metric'|'inch_na'|'inch_legacy'|'match_existing'} UnitId */
 /** @typedef {'bolt_nut'|'tapped_hole'|'pipe_fitting'|'sheet_metal'|'die_cast'|'plastic_insert'} ProcessId */
 /** @typedef {'normal'|'vibration'|'high_load'|'frequent'} LoadId */
@@ -13,6 +14,7 @@ import { getThreadRows } from '@/constants/thread-standards'
  * @typedef {object} WizardAnswers
  * @property {PurposeId} purpose
  * @property {SealingId} sealing
+ * @property {PowerSystemId} powerSystem
  * @property {UnitId} unit
  * @property {ProcessId} process
  * @property {LoadId} [load]
@@ -22,6 +24,7 @@ import { getThreadRows } from '@/constants/thread-standards'
 export const WIZARD_STEP_ORDER = /** @type {WizardStepId[]} */ ([
   'purpose',
   'sealing',
+  'powerSystem',
   'unit',
   'process',
 ])
@@ -29,6 +32,7 @@ export const WIZARD_STEP_ORDER = /** @type {WizardStepId[]} */ ([
 export const DEFAULT_ANSWERS = /** @type {WizardAnswers} */ ({
   purpose: 'fastener',
   sealing: 'none',
+  powerSystem: 'auto',
   unit: 'metric',
   process: 'bolt_nut',
   load: 'normal',
@@ -53,11 +57,20 @@ export function needsSealingStep(answers) {
 
 /**
  * @param {Partial<WizardAnswers>} answers
+ */
+export function needsPowerSystemStep(answers) {
+  const a = normalizeWizardAnswers(answers)
+  return a.purpose === 'leadscrew'
+}
+
+/**
+ * @param {Partial<WizardAnswers>} answers
  * @returns {WizardStepId[]}
  */
 export function getActiveWizardSteps(answers) {
   const steps = ['purpose']
   if (needsSealingStep(answers)) steps.push('sealing')
+  if (needsPowerSystemStep(answers)) steps.push('powerSystem')
   steps.push('unit', 'process')
   return steps
 }
@@ -111,28 +124,83 @@ export function runThreadDesignWizard(answers) {
  * @property {import('@/constants/thread-standards').ThreadRow[]} sampleRows
  * @property {boolean} showTapDrill
  * @property {string|null} unsupportedKey
+ * @property {string|null} [comparePresetId]
  */
 
 /** @param {WizardAnswers} a */
+function resolveLeadscrewPrimary(a) {
+  if (a.powerSystem === 'tr') return 'tr'
+  if (a.powerSystem === 'acme') return 'acme'
+  if (a.unit === 'inch_na') return 'acme'
+  if (a.unit === 'metric') return 'tr'
+  return 'tr'
+}
+
+/** @param {WizardAnswers} a */
 function buildLeadscrewResult(a) {
+  if (a.powerSystem === 'compare') {
+    const trSamples = pickSampleRows('tr', 'tr', 3)
+    const acmeSamples = pickSampleRows('acme', 'acme', 3)
+    return {
+      success: true,
+      primarySystem: 'tr',
+      systems: ['tr', 'acme'],
+      subSeries: null,
+      toleranceInternal: '7H / 2G',
+      toleranceExternal: '7e / 2G',
+      toleranceScenarioKey: 'wiz_tol_power_compare',
+      sizeRangeKey: 'wiz_size_leadscrew',
+      preferFinePitch: false,
+      processTipKeys: ['wiz_proc_leadscrew', 'wiz_proc_tr', 'wiz_proc_acme'],
+      warnings: [
+        { level: 'info', key: 'wiz_warn_leadscrew' },
+        { level: 'info', key: 'wiz_warn_power_compare' },
+      ],
+      alternatives: [],
+      standardRefKeys: ['wiz_std_tr', 'wiz_std_acme'],
+      sealingNoteKey: null,
+      sampleRows: [...trSamples, ...acmeSamples],
+      showTapDrill: a.process === 'tapped_hole',
+      unsupportedKey: null,
+      comparePresetId: 'power-tr-acme',
+    }
+  }
+
+  const primarySystem = resolveLeadscrewPrimary(a)
+  const explicit = a.powerSystem === 'tr' || a.powerSystem === 'acme'
+
   return {
-    success: false,
-    primarySystem: null,
-    systems: [],
-    subSeries: null,
-    toleranceInternal: '—',
-    toleranceExternal: '—',
-    toleranceScenarioKey: 'wiz_tol_leadscrew',
+    success: true,
+    primarySystem,
+    systems: [primarySystem],
+    subSeries: primarySystem,
+    toleranceInternal: primarySystem === 'tr' ? '7H' : '2G',
+    toleranceExternal: primarySystem === 'tr' ? '7e' : '2G',
+    toleranceScenarioKey: primarySystem === 'tr' ? 'wiz_tol_tr' : 'wiz_tol_acme',
     sizeRangeKey: 'wiz_size_leadscrew',
     preferFinePitch: false,
-    processTipKeys: ['wiz_proc_leadscrew'],
-    warnings: [{ level: 'info', key: 'wiz_warn_leadscrew' }],
-    alternatives: [{ key: 'wiz_alt_leadscrew_tr' }],
-    standardRefKeys: ['wiz_std_tr', 'wiz_std_acme'],
+    processTipKeys: [
+      'wiz_proc_leadscrew',
+      primarySystem === 'tr' ? 'wiz_proc_tr' : 'wiz_proc_acme',
+    ],
+    warnings: [
+      { level: 'info', key: 'wiz_warn_leadscrew' },
+      ...(explicit && a.unit === 'inch_na' && primarySystem === 'tr'
+        ? [{ level: 'warning', key: 'wiz_warn_tr_on_inch' }]
+        : []),
+      ...(explicit && a.unit === 'metric' && primarySystem === 'acme'
+        ? [{ level: 'warning', key: 'wiz_warn_acme_on_metric' }]
+        : []),
+    ],
+    alternatives: primarySystem === 'tr'
+      ? [{ key: 'wiz_alt_leadscrew_acme', system: 'acme' }]
+      : [{ key: 'wiz_alt_leadscrew_tr', system: 'tr' }],
+    standardRefKeys: primarySystem === 'tr' ? ['wiz_std_tr'] : ['wiz_std_acme'],
     sealingNoteKey: null,
-    sampleRows: [],
-    showTapDrill: false,
-    unsupportedKey: 'wiz_unsupported_leadscrew',
+    sampleRows: pickSampleRows(primarySystem, primarySystem, 6),
+    showTapDrill: a.process === 'tapped_hole',
+    unsupportedKey: null,
+    comparePresetId: null,
   }
 }
 
@@ -157,6 +225,7 @@ function buildPipeResult(a) {
     sampleRows: [],
     showTapDrill: false,
     unsupportedKey: null,
+    comparePresetId: null,
   }
 
   if (a.sealing === 'none') {
@@ -175,11 +244,13 @@ function buildPipeResult(a) {
   } else {
     if (a.unit === 'inch_na' || a.unit === 'match_existing') {
       base.primarySystem = 'npt'
-      base.systems = ['npt']
+      base.systems = ['npt', 'nptf']
       base.sealingNoteKey = 'wiz_seal_npt'
-      base.standardRefKeys = ['wiz_std_npt']
+      base.standardRefKeys = ['wiz_std_npt', 'wiz_std_nptf']
       base.warnings.push({ level: 'warning', key: 'wiz_warn_npt_not_bsp' })
+      base.warnings.push({ level: 'info', key: 'wiz_info_nptf_dry' })
       base.alternatives.push({ key: 'wiz_alt_npt_to_r', system: 'r' })
+      base.alternatives.push({ key: 'wiz_alt_npt_to_nptf', system: 'nptf' })
     } else {
       base.primarySystem = 'r'
       base.systems = ['r']
@@ -221,6 +292,7 @@ function buildFastenerResult(a) {
     sampleRows: [],
     showTapDrill: false,
     unsupportedKey: null,
+    comparePresetId: null,
   }
 
   if (a.unit === 'inch_na') {
@@ -237,6 +309,7 @@ function buildFastenerResult(a) {
     base.primarySystem = 'metric'
     base.systems = ['metric', 'unc']
     base.alternatives.push({ key: 'wiz_alt_wh_to_metric', system: 'metric' })
+    base.alternatives.push({ key: 'wiz_alt_wh_to_bsw', system: 'bsw' })
   } else if (a.unit === 'match_existing') {
     base.warnings.push({ level: 'info', key: 'wiz_warn_match_existing' })
   }
@@ -267,6 +340,10 @@ function buildFastenerResult(a) {
 
   if (a.load === 'frequent') {
     base.alternatives.push({ key: 'wiz_alt_frequent_coating', system: base.primarySystem })
+  }
+
+  if (a.unit === 'inch_na' && (a.load === 'high_load' || a.load === 'frequent')) {
+    base.alternatives.push({ key: 'wiz_alt_unef_precision', system: 'unef' })
   }
 
   return base
@@ -326,10 +403,16 @@ function isTypicalSize(row) {
   if (row.system === 'metric' && row.nominal != null) {
     return [4, 5, 6, 8, 10, 12, 16, 20].includes(row.nominal)
   }
-  if (row.system === 'unc' || row.system === 'unf') {
+  if (row.system === 'unc' || row.system === 'unf' || row.system === 'unef') {
     return /#(4|6|8|10)|1\/4|5\/16|3\/8|1\/2/.test(row.designation)
   }
-  if (['npt', 'g', 'r'].includes(row.system)) {
+  if (row.system === 'tr' && row.nominal != null) {
+    return [10, 16, 20, 24, 32, 40].includes(row.nominal)
+  }
+  if (row.system === 'acme') {
+    return /1\/2|5\/8|3\/4|1[^0-9]/.test(row.designation)
+  }
+  if (['npt', 'nptf', 'g', 'r'].includes(row.system)) {
     return /1\/8|1\/4|3\/8|1\/2|3\/4|1[^0-9]/.test(row.designation)
   }
   return row.priority === 1

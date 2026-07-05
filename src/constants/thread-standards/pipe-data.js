@@ -12,6 +12,10 @@ function nptDesignation(nom, tpi) {
   return `${nom}-${tpi} NPT`
 }
 
+function nptfDesignation(nom, tpi) {
+  return `${nom}-${tpi} NPTF`
+}
+
 function gDesignation(nom) {
   return `G${nom}`
 }
@@ -104,5 +108,24 @@ function buildRRow([nom, tpi, major, pitchDia, minor, tapDrill]) {
 }
 
 export const NPT_ROWS = NPT_DEFINITIONS.map(buildNptRow)
+
+function buildNptfRow(def) {
+  const row = buildNptRow(def)
+  const nom = def[0]
+  const tpi = def[1]
+  return {
+    ...row,
+    id: `pipe-nptf-${nom.replace(/[^\w]/g, '')}-${tpi}`,
+    system: 'nptf',
+    subSeries: 'nptf',
+    designation: nptfDesignation(nom, tpi),
+    standardRef: 'SAE J476 / ASME B1.20.3',
+    sealing: 'dry_seal',
+    compatibilityKey: 'npt_bsp',
+    usageKey: 'pipe',
+  }
+}
+
+export const NPTF_ROWS = NPT_DEFINITIONS.map(buildNptfRow)
 export const G_ROWS = BSP_DEFINITIONS.map(buildGRow)
 export const R_ROWS = BSP_DEFINITIONS.map(buildRRow)

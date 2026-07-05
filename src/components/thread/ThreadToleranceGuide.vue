@@ -70,7 +70,7 @@ const props = defineProps({
   pt: { type: Function, required: true },
 })
 
-const systems = ['metric', 'unc', 'unf', 'npt', 'g', 'r']
+const systems = ['metric', 'unc', 'unf', 'unef', 'tr', 'acme', 'npt', 'nptf', 'g', 'r']
 const system = ref('metric')
 const scenarioId = ref('general')
 const resultRef = ref(null)

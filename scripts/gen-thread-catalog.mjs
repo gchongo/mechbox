@@ -123,6 +123,77 @@ const UNF_DEF = [
   ['1-1/2', 1.5, 12],
 ]
 
+/** ASME B1.1 UNEF extra-fine series */
+const UNEF_DEF = [
+  ['#0', 0.06, 80],
+  ['#1', 0.073, 72],
+  ['#2', 0.086, 64],
+  ['#3', 0.099, 56],
+  ['#4', 0.112, 48],
+  ['#5', 0.125, 44],
+  ['#6', 0.138, 40],
+  ['#8', 0.164, 36],
+  ['#10', 0.19, 32],
+  ['#12', 0.216, 28],
+  ['1/4', 0.25, 32],
+  ['5/16', 0.3125, 32],
+  ['3/8', 0.375, 32],
+  ['7/16', 0.4375, 28],
+  ['1/2', 0.5, 28],
+  ['9/16', 0.5625, 24],
+  ['5/8', 0.625, 24],
+  ['3/4', 0.75, 20],
+  ['7/8', 0.875, 20],
+  ['1', 1, 20],
+  ['1-1/8', 1.125, 18],
+  ['1-1/4', 1.25, 18],
+  ['1-3/8', 1.375, 18],
+  ['1-1/2', 1.5, 18],
+  ['1-3/4', 1.75, 16],
+  ['2', 2, 12],
+  ['2-1/4', 2.25, 12],
+  ['2-1/2', 2.5, 12],
+  ['2-3/4', 2.75, 12],
+  ['3', 3, 12],
+  ['3-1/4', 3.25, 12],
+  ['3-1/2', 3.5, 12],
+  ['3-3/4', 3.75, 12],
+  ['4', 4, 12],
+]
+
+/** ISO 290-4 / DIN 103 preferred Tr combinations [d mm, P mm] */
+const TR_DEF = [
+  [8, 1.5], [10, 2], [12, 3], [14, 3], [16, 4], [18, 4], [20, 4], [22, 5], [24, 5],
+  [26, 5], [28, 5], [30, 6], [32, 6], [36, 6], [40, 7], [44, 7], [48, 8], [52, 8],
+  [60, 9], [70, 10], [80, 10], [90, 12], [100, 12], [110, 14], [120, 14], [140, 16],
+  [160, 18], [180, 20], [200, 20], [220, 22], [240, 22], [260, 24], [280, 24], [300, 24],
+]
+
+/** ASME B1.5 general-purpose Acme [label, major in, TPI] */
+const ACME_DEF = [
+  ['1/4', 0.25, 16],
+  ['5/16', 0.3125, 14],
+  ['3/8', 0.375, 12],
+  ['7/16', 0.4375, 12],
+  ['1/2', 0.5, 10],
+  ['5/8', 0.625, 8],
+  ['3/4', 0.75, 6],
+  ['7/8', 0.875, 6],
+  ['1', 1, 5],
+  ['1-1/4', 1.25, 5],
+  ['1-1/2', 1.5, 4],
+  ['1-3/4', 1.75, 4],
+  ['2', 2, 4],
+  ['2-1/4', 2.25, 3],
+  ['2-1/2', 2.5, 3],
+  ['2-3/4', 2.75, 3],
+  ['3', 3, 2],
+  ['3-1/2', 3.5, 2],
+  ['4', 4, 2],
+  ['4-1/2', 4.5, 2],
+  ['5', 5, 2],
+]
+
 /** ASME B1.20.1 Table 2 basic at external end (E0) and pitch dia at L1 (E1); K0 tap drill ref */
 const NPT_DEF = [
   ['1/16', 27, 0.3125, 0.2712, 0.2344, 0.25],
@@ -175,7 +246,15 @@ function fmtMetricDef() {
 }
 
 function fmtUnifiedDef() {
-  return `/** AUTO-GENERATED ASME B1.1 standard series — run scripts/gen-thread-catalog.mjs */\nexport const UNC_DEFINITIONS = ${JSON.stringify(UNC_DEF, null, 2)}\n\nexport const UNF_DEFINITIONS = ${JSON.stringify(UNF_DEF, null, 2)}\n`
+  return `/** AUTO-GENERATED ASME B1.1 standard series — run scripts/gen-thread-catalog.mjs */\nexport const UNC_DEFINITIONS = ${JSON.stringify(UNC_DEF, null, 2)}\n\nexport const UNF_DEFINITIONS = ${JSON.stringify(UNF_DEF, null, 2)}\n\nexport const UNEF_DEFINITIONS = ${JSON.stringify(UNEF_DEF, null, 2)}\n`
+}
+
+function fmtTrDef() {
+  return `/** AUTO-GENERATED ISO 290 / DIN 103 Tr series — run scripts/gen-thread-catalog.mjs */\nexport const TR_DEFINITIONS = ${JSON.stringify(TR_DEF, null, 2)}\n`
+}
+
+function fmtAcmeDef() {
+  return `/** AUTO-GENERATED ASME B1.5 Acme GP series — run scripts/gen-thread-catalog.mjs */\nexport const ACME_DEFINITIONS = ${JSON.stringify(ACME_DEF, null, 2)}\n`
 }
 
 function fmtPipeDef() {
@@ -184,9 +263,12 @@ function fmtPipeDef() {
 
 writeFileSync(join(root, 'src/constants/thread-standards/metric-definitions.js'), fmtMetricDef())
 writeFileSync(join(root, 'src/constants/thread-standards/unified-definitions.js'), fmtUnifiedDef())
+writeFileSync(join(root, 'src/constants/thread-standards/tr-definitions.js'), fmtTrDef())
+writeFileSync(join(root, 'src/constants/thread-standards/acme-definitions.js'), fmtAcmeDef())
 writeFileSync(join(root, 'src/constants/thread-standards/pipe-definitions.js'), fmtPipeDef())
 
 console.log('Generated thread catalog definitions:')
 console.log(`  Metric diameters: ${METRIC_DEF.length}, fine pairs: ${METRIC_DEF.reduce((s, r) => s + r[3].length, 0)}`)
-console.log(`  UNC: ${UNC_DEF.length}, UNF: ${UNF_DEF.length}`)
+console.log(`  UNC: ${UNC_DEF.length}, UNF: ${UNF_DEF.length}, UNEF: ${UNEF_DEF.length}`)
+console.log(`  Tr: ${TR_DEF.length}, Acme: ${ACME_DEF.length}`)
 console.log(`  NPT: ${NPT_DEF.length}, BSP sizes: ${BSP_DEF.length}`)
