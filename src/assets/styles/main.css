@@ -175,6 +175,40 @@
     background: rgb(17 24 39);
   }
 
+  /* 螺纹数据表：文字居中，列宽随内容 */
+  .thread-data-table.el-table {
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .thread-data-table.el-table .el-table__header table,
+  .thread-data-table.el-table .el-table__body table {
+    table-layout: auto;
+    width: max-content;
+  }
+
+  .thread-data-table.el-table th.el-table__cell,
+  .thread-data-table.el-table td.el-table__cell {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .thread-data-table.el-table .cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    max-width: none;
+    white-space: nowrap;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: center;
+  }
+
+  .thread-data-table.el-table th .thread-field-tip {
+    justify-content: center;
+  }
+
   .thread-nav-favorites {
     @apply mb-3 rounded-lg border border-amber-200/80 bg-amber-50/50 p-2 dark:border-amber-900/40 dark:bg-amber-950/20;
   }

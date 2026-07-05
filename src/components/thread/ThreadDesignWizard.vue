@@ -205,18 +205,19 @@
           </div>
           <el-table
             :data="result.sampleRows"
+            :fit="false"
             size="small"
             border
             stripe
-            class="min-w-[640px] thread-sticky-header-table"
+            class="thread-data-table thread-sticky-header-table"
           >
-            <el-table-column :label="pt('colDesignation')" prop="designation" min-width="120" />
-            <el-table-column v-if="result.showTapDrill" :label="pt('colTapDrill')" width="100">
+            <el-table-column :label="pt('colDesignation')" prop="designation" />
+            <el-table-column v-if="result.showTapDrill" :label="pt('colTapDrill')">
               <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
             </el-table-column>
-            <el-table-column :label="pt('colToleranceExt')" prop="toleranceExternal" width="80" />
-            <el-table-column :label="pt('colToleranceInt')" prop="toleranceInternal" width="80" />
-            <el-table-column :label="pt('colActions')" width="100" align="center">
+            <el-table-column :label="pt('colToleranceExt')" prop="toleranceExternal" />
+            <el-table-column :label="pt('colToleranceInt')" prop="toleranceInternal" />
+            <el-table-column :label="pt('colActions')">
               <template #default="{ row }">
                 <el-button size="small" link type="primary" @click="$emit('open-row', row)">
                   {{ pt('wizViewDetail') }}

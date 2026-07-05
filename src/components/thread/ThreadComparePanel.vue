@@ -80,7 +80,7 @@
 
       <!-- 桌面端：并排表格（固定表头 + 竖直滚动） -->
       <div class="compare-table-wrap hidden md:block">
-      <table class="compare-table min-w-[640px] w-full border-collapse text-sm">
+      <table class="compare-table w-full border-collapse text-sm">
         <thead>
           <tr>
             <th class="compare-th">{{ pt('compareField') }}</th>
@@ -259,6 +259,9 @@ function formatCell(key, val) {
 <style scoped>
 .compare-table {
   border: 1px solid var(--el-border-color);
+  table-layout: auto;
+  width: max-content;
+  max-width: 100%;
 }
 .compare-table-wrap {
   overflow-x: auto;
@@ -274,7 +277,8 @@ function formatCell(key, val) {
 .compare-td {
   border: 1px solid var(--el-border-color-lighter);
   padding: 0.5rem 0.65rem;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
 }
 .compare-th {
   background: var(--el-fill-color-light);
@@ -282,7 +286,6 @@ function formatCell(key, val) {
 }
 .compare-label {
   color: var(--el-text-color-secondary);
-  white-space: nowrap;
 }
 .compare-diff {
   background: rgb(255 251 230 / 0.5);
