@@ -76,7 +76,7 @@ export const TOOL_GROUPS = [
     tools: [
       { path: '/help', label: '工具帮助', desc: '步骤 · 原理 · 公式 · 注意点', icon: 'Reading', keywords: ['帮助', '文档', '入门', '学生', '教程'] },
       { path: '/manual', label: '公式手册', desc: '常用公式速查', icon: 'Notebook', keywords: ['公式', '手册'] },
-      { path: '/thread-table', label: '螺纹标准表', desc: 'ISO/UNC/NPT/G/R 尺寸', icon: 'List', keywords: ['螺纹', 'ISO724', 'UNC', 'NPT', 'BSP', '管螺纹', '标准表'] },
+      { path: '/thread-table', label: '螺纹标准表', desc: '选型·公差·啮合·底孔·误配', icon: 'List', keywords: ['螺纹', 'ISO724', 'UNC', 'NPT', 'BSP', '管螺纹', '标准表', '攻丝', '底孔'] },
       { path: '/glossary', label: '术语表', desc: '机械术语解释', icon: 'Collection', keywords: ['术语', 'glossary'] },
       { path: '/cases', label: '案例库', desc: '尺寸链示例', icon: 'FolderOpened', keywords: ['案例'] },
       { path: '/tutorial', label: '教程', desc: '使用指南', icon: 'Guide', keywords: ['教程'] },

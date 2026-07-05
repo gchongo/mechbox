@@ -3,6 +3,25 @@
     <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
+    <section class="card-panel mb-6 thread-workflow-hub">
+      <h2 class="mb-2 text-sm font-semibold">{{ pt('hubTitle') }}</h2>
+      <p class="mb-3 text-xs text-gray-500">{{ pt('hubIntro') }}</p>
+      <div class="flex flex-wrap gap-2">
+        <el-button
+          v-for="step in hubSteps"
+          :key="`${step.featureTab}-${step.devTab || ''}`"
+          size="small"
+          :type="isHubActive(step) ? 'primary' : 'default'"
+          @click="goHub(step)"
+        >
+          {{ pt(step.labelKey) }}
+        </el-button>
+        <router-link to="/thread">
+          <el-button size="small" type="info" plain>{{ pt('hubStrength') }} →</el-button>
+        </router-link>
+      </div>
+    </section>
+
     <section class="card-panel mb-6">
       <div class="grid gap-6 lg:grid-cols-2">
         <ThreadProfileDiagram
@@ -43,10 +62,38 @@
             <el-badge v-if="compareIds.length" :value="compareIds.length" class="ml-1" />
           </template>
         </el-tab-pane>
+        <el-tab-pane :label="pt('tabDesign')" name="design" />
+        <el-tab-pane :label="pt('tabDev')" name="dev" />
       </el-tabs>
 
+      <template v-if="featureTab === 'dev'">
+        <el-tabs v-model="devTab" class="mb-4" type="card">
+          <el-tab-pane :label="pt('devTabEngagement')" name="engagement" />
+          <el-tab-pane :label="pt('devTabTolerance')" name="tolerance" />
+          <el-tab-pane :label="pt('devTabTapDrill')" name="tapDrill" />
+          <el-tab-pane :label="pt('devTabMisconfig')" name="misconfig" />
+          <el-tab-pane :label="pt('devTabMfg')" name="mfg" />
+        </el-tabs>
+        <ThreadEngagementPanel v-if="devTab === 'engagement'" :pt="pt" />
+        <ThreadToleranceGuide v-else-if="devTab === 'tolerance'" :pt="pt" />
+        <ThreadTapDrillPanel v-else-if="devTab === 'tapDrill'" :pt="pt" />
+        <ThreadMisconfigPanel
+          v-else-if="devTab === 'misconfig'"
+          :pt="pt"
+          @open-compare="onMisconfigCompare"
+        />
+        <ThreadManufacturingPanel v-else-if="devTab === 'mfg'" :pt="pt" />
+      </template>
+
+      <ThreadDesignWizard
+        v-else-if="featureTab === 'design'"
+        :pt="pt"
+        @open-query="onDesignOpenQuery"
+        @open-row="openDetailRow"
+      />
+
       <ThreadParsePanel
-        v-if="featureTab === 'parse'"
+        v-else-if="featureTab === 'parse'"
         :pt="pt"
         @locate="onLocateRow"
       />
@@ -57,7 +104,7 @@
         :pt="pt"
       />
 
-      <template v-else>
+      <template v-else-if="featureTab === 'query'">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 class="font-semibold">{{ tableTitle }}</h2>
           <span class="text-xs text-gray-500">{{ unitLabel }}</span>
@@ -281,12 +328,20 @@ import ThreadParsePanel from '@/components/thread/ThreadParsePanel.vue'
 import ThreadComparePanel from '@/components/thread/ThreadComparePanel.vue'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 import ThreadPitchTool from '@/components/thread/ThreadPitchTool.vue'
+import ThreadDesignWizard from '@/components/thread/ThreadDesignWizard.vue'
+import ThreadEngagementPanel from '@/components/thread/ThreadEngagementPanel.vue'
+import ThreadTapDrillPanel from '@/components/thread/ThreadTapDrillPanel.vue'
+import ThreadToleranceGuide from '@/components/thread/ThreadToleranceGuide.vue'
+import ThreadMisconfigPanel from '@/components/thread/ThreadMisconfigPanel.vue'
+import ThreadManufacturingPanel from '@/components/thread/ThreadManufacturingPanel.vue'
+import { getComparePresets } from '@/utils/thread-standards'
 import { useCalcPage } from '@/composables/useCalcPage'
 
 const { pt } = useCalcPage('thread-table')
 
 const systems = THREAD_SYSTEMS
 const featureTab = ref('query')
+const devTab = ref('engagement')
 const systemTab = ref('metric')
 const metricSubTab = ref('coarse')
 const searchQuery = ref('')
@@ -299,6 +354,33 @@ const detailVisible = ref(false)
 const detailRow = ref(null)
 const compareIds = ref([])
 const highlightRowId = ref(null)
+
+const hubSteps = [
+  { labelKey: 'hubStepDesign', featureTab: 'design', devTab: null },
+  { labelKey: 'hubStepTolerance', featureTab: 'dev', devTab: 'tolerance' },
+  { labelKey: 'hubStepEngagement', featureTab: 'dev', devTab: 'engagement' },
+  { labelKey: 'hubStepTap', featureTab: 'dev', devTab: 'tapDrill' },
+  { labelKey: 'hubStepQuery', featureTab: 'query', devTab: null },
+  { labelKey: 'hubStepMisconfig', featureTab: 'dev', devTab: 'misconfig' },
+]
+
+function isHubActive(step) {
+  if (step.featureTab !== featureTab.value) return false
+  if (step.devTab) return devTab.value === step.devTab
+  return true
+}
+
+function goHub(step) {
+  featureTab.value = step.featureTab
+  if (step.devTab) devTab.value = step.devTab
+}
+
+function onMisconfigCompare(presetId) {
+  const preset = getComparePresets().find((p) => p.id === presetId)
+  if (!preset?.rowIds?.length) return
+  featureTab.value = 'compare'
+  compareIds.value = preset.rowIds.slice(0, 3)
+}
 
 const activeSystemMeta = computed(() => systems.find((s) => s.id === systemTab.value))
 
@@ -459,6 +541,18 @@ function onLocateRow(row) {
   searchQuery.value = row.designation
   highlightRowId.value = row.id
   openDetail(row)
+}
+
+function onDesignOpenQuery({ system, subSeries }) {
+  if (!system) return
+  featureTab.value = 'query'
+  systemTab.value = system
+  if (system === 'metric') {
+    metricSubTab.value = subSeries === 'fine' ? 'fine' : 'coarse'
+  }
+  searchQuery.value = ''
+  priorityFilter.value = 1
+  clearFilters()
 }
 
 function rowClassName({ row }) {
