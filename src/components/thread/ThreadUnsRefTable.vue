@@ -1,16 +1,8 @@
 <template>
-  <section class="whitworth-ref-table min-w-0">
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h4 class="font-semibold">{{ pt('whTableTitle') }}</h4>
-      <el-radio-group v-if="showSeriesToggle" v-model="seriesFilter" size="small">
-        <el-radio-button value="all">{{ pt('whSeriesAll') }}</el-radio-button>
-        <el-radio-button value="bsw">{{ pt('whSeriesBsw') }}</el-radio-button>
-        <el-radio-button value="bsf">{{ pt('whSeriesBsf') }}</el-radio-button>
-      </el-radio-group>
-    </div>
-
-    <p class="mb-3 text-xs text-gray-500">{{ pt('whTableIntro') }}</p>
-    <p class="mb-3 font-mono text-xs text-gray-500">{{ pt('formulaWhitworth') }}</p>
+  <section class="uns-ref-table min-w-0">
+    <h4 class="mb-2 font-semibold">{{ pt('unsTableTitle') }}</h4>
+    <p class="mb-3 text-xs text-gray-500">{{ pt('unsTableIntro') }}</p>
+    <p class="mb-3 font-mono text-xs text-gray-500">{{ pt('formula60') }}</p>
 
     <el-table
       :data="rows"
@@ -63,45 +55,27 @@
       </el-table-column>
     </el-table>
 
-    <div class="flex flex-wrap gap-2">
-      <el-button size="small" @click="$emit('open-compare', 'whitworth-quarter')">
-        {{ pt('whComparePreset') }}
-      </el-button>
-    </div>
-    <p class="mt-2 text-[10px] text-gray-400">{{ pt('whDisclaimer') }}</p>
+    <p class="text-[10px] text-gray-400">{{ pt('unsDisclaimer') }}</p>
   </section>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { getWhitworthReferenceRows, getWhitworthRowsForTaxonomy } from '@/constants/thread-standards/whitworth-data'
+import { getUnsReferenceRows } from '@/constants/thread-standards/uns-data'
 import { THREAD_TABLE_MAX_HEIGHT } from '@/constants/thread-ui'
 import { formatDim } from '@/utils/thread-standards'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 
-const props = defineProps({
-  taxonomyId: { type: String, default: 'whitworth' },
+defineProps({
   pt: { type: Function, required: true },
 })
 
-defineEmits(['row-click', 'open-compare'])
+defineEmits(['row-click'])
 
-const showSeriesToggle = computed(() => props.taxonomyId === 'whitworth')
-
-const seriesFilter = ref(
-  props.taxonomyId === 'bsf' ? 'bsf' : props.taxonomyId === 'bsw' ? 'bsw' : 'all',
-)
-
-const rows = computed(() => {
-  if (!showSeriesToggle.value) {
-    return getWhitworthRowsForTaxonomy(props.taxonomyId)
-  }
-  return getWhitworthReferenceRows(seriesFilter.value)
-})
+const rows = getUnsReferenceRows()
 </script>
 
 <style scoped>
-.whitworth-ref-table :deep(.thread-scroll-table .el-table__cell) {
+.uns-ref-table :deep(.thread-scroll-table .el-table__cell) {
   font-variant-numeric: tabular-nums;
 }
 </style>

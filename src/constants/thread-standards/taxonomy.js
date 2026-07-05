@@ -502,6 +502,7 @@ export function resolveTaxonomyFromCatalog(catalogSystem, subSeries) {
     unc: 'unc',
     unf: 'unf',
     unef: 'unef',
+    uns: 'uns',
     tr: 'tr',
     acme: 'acme',
     npt: 'npt',

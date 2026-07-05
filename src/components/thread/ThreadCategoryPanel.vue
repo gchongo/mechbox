@@ -44,6 +44,10 @@
         />
       </section>
 
+      <section v-else-if="selectedSystem.id === 'uns'" class="thread-catalog-table-wrap">
+        <ThreadUnsRefTable :pt="pt" @row-click="$emit('row-click', $event)" />
+      </section>
+
       <section v-else class="thread-ref-guide card-panel">
         <el-alert type="info" show-icon :closable="false" :title="pt('refNoCatalogTitle')" />
         <p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
@@ -82,6 +86,7 @@ import ThreadProfileDiagram from '@/components/thread/ThreadProfileDiagram.vue'
 import ThreadSystemMetaPanel from '@/components/thread/ThreadSystemMetaPanel.vue'
 import ThreadCatalogTable from '@/components/thread/ThreadCatalogTable.vue'
 import ThreadWhitworthRefTable from '@/components/thread/ThreadWhitworthRefTable.vue'
+import ThreadUnsRefTable from '@/components/thread/ThreadUnsRefTable.vue'
 
 const props = defineProps({
   purposeId: { type: String, required: true },

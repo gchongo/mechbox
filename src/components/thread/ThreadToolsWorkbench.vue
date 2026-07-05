@@ -16,6 +16,7 @@
       :pt="pt"
       @open-compare="$emit('open-compare', $event)"
     />
+    <ThreadGlossaryPanel v-else-if="modelValue === 'glossary'" :pt="pt" />
   </section>
 </template>
 
@@ -23,6 +24,7 @@
 import ThreadParsePanel from '@/components/thread/ThreadParsePanel.vue'
 import ThreadComparePanel from '@/components/thread/ThreadComparePanel.vue'
 import ThreadMisconfigPanel from '@/components/thread/ThreadMisconfigPanel.vue'
+import ThreadGlossaryPanel from '@/components/thread/ThreadGlossaryPanel.vue'
 
 defineProps({
   modelValue: { type: String, required: true },

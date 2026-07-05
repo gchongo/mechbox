@@ -125,6 +125,13 @@ describe('catalog completeness', () => {
       'metric', 'unc', 'unf', 'unef', 'tr', 'acme', 'npt', 'nptf', 'g', 'r',
     ])
   })
+
+  it('includes UNS and Whitworth reference rows in getAllThreadRows', () => {
+    const all = getAllThreadRows()
+    expect(all.some((r) => r.designation === '1/4-28 UNS')).toBe(true)
+    expect(all.some((r) => r.designation === '1/4-20 BSW')).toBe(true)
+    expect(all.filter((r) => r.system === 'uns').length).toBeGreaterThanOrEqual(20)
+  })
 })
 
 describe('NPT reference dimensions (ASME B1.20.1 Table 2)', () => {

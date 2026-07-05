@@ -55,7 +55,31 @@
       :title="pt('compareNeedTwo')"
     />
 
-    <div v-else class="overflow-x-auto">
+    <div v-else>
+      <!-- 移动端：纵向卡片 -->
+      <div class="compare-cards md:hidden">
+        <article
+          v-for="(row, colIdx) in matrix.rows"
+          :key="row.id"
+          class="compare-card"
+        >
+          <header class="compare-card__head">{{ row.designation }}</header>
+          <dl class="compare-card__dl">
+            <div
+              v-for="field in matrix.fields"
+              :key="field.key"
+              class="compare-card__row"
+              :class="{ 'is-diff': field.isDiff }"
+            >
+              <dt>{{ pt(`cmp_${field.key}`) }}</dt>
+              <dd>{{ formatCell(field.key, field.values[colIdx]) }}</dd>
+            </div>
+          </dl>
+        </article>
+      </div>
+
+      <!-- 桌面端：并排表格（固定表头 + 竖直滚动） -->
+      <div class="compare-table-wrap hidden md:block">
       <table class="compare-table min-w-[640px] w-full border-collapse text-sm">
         <thead>
           <tr>
@@ -70,6 +94,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
 
       <el-alert
         v-if="hasPipeMix"
@@ -102,6 +127,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { getAllThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
+import { getUnsReferenceRows } from '@/constants/thread-standards/uns-data'
+import { getWhitworthReferenceRows } from '@/constants/thread-standards/whitworth-data'
 import {
   buildCompareMatrix,
   getComparePresets,
@@ -124,14 +151,27 @@ const selectedIds = computed({
 const allRows = getAllThreadRows()
 const presets = getComparePresets()
 
-const optionGroups = computed(() =>
-  THREAD_SYSTEMS.map((sys) => ({
+const optionGroups = computed(() => {
+  const catalog = THREAD_SYSTEMS.map((sys) => ({
     label: props.pt(`system_${sys.id}`) !== `calc.pages.thread-table.system_${sys.id}`
       ? props.pt(`system_${sys.id}`)
       : sys.id,
     rows: sys.subTabs.flatMap((t) => t.rows),
-  })),
-)
+  }))
+  return [
+    ...catalog,
+    {
+      label: props.pt('system_uns') !== 'calc.pages.thread-table.system_uns'
+        ? props.pt('system_uns')
+        : 'UNS',
+      rows: getUnsReferenceRows(),
+    },
+    {
+      label: props.pt('whSeriesAll'),
+      rows: getWhitworthReferenceRows('all'),
+    },
+  ]
+})
 
 const selectedRows = computed(() =>
   selectedIds.value.map((id) => findRowById(id)).filter(Boolean),
@@ -220,6 +260,17 @@ function formatCell(key, val) {
 .compare-table {
   border: 1px solid var(--el-border-color);
 }
+.compare-table-wrap {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.compare-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .compare-th,
 .compare-td {
   border: 1px solid var(--el-border-color-lighter);
@@ -242,5 +293,65 @@ function formatCell(key, val) {
 }
 .compare-td {
   font-variant-numeric: tabular-nums;
+}
+
+.compare-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.compare-card {
+  border: 1px solid var(--el-border-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--el-bg-color);
+}
+
+.compare-card__head {
+  padding: 0.65rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.compare-card__dl {
+  margin: 0;
+  padding: 0.5rem 0.85rem 0.75rem;
+}
+
+.compare-card__row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+  font-size: 0.8125rem;
+}
+
+.compare-card__row:last-child {
+  border-bottom: none;
+}
+
+.compare-card__row.is-diff {
+  background: rgb(255 251 230 / 0.45);
+  margin: 0 -0.85rem;
+  padding-left: 0.85rem;
+  padding-right: 0.85rem;
+}
+
+:root.dark .compare-card__row.is-diff {
+  background: rgb(120 90 0 / 0.12);
+}
+
+.compare-card__row dt {
+  color: var(--el-text-color-secondary);
+}
+
+.compare-card__row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
 }
 </style>

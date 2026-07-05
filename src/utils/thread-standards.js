@@ -334,7 +334,7 @@ export function findMatchingRows(parsed) {
     return list.length ? list : all.filter((r) => designationLooseMatch(r.designation, normalizeQuery(parsed.raw)))
   }
 
-  if (parsed.system === 'unc' || parsed.system === 'unf' || parsed.system === 'unef') {
+  if (parsed.system === 'unc' || parsed.system === 'unf' || parsed.system === 'unef' || parsed.system === 'uns') {
     const q = normalizeQuery(parsed.raw)
     const hits = all.filter((r) => designationLooseMatch(r.designation, q))
     if (hits.length) return hits

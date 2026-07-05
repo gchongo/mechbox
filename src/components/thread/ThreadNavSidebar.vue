@@ -2,6 +2,17 @@
   <nav class="thread-nav" :aria-label="pt('navSidebarTitle')">
     <p class="thread-nav__hint">{{ pt('navSidebarHint') }}</p>
 
+    <section v-if="favoriteItems.length" class="thread-nav-favorites">
+      <p class="thread-nav-favorites__title">{{ pt('favSection') }}</p>
+      <ul class="thread-nav-list">
+        <li v-for="item in favoriteItems" :key="item.id">
+          <button type="button" class="thread-nav-item" @click="onFavorite(item.id)">
+            <span class="thread-nav-item__label">★ {{ item.label }}</span>
+          </button>
+        </li>
+      </ul>
+    </section>
+
     <section v-for="group in groups" :key="group.id" class="thread-nav-group">
       <button
         type="button"
@@ -99,10 +110,11 @@ import { THREAD_PURPOSE_ORDER, getSystemsForPurpose } from '@/constants/thread-s
 const props = defineProps({
   modelValue: { type: String, required: true },
   compareCount: { type: Number, default: 0 },
+  favoriteItems: { type: Array, default: () => [] },
   pt: { type: Function, required: true },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'open-favorite', 'nav-selected'])
 
 const purposeOrder = THREAD_PURPOSE_ORDER
 
@@ -124,6 +136,7 @@ const toolItems = [
   { id: 'parse', labelKey: 'tabParse' },
   { id: 'compare', labelKey: 'tabCompare' },
   { id: 'misconfig', labelKey: 'devTabMisconfig' },
+  { id: 'glossary', labelKey: 'tabGlossary' },
 ]
 
 const systemsByPurpose = computed(() =>
@@ -186,13 +199,21 @@ function isToolsActive(id) {
 
 function selectCatalog(purpose, systemId) {
   emit('update:modelValue', `catalog|${purpose}|${systemId}`)
+  emit('nav-selected')
 }
 
 function selectDesign(id) {
   emit('update:modelValue', `design|${id}`)
+  emit('nav-selected')
 }
 
 function selectTools(id) {
   emit('update:modelValue', `tools|${id}`)
+  emit('nav-selected')
+}
+
+function onFavorite(id) {
+  emit('open-favorite', id)
+  emit('nav-selected')
 }
 </script>

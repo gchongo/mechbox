@@ -119,15 +119,50 @@
 
   /* ── 螺纹标准模块 ── */
   .thread-shell {
-    @apply grid min-h-[640px] gap-0 overflow-hidden p-0 lg:grid-cols-[280px_1fr];
+    @apply grid max-h-[calc(100vh-7rem)] min-h-[640px] gap-0 overflow-hidden p-0 lg:grid-cols-[280px_1fr];
   }
 
   .thread-shell__sidebar {
-    @apply border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-900/40 lg:border-b-0 lg:border-r;
+    @apply flex min-h-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-900/40 lg:border-b-0 lg:border-r;
+  }
+
+  .thread-shell__sidebar--desktop {
+    @apply hidden lg:flex;
+  }
+
+  .thread-shell__sidebar .thread-nav,
+  .thread-mobile-drawer .thread-nav {
+    @apply min-h-0 flex-1 overflow-y-auto overscroll-contain;
+    max-height: calc(100vh - 10rem);
+  }
+
+  .thread-table-scroll {
+    @apply min-w-0;
+  }
+
+  .thread-scroll-table :deep(.el-table__header-wrapper) {
+    @apply sticky top-0 z-10;
+  }
+
+  .thread-nav-favorites {
+    @apply mb-3 rounded-lg border border-amber-200/80 bg-amber-50/50 p-2 dark:border-amber-900/40 dark:bg-amber-950/20;
+  }
+
+  .thread-nav-favorites__title {
+    @apply mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300;
+  }
+
+  .thread-mobile-drawer :deep(.el-drawer__body) {
+    @apply flex min-h-0 flex-col overflow-hidden p-0;
+  }
+
+  .thread-mobile-drawer .thread-nav {
+    max-height: none;
+    flex: 1;
   }
 
   .thread-shell__main {
-    @apply min-w-0 p-4 sm:p-6;
+    @apply min-h-0 min-w-0 overflow-y-auto p-4 sm:p-6;
   }
 
   .thread-main-header {

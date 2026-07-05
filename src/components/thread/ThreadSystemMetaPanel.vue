@@ -7,20 +7,36 @@
     </div>
 
     <dl class="meta-dl">
-      <div><dt>{{ pt('metaField_purpose') }}</dt><dd>{{ pt(`enum_purpose_${system.purpose}`) }}</dd></div>
-      <div><dt>{{ pt('metaField_profile') }}</dt><dd>{{ pt(`enum_profile_${system.profile}`) }}</dd></div>
-      <div v-if="system.angle != null">
-        <dt>{{ pt('metaField_angle') }}</dt><dd>{{ system.angle }}°</dd>
-      </div>
-      <div><dt>{{ pt('metaField_parentShape') }}</dt><dd>{{ pt(`enum_shape_${system.parentShape}`) }}</dd></div>
-      <div><dt>{{ pt('metaField_taper') }}</dt><dd>{{ pt(`enum_taper_${system.taper}`) }}</dd></div>
-      <div><dt>{{ pt('metaField_sealing') }}</dt><dd>{{ pt(`enum_seal_${system.sealing}`) }}</dd></div>
       <div>
-        <dt>{{ pt('metaField_hand') }}</dt>
+        <dt><ThreadFieldTip :label="pt('metaField_purpose')" :tip="pt('term_purpose')" /></dt>
+        <dd>{{ pt(`enum_purpose_${system.purpose}`) }}</dd>
+      </div>
+      <div>
+        <dt><ThreadFieldTip :label="pt('metaField_profile')" :tip="pt('term_profile')" /></dt>
+        <dd>{{ pt(`enum_profile_${system.profile}`) }}</dd>
+      </div>
+      <div v-if="system.angle != null">
+        <dt><ThreadFieldTip :label="pt('metaField_angle')" :tip="pt('term_threadAngle')" /></dt>
+        <dd>{{ system.angle }}°</dd>
+      </div>
+      <div>
+        <dt><ThreadFieldTip :label="pt('metaField_parentShape')" :tip="pt('term_parentShape')" /></dt>
+        <dd>{{ pt(`enum_shape_${system.parentShape}`) }}</dd>
+      </div>
+      <div>
+        <dt><ThreadFieldTip :label="pt('metaField_taper')" :tip="pt('term_taper')" /></dt>
+        <dd>{{ pt(`enum_taper_${system.taper}`) }}</dd>
+      </div>
+      <div>
+        <dt><ThreadFieldTip :label="pt('metaField_sealing')" :tip="pt('term_sealing')" /></dt>
+        <dd>{{ pt(`enum_seal_${system.sealing}`) }}</dd>
+      </div>
+      <div>
+        <dt><ThreadFieldTip :label="pt('metaField_hand')" :tip="pt('term_hand')" /></dt>
         <dd>{{ system.hand.map((h) => pt(`enum_hand_${h}`)).join(' · ') }}</dd>
       </div>
       <div>
-        <dt>{{ pt('metaField_starts') }}</dt>
+        <dt><ThreadFieldTip :label="pt('metaField_starts')" :tip="pt('term_starts')" /></dt>
         <dd>{{ system.starts.map((s) => pt(`enum_starts_${s}`)).join(' · ') }}</dd>
       </div>
       <div><dt>{{ pt('metaField_marking') }}</dt><dd>{{ ts('marking') }}</dd></div>
@@ -31,7 +47,7 @@
       <div><dt>{{ pt('metaField_interchange') }}</dt><dd>{{ ts('interchange') }}</dd></div>
       <div><dt>{{ pt('metaField_misconfig') }}</dt><dd class="text-warning">{{ ts('misconfig') }}</dd></div>
       <div>
-        <dt>{{ pt('metaField_standards') }}</dt>
+        <dt><ThreadFieldTip :label="pt('metaField_standards')" :tip="pt('term_standard')" /></dt>
         <dd>{{ system.standards.join(' · ') }}</dd>
       </div>
     </dl>
@@ -41,6 +57,7 @@
 <script setup>
 import { computed } from 'vue'
 import { getThreadSystemDef } from '@/constants/thread-standards/taxonomy'
+import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 
 const props = defineProps({
   systemId: { type: String, required: true },

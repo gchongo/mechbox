@@ -4,11 +4,13 @@ import { TR_ROWS } from './tr-data'
 import { ACME_ROWS } from './acme-data'
 import { NPT_ROWS, NPTF_ROWS, G_ROWS, R_ROWS } from './pipe-data'
 import { WHITWORTH_REF_ROWS } from './whitworth-data'
+import { UNS_REF_ROWS } from './uns-data'
 
 export { calcMetricBasicDims } from './metric-data'
 export { calcTrapezoidalBasicDims } from './tr-data'
 export { calcAcmeBasicDims } from './acme-data'
 export { calcWhitworthBasicDims, getWhitworthReferenceRows } from './whitworth-data'
+export { getUnsReferenceRows } from './uns-data'
 
 /** @typedef {import('@/utils/thread-standards').ThreadRow} ThreadRow */
 
@@ -90,7 +92,7 @@ export const THREAD_SYSTEMS = [
 
 export function getAllThreadRows() {
   const catalog = THREAD_SYSTEMS.flatMap((sys) => sys.subTabs.flatMap((t) => t.rows))
-  return [...catalog, ...WHITWORTH_REF_ROWS]
+  return [...catalog, ...WHITWORTH_REF_ROWS, ...UNS_REF_ROWS]
 }
 
 export function getThreadRows(systemId, subTabId) {

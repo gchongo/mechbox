@@ -147,6 +147,9 @@
 
       <div class="mt-4 flex flex-wrap gap-2">
         <el-button type="primary" plain @click="$emit('add-compare', row)">{{ pt('addToCompare') }}</el-button>
+        <el-button :type="favorited ? 'warning' : 'default'" plain @click="toggleFavorite">
+          {{ favorited ? pt('favRemove') : pt('favToggle') }}
+        </el-button>
       </div>
 
       <p class="mt-6 text-[10px] text-gray-400">{{ pt('dataDisclaimer') }}</p>
@@ -155,7 +158,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import {
   formatDim,
   formatPitchDisplay,
@@ -163,6 +167,7 @@ import {
   getThreadNeighbors,
 } from '@/utils/thread-standards'
 import { getUsageNoteKey, getProcessNoteKeys, getToleranceNoteKey } from '@/constants/thread-standards/notes'
+import { isThreadFavorite, toggleThreadFavorite } from '@/utils/thread-favorites'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 
 const props = defineProps({
@@ -171,7 +176,25 @@ const props = defineProps({
   pt: { type: Function, required: true },
 })
 
-defineEmits(['close', 'select-row', 'add-compare'])
+const emit = defineEmits(['close', 'select-row', 'add-compare', 'favorite-changed'])
+
+const favorited = ref(false)
+
+watch(
+  () => props.row?.id,
+  (id) => {
+    favorited.value = id ? isThreadFavorite(id) : false
+  },
+  { immediate: true },
+)
+
+function toggleFavorite() {
+  if (!props.row?.id) return
+  const now = toggleThreadFavorite(props.row.id)
+  favorited.value = now
+  emit('favorite-changed')
+  ElMessage.success(props.pt(now ? 'favAdded' : 'favRemoved'))
+}
 
 const parseResult = computed(() =>
   props.row ? parseThreadMark(props.row.designation) : null,

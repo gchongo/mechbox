@@ -37,6 +37,7 @@ export const TOOL_GROUPS = [
       { path: '/fatigue', label: '疲劳寿命', desc: 'S-N · Miner 损伤', icon: 'TrendCharts', keywords: ['疲劳', 'Miner', 'SN'] },
       { path: '/gear', label: '齿轮强度', desc: 'ISO 6336 / AGMA', icon: 'SetUp', keywords: ['齿轮', 'ISO6336', 'AGMA'] },
       { path: '/thread', label: '螺纹强度', desc: '拉剪应力 / 扭矩', icon: 'Link', keywords: ['螺纹'] },
+      { path: '/thread-table', label: '螺纹标准表', desc: '规格库 · 设计制造 · 解析对照', icon: 'List', keywords: ['螺纹', 'ISO724', 'UNC', 'NPT', 'BSP', 'Tr', 'Acme', '标准表', '公差', '啮合'] },
       { path: '/bolt-preload', label: '螺栓预紧力', desc: '扭矩 ↔ 预紧力', icon: 'TurnOff', keywords: ['螺栓', '预紧', 'VDI'] },
       { path: '/bearing', label: '轴承寿命', desc: 'X/Y 查表 ISO 281', icon: 'Help', keywords: ['轴承', 'ISO281'] },
     ],
@@ -76,7 +77,6 @@ export const TOOL_GROUPS = [
     tools: [
       { path: '/help', label: '工具帮助', desc: '步骤 · 原理 · 公式 · 注意点', icon: 'Reading', keywords: ['帮助', '文档', '入门', '学生', '教程'] },
       { path: '/manual', label: '公式手册', desc: '常用公式速查', icon: 'Notebook', keywords: ['公式', '手册'] },
-      { path: '/thread-table', label: '螺纹标准表', desc: '规格库 · 设计制造 · 解析对照', icon: 'List', keywords: ['螺纹', 'ISO724', 'UNC', 'NPT', 'BSP', 'Tr', 'Acme', '标准表'] },
       { path: '/glossary', label: '术语表', desc: '机械术语解释', icon: 'Collection', keywords: ['术语', 'glossary'] },
       { path: '/cases', label: '案例库', desc: '尺寸链示例', icon: 'FolderOpened', keywords: ['案例'] },
       { path: '/tutorial', label: '教程', desc: '使用指南', icon: 'Guide', keywords: ['教程'] },
