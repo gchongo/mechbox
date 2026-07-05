@@ -383,27 +383,130 @@ export const toolHelpEnById = {
   allocation: {
     title: 'Tolerance Allocation',
     summary:
-      'When closed-ring tolerance is given, allocate tolerance reasonably across component rings (equal contribution, proportional, optimization, etc.).',
+      'Given a closed-loop RSS target tolerance $T_0$, allocate tolerance across component rings. Supports equal-contribution, equal-tolerance, proportional, minimum-cost, and sensitivity analytical methods, plus genetic algorithm and Pareto multi-objective optimization. Results can be sent to the Tolerance Stack Editor for verification.',
     steps: [
-      'Enter closed-ring allowable tolerance and each ring’s nominal size/weight.',
-      'Choose allocation method (equal RSS contribution, proportional, etc.).',
-      'Compare result tables from several methods and pick a manufacturable set.',
-      'Bring results back to the Tolerance Stack Editor for verification.',
+      'Under Allocation parameters, enter target RSS tolerance $T_0$ (mm) and choose a method; the core formula for that method is shown below.',
+      'Under Component rings, enter name, transfer factor $f_i$, and nominal size $n_i$; minimum-cost / genetic / Pareto need cost coefficient $c_i$; sensitivity methods need $s_i$.',
+      'Click Run allocation to view RSS verification, utilization, allocated tolerance $T_i$, and half-band $\\pm T_i/2$.',
+      'Use Method comparison to compare RSS, utilization, min/max tolerance, and cost index; click a row to switch the active method.',
+      'After selecting a scheme, use Apply to editor, then verify closed-loop min/max and ring directions before release.',
     ],
     principle:
-      'Tolerance allocation is the inverse of stacking: given total tolerance, find component tolerances. Equal-contribution methods balance variance share; weighting by cost or size is also common.',
+      'Tolerance allocation is the inverse of stacking: forward stacking computes RSS from ring $T_i$; here $T_0$ is given and ring $T_i$ are solved. All RSS analytical methods enforce $T_{\\mathrm{stack}}=\\sqrt{\\sum (T_i f_i)^2}\\le T_0$. Proportional allocation follows worst-case sizing logic and does not guarantee full RSS budget use. Half-band $\\pm T_i/2$ is the symmetric manufacturing band—it is not summed in the RSS formula.',
     formulas: [
-      { latex: 'T_i = \\frac{T_0}{\\sqrt{n}}', note: 'Equal RSS contribution simplified form with n rings and |ξ|=1' },
+      {
+        latex: 'T_{\\mathrm{stack}} = \\sqrt{\\sum_i (T_i f_i)^2}',
+        note: 'RSS verification (same as Tolerance Stack Editor RSS method); $f_i$ = transfer factor',
+      },
+      {
+        latex: 'T_{\\mathrm{stack}} \\le T_0 \\quad\\Rightarrow\\quad \\text{utilization} = \\frac{T_{\\mathrm{stack}}}{T_0}\\times 100\\%',
+        note: 'Pass criterion: stacked RSS must not exceed target (allows $10^{-9}$ mm numerical tolerance)',
+      },
+      {
+        latex: 'T_i = \\frac{T_0}{f_i \\sqrt{n}}',
+        note: 'Equal RSS contribution: each $(T_i f_i)^2$ equal; $n$ = ring count. When all $f_i=1$, simplifies to $T_i=T_0/\\sqrt{n}$',
+      },
+      {
+        latex: 'T_i = \\frac{T_0}{\\sqrt{n}}',
+        note: 'Equal tolerance RSS: same $T_i$ per ring (ignores $f_i$ differences, then verifies RSS)',
+      },
+      {
+        latex: 'T_i = T_0 \\cdot \\frac{n_i}{\\sum_j n_j}',
+        note: 'Proportional: by nominal size ratio; worst-case reference—RSS utilization often below 100%',
+      },
+      {
+        latex: 'T_i = \\frac{T_0 \\sqrt{c_i}}{f_i \\sqrt{\\sum_j c_j}}',
+        note: 'Minimum-cost RSS: higher cost coefficient $c_i$ → smaller allocated tolerance',
+      },
+      {
+        latex: 'T_i = \\frac{T_0 \\cdot s_i}{f_i \\sqrt{\\sum_j s_j^2}}',
+        note: 'Sensitivity RSS: larger $s_i$ → larger allocation; iterative method updates $s_i$ over several rounds',
+      },
+      {
+        latex: '\\text{cost index} = \\sum_i \\frac{c_i}{T_i}',
+        note: 'Method comparison sort key: lower index usually means lower manufacturing cost',
+      },
     ],
     notes: [
-      'Round allocated tolerances to achievable grades (e.g. IT classes).',
-      'Relax cost-sensitive rings; tighten easy-to-hold rings.',
+      'Round allocated values to achievable tolerance grades (e.g. IT bands), then re-verify RSS in the editor or batch tool.',
+      'Equal-contribution / equal-tolerance / min-cost / sensitivity RSS methods target the $T_0$ budget; proportional allocation may show low utilization by design.',
+      'When $f_i>1$, allocated tolerance should shrink for the same RSS share; tests confirm $f_A=1, f_B=2$ gives $T_A\\approx 2T_B$ under equal contribution.',
+      'Genetic algorithm minimizes $\\sum c_i n_i/T_i$ subject to $T_{\\mathrm{stack}}\\le T_0$; Pareto returns non-dominated cost vs utilization trade-offs.',
+      'Apply to editor loads example closed-loop min/max—you must replace them with drawing values before sign-off.',
     ],
-    useCases: COMMON_USE_CASES,
-    inputs: COMMON_INPUTS,
-    outputs: COMMON_OUTPUTS,
-    reliability: COMMON_RELIABILITY,
-    keywords: ['tolerance allocation', 'Pareto'],
+    example:
+      'Example: $T_0=0.10$ mm, three rings with $f_i=1$. Equal RSS contribution gives $T_i=0.10/\\sqrt{3}\\approx 0.0577$ mm, half-band $\\pm 0.0289$ mm; RSS check $=\\sqrt{3\\times 0.0577^2}=0.1000$ mm, 100% utilization. Proportional allocation (nominals 40/15/55.25 mm) yields RSS $\\approx 0.051$ mm, $\\approx 51%$ utilization—expected, not an error.',
+    useCases: [
+      'Closed-loop RSS budget is fixed and must be split onto component drawings.',
+      'Compare equal-contribution, minimum-cost, and sensitivity strategies for manufacturability vs budget use.',
+      'Support scheme selection via method comparison and Pareto front (quality/cost trade-off).',
+    ],
+    inputs: [
+      {
+        name: 'Target RSS tolerance $T_0$',
+        meaning: 'Allowed total RSS bandwidth for the closed loop—the core budget.',
+        source: 'Functional requirement, upstream stack result, or design specification.',
+      },
+      {
+        name: 'Transfer factor $f_i$',
+        meaning: 'Sensitivity of closed loop to ring $i$; enters RSS as $(T_i f_i)^2$.',
+        source: 'Usually 1 for 1D chains; derive from geometry for levers/projections.',
+      },
+      {
+        name: 'Nominal size $n_i$',
+        meaning: 'Used in proportional allocation and in GA/Pareto cost $c_i n_i/T_i$.',
+        source: 'Drawing nominal; proportional weight $n_i/\\sum n_j$.',
+      },
+      {
+        name: 'Cost coefficient $c_i$',
+        meaning: 'Manufacturing difficulty; higher $c_i$ tends to receive tighter allocation in min-cost RSS.',
+        source: 'Process assessment or company cost model; default 1 = equal cost.',
+      },
+      {
+        name: 'Sensitivity $s_i$',
+        meaning: 'Weight in sensitivity RSS / iterative sensitivity methods.',
+        source: 'Monte Carlo tornado, analytic partials, or engineering judgement; default 1.',
+      },
+    ],
+    outputs: [
+      {
+        name: 'Allocated tolerance $T_i$',
+        meaning: 'Suggested full tolerance width per ring (mm).',
+        judgement: 'Round to standard grades then re-verify; larger $f_i$ should get smaller $T_i$ (equal contribution).',
+      },
+      {
+        name: 'Half-band $\\pm T_i/2$',
+        meaning: 'Symmetric band for ES/EI entry.',
+        judgement: 'Manufacturing band only—not used in RSS sum; confirm direction and datum on drawings.',
+      },
+      {
+        name: 'RSS verification',
+        meaning: '$T_{\\mathrm{stack}}=\\sqrt{\\sum(T_i f_i)^2}$.',
+        judgement: 'Must be $\\le T_0$; analytical RSS methods usually $\\approx T_0$; proportional often well below.',
+      },
+      {
+        name: 'Utilization',
+        meaning: '$T_{\\mathrm{stack}}/T_0\\times 100\\%$.',
+        judgement: '100% = budget fully used; low values may be intentional (e.g. proportional method).',
+      },
+      {
+        name: 'Method comparison / cost index',
+        meaning: 'Cross-method RSS, min/max $T_i$, and $\\sum c_i/T_i$.',
+        judgement: 'Lowest cost index is not automatically best—check utilization and manufacturability.',
+      },
+      {
+        name: 'Pareto / GA cost',
+        meaning: 'Alternative schemes from multi-objective or constrained search.',
+        judgement: 'GA may be approximate; Pareto points require engineer selection—not auto sign-off.',
+      },
+    ],
+    reliability: [
+      'RSS stacking matches the Tolerance Stack Editor and batch verification: $T_{\\mathrm{stack}}=\\sqrt{\\sum(T_i f_i)^2}$.',
+      'Analytical RSS allocators target $T_{\\mathrm{stack}}\\le T_0$; always read verification and utilization for proportional / GA / Pareto results.',
+      'Allocation does not enforce worst-case budget $\\sum T_i$; safety-critical parts must check worst-case in the editor too.',
+      'RSS assumes independent random errors—use Monte Carlo or measured Cpk when rings correlate or processes drift.',
+    ],
+    keywords: ['tolerance allocation', 'RSS', 'equal contribution', 'Pareto', 'genetic algorithm'],
   },
 
   fit: {
