@@ -34,15 +34,16 @@
 
     <ThreadPitchTool v-if="showPitchTool" :pt="pt" />
 
-    <div class="thread-table-scroll">
+    <div ref="tableHostRef" class="thread-table-scroll">
       <el-table
         ref="tableRef"
         :data="filteredRows"
+        :max-height="tableMaxHeight"
         :fit="false"
         border
         stripe
         size="small"
-        class="thread-data-table thread-sticky-header-table cursor-pointer"
+        class="thread-data-table cursor-pointer"
         highlight-current-row
         :row-class-name="rowClassName"
         @row-click="(row) => $emit('row-click', row)"
@@ -133,6 +134,7 @@ import { Search, Plus, Check } from '@element-plus/icons-vue'
 import { getThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
 import { filterThreadRows, formatPitchDisplay, formatDim } from '@/utils/thread-standards'
 import { THREAD_TABLE_COL } from '@/constants/thread-table-columns'
+import { useThreadTableMaxHeight } from '@/utils/thread-table-layout'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 import ThreadPitchTool from '@/components/thread/ThreadPitchTool.vue'
 
@@ -151,9 +153,14 @@ const priorityFilter = ref('all')
 const tpiMin = ref(null)
 const tpiMax = ref(null)
 const tableRef = ref(null)
+const tableHostRef = ref(null)
+const { maxHeight: tableMaxHeight, updateMaxHeight } = useThreadTableMaxHeight(tableHostRef, { min: 320, gap: 24 })
 
 function layoutTable() {
-  nextTick(() => tableRef.value?.doLayout?.())
+  nextTick(() => {
+    updateMaxHeight()
+    tableRef.value?.doLayout?.()
+  })
 }
 
 const activeMeta = computed(() => THREAD_SYSTEMS.find((s) => s.id === props.catalogSystem))
@@ -195,6 +202,8 @@ const filteredRows = computed(() =>
 )
 
 watch(filteredRows, layoutTable)
+
+watch(tableMaxHeight, layoutTable)
 
 onMounted(layoutTable)
 

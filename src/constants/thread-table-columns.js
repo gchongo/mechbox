@@ -1,4 +1,6 @@
 /** 螺纹模块 el-table 列最小宽度（px），fit=false 时作为列宽 */
+export const THREAD_TABLE_MAX_HEIGHT = 'calc(100vh - 17rem)'
+
 export const THREAD_TABLE_COL = {
   designation: 132,
   priority: 56,

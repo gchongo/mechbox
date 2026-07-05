@@ -6,11 +6,12 @@
 
     <el-table
       :data="rows"
+      :max-height="THREAD_TABLE_MAX_HEIGHT"
       :fit="false"
       size="small"
       border
       stripe
-      class="thread-data-table thread-sticky-header-table mb-3"
+      class="thread-data-table mb-3"
     >
       <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation">
         <template #header>
@@ -60,7 +61,7 @@
 </template>
 
 <script setup>
-import { THREAD_TABLE_COL } from '@/constants/thread-table-columns'
+import { THREAD_TABLE_COL, THREAD_TABLE_MAX_HEIGHT } from '@/constants/thread-table-columns'
 import { getUnsReferenceRows } from '@/constants/thread-standards/uns-data'
 import { formatDim } from '@/utils/thread-standards'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
