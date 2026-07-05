@@ -352,10 +352,7 @@ export function pickMergedMethodResult(data, snapshotStatus = 'draft') {
       : data?.method === 'sigma6Rss'
         ? 'sigma6-rss'
         : data?.method
-  if (snapshotStatus === 'pass') {
-    return methodResults.find((x) => x.method === methodKey) ?? methodResults.find((x) => x.pass) ?? worst
-  }
-  return worst
+  return methodResults.find((x) => x.method === methodKey) ?? methodResults.find((x) => x.pass) ?? worst
 }
 
 export async function exportResultPdf(element, filename, meta = {}) {

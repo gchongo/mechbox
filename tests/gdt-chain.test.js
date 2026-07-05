@@ -6,7 +6,7 @@ import {
   calcAutoBonusTolerance,
   resolveBonusTolerance,
 } from '@/utils/gdt-chain'
-import { analyzeGdtStack } from '@/utils/gdt-stack-calc'
+import { analyzeGdtStack, buildGdtStackReportText } from '@/utils/gdt-stack-calc'
 
 describe('gdt-chain', () => {
   it('resolves position mode', () => {
@@ -169,5 +169,18 @@ describe('gdt-chain', () => {
     })
     expect(r.bonusSource).toBe('auto')
     expect(r.bonusApplied).toBeCloseTo(0.03)
+  })
+
+  it('buildGdtStackReportText supports simple mode without contributions', () => {
+    const r = analyzeGdtStack({
+      calcMode: 'simple',
+      typeId: 'flatness',
+      closedRing: { min: 0, max: 0.1 },
+      rings: [{ name: 'A', tolerance: 0.03, factor: 1, type: 'increasing' }],
+      method: 'rss',
+    })
+    const text = buildGdtStackReportText(r, 'zh')
+    expect(text).toContain('GD&T')
+    expect(text).not.toContain('undefined')
   })
 })

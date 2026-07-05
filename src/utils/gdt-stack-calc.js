@@ -273,9 +273,12 @@ export function buildGdtStackReportText(result, locale = 'zh') {
       `${msg('report_with_datum')}: ${result.effectiveWithDatum.toFixed(4)} mm (${datumPass})`,
     )
   }
-  lines.push('', `${msg('report_contributions')}:`)
-  for (const c of result.contributions) {
-    lines.push(`  ${c.name}: ${c.percent.toFixed(1)}% (T=${c.tolerance})`)
+  const contributions = Array.isArray(result.contributions) ? result.contributions : []
+  if (contributions.length) {
+    lines.push('', `${msg('report_contributions')}:`)
+    for (const c of contributions) {
+      lines.push(`  ${c.name}: ${c.percent.toFixed(1)}% (T=${c.tolerance})`)
+    }
   }
   return lines.join('\n')
 }

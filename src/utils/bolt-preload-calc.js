@@ -303,9 +303,14 @@ export function analyzeBoltPreload(input) {
   const stressPass = stress <= grade.allowStress
   const stressResidualPass = stressResidual <= grade.allowStress
   const stressUnderLoadPass = stressUnderLoad != null ? stressUnderLoad <= grade.allowStress : null
+  const preloadPositive = preloadTightening > 0
+  const residualPreloadPositive = preloadResidual > 0
 
-  let pass = stressPass
-  let passResidual = stressResidualPass
+  let pass = stressPass && preloadPositive
+  let passResidual = stressResidualPass && residualPreloadPositive
+  if (isProfessional) {
+    pass = pass && residualPreloadPositive
+  }
   if (jointLoad?.externalAxialLoad > 0) {
     pass = pass && jointLoad.separationPass && !!stressUnderLoadPass
     passResidual =
@@ -331,6 +336,8 @@ export function analyzeBoltPreload(input) {
     stress,
     stressResidualPass,
     stressResidual,
+    preloadPositive,
+    residualPreloadPositive,
     stressUnderLoadPass,
     stressUnderLoad,
     allowStress: grade.allowStress,

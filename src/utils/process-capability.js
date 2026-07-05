@@ -29,9 +29,28 @@ export function cdfNormalAt(x, mean, sigma) {
 export function calcProcessCapability({ lsl, usl, mean, sigma }) {
   const processSigma = sigma > 0 ? sigma : 0
   const targetTolerance = usl - lsl
-  const c = targetTolerance / (6 * processSigma || 1)
-  const cpu = (usl - mean) / (3 * processSigma || 1)
-  const cpl = (mean - lsl) / (3 * processSigma || 1)
+  if (processSigma <= 0) {
+    const passRateRaw =
+      cdfNormalAt(usl, mean, processSigma) - cdfNormalAt(lsl, mean, processSigma)
+    const passRate = Math.max(0, Math.min(1, passRateRaw))
+    return {
+      c: Number.NaN,
+      cpk: Number.NaN,
+      sigmaLevel: Number.NaN,
+      sigmaLevelFormula: '3·Cpk',
+      sigmaLevelDefinition: SIGMA_LEVEL_DEFINITION,
+      toleranceOver6Sigma: Number.NaN,
+      passRate,
+      dppm: Math.round((1 - passRate) * 1_000_000),
+      cpu: Number.NaN,
+      cpl: Number.NaN,
+      edgeCaseKey: 'sigma_non_positive',
+    }
+  }
+
+  const c = targetTolerance / (6 * processSigma)
+  const cpu = (usl - mean) / (3 * processSigma)
+  const cpl = (mean - lsl) / (3 * processSigma)
   const cpk = Math.min(cpu, cpl)
   const passRateRaw =
     cdfNormalAt(usl, mean, processSigma) - cdfNormalAt(lsl, mean, processSigma)
@@ -44,7 +63,7 @@ export function calcProcessCapability({ lsl, usl, mean, sigma }) {
     sigmaLevel,
     sigmaLevelFormula: '3·Cpk',
     sigmaLevelDefinition: SIGMA_LEVEL_DEFINITION,
-    toleranceOver6Sigma: targetTolerance / (6 * processSigma || 1),
+    toleranceOver6Sigma: targetTolerance / (6 * processSigma),
     passRate,
     dppm: Math.round((1 - passRate) * 1_000_000),
     cpu,

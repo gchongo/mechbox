@@ -274,8 +274,9 @@ export function analyzeBearingLife(input) {
   if (calcMode === 'professional') {
     a2 = input.temperatureFactor ?? getTemperatureFactor(input.operatingTemp ?? 120)
   }
-  const lifeExp = bearingType === 'roller' ? 10 / 3 : 3
-  const lnm = calcModifiedLife(l10, a1 * aIso * a2 ** lifeExp)
+  // Keep life modifiers consistent with ISO-style multiplicative correction chain:
+  // Lnm = L10 * a1 * aISO * a2
+  const lnm = calcModifiedLife(l10, a1 * aIso * a2)
   const hours = calcLifeHours(lnm, input.rpm)
   const targetHours = input.targetHours ?? 10000
   const staticSafety = staticLoad

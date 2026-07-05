@@ -62,7 +62,7 @@ export function buildToolReplayRoute(record) {
 
 /**
  * Resolve how a history row should open (editor reload, input replay, or tool page without replay).
- * @returns {{ kind: 'editor', id: string } | { kind: 'replay', route: object } | { kind: 'tool-blank', path: string, tool: string } | { kind: 'summary-only', record: object }}
+ * @returns {{ kind: 'editor', id: string } | { kind: 'replay', route: object } | { kind: 'tool-blank', path: string, tool: string } | { kind: 'summary-only', record: object, reason?: string }}
  */
 export function resolveHistoryOpenTarget(record) {
   if (!record?.id) return { kind: 'summary-only', record }
@@ -76,7 +76,9 @@ export function resolveHistoryOpenTarget(record) {
   }
   const path = getToolRoute(record.tool)
   if (path) {
-    return { kind: 'tool-blank', path, tool: record.tool }
+    // Safety-first behavior: avoid opening a blank tool page that could be mistaken
+    // as a restored historical calculation state.
+    return { kind: 'summary-only', record, reason: 'replay_unsupported' }
   }
   return { kind: 'summary-only', record }
 }

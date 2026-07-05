@@ -134,4 +134,29 @@ describe('bolt-preload-calc', () => {
     expect(r.joint.loadFactor).toBeCloseTo(expectedPhi, 8)
     expect(r.jointLoad.maxBoltForce).toBeCloseTo(r.preloadResidual + expectedPhi * 5000, 6)
   })
+
+  it('professional must fail when residual preload is non-positive', () => {
+    const r = analyzeBoltPreload({
+      calcMode: 'professional',
+      mode: 'torque2force',
+      diameter: 10,
+      pitch: 1.5,
+      grade: '8.8',
+      muG: 0.12,
+      muK: 0.12,
+      torque: 0,
+      gripLength: 20,
+      holeDiameter: 11,
+      headContactDiameter: 15,
+      outerDiameter: 43,
+      embedmentUm: 200,
+      deltaT: 200,
+      alphaBolt: 10e-6,
+      alphaPlate: 24e-6,
+    })
+    expect(r.preloadResidual).toBeLessThanOrEqual(0)
+    expect(r.residualPreloadPositive).toBe(false)
+    expect(r.pass).toBe(false)
+    expect(r.passResidual).toBe(false)
+  })
 })

@@ -175,7 +175,7 @@ export function analyzeFilletWeldCombined(input) {
 /** 专业：合成应力 + 三标准 + HAZ + 可选疲劳 */
 export function analyzeFilletWeldProfessional(input) {
   const combined = analyzeFilletWeldCombined(input)
-  if (combined.error) return { calcMode: 'professional', error: combined.error }
+  if (combined.errorKey) return { calcMode: 'professional', errorKey: combined.errorKey }
 
   const cmp = compareWeldStandards(input)
   const ec = analyzeFilletWeldEurocode(input)

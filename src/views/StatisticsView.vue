@@ -446,11 +446,13 @@ const convertLatex = computed(() => {
 const sigmaLevelLatex = computed(() => {
   locale.value
   if (!capability.value) return '3 \\cdot C_{pk} = \\text{—}'
+  if (!Number.isFinite(capability.value.sigmaLevel)) return '3 \\cdot C_{pk} = \\text{N/A}'
   return `3 \\cdot C_{pk} = ${capability.value.sigmaLevel.toFixed(2)}\\sigma`
 })
 
 const cValueLatex = computed(() => {
   if (!capability.value) return 'C = T/(6\\sigma) = \\text{—}'
+  if (!Number.isFinite(capability.value.c)) return 'C = T/(6\\sigma) = \\text{N/A}'
   return `C = T/(6\\sigma) = ${capability.value.c.toFixed(2)}`
 })
 
@@ -471,12 +473,15 @@ const passRateDisplay = computed(() => {
 
 const cpkDisplay = computed(() => {
   if (!capability.value) return '—'
+  if (!Number.isFinite(capability.value.cpk)) return 'N/A'
   return capability.value.cpk.toFixed(2)
 })
 
 const capabilityPassRateOk = computed(() => capability.value && capability.value.passRate >= 0.9973)
 
-const capabilityCpkOk = computed(() => capability.value && capability.value.cpk > 1.33)
+const capabilityCpkOk = computed(() =>
+  capability.value && Number.isFinite(capability.value.cpk) && capability.value.cpk > 1.33,
+)
 
 function applySampleToProcess() {
   const nums = parseNumbers(dataInput.value)

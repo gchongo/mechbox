@@ -186,7 +186,7 @@
         <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
           <MathTex expr="P = X \cdot F_r + Y \cdot F_a" />
           <MathTex :expr="l10Formula" />
-          <MathTex expr="L_{nm} = a_1 \cdot L_{10},\quad L_h = \frac{L_{nm} \times 10^6}{60 n}" />
+          <MathTex :expr="lnmFormula" />
         </div>
       </section>
     </div>
@@ -226,6 +226,12 @@ const l10Formula = computed(() =>
   locale.value === 'en'
     ? 'L_{10} = \\left(\\frac{C}{P}\\right)^{\\varepsilon} \\quad (\\text{million rev.})'
     : 'L_{10} = \\left(\\frac{C}{P}\\right)^{\\varepsilon} \\quad (\\text{百万转})',
+)
+
+const lnmFormula = computed(() =>
+  form.calcMode === 'professional'
+    ? 'L_{nm} = a_1 \\cdot a_{ISO} \\cdot a_2 \\cdot L_{10},\\quad L_h = \\frac{L_{nm} \\times 10^6}{60 n}'
+    : 'L_{nm} = a_1 \\cdot a_{ISO} \\cdot L_{10},\\quad L_h = \\frac{L_{nm} \\times 10^6}{60 n}',
 )
 
 const lifeConditions = computed(() => optionMap({
