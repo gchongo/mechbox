@@ -1,264 +1,108 @@
-/** 管螺纹参考尺寸 — NPT (ASME B1.20.1) / BSPP G (ISO 228) / BSPT R (ISO 7-1) */
+/**
+ * 管螺纹参考尺寸
+ * NPT: ASME B1.20.1 Table 2 (E0 大径, E1 手紧平面中径, K0 小径/底孔参考)
+ * G:   ISO 228-1 平行管螺纹
+ * R:   ISO 7-1 锥管螺纹 (55°, 1:16)
+ */
 
-/** 参考工程手册常用值; major/pitchDia 为英寸 */
-const PIPE_RAW = [
-  {
-    system: 'npt',
-    designation: '1/16-27 NPT',
-    tpi: 27,
-    major: 0.3125,
-    pitchDiameter: 0.271,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'npt_bsp',
-    tapDrill: 0.234,
-    standardRef: 'ASME B1.20.1',
-  },
-  {
-    system: 'npt',
-    designation: '1/8-27 NPT',
-    tpi: 27,
-    major: 0.405,
-    pitchDiameter: 0.351,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'npt_bsp',
-    tapDrill: 0.332,
-    standardRef: 'ASME B1.20.1',
-  },
-  {
-    system: 'npt',
-    designation: '1/4-18 NPT',
-    tpi: 18,
-    major: 0.54,
-    pitchDiameter: 0.47,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'npt_bsp',
-    tapDrill: 0.438,
-    standardRef: 'ASME B1.20.1',
-  },
-  {
-    system: 'npt',
-    designation: '3/8-18 NPT',
-    tpi: 18,
-    major: 0.675,
-    pitchDiameter: 0.588,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'npt_bsp',
-    tapDrill: 0.562,
-    standardRef: 'ASME B1.20.1',
-  },
-  {
-    system: 'npt',
-    designation: '1/2-14 NPT',
-    tpi: 14,
-    major: 0.84,
-    pitchDiameter: 0.733,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'npt_bsp',
-    tapDrill: 0.703,
-    standardRef: 'ASME B1.20.1',
-  },
-  {
-    system: 'npt',
-    designation: '3/4-14 NPT',
-    tpi: 14,
-    major: 1.05,
-    pitchDiameter: 0.918,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'npt_bsp',
-    tapDrill: 0.906,
-    standardRef: 'ASME B1.20.1',
-  },
-  {
-    system: 'npt',
-    designation: '1-11.5 NPT',
-    tpi: 11.5,
-    major: 1.315,
-    pitchDiameter: 1.161,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'npt_bsp',
-    tapDrill: 1.156,
-    standardRef: 'ASME B1.20.1',
-  },
-  {
-    system: 'g',
-    designation: 'G1/8',
-    tpi: 28,
-    major: 0.383,
-    pitchDiameter: 0.337,
-    taper: '—',
-    sealing: 'parallel_seal',
-    compatibilityKey: 'bsp_npt',
-    tapDrill: 0.346,
-    standardRef: 'ISO 228-1',
-  },
-  {
-    system: 'g',
-    designation: 'G1/4',
-    tpi: 19,
-    major: 0.518,
-    pitchDiameter: 0.454,
-    taper: '—',
-    sealing: 'parallel_seal',
-    compatibilityKey: 'bsp_npt',
-    tapDrill: 0.469,
-    standardRef: 'ISO 228-1',
-  },
-  {
-    system: 'g',
-    designation: 'G3/8',
-    tpi: 19,
-    major: 0.656,
-    pitchDiameter: 0.592,
-    taper: '—',
-    sealing: 'parallel_seal',
-    compatibilityKey: 'bsp_npt',
-    tapDrill: 0.609,
-    standardRef: 'ISO 228-1',
-  },
-  {
-    system: 'g',
-    designation: 'G1/2',
-    tpi: 14,
-    major: 0.825,
-    pitchDiameter: 0.733,
-    taper: '—',
-    sealing: 'parallel_seal',
-    compatibilityKey: 'bsp_npt',
-    tapDrill: 0.766,
-    standardRef: 'ISO 228-1',
-  },
-  {
-    system: 'g',
-    designation: 'G3/4',
-    tpi: 14,
-    major: 1.041,
-    pitchDiameter: 0.949,
-    taper: '—',
-    sealing: 'parallel_seal',
-    compatibilityKey: 'bsp_npt',
-    tapDrill: 0.984,
-    standardRef: 'ISO 228-1',
-  },
-  {
-    system: 'g',
-    designation: 'G1',
-    tpi: 11,
-    major: 1.309,
-    pitchDiameter: 1.193,
-    taper: '—',
-    sealing: 'parallel_seal',
-    compatibilityKey: 'bsp_npt',
-    tapDrill: 1.234,
-    standardRef: 'ISO 228-1',
-  },
-  {
-    system: 'r',
-    designation: 'R1/8',
-    tpi: 28,
-    major: 0.383,
-    pitchDiameter: 0.337,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'bspt_npt',
-    tapDrill: 0.346,
-    standardRef: 'ISO 7-1',
-  },
-  {
-    system: 'r',
-    designation: 'R1/4',
-    tpi: 19,
-    major: 0.518,
-    pitchDiameter: 0.454,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'bspt_npt',
-    tapDrill: 0.469,
-    standardRef: 'ISO 7-1',
-  },
-  {
-    system: 'r',
-    designation: 'R3/8',
-    tpi: 19,
-    major: 0.656,
-    pitchDiameter: 0.592,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'bspt_npt',
-    tapDrill: 0.609,
-    standardRef: 'ISO 7-1',
-  },
-  {
-    system: 'r',
-    designation: 'R1/2',
-    tpi: 14,
-    major: 0.825,
-    pitchDiameter: 0.733,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'bspt_npt',
-    tapDrill: 0.766,
-    standardRef: 'ISO 7-1',
-  },
-  {
-    system: 'r',
-    designation: 'R3/4',
-    tpi: 14,
-    major: 1.041,
-    pitchDiameter: 0.949,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'bspt_npt',
-    tapDrill: 0.984,
-    standardRef: 'ISO 7-1',
-  },
-  {
-    system: 'r',
-    designation: 'R1',
-    tpi: 11,
-    major: 1.309,
-    pitchDiameter: 1.193,
-    taper: '1:16',
-    sealing: 'taper_seal',
-    compatibilityKey: 'bspt_npt',
-    tapDrill: 1.234,
-    standardRef: 'ISO 7-1',
-  },
-]
+import { NPT_DEFINITIONS, BSP_DEFINITIONS } from './pipe-definitions'
+import { calcWhitworthMinor, round } from './thread-dim'
 
-function pipeRow(raw) {
-  const pitch = 1 / raw.tpi
+function nptDesignation(nom, tpi) {
+  return `${nom}-${tpi} NPT`
+}
+
+function gDesignation(nom) {
+  return `G${nom}`
+}
+
+function rDesignation(nom) {
+  return `R${nom}`
+}
+
+function buildNptRow([nom, tpi, major, pitchDia, minor, tapDrill]) {
+  const pitch = 1 / tpi
   return {
-    id: `pipe-${raw.system}-${raw.designation.replace(/\W/g, '')}`,
-    system: raw.system,
-    subSeries: raw.system,
-    designation: raw.designation,
+    id: `pipe-npt-${nom.replace(/[^\w]/g, '')}-${tpi}`,
+    system: 'npt',
+    subSeries: 'npt',
+    designation: nptDesignation(nom, tpi),
     priority: 1,
-    standardRef: raw.standardRef,
+    standardRef: 'ASME B1.20.1',
     unit: 'in',
-    nominal: raw.major,
-    major: raw.major,
-    pitchDiameter: raw.pitchDiameter,
-    minor: null,
+    nominal: major,
+    major: round(major, 4),
+    pitchDiameter: round(pitchDia, 4),
+    minor: round(minor, 4),
     pitch,
-    tpi: raw.tpi,
-    threadAngle: 55,
-    tapDrill: raw.tapDrill,
+    tpi,
+    threadAngle: 60,
+    tapDrill: round(tapDrill, 4),
     toleranceExternal: '—',
     toleranceInternal: '—',
-    taper: raw.taper,
-    sealing: raw.sealing,
-    compatibilityKey: raw.compatibilityKey,
+    taper: '1:16',
+    sealing: 'taper_seal',
+    compatibilityKey: 'npt_bsp',
     usageKey: 'pipe',
   }
 }
 
-export const NPT_ROWS = PIPE_RAW.filter((r) => r.system === 'npt').map(pipeRow)
-export const G_ROWS = PIPE_RAW.filter((r) => r.system === 'g').map(pipeRow)
-export const R_ROWS = PIPE_RAW.filter((r) => r.system === 'r').map(pipeRow)
+function buildGRow([nom, tpi, major, pitchDia, minor, tapDrill]) {
+  const pitch = 1 / tpi
+  const m = minor ?? calcWhitworthMinor(major, tpi)
+  return {
+    id: `pipe-g-${nom.replace(/[^\w]/g, '')}`,
+    system: 'g',
+    subSeries: 'g',
+    designation: gDesignation(nom),
+    priority: 1,
+    standardRef: 'ISO 228-1',
+    unit: 'in',
+    nominal: major,
+    major: round(major, 4),
+    pitchDiameter: round(pitchDia, 4),
+    minor: round(m, 4),
+    pitch,
+    tpi,
+    threadAngle: 55,
+    tapDrill: round(tapDrill, 4),
+    toleranceExternal: '—',
+    toleranceInternal: '—',
+    taper: '—',
+    sealing: 'parallel_seal',
+    compatibilityKey: 'bsp_npt',
+    usageKey: 'pipe',
+  }
+}
+
+function buildRRow([nom, tpi, major, pitchDia, minor, tapDrill]) {
+  const pitch = 1 / tpi
+  const m = minor ?? calcWhitworthMinor(major, tpi)
+  return {
+    id: `pipe-r-${nom.replace(/[^\w]/g, '')}`,
+    system: 'r',
+    subSeries: 'r',
+    designation: rDesignation(nom),
+    priority: 1,
+    standardRef: 'ISO 7-1',
+    unit: 'in',
+    nominal: major,
+    major: round(major, 4),
+    pitchDiameter: round(pitchDia, 4),
+    minor: round(m, 4),
+    pitch,
+    tpi,
+    threadAngle: 55,
+    tapDrill: round(tapDrill, 4),
+    toleranceExternal: '—',
+    toleranceInternal: '—',
+    taper: '1:16',
+    sealing: 'taper_seal',
+    compatibilityKey: 'bspt_npt',
+    usageKey: 'pipe',
+  }
+}
+
+export const NPT_ROWS = NPT_DEFINITIONS.map(buildNptRow)
+export const G_ROWS = BSP_DEFINITIONS.map(buildGRow)
+export const R_ROWS = BSP_DEFINITIONS.map(buildRRow)
