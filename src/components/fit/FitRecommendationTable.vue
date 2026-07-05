@@ -1,7 +1,7 @@
 <template>
   <section class="fit-rec-table">
-    <div class="mb-3">
-      <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ title }}</h3>
+    <div v-if="title || subtitle" class="mb-3">
+      <h3 v-if="title" class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ title }}</h3>
       <p v-if="subtitle" class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ subtitle }}</p>
     </div>
 
@@ -79,7 +79,7 @@ import {
 import { calcToleranceLimits } from '@/utils/iso-286-calc'
 
 const props = defineProps({
-  title: { type: String, required: true },
+  title: { type: String, default: '' },
   subtitle: { type: String, default: '' },
   referenceLabel: { type: String, required: true },
   legend: { type: String, default: '' },

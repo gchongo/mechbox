@@ -28,10 +28,17 @@
           </el-form>
         </section>
 
-        <section class="card-panel space-y-8">
+        <section class="card-panel">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <el-radio-group v-model="basisTab" size="small">
+              <el-radio-button value="hole">{{ prc('tabHoleBasis') }}</el-radio-button>
+              <el-radio-button value="shaft">{{ prc('tabShaftBasis') }}</el-radio-button>
+            </el-radio-group>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ prc('subtitle') }}</p>
+          </div>
+
           <FitRecommendationTable
-            :title="prc('holeBasisTitle')"
-            :subtitle="prc('subtitle')"
+            v-if="basisTab === 'hole'"
             :reference-label="prc('referenceHole')"
             :legend="prc('legend')"
             :rows="HOLE_BASIS_ROWS"
@@ -42,15 +49,14 @@
             @select="applyFitSelection"
           />
           <FitRecommendationTable
-            :title="prc('shaftBasisTitle')"
+            v-else
             :reference-label="prc('referenceShaft')"
-            :legend="prc('legendShort')"
+            :legend="prc('legend')"
             :rows="SHAFT_BASIS_ROWS"
             :selected-hole="holeCode"
             :selected-shaft="shaftCode"
             :nominal="nominal"
             :category-labels="categoryLabels"
-            :show-preferred-legend="false"
             @select="applyFitSelection"
           />
         </section>
@@ -170,6 +176,7 @@ const nominal = ref(25)
 const holeCode = ref('H7')
 const shaftCode = ref('g6')
 const deltaT = ref(0)
+const basisTab = ref('hole')
 const resultRef = ref(null)
 const route = useRoute()
 const router = useRouter()
