@@ -159,6 +159,8 @@
           </p>
         </section>
 
+        <FitHelpReference v-if="article.id === 'fit'" />
+
         <section v-if="relatedArticles.length" class="help-section">
           <h3 class="help-section__title">{{ ct('help.related') }}</h3>
           <div class="flex flex-wrap gap-2">
@@ -186,6 +188,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
+import FitHelpReference from '@/components/fit/FitHelpReference.vue'
 import {
   HELP_GROUP_ORDER,
   getHelpArticle,

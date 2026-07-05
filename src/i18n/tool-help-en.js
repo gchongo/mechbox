@@ -593,7 +593,7 @@ export const toolHelpEnById = {
     summary:
       'Compute limit sizes, max/min clearance or interference, fit quality index, and optional assembly ΔT effects from hole/shaft codes (e.g. H7/g6, H7/n6). For preliminary sizing only—verify against GB/T 1800 / ISO 286-2 tables before release.',
     steps: [
-      'Enter nominal size (1–500 mm), hole code (e.g. H7) and shaft code (e.g. g6, n6), or pick a common fit preset.',
+      'Enter nominal size (1–500 mm) and hole/shaft codes, or click a cell in the hole-basis / shaft-basis tables on the tool page.',
       'Optionally enter assembly ΔT vs 20°C; equal default materials give zero thermal shift.',
       'Review limit sizes, clearances (μm), mean clearance, quality index Q, and fit type.',
       'Read check status and assumptions—“Review” means engineer verification, not automatic fail.',
@@ -643,6 +643,7 @@ export const toolHelpEnById = {
       'Diagram labels like (+8/-5) vs handbook (+28/+15) reflect deviation data difference—compare limit sizes and clearances to the standard.',
       'When comparing to external calculators or handbooks, clearance formulas $X_{\\max}=ES-ei$, $X_{\\min}=EI-es$ are the same; differences come from IT formula or shaft n/k/p deviation tables, not different fit math.',
       'Nominal >500 mm unsupported; IT grades 5–11 only; letter set is a common subset, not full ISO 286.',
+      'Help page Appendix D3-3 lists typical uses of preferred fits; D4-1 maps IT grades to processes—verify shop capability after selecting a fit.',
     ],
     example:
       'Ex.1 — Ø11 H7/g6 (clearance, close to standard): Tool hole 11.000–11.0162 mm, shaft 10.9829–10.9930 mm, $X_{\\max}\\approx 33.3\\ \\mu m$, $X_{\\min}\\approx 7.0\\ \\mu m$, mean clearance $\\approx 20.2\\ \\mu m$, $Q\\approx 0.77$ (comparison only). Standard IT7=18 μm gives $X_{\\max}\\approx 36\\ \\mu m$—IT formula gap. Ex.2 — Ø25 H7/n6 (transition, large vs standard calculators): Standard hole +21/0, shaft +28/+15 μm → $X_{\\max}=+6\\ \\mu m$, $X_{\\min}=-28\\ \\mu m$. Tool shaft n fundamental deviation +8 μm (not +15 μm) → shaft ~+8/−5 μm, $X_{\\max}\\approx 26.9\\ \\mu m$, $X_{\\min}\\approx -8\\ \\mu m$—max interference underestimated by ~20 μm. Use GB/T 1800 for transition/interference fits.',

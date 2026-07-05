@@ -44,11 +44,6 @@
                   :title="cellTitle(fit)"
                   @click="emit('select', { hole: fit.hole, shaft: fit.shaft, fit })"
                 >
-                  <span
-                    v-if="fit.preferred"
-                    class="pointer-events-none absolute left-0 top-0 h-0 w-0 border-l-[6px] border-t-[6px] border-l-primary border-t-primary"
-                    aria-hidden="true"
-                  />
                   {{ fit.hole }}/{{ fit.shaft }}
                   <span
                     v-if="sizeNoteActive(fit)"
@@ -62,8 +57,14 @@
       </table>
     </div>
 
-    <p class="mt-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
-      {{ legend }}
+    <p v-if="legend" class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+      <span>{{ legend }}</span>
+      <span
+        v-if="showPreferredLegend"
+        class="inline-flex items-center rounded border border-amber-400 bg-amber-100 px-1.5 py-0.5 font-mono text-[10px] text-amber-950 dark:border-amber-500 dark:bg-amber-950/60 dark:text-amber-100"
+      >
+        {{ categoryLabels.preferred }}
+      </span>
     </p>
   </section>
 </template>
@@ -87,6 +88,7 @@ const props = defineProps({
   selectedShaft: { type: String, default: '' },
   nominal: { type: Number, default: 25 },
   categoryLabels: { type: Object, required: true },
+  showPreferredLegend: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['select'])
@@ -115,13 +117,16 @@ function sizeNoteActive(fit) {
 function cellClass(fit) {
   const selected = isSelected(fit)
   const supported = isSupported(fit)
-  return [
-    selected
-      ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/40'
-      : supported
-        ? 'border-gray-300 bg-white text-gray-800 hover:border-primary/60 hover:bg-primary/5 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100'
-        : 'border-dashed border-gray-300 bg-gray-50 text-gray-400 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-500',
-  ]
+  if (selected) {
+    return 'border-primary bg-primary/15 text-primary ring-2 ring-primary/50 font-semibold'
+  }
+  if (fit.preferred && supported) {
+    return 'border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-950/60 dark:text-amber-100 dark:hover:bg-amber-900/70'
+  }
+  if (supported) {
+    return 'border-gray-300 bg-white text-gray-800 hover:border-primary/60 hover:bg-primary/5 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100'
+  }
+  return 'border-dashed border-gray-300 bg-gray-50 text-gray-400 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-500'
 }
 
 function categoryCellClass(cat) {

@@ -5,101 +5,108 @@
       {{ pt('subtitle') }}
     </p>
 
-    <div class="grid gap-6 lg:grid-cols-2">
-      <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
-        <el-form label-width="100px">
-          <CalcFormItem :label="pf('nominalSize')">
-            <el-input-number v-model="nominal" :min="1" :max="500" :precision="2" />
-            <span class="ml-2 text-sm text-gray-500">mm</span>
-          </CalcFormItem>
-          <CalcFormItem :label="pf('holeCode')">
-            <el-input v-model="holeCode" placeholder="H7" class="w-32" />
-          </CalcFormItem>
-          <CalcFormItem :label="pf('shaftCode')">
-            <el-input v-model="shaftCode" placeholder="g6" class="w-32" />
-          </CalcFormItem>
-          <CalcFormItem :label="pf('assemblyDeltaT')">
-            <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
-            <span class="ml-2 text-xs text-gray-500">°C</span>
-          </CalcFormItem>
-        </el-form>
-      </section>
+    <div class="grid gap-6 xl:grid-cols-5">
+      <!-- 左侧：输入 + 选用附表 -->
+      <div class="space-y-6 xl:col-span-3">
+        <section class="card-panel">
+          <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
+          <el-form label-width="100px">
+            <CalcFormItem :label="pf('nominalSize')">
+              <el-input-number v-model="nominal" :min="1" :max="500" :precision="2" />
+              <span class="ml-2 text-sm text-gray-500">mm</span>
+            </CalcFormItem>
+            <CalcFormItem :label="pf('holeCode')">
+              <el-input v-model="holeCode" placeholder="H7" class="w-32" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('shaftCode')">
+              <el-input v-model="shaftCode" placeholder="g6" class="w-32" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('assemblyDeltaT')">
+              <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
+              <span class="ml-2 text-xs text-gray-500">°C</span>
+            </CalcFormItem>
+          </el-form>
+        </section>
 
-      <section ref="resultRef" class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-alert v-if="result?.errorKey" :title="resultError(result)" type="warning" show-icon />
-        <template v-else-if="result">
-          <div class="mb-4 flex items-center gap-3">
-            <el-tag :type="overallStatusType">{{ fc('check') }}: {{ overallStatusLabel }}</el-tag>
-            <el-tag :type="fitTagType">{{ fitTypeLabel }}</el-tag>
-          </div>
-          <p v-if="statusHint" class="mb-3 text-xs" :class="overallStatus === 'fail' ? 'text-error' : 'text-warning'">
-            {{ statusHint }}
-          </p>
-          <dl class="space-y-2 text-sm">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxClearance')" />
-              <dd class="font-mono">{{ (result.maxClearance * 1000).toFixed(1) }} μm</dd>
+        <section class="card-panel space-y-8">
+          <FitRecommendationTable
+            :title="prc('holeBasisTitle')"
+            :subtitle="prc('subtitle')"
+            :reference-label="prc('referenceHole')"
+            :legend="prc('legend')"
+            :rows="HOLE_BASIS_ROWS"
+            :selected-hole="holeCode"
+            :selected-shaft="shaftCode"
+            :nominal="nominal"
+            :category-labels="categoryLabels"
+            @select="applyFitSelection"
+          />
+          <FitRecommendationTable
+            :title="prc('shaftBasisTitle')"
+            :reference-label="prc('referenceShaft')"
+            :legend="prc('legendShort')"
+            :rows="SHAFT_BASIS_ROWS"
+            :selected-hole="holeCode"
+            :selected-shaft="shaftCode"
+            :nominal="nominal"
+            :category-labels="categoryLabels"
+            :show-preferred-legend="false"
+            @select="applyFitSelection"
+          />
+        </section>
+      </div>
+
+      <!-- 右侧：结果 sticky -->
+      <div class="xl:col-span-2">
+        <section ref="resultRef" class="card-panel xl:sticky xl:top-4">
+          <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+          <el-alert v-if="result?.errorKey" :title="resultError(result)" type="warning" show-icon />
+          <template v-else-if="result">
+            <div class="mb-4 flex flex-wrap items-center gap-2">
+              <el-tag size="small" type="info" class="font-mono">{{ holeCode }}/{{ shaftCode }}</el-tag>
+              <el-tag :type="overallStatusType">{{ fc('check') }}: {{ overallStatusLabel }}</el-tag>
+              <el-tag :type="fitTagType">{{ fitTypeLabel }}</el-tag>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('minClearance')" />
-              <dd class="font-mono">{{ (result.minClearance * 1000).toFixed(1) }} μm</dd>
-            </div>
-            <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('holeLimits') }} {{ result.hole.designation }}</dt>
-              <dd class="font-mono">{{ result.hole.minSize.toFixed(4) }} ~ {{ result.hole.maxSize.toFixed(4) }}</dd>
-            </div>
-            <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <dt>{{ pr('shaftLimits') }} {{ result.shaft.designation }}</dt>
-              <dd class="font-mono">{{ result.shaft.minSize.toFixed(4) }} ~ {{ result.shaft.maxSize.toFixed(4) }}</dd>
-            </div>
-            <div v-if="result.meanClearance != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <ResultLabel :text="pr('meanClearance')" />
-              <dd class="font-mono">{{ (result.meanClearance * 1000).toFixed(1) }} μm</dd>
-            </div>
-            <div v-if="result.fitQuality != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <ResultLabel :text="pr('fitQuality')" />
-              <dd class="font-mono">{{ result.fitQuality }}</dd>
-            </div>
-            <div v-if="result.thermalShift != null && deltaT !== 0" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <ResultLabel :text="pr('thermalShift')" />
-              <dd class="font-mono">{{ (result.thermalShift * 1000).toFixed(1) }} μm</dd>
-            </div>
-            <div v-if="thermalRiskLabel" class="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/20">
-              {{ thermalRiskLabel }}
-            </div>
-          </dl>
-          <FitDiagram :fit="result" class="mx-auto mt-4" />
-          <FitToleranceBand v-if="bandData && !bandData.errorKey" :band="bandData" class="mx-auto mt-4" />
-        </template>
-      </section>
+            <p v-if="statusHint" class="mb-3 text-xs" :class="overallStatus === 'fail' ? 'text-error' : 'text-warning'">
+              {{ statusHint }}
+            </p>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxClearance')" />
+                <dd class="font-mono">{{ (result.maxClearance * 1000).toFixed(1) }} μm</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('minClearance')" />
+                <dd class="font-mono">{{ (result.minClearance * 1000).toFixed(1) }} μm</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+                <dt>{{ pr('holeLimits') }} {{ result.hole.designation }}</dt>
+                <dd class="font-mono">{{ result.hole.minSize.toFixed(4) }} ~ {{ result.hole.maxSize.toFixed(4) }}</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+                <dt>{{ pr('shaftLimits') }} {{ result.shaft.designation }}</dt>
+                <dd class="font-mono">{{ result.shaft.minSize.toFixed(4) }} ~ {{ result.shaft.maxSize.toFixed(4) }}</dd>
+              </div>
+              <div v-if="result.meanClearance != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+                <ResultLabel :text="pr('meanClearance')" />
+                <dd class="font-mono">{{ (result.meanClearance * 1000).toFixed(1) }} μm</dd>
+              </div>
+              <div v-if="result.fitQuality != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+                <ResultLabel :text="pr('fitQuality')" />
+                <dd class="font-mono">{{ result.fitQuality }}</dd>
+              </div>
+              <div v-if="result.thermalShift != null && deltaT !== 0" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+                <ResultLabel :text="pr('thermalShift')" />
+                <dd class="font-mono">{{ (result.thermalShift * 1000).toFixed(1) }} μm</dd>
+              </div>
+              <div v-if="thermalRiskLabel" class="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/20">
+                {{ thermalRiskLabel }}
+              </div>
+            </dl>
+            <FitDiagram :fit="result" class="mx-auto mt-4 max-w-full" />
+            <FitToleranceBand v-if="bandData && !bandData.errorKey" :band="bandData" class="mx-auto mt-4 max-w-full" />
+          </template>
+        </section>
+      </div>
     </div>
-
-    <section class="card-panel mt-6 space-y-8">
-      <FitRecommendationTable
-        :title="prc('holeBasisTitle')"
-        :subtitle="prc('subtitle')"
-        :reference-label="prc('referenceHole')"
-        :legend="prc('legend')"
-        :rows="HOLE_BASIS_ROWS"
-        :selected-hole="holeCode"
-        :selected-shaft="shaftCode"
-        :nominal="nominal"
-        :category-labels="categoryLabels"
-        @select="applyFitSelection"
-      />
-      <FitRecommendationTable
-        :title="prc('shaftBasisTitle')"
-        :subtitle="prc('subtitle')"
-        :reference-label="prc('referenceShaft')"
-        :legend="prc('legend')"
-        :rows="SHAFT_BASIS_ROWS"
-        :selected-hole="holeCode"
-        :selected-shaft="shaftCode"
-        :nominal="nominal"
-        :category-labels="categoryLabels"
-        @select="applyFitSelection"
-      />
-    </section>
 
     <section class="card-panel mt-6">
       <h2 class="mb-2 text-sm font-semibold">{{ pf('supportedCodes') }}</h2>
