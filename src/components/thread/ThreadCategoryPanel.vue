@@ -4,6 +4,7 @@
       <div class="thread-catalog-hero">
         <ThreadProfileDiagram
           v-if="showDiagram"
+          :kind="diagramKind"
           :angle="diagramAngle"
           :title="diagramTitle"
           :formula="diagramFormula"
@@ -76,6 +77,7 @@ import {
   getReferenceCatalogAlternatives,
   catalogAlternativeToQuery,
 } from '@/constants/thread-standards/taxonomy'
+import { resolveDiagramKind } from '@/utils/thread-profile-diagram'
 import ThreadProfileDiagram from '@/components/thread/ThreadProfileDiagram.vue'
 import ThreadSystemMetaPanel from '@/components/thread/ThreadSystemMetaPanel.vue'
 import ThreadCatalogTable from '@/components/thread/ThreadCatalogTable.vue'
@@ -102,6 +104,8 @@ const activeSystemDef = computed(() =>
   selectedSystem.value ? getThreadSystemDef(selectedSystem.value.id) : null,
 )
 
+const diagramKind = computed(() => resolveDiagramKind(activeSystemDef.value))
+
 const diagramAngle = computed(() => activeSystemDef.value?.diagramAngle ?? 60)
 
 const diagramTitle = computed(() => {
@@ -110,8 +114,17 @@ const diagramTitle = computed(() => {
 })
 
 const diagramFormula = computed(() => {
-  if (activeSystemDef.value?.angle === 55) return props.pt('formula55')
-  if (activeSystemDef.value?.profile === 'trapezoidal') return props.pt('formulaTrapezoidal')
+  const kind = diagramKind.value
+  const def = activeSystemDef.value
+  if (kind === 'trapezoidal_tr') return props.pt('formulaTrapezoidal')
+  if (kind === 'trapezoidal_acme') return props.pt('formulaAcme')
+  if (kind === 'triangular_55' || kind === 'triangular_55_taper') return props.pt('formula55')
+  if (kind === 'triangular_60_taper') return props.pt('formulaNptTaper')
+  if (kind === 'square') return props.pt('formulaSquare')
+  if (kind === 'buttress') return props.pt('formulaButtress')
+  if (kind === 'round') return props.pt('formulaRound')
+  if (kind === 'ball_screw') return props.pt('formulaBallScrew')
+  if (def?.profile === 'trapezoidal') return props.pt('formulaTrapezoidal')
   return props.pt('formula60')
 })
 
