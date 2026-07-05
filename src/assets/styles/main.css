@@ -142,10 +142,10 @@
   }
 
   .thread-table-scroll {
-    @apply min-w-0;
+    @apply min-w-0 overflow-x-auto;
   }
 
-  /* 页面滚动时表头吸顶（紧贴全局顶栏下方）；勿对 el-table 设 max-height */
+  /* 页面滚动时表头吸顶 */
   .thread-sticky-header-table.el-table {
     overflow: visible;
   }
@@ -166,38 +166,71 @@
     background: var(--el-table-header-bg-color, var(--el-fill-color-light));
   }
 
-  .thread-sticky-header-table.el-table .el-table__header-wrapper th.el-table-fixed-column--left,
-  .thread-sticky-header-table.el-table .el-table__header-wrapper th.el-table-fixed-column--right {
-    z-index: 6;
-  }
-
   .dark .thread-sticky-header-table.el-table .el-table__header-wrapper th.el-table__cell {
     background: rgb(17 24 39);
   }
 
-  /* 螺纹数据表：文字居中，列宽随内容（无 fixed 列，避免表头错位） */
+  /* 表头表体同宽：固定列宽 + 外层横向滚动 */
   .thread-data-table.el-table {
     width: max-content;
-    max-width: 100%;
+    min-width: 100%;
+  }
+
+  .thread-data-table.el-table .el-table__header-wrapper table,
+  .thread-data-table.el-table .el-table__body-wrapper table {
+    table-layout: fixed;
+    width: max-content;
   }
 
   .thread-data-table.el-table th.el-table__cell,
   .thread-data-table.el-table td.el-table__cell {
     text-align: center;
     font-variant-numeric: tabular-nums;
+    padding: 8px 0;
   }
 
   .thread-data-table.el-table .cell {
     overflow: visible;
     text-overflow: clip;
     white-space: nowrap;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 8px;
+    padding-right: 8px;
     text-align: center;
+    line-height: 1.4;
+  }
+
+  .thread-data-table.el-table td.thread-col-action .cell,
+  .thread-data-table.el-table th.thread-col-action .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .thread-col-action__head {
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    font-weight: 600;
   }
 
   .thread-data-table.el-table th .thread-field-tip {
     justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  .thread-sticky-header-table.el-table .el-table__body-wrapper {
+    overflow-x: visible;
+  }
+
+  .thread-panel-form :deep(.el-form-item__label) {
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+
+  .thread-hole-type :deep(.el-radio) {
+    margin-right: 1rem;
   }
 
   .thread-nav-favorites {

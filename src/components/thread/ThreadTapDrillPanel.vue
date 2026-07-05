@@ -4,7 +4,7 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <el-form label-width="120px">
+        <el-form label-width="148px" class="thread-panel-form">
           <el-form-item :label="pt('engPickRow')">
             <ThreadRowPicker
               v-model="rowId"
@@ -20,10 +20,13 @@
             </el-select>
           </el-form-item>
           <el-form-item :label="pt('tapHoleType')">
-            <el-radio-group v-model="holeType">
+            <el-radio-group v-model="holeType" class="thread-hole-type">
               <el-radio value="through">{{ pt('tapHole_through') }}</el-radio>
               <el-radio value="blind">{{ pt('tapHole_blind') }}</el-radio>
             </el-radio-group>
+            <p class="mt-1 text-xs leading-relaxed text-gray-500">
+              {{ holeType === 'through' ? pt('tapHole_through_hint') : pt('tapHole_blind_hint') }}
+            </p>
           </el-form-item>
           <el-form-item :label="pt('engInputLength')">
             <el-input-number v-model="engagementLength" :min="0" :precision="2" :step="0.5" />
@@ -118,13 +121,20 @@ async function exportPdf() {
   font-size: 0.875rem;
 }
 .tap-dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(8.5rem, auto) 1fr;
+  gap: 0.75rem 1rem;
+  align-items: baseline;
   border-bottom: 1px solid var(--el-border-color-lighter);
   padding-bottom: 0.35rem;
 }
 .tap-dl dt {
   color: var(--el-text-color-secondary);
+  white-space: nowrap;
+}
+.tap-dl dd {
+  margin: 0;
+  text-align: right;
+  word-break: break-word;
 }
 </style>

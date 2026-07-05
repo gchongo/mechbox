@@ -3,35 +3,28 @@
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
       <router-link
         to="/"
-        class="flex min-w-0 shrink items-center gap-2 font-bold text-gray-900 dark:text-gray-100"
+        class="flex min-w-0 items-center gap-2 font-bold text-gray-900 dark:text-gray-100"
       >
         <AppLogo :size="36" class="shrink-0" />
-        <span class="truncate whitespace-nowrap text-base sm:text-xl">{{ t('appName', locale) }}</span>
+        <span class="truncate text-base sm:text-xl">{{ t('appName', locale) }}</span>
       </router-link>
 
-      <nav class="flex shrink-0 items-center gap-0.5 sm:gap-1">
-        <router-link
-          to="/editor"
-          class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors md:hidden"
-          :class="route.path.startsWith('/editor') ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300'"
-        >
-          {{ t('nav.analysis', locale) }}
-        </router-link>
-
+      <!-- 桌面端导航 -->
+      <nav class="hidden items-center gap-0.5 md:flex md:gap-1">
         <template v-for="item in navItems" :key="item.path">
           <a
             v-if="item.external"
             :href="item.path"
             target="_blank"
             rel="noopener noreferrer"
-            class="hidden rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white md:inline-block"
+            class="rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             {{ item.label }}
           </a>
           <router-link
             v-else
             :to="item.path"
-            class="hidden rounded-md px-3 py-2 text-sm font-medium transition-colors md:inline-block"
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
             :class="navLinkClass(item.path)"
           >
             {{ item.label }}
@@ -48,7 +41,7 @@
         >
           <button
             type="button"
-            class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:py-2"
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
             :class="toolsActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
           >
             {{ t('nav.tools', locale) }}
@@ -79,7 +72,7 @@
         >
           <button
             type="button"
-            class="rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:py-2"
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
             :class="moreActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'"
           >
             {{ t('nav.more', locale) }}
@@ -98,27 +91,123 @@
 
         <router-link
           to="/account"
-          class="flex items-center rounded-md p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 sm:px-2 sm:py-2"
+          class="flex items-center rounded-md px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
           :title="user ? user.username : t('nav.login', locale)"
         >
           <el-icon :size="18"><User /></el-icon>
-          <span v-if="user" class="ml-1 hidden max-w-[80px] truncate lg:inline">{{ user.username }}</span>
+          <span v-if="user" class="ml-1 max-w-[80px] truncate lg:inline">{{ user.username }}</span>
         </router-link>
         <router-link
           to="/settings"
-          class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 sm:p-2"
+          class="rounded-md p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
           :title="t('nav.settings', locale)"
         >
           <el-icon :size="18"><Setting /></el-icon>
         </router-link>
       </nav>
+
+      <!-- 移动端：仅菜单按钮 -->
+      <button
+        type="button"
+        class="mobile-menu-btn md:hidden"
+        :aria-label="t('nav.menu', locale)"
+        :aria-expanded="mobileOpen"
+        @click="mobileOpen = true"
+      >
+        <el-icon :size="22"><Menu /></el-icon>
+      </button>
     </div>
+
+    <el-drawer
+      v-model="mobileOpen"
+      direction="rtl"
+      size="min(300px, 88vw)"
+      class="app-header-mobile-drawer md:hidden"
+      :title="t('nav.menu', locale)"
+      :append-to-body="true"
+    >
+      <nav class="mobile-nav" :aria-label="t('nav.menu', locale)">
+        <section class="mobile-nav__section">
+          <ul class="mobile-nav__list">
+            <li v-for="item in navItems" :key="item.path">
+              <a
+                v-if="item.external"
+                :href="item.path"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mobile-nav__link"
+                @click="mobileOpen = false"
+              >
+                {{ item.label }}
+              </a>
+              <router-link
+                v-else
+                :to="item.path"
+                class="mobile-nav__link"
+                :class="{ 'is-active': isActive(item.path) }"
+                @click="mobileOpen = false"
+              >
+                {{ item.label }}
+              </router-link>
+            </li>
+          </ul>
+        </section>
+
+        <section v-for="group in mobileToolGroups" :key="group.id" class="mobile-nav__section">
+          <h3 class="mobile-nav__heading">{{ group.label }}</h3>
+          <ul class="mobile-nav__list">
+            <li v-for="tool in group.tools" :key="tool.path">
+              <button
+                type="button"
+                class="mobile-nav__link mobile-nav__link--btn"
+                :class="{ 'is-active': route.path === tool.path }"
+                @click="goTool(tool.path)"
+              >
+                {{ tool.label }}
+              </button>
+            </li>
+          </ul>
+        </section>
+
+        <section class="mobile-nav__section">
+          <h3 class="mobile-nav__heading">{{ t('nav.more', locale) }}</h3>
+          <ul class="mobile-nav__list">
+            <li v-for="item in moreItems" :key="item.path">
+              <button
+                type="button"
+                class="mobile-nav__link mobile-nav__link--btn"
+                :class="{ 'is-active': route.path.startsWith(item.path) }"
+                @click="goTool(item.path)"
+              >
+                {{ item.label }}
+              </button>
+            </li>
+          </ul>
+        </section>
+
+        <section class="mobile-nav__footer">
+          <div class="mobile-nav__footer-row">
+            <span class="mobile-nav__footer-label">{{ t('nav.language', locale) }}</span>
+            <LocaleToggle />
+          </div>
+          <router-link to="/account" class="mobile-nav__footer-link" @click="mobileOpen = false">
+            <el-icon><User /></el-icon>
+            <span>{{ user ? user.username : t('nav.login', locale) }}</span>
+          </router-link>
+          <router-link to="/settings" class="mobile-nav__footer-link" @click="mobileOpen = false">
+            <el-icon><Setting /></el-icon>
+            <span>{{ t('nav.settings', locale) }}</span>
+          </router-link>
+        </section>
+      </nav>
+    </el-drawer>
   </header>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ArrowDown, Menu, User, Setting } from '@element-plus/icons-vue'
 import { useAuth } from '@/composables/useAuth'
 import { getSettings } from '@/utils/settings'
 import { FORUM_URL } from '@/constants/external-links'
@@ -130,6 +219,7 @@ const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
 const locale = ref(getSettings().locale ?? 'zh')
+const mobileOpen = ref(false)
 
 const navItems = computed(() => [
   { path: '/', label: t('nav.home', locale.value) },
@@ -183,6 +273,14 @@ const allTools = computed(() => [
   ...toolGroups.value.material,
 ])
 
+const mobileToolGroups = computed(() =>
+  (['chain', 'drive', 'material']).map((id) => ({
+    id,
+    label: t(`toolGroups.${id}`, locale.value),
+    tools: toolGroups.value[id],
+  })),
+)
+
 const moreItems = computed(() => [
   { path: '/tools', label: t('tools.tool-map', locale.value) },
   { path: '/cases', label: t('nav.cases', locale.value) },
@@ -214,6 +312,10 @@ onUnmounted(() => {
   window.removeEventListener('mechbox-settings', onSettingsChange)
 })
 
+watch(() => route.path, () => {
+  mobileOpen.value = false
+})
+
 const toolsActive = computed(() => allToolPaths.value.some((p) => route.path.startsWith(p)))
 const moreActive = computed(() => morePaths.some((p) => route.path.startsWith(p)))
 
@@ -230,6 +332,7 @@ function isActive(path) {
 }
 
 function goTool(path) {
+  mobileOpen.value = false
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur()
   }
@@ -243,7 +346,6 @@ function goTool(path) {
 
 <style scoped>
 .app-header {
-  /* 半透明 + 模糊，滚动时仍可读 */
   background-color: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
 }
@@ -252,13 +354,120 @@ function goTool(path) {
   background-color: rgba(31, 41, 55, 0.92);
 }
 
+.mobile-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  color: var(--el-text-color-regular);
+  transition: background-color 0.15s;
+}
+
+.mobile-menu-btn:hover {
+  background: var(--el-fill-color-light);
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+}
+
+.mobile-nav__section {
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  padding-bottom: 0.75rem;
+}
+
+.mobile-nav__section:last-of-type {
+  border-bottom: none;
+}
+
+.mobile-nav__heading {
+  margin: 0 0 0.35rem;
+  padding: 0 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--el-text-color-secondary);
+}
+
+.mobile-nav__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mobile-nav__link {
+  display: block;
+  width: 100%;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.mobile-nav__link--btn {
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mobile-nav__link:hover,
+.mobile-nav__link.is-active {
+  background: color-mix(in srgb, var(--el-color-primary) 10%, transparent);
+  color: var(--el-color-primary);
+}
+
+.mobile-nav__footer {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.mobile-nav__footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.25rem 0.5rem;
+}
+
+.mobile-nav__footer-label {
+  font-size: 0.8125rem;
+  color: var(--el-text-color-secondary);
+}
+
+.mobile-nav__footer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.9375rem;
+  color: var(--el-text-color-primary);
+  text-decoration: none;
+}
+
+.mobile-nav__footer-link:hover {
+  background: var(--el-fill-color-light);
+}
+
 :deep(.el-dropdown-menu__item.is-active) {
   color: var(--el-color-primary);
   font-weight: 600;
 }
 </style>
 
-<!-- popper 挂载到 body，需非 scoped 样式 -->
 <style>
 :root {
   --app-tools-menu-max-h: min(420px, calc(100dvh - 72px));
@@ -303,5 +512,11 @@ function goTool(path) {
   line-height: 1.4;
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+.app-header-mobile-drawer .el-drawer__body {
+  padding: 0.75rem 1rem 1.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 </style>

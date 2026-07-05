@@ -4,7 +4,7 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <el-form label-width="120px">
+        <el-form label-width="148px" class="thread-panel-form">
           <el-form-item :label="pt('engPickRow')">
             <ThreadRowPicker
               v-model="rowId"
@@ -167,13 +167,20 @@ async function exportPdf() {
   font-size: 0.875rem;
 }
 .eng-dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(8.5rem, auto) 1fr;
+  gap: 0.75rem 1rem;
+  align-items: baseline;
   border-bottom: 1px solid var(--el-border-color-lighter);
   padding-bottom: 0.35rem;
 }
 .eng-dl dt {
   color: var(--el-text-color-secondary);
+  white-space: nowrap;
+}
+.eng-dl dd {
+  margin: 0;
+  text-align: right;
+  word-break: break-word;
 }
 </style>

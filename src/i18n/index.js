@@ -33,6 +33,8 @@ const zh = {
     login: '登录',
     settings: '设置',
     language: '切换语言',
+    menu: '菜单',
+    menuClose: '关闭菜单',
   },
   home: {
     quickDesc: '尺寸链叠加 · 概率统计 · 机械强度计算',
@@ -266,6 +268,8 @@ const en = {
     login: 'Sign in',
     settings: 'Settings',
     language: 'Switch language',
+    menu: 'Menu',
+    menuClose: 'Close menu',
   },
   home: {
     quickDesc: 'Tolerance stack · Statistics · Mechanical strength',
