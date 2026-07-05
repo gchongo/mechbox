@@ -245,6 +245,19 @@ describe('batch analysis', () => {
     expect(rows[0].adviceLevel).toBeDefined()
     expect(rows[0].methodRatio).toBeGreaterThan(1)
   })
+
+  it('returns pass flags and tolerance totals for each row', () => {
+    const rows = batchValidate(
+      [{ name: '方案A', tolerances: '0.03,0.02,0.02' }],
+      0,
+      0.25,
+    )
+    expect(rows[0].worstTolerance).toBeCloseTo(0.07)
+    expect(rows[0].rssTolerance).toBeCloseTo(0.0412, 3)
+    expect(rows[0].rssPass).toBe(false)
+    expect(rows[0].worstPass).toBe(false)
+    expect(rows[0].adviceKey).toBe('stack_method_caution')
+  })
 })
 
 describe('monte carlo reproducibility', () => {

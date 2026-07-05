@@ -413,6 +413,21 @@ export const modulePagesZh = {
       stack_method_warn: '极值/RSS 公差比 $≥ 2$',
       worst_pass_rss_fail: '极值 ✓ RSS ✗ — 核对过程能力',
     },
+    methodology: {
+      title: '分析方法与判定依据',
+      model:
+        '建模：各组成环名义尺寸为 0，对称公差带 $\\pm T_i/2$，均为增环（与尺寸链编辑器 RSS/极值法一致，单位 mm）。',
+      worst:
+        '极值法：$T_{\\mathrm{worst}}=\\sum T_i$；合成区间 $[L,U]=[-T_{\\mathrm{worst}}/2,\\,+T_{\\mathrm{worst}}/2]$。',
+      rss:
+        'RSS 法：$T_{\\mathrm{rss}}=\\sqrt{\\sum T_i^2}$；合成区间 $[L,U]=[-T_{\\mathrm{rss}}/2,\\,+T_{\\mathrm{rss}}/2]$。',
+      pass:
+        '合格判定：$L \\ge$ 封闭环下限 且 $U \\le$ 封闭环上限（RSS 与极值分别独立判定，非仅比较总公差宽度）。',
+      summary:
+        '摘要统计：「不合格」= RSS 与极值均未通过；「RSS过/极值不过」= RSS 通过但极值未通过（须优先关注）。',
+      risk:
+        '方法风险：极值/RSS 公差比 $\\ge 1.5$ 提示偏大，$\\ge 2$ 警告；RSS 通过而极值未通过标记为关键风险。',
+    },
   },
 }
 
@@ -828,6 +843,21 @@ export const modulePagesEn = {
       stack_method_caution: 'Worst/RSS tolerance ratio is large',
       stack_method_warn: 'Worst/RSS ratio $≥ 2$',
       worst_pass_rss_fail: 'Worst ✓ RSS ✗ — verify process capability',
+    },
+    methodology: {
+      title: 'Methods and pass criteria',
+      model:
+        'Model: each ring nominal size 0, symmetric band $\\pm T_i/2$, all increasing (same RSS/worst-case stack as the size-chain editor; mm).',
+      worst:
+        'Worst case: $T_{\\mathrm{worst}}=\\sum T_i$; stacked band $[L,U]=[-T_{\\mathrm{worst}}/2,\\,+T_{\\mathrm{worst}}/2]$.',
+      rss:
+        'RSS: $T_{\\mathrm{rss}}=\\sqrt{\\sum T_i^2}$; stacked band $[L,U]=[-T_{\\mathrm{rss}}/2,\\,+T_{\\mathrm{rss}}/2]$.',
+      pass:
+        'Pass: $L \\ge$ closed-loop lower and $U \\le$ closed-loop upper (RSS and worst-case judged independently—not total tolerance width alone).',
+      summary:
+        'Summary: “Fail” = both RSS and worst-case fail; “RSS pass / worst fail” = RSS pass but worst-case fail (review first).',
+      risk:
+        'Method risk: worst/RSS ratio $\\ge 1.5$ caution, $\\ge 2$ warn; RSS pass with worst fail flagged critical.',
     },
   },
 }

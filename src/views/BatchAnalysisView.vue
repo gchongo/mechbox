@@ -58,6 +58,19 @@
           </div>
         </div>
         <el-empty v-else :description="pt('emptyHint')" />
+
+        <div
+          class="mt-4 rounded border border-gray-200 bg-gray-50 p-3 text-xs leading-relaxed text-gray-600 dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-400"
+        >
+          <p class="mb-2 font-medium text-gray-700 dark:text-gray-300">
+            {{ pt('methodology.title') }}
+          </p>
+          <ul class="list-disc space-y-1.5 pl-4">
+            <li v-for="key in methodologyKeys" :key="key">
+              <MathContent :text="enrichedMethodology(key)" />
+            </li>
+          </ul>
+        </div>
       </section>
     </div>
 
@@ -122,12 +135,14 @@ import { useResultI18n } from '@/composables/useResultI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useDemoData } from '@/composables/useDemoData'
 
-const { pt, pf, pr, locale } = useCalcPage('batch')
+const { pt, pf, pr, fc, locale } = useCalcPage('batch')
 const { resultError } = useResultI18n()
 const { exportFilename } = useContentI18n()
 const { demo } = useDemoData()
 
 const csvPlaceholder = computed(() => demo.value.batchCsvPlaceholder)
+
+const methodologyKeys = ['model', 'worst', 'rss', 'pass', 'summary', 'risk']
 
 const targetMin = ref(0)
 const targetMax = ref(0.25)
@@ -148,6 +163,10 @@ const summary = computed(() => {
 
 function enrichedAdvice(key) {
   return enrichMathText(pt(`advice.${key}`))
+}
+
+function enrichedMethodology(key) {
+  return enrichMathText(pt(`methodology.${key}`))
 }
 
 function runBatch() {
