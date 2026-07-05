@@ -18,7 +18,7 @@ describe('thread profile diagram', () => {
     const m = buildProfilePath('triangular_60', 'external')
     const tr = buildProfilePath('trapezoidal_tr', 'external')
     expect(m).not.toBe(tr)
-    expect(m).toContain('248')
+    expect(m).toContain('128')
     expect(tr).toContain('135')
   })
 
@@ -29,6 +29,9 @@ describe('thread profile diagram', () => {
     expect(scene.dims.some((d) => d.label === 'd / D')).toBe(true)
     expect(scene.ghosts.length).toBeGreaterThan(0)
     expect(scene.angleMark?.label).toBe('60°')
+    const vb = scene.viewBox.split(/\s+/).map(Number)
+    expect(vb[2]).toBeLessThan(500)
+    expect(vb[3]).toBeLessThan(280)
   })
 
   it('includes sample row values when provided', () => {

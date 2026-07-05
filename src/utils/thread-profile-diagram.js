@@ -78,11 +78,21 @@ export function buildDetailedDiagram(kind, options = {}) {
   }
   const scene = (builders[kind] ?? builders.triangular_60)()
   scene.sampleParams = buildSampleParamRows(options.sample ?? null)
-  scene.fontSize ??= 15
-  scene.titleFontSize ??= 18
-  scene.regionFontSize ??= 16
-  scene.title ??= { x: 460, y: 36 }
+  scene.fontSize ??= 14
+  scene.titleFontSize ??= 16
+  scene.regionFontSize ??= 14
+  if (scene.contentBounds) {
+    applyTightViewBox(scene, scene.contentBounds)
+    delete scene.contentBounds
+  }
   return scene
+}
+
+/** @param {{ minX:number, minY:number, maxX:number, maxY:number }} bounds */
+function applyTightViewBox(scene, bounds, pad = 10) {
+  const w = bounds.maxX - bounds.minX + pad * 2
+  const h = bounds.maxY - bounds.minY + pad * 2
+  scene.viewBox = `${bounds.minX - pad} ${bounds.minY - pad} ${w} ${h}`
 }
 
 function defaultAngle(kind) {
@@ -195,26 +205,27 @@ function angleMarkAtApex(cx, yApex, includedAngleDeg, label) {
 }
 
 function diameterLeader(y, label, xProfileEnd, opts = {}) {
-  const ext = opts.ext ?? 110
+  const ext = opts.ext ?? 72
   return {
     type: 'diameter',
     y,
     label,
     xProfile: xProfileEnd,
-    x1: xProfileEnd + 8,
+    x1: xProfileEnd + 6,
     x2: xProfileEnd + ext,
-    labelX: xProfileEnd + ext + 10,
-    labelY: y + 5,
+    labelX: xProfileEnd + ext + 6,
+    labelY: y + 4,
   }
 }
 
-/** ISO 60° / 惠氏 55° 基本牙型 — 大画布 + 精确标注 */
+/** ISO 60° / 惠氏 55° 基本牙型 */
 function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
   const P = 88
   const H = P * Hfactor
-  const x0 = 248
+  const x0 = 128
   const teeth = 2
-  const yPitch = 248
+  const y0 = 56
+  const yPitch = y0 + H * 1.05
   const cf = P / 8
   const { crest: tCrest, root: tRoot } = trunc
 
@@ -239,8 +250,8 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
 
   const xEnd = x0 + teeth * P
   const xc = x0 + P / 2
-  const yBottom = yExtRoot + H / 2.2
-  const yTop = yIntRoot - H / 4
+  const yBottom = yExtRoot + H / 2.4
+  const yTop = yIntRoot - H / 5
   const xTick = xc - P / 2 - 4
 
   const extProfile = ptsToPath(extPts)
@@ -256,18 +267,19 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     )
   }
 
-  const xDimH = 72
-  const xDimPart = 118
+  const xDimH = 52
+  const xDimPart = 92
+  const maxLabelX = xEnd + 6 + 72 + 58
 
   const dims = [
     dimV(xDimH, ySharpCrest, ySharpRoot, 'H', { ext: 8, tickX: xTick }),
     dimV(xDimPart, ySharpCrest, yExtCrest, 'H/8', { ext: 6, tickX: xTick }),
     dimV(xDimPart, ySharpCrest, yPitch, 'H/2', { ext: 6, tickX: xTick }),
     dimV(xDimPart, ySharpRoot, yExtRoot, 'H/4', { ext: 6, tickX: xTick }),
-    dimH(xc - P / 2, xc + P / 2, yExtRoot, 'P', { ext: 18, tickY: yExtRoot }),
-    diameterLeader(yExtCrest, 'd / D', xEnd, { ext: 96 }),
-    diameterLeader(yPitch, 'd₂ / D₂', xEnd, { ext: 96 }),
-    diameterLeader(yExtRoot, 'd₁ / D₁', xEnd, { ext: 96 }),
+    dimH(xc - P / 2, xc + P / 2, yExtRoot, 'P', { ext: 16, tickY: yExtRoot }),
+    diameterLeader(yExtCrest, 'd / D', xEnd),
+    diameterLeader(yPitch, 'd₂ / D₂', xEnd),
+    diameterLeader(yExtRoot, 'd₁ / D₁', xEnd),
   ]
 
   if (includedAngle === 55) {
@@ -276,11 +288,16 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
   }
 
   const scene = {
-    viewBox: '0 0 920 480',
-    fontSize: 15,
-    titleFontSize: 18,
-    regionFontSize: 16,
-    strokeScale: 1.6,
+    viewBox: '0 0 400 240',
+    fontSize: 14,
+    titleFontSize: 16,
+    regionFontSize: 14,
+    contentBounds: {
+      minX: xDimH - 42,
+      minY: yTop - 6,
+      maxX: maxLabelX,
+      maxY: yExtRoot + 16 + 22,
+    },
     regions: [
       { d: intFill, fill: 'var(--thread-diagram-internal, #d8ece8)', stroke: '#5a8f88' },
       { d: extFill, fill: 'var(--thread-diagram-external, #e4e8ec)', stroke: '#6b7280' },
@@ -294,10 +311,9 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     dims,
     angleMark: angleMarkAtApex(xc, ySharpCrest, includedAngle, `${includedAngle}°`),
     labels: [
-      { text: 'internal', x: x0 + P * 0.35, y: yTop + 28 },
-      { text: 'external', x: x0 + P * 0.35, y: yBottom - 12 },
+      { text: 'internal', x: x0 + P * 0.35, y: yTop + 22 },
+      { text: 'external', x: x0 + P * 0.35, y: yBottom - 10 },
     ],
-    title: { x: 460, y: 36 },
     paramKeys: ['pitch', 'major', 'pitchDia', 'minor', 'tapDrill', 'toleranceExt', 'toleranceInt'],
     legacyExternalPath: extProfile,
     legacyInternalPath: intProfile,
@@ -306,14 +322,15 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
 
   if (withTaper) {
     scene.taper = {
-      x1: 180,
-      y1: yBottom + 8,
-      x2: xEnd + 48,
-      y2: yTop - 4,
-      labelX: xEnd + 12,
-      labelY: yTop - 10,
+      x1: x0 - 20,
+      y1: yBottom + 4,
+      x2: xEnd + 24,
+      y2: yTop - 2,
+      labelX: xEnd + 4,
+      labelY: yTop - 6,
       label: '1:16',
     }
+    scene.contentBounds.minX = Math.min(scene.contentBounds.minX, x0 - 28)
     scene.paramKeys.push('taper', 'sealing')
   }
 

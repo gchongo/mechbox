@@ -281,11 +281,11 @@
   }
 
   .thread-catalog-hero {
-    @apply mb-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)];
+    @apply mb-6 grid gap-4 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:items-start;
   }
 
   .thread-catalog-hero .thread-profile-diagram {
-    @apply min-w-0;
+    @apply min-w-0 max-w-[480px];
   }
 
   .thread-catalog-hero__aside {

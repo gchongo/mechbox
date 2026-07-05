@@ -182,16 +182,6 @@
       >
         {{ lbl.text === 'internal' ? labels.internal : labels.external }}
       </text>
-
-      <text
-        :x="scene.title?.x ?? 460"
-        :y="scene.title?.y ?? 36"
-        :font-size="scene.titleFontSize"
-        text-anchor="middle"
-        class="thread-profile-diagram__title"
-      >
-        {{ title }}
-      </text>
     </svg>
 
     <p class="thread-profile-diagram__formula">{{ formula }}</p>
@@ -280,16 +270,9 @@ function paramLabel(key) {
 .thread-profile-diagram__svg {
   display: block;
   width: 100%;
-  min-height: 300px;
+  max-width: 480px;
   height: auto;
-  max-width: none;
   color: var(--el-text-color-primary);
-}
-
-@media (min-width: 1024px) {
-  .thread-profile-diagram__svg {
-    min-height: 360px;
-  }
 }
 
 .thread-profile-diagram__ghost {
