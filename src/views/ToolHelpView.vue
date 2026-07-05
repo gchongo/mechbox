@@ -160,6 +160,7 @@
         </section>
 
         <FitHelpReference v-if="article.id === 'fit'" />
+        <GdtStackHelpReference v-if="article.id === 'gdt-stack'" />
 
         <section v-if="relatedArticles.length" class="help-section">
           <h3 class="help-section__title">{{ ct('help.related') }}</h3>
@@ -189,6 +190,7 @@ import { Search } from '@element-plus/icons-vue'
 import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
 import FitHelpReference from '@/components/fit/FitHelpReference.vue'
+import GdtStackHelpReference from '@/components/gdt/GdtStackHelpReference.vue'
 import {
   HELP_GROUP_ORDER,
   getHelpArticle,

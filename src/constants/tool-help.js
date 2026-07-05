@@ -394,25 +394,69 @@ export const TOOL_HELP_ARTICLES = [
     groupId: 'chain',
     level: 'intermediate',
     title: 'GD&T 公差栈',
-    summary: '对位置度、平面度、同轴度等形位公差做叠加，支持 MMC/LMC 奖励公差。',
+    summary:
+      '对位置度、平面度、同轴度等形位公差做 RSS/极值叠加，支持 MMC/LMC 奖励公差、基准累积与贡献度分解。用于装配链路上的形位公差预算与方案比较；正式放行须对照 ASME Y14.5 与实测状态复核。',
+    useCases: [
+      '孔组位置度、多贴合面平面度、轴承同轴度等在装配中会累积，需估算合成是否仍落在图样允许带内。',
+      '方案阶段比较不同定位公差、基准面精度或 MMC 奖励对可装配性的影响。',
+      '需要知道哪些组成环贡献最大，以便优先收紧关键工序或改基准顺序。',
+      '功能件或单件必过场合，除 RSS 外还要用专业模式的极值裕度做最坏情况复核。',
+    ],
     steps: [
-      '选择 GD&T 模式（位置度、平面度、同轴度等）。',
-      '添加各要素公差与方向/系数；尺寸要素标注孔或轴及尺寸公差。',
-      '选择材料条件 RFS / MMC / LMC；开启自动奖励时按 FOS 尺寸公差求和。',
-      '查看叠加结果是否落在允许带内，并看贡献分解。',
+      '选择计算模式：简化（仅叠加）/ 完整（+贡献+基准）/ 专业（+极值裕度）。有基准输入时勿仅用简化模式放行。',
+      '选择 GD&T 类型（位置度、平面度、同轴度等）与叠加方法（RSS / 极值 / Modified RSS）。',
+      '填写封闭环上限 $T_{closed}$（形位公差预算带下界为 0）；添加各组成环公差、传递系数 factor；位置度须指定 X/Y 方向。',
+      '尺寸要素（孔/轴）标注 featureKind 与 sizeTolerance，以便 MMC/LMC 自动奖励；非尺寸要素不参与奖励。',
+      '可选添加基准及 flatness/perpendicularity 公差；完整/专业模式会 RSS 合成含基准累积值。',
+      '查看叠加公差、贡献度、含基准累积、极值裕度（专业）与校验状态；贡献条越长越应优先优化。',
+      '可从尺寸链编辑器导入组成环；导出 PDF 报告存档。',
     ],
     principle:
-      '形位公差在装配中也会累积。MMC 下，尺寸偏离最大实体时位置度可获得奖励公差，使可装配性判断更符合 ASME Y14.5。',
+      '形位公差在装配与测量链路上会累积。与 1D 尺寸链不同，多数形位栈使用预算带 $[0, T_{closed}]$（名义≈0），而非对称 $\\pm$ 半公差带。位置度是二维问题：X/Y 方向偏差先在各轴 RSS，再合成直径公差带 $T_{pos}=2\\sqrt{(T_x/2)^2+(T_y/2)^2}$。基准体系引入额外累积，本工具用加权 RSS 近似（主 1.0、次 0.7、三 0.5）。MMC 下尺寸要素偏离最大实体时可获奖励公差，使有效可用公差增大；自动模式按 FOS 尺寸公差全额估计，偏教学/保守。RSS 通过不等于极值安全——专业模式额外计算 worst-case 裕度。',
     formulas: [
-      { latex: 'T_{\\text{eff}} = T_{\\text{stack}} + T_{\\text{bonus}}', note: '有效公差带 = 叠加公差 + 奖励' },
+      {
+        latex: 'T_{pos} = 2\\sqrt{\\left(\\frac{T_x}{2}\\right)^2 + \\left(\\frac{T_y}{2}\\right)^2}',
+        note: '位置度 RSS；$T_x$、$T_y$ 为各轴环（含 factor）RSS 合成全公差',
+      },
+      {
+        latex: 'T_{pos}^{worst} = T_x + T_y',
+        note: '位置度极值：各轴内先极值加，再轴间相加',
+      },
+      {
+        latex: 'T_{rad} = \\sqrt{\\sum (f_i T_i)^2}',
+        note: '同轴度/跳动/圆度等径向栈 RSS',
+      },
+      {
+        latex: 'T_{datum} = \\sqrt{\\sum (w_i T_i)^2}',
+        note: '基准累积；$w_i$ 为主 1.0 / 次 0.7 / 三 0.5',
+      },
+      {
+        latex: 'T_{含基准} = \\sqrt{T_{stack}^2 + T_{datum}^2}',
+        note: '完整/专业模式：主栈与基准 RSS 再合成',
+      },
+      {
+        latex: 'T_{eff} = T_{stack} - bonus',
+        note: 'MMC/LMC 下有效栈减小；bonus 来自 FOS 尺寸公差（MMC 全额，LMC 半额简化）',
+      },
+      {
+        latex: 'M_{worst} = T_{closed} - T_{stack}^{worst}',
+        note: '专业模式极值裕度；$M_{worst}\\ge 0$ 才通过',
+      },
     ],
     notes: [
-      '非尺寸要素（如单纯平面）不参与尺寸奖励。',
-      '自动奖励按尺寸公差全额估计，偏保守/教学向，精密场合请按实际检测状态计算。',
+      '封闭环填 $[0, T_{closed}]$ 预算带；若误填对称尺寸链 min/max，判定语义会变为 band 模式而非 budget。',
+      '简化模式已输入基准时不计入基准累积，系统标 estimateOnly/待复核——须切换完整或专业模式。',
+      '贡献度：2D 位置度 RSS 下 X/Y 轴各分 50% 方差；1D/radial 栈按 $T_i^2/\\sum T_j^2$ 分配。',
+      'factor 为传递系数/灵敏度，孔径对 X 向常用 0.5 近似耦合，不等同于标准逐件 bonus 计算。',
+      '非尺寸要素（纯平面度等）不参与 MMC/LMC 奖励；自动 bonus 按尺寸公差全额，精密场合按实测离 MMC 偏离计算。',
+      'Modified RSS 需配合分布参数；sigma6-rss 在部分栈类型可用，见工具下拉选项。',
+      '本工具为前期公差预算，非 CMM/GD&T 仿真；pattern 位置度、simultaneous、DRF shift 等须专用软件或手工按 Y14.5 复核。',
     ],
-    standards: ['ASME Y14.5'],
-    related: ['editor'],
-    keywords: ['GD&T', '位置度', 'MMC'],
+    example:
+      '孔组位置度预设（专业 · RSS · RFS）：X 定位 0.0500、Y 0.0400、孔径 0.0200×0.5（X）；上限 0.1500；基准 A 0.0200（主）、B 0.0300（次）。叠加 $T_{pos}\\approx 0.0648$ mm；贡献 Y 50.0%、X 48.1%、孔 1.9%；含基准 $\\approx 0.0710$ mm；极值 $T_{pos}^{worst}=0.10$ mm，裕度 0.05 mm；三项均通过。优化优先级：Y 定位 > X 定位 >> 孔径；基准公差放大时会先于主栈耗尽裕度。',
+    standards: ['ASME Y14.5', 'ISO 1101（概念对照）'],
+    related: ['editor', 'allocation', 'monte-carlo'],
+    keywords: ['GD&T', '位置度', '平面度', '同轴度', 'MMC', '基准', 'RSS', '贡献度'],
   },
   {
     id: 'units',
@@ -1644,32 +1688,75 @@ const DETAIL_OVERRIDES = {
   'gdt-stack': {
     inputs: [
       {
-        name: '形位公差类型',
-        meaning: '决定是位置度、平面度、同轴度还是其他误差叠加模型。',
-        source: '图纸 GD&T 框格和功能要求。',
+        name: '计算模式',
+        meaning: '简化仅主栈；完整加贡献与基准；专业加极值裕度。有基准时勿仅用简化放行。',
+        source: '按设计阶段与风险选择；功能件建议专业模式。',
       },
       {
-        name: '基准与组成要素',
-        meaning: '定义误差来源和叠加方向。',
-        source: '基准体系、定位尺寸、检测方案。',
+        name: '形位公差类型',
+        meaning: '决定栈模型：2d-position / form-direct / radial / form-linear / 1d-weighted。',
+        source: '图纸 GD&T 框格、功能要求（装配间隙、同轴、贴合等）。',
+      },
+      {
+        name: '封闭环上限',
+        meaning: '图样允许的最大合成形位公差 $T_{closed}$；下界固定为 0（预算带）。',
+        source: '位置度框格值、功能分析给出的总预算，或企业公差分配结果。',
+      },
+      {
+        name: '组成环与 factor',
+        meaning: '各误差源公差、增/减方向（位置度 X/Y）、传递系数 sensitivity。',
+        source: '各工序能力、检具重复性、定位尺寸公差、轴承游隙等。',
+      },
+      {
+        name: '基准（可选）',
+        meaning: '各基准面 flatness/perpendicularity 及优先级（主/次/三）。',
+        source: '图纸基准体系 A|B|C 及对应形位公差。',
       },
       {
         name: '材料条件与 FOS',
-        meaning: '决定是否有 MMC/LMC 奖励公差。',
-        source: '图纸上的 M/L/S 符号和孔/轴尺寸公差。',
+        meaning: 'RFS / MMC / LMC；孔/轴须标 sizeTolerance 才参与自动奖励。',
+        source: '框格修饰符 M/L/S 与孔轴尺寸公差带。',
       },
     ],
     outputs: [
       {
         name: '叠加公差',
-        meaning: '各形位误差按所选方法合成后的总影响。',
-        judgement: '与目标公差带比较，判断是否满足功能要求。',
+        meaning: '主栈 RSS/极值合成结果 $T_{stack}$。',
+        judgement: '须 $\\le T_{closed}$；位置度为直径公差带量级。',
       },
       {
-        name: '奖励公差',
-        meaning: '尺寸要素偏离 MMC/LMC 时得到的额外可用公差。',
-        judgement: '自动奖励只用于早期评估，正式判定看实测尺寸状态。',
+        name: '贡献度',
+        meaning: '各环占合成方差（或极值份额）的百分比，条越长越敏感。',
+        judgement: '优先收紧排序靠前的环；2D 位置度 Y/X 通常主导。',
       },
+      {
+        name: '含基准累积',
+        meaning: '$\\sqrt{T_{stack}^2+T_{datum}^2}$，反映基准面误差叠加后的总预算。',
+        judgement: '完整/专业模式须同时满足；基准裕度常先于主栈耗尽。',
+      },
+      {
+        name: '极值裕度',
+        meaning: '专业模式：$T_{closed}-T_{stack}^{worst}$。',
+        judgement: '须 $\\ge 0$；RSS 通过但裕度为负时仍判不通过。',
+      },
+      {
+        name: '奖励公差 / 有效公差',
+        meaning: 'MMC/LMC 下从栈中扣除的 bonus 及 $T_{eff}$。',
+        judgement: '自动奖励为保守估计；正式判定用实测尺寸与 MMC 偏离。',
+      },
+    ],
+    reliability: [
+      '公式与栈模型在页面和本帮助中可查；结果为显式工程近似，非 AI 推断。',
+      '基准累积、MMC 自动奖励、孔径 factor 均为简化模型，与 ASME Y14.5 完整仿真存在差距。',
+      'RSS 假设各误差独立同分布；强相关误差源（同一工序、同一基准面）会低估或高估风险，须工程师判断。',
+      '从编辑器导入的环方向与 typeId 须人工核对是否与图纸 GD&T 一致。',
+    ],
+    professionalChecks: [
+      '功能件或单件必过：必须看专业模式极值裕度，不能仅看 RSS 叠加。',
+      '有基准输入时：确认完整/专业模式下含基准累积仍通过；简化模式结果不可直接放行。',
+      'MMC 标注时：用实测孔/轴尺寸验证 bonus，勿盲信自动全额奖励。',
+      '位置度孔组：本工具不处理 pattern / simultaneous；多孔须按标准单独分析或专用软件。',
+      '优化后回到尺寸链编辑器或批量验证，确认与 1D 尺寸链预算一致。',
     ],
   },
   'monte-carlo': {

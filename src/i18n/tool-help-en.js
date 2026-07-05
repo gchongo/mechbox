@@ -725,55 +725,139 @@ export const toolHelpEnById = {
   'gdt-stack': {
     title: 'GD&T Tolerance Stack',
     summary:
-      'Stack position, flatness, coaxiality, and other geometric tolerances; supports MMC/LMC bonus tolerance.',
+      'Stack position, flatness, coaxiality, and other geometric tolerances with RSS/worst-case methods; supports MMC/LMC bonus, datum accumulation, and contribution breakdown. For early geometric budget and design comparison—formal release requires ASME Y14.5 and measured state review.',
+    useCases: [
+      'Hole pattern position, multi-face flatness, bearing coaxiality accumulate in assembly—estimate whether combined effect stays within drawing allowance.',
+      'Compare how locating tolerances, datum face accuracy, or MMC bonus affect assemblability during concept design.',
+      'Identify which component rings contribute most to tighten key processes or revise datum order.',
+      'For critical fits or must-pass single parts, use Professional mode worst-case margin in addition to RSS.',
+    ],
     steps: [
-      'Select GD&T mode (position, flatness, coaxiality, etc.).',
-      'Add feature tolerances with direction/coefficients; mark hole/shaft size features and size tolerance.',
-      'Choose material condition RFS / MMC / LMC; auto bonus sums FOS size tolerance when enabled.',
-      'Check whether stack result lies within allowable zone and review contribution breakdown.',
+      'Choose mode: Simplified (stack only) / Full (+contributions+datums) / Professional (+worst margin). Do not release on Simplified alone when datums are entered.',
+      'Select GD&T type (position, flatness, coaxiality, etc.) and stack method (RSS / worst / modified RSS).',
+      'Enter closed max $T_{closed}$ (budget band lower bound is 0); add ring tolerances and factor; position requires X/Y direction.',
+      'Mark size features (hole/shaft) with featureKind and sizeTolerance for MMC/LMC auto bonus; non-size features excluded.',
+      'Optionally add datums with flatness/perpendicularity; Full/Professional computes combined with-datum value.',
+      'Review stacked tolerance, contributions, with-datum total, worst margin (Professional), and pass status.',
+      'Import rings from the size-chain editor; export PDF report for records.',
     ],
     principle:
-      'Geometric tolerances accumulate in assembly. Under MMC, position tolerance gains bonus when size departs from maximum material—aligning assemblability judgement with ASME Y14.5.',
+      'Geometric tolerances accumulate along assembly and inspection chains. Unlike 1D stacks, most GD&T stacks use budget band $[0, T_{closed}]$ (nominal ≈ 0), not symmetric $\\pm$ half-tolerance bands. Position is 2D: X/Y deviations RSS per axis, then $T_{pos}=2\\sqrt{(T_x/2)^2+(T_y/2)^2}$. Datum scheme adds accumulation via weighted RSS (primary 1.0, secondary 0.7, tertiary 0.5). Under MMC, departure from maximum material grants bonus tolerance; auto mode uses full FOS size tolerance—conservative/teaching. RSS pass does not imply worst-case safety—Professional mode adds worst-case margin.',
     formulas: [
-      { latex: 'T_{\\text{eff}} = T_{\\text{stack}} + T_{\\text{bonus}}', note: 'Effective tolerance zone = stacked tolerance + bonus' },
+      {
+        latex: 'T_{pos} = 2\\sqrt{\\left(\\frac{T_x}{2}\\right)^2 + \\left(\\frac{T_y}{2}\\right)^2}',
+        note: 'Position RSS; $T_x$, $T_y$ = per-axis RSS of rings (with factor)',
+      },
+      {
+        latex: 'T_{pos}^{worst} = T_x + T_y',
+        note: 'Position worst-case: sum within axis, then between axes',
+      },
+      {
+        latex: 'T_{rad} = \\sqrt{\\sum (f_i T_i)^2}',
+        note: 'Coaxiality/runout/roundness radial RSS',
+      },
+      {
+        latex: 'T_{datum} = \\sqrt{\\sum (w_i T_i)^2}',
+        note: 'Datum accumulation; $w_i$ = primary 1.0 / secondary 0.7 / tertiary 0.5',
+      },
+      {
+        latex: 'T_{combined} = \\sqrt{T_{stack}^2 + T_{datum}^2}',
+        note: 'Full/Professional: stack and datum RSS combined',
+      },
+      {
+        latex: 'T_{eff} = T_{stack} - bonus',
+        note: 'MMC/LMC reduces effective stack; MMC full bonus, LMC half (simplified)',
+      },
+      {
+        latex: 'M_{worst} = T_{closed} - T_{stack}^{worst}',
+        note: 'Professional worst margin; require $M_{worst}\\ge 0$',
+      },
     ],
     notes: [
-      'Non-size features (e.g. flatness only) do not participate in size bonus.',
-      'Auto bonus uses full size tolerance—conservative/teaching-oriented; use actual inspection state for precision work.',
+      'Closed zone is $[0, T_{closed}]$ budget band; symmetric size-chain min/max changes pass semantics to band mode.',
+      'Simplified mode with datums entered ignores datum accumulation—marked estimate-only; use Full or Professional.',
+      'Contributions: 2D position RSS splits 50% variance per axis; 1D/radial by $T_i^2/\\sum T_j^2$.',
+      'factor = sensitivity; hole size on X often uses 0.5—not item-by-item standard bonus.',
+      'Non-size features excluded from MMC/LMC bonus; auto bonus uses full size tolerance—use measured MMC departure for precision.',
+      'Modified RSS needs distribution parameters; sigma6-rss available on some stack types.',
+      'Early budget tool—not CMM/GD&T simulation; pattern position, simultaneous, DRF shift need dedicated review or software.',
     ],
-    standards: ['ASME Y14.5'],
-    useCases: COMMON_USE_CASES,
+    example:
+      'Hole pattern preset (Professional · RSS · RFS): X loc 0.0500, Y 0.0400, hole 0.0200×0.5 (X); max 0.1500; datum A 0.0200 (primary), B 0.0300 (secondary). Stack $T_{pos}\\approx 0.0648$ mm; contributions Y 50.0%, X 48.1%, hole 1.9%; with datums $\\approx 0.0710$ mm; worst $T_{pos}^{worst}=0.10$ mm, margin 0.05 mm—all pass. Optimize Y loc > X loc >> hole; datum tolerance growth exhausts margin before main stack.',
+    standards: ['ASME Y14.5', 'ISO 1101 (conceptual reference)'],
     inputs: [
       {
+        name: 'Calculation mode',
+        meaning: 'Simplified: main stack only; Full: +contributions+datums; Professional: +worst margin. Do not release on Simplified with datums.',
+        source: 'By design phase and risk; critical parts use Professional.',
+      },
+      {
         name: 'Geometric tolerance type',
-        meaning: 'Whether stacking position, flatness, coaxiality, or another error model.',
+        meaning: 'Stack model: 2d-position / form-direct / radial / form-linear / 1d-weighted.',
         source: 'Drawing GD&T frames and functional requirements.',
       },
       {
-        name: 'Datums and component features',
-        meaning: 'Define error sources and stack direction.',
-        source: 'Datum scheme, locating dimensions, inspection plan.',
+        name: 'Closed max',
+        meaning: 'Maximum allowable combined geometric tolerance $T_{closed}$; lower bound fixed at 0 (budget).',
+        source: 'Position frame value, functional analysis, or allocation result.',
+      },
+      {
+        name: 'Rings and factor',
+        meaning: 'Error source tolerances, direction (X/Y for position), sensitivity factor.',
+        source: 'Process capability, gage repeatability, locating dimensions, bearing clearance, etc.',
+      },
+      {
+        name: 'Datums (optional)',
+        meaning: 'Datum face flatness/perpendicularity and priority (primary/secondary/tertiary).',
+        source: 'Drawing datum scheme A|B|C and associated geometric tolerances.',
       },
       {
         name: 'Material condition and FOS',
-        meaning: 'Whether MMC/LMC bonus tolerance applies.',
-        source: 'M/L/S symbols on drawings and hole/shaft size tolerances.',
+        meaning: 'RFS / MMC / LMC; hole/shaft needs sizeTolerance for auto bonus.',
+        source: 'M/L/S modifier and hole/shaft size tolerance band.',
       },
     ],
     outputs: [
       {
         name: 'Stacked tolerance',
-        meaning: 'Combined effect of geometric errors by the selected method.',
-        judgement: 'Compare with target tolerance zone for functional adequacy.',
+        meaning: 'Main stack RSS/worst result $T_{stack}$.',
+        judgement: 'Must be $\\le T_{closed}$; position is diameter-zone magnitude.',
       },
       {
-        name: 'Bonus tolerance',
-        meaning: 'Extra usable tolerance when size departs from MMC/LMC.',
-        judgement: 'Auto bonus is for early assessment; formal judgement uses measured size state.',
+        name: 'Contributions',
+        meaning: 'Percent of combined variance (or worst share); longer bar = more sensitive.',
+        judgement: 'Tighten top-ranked rings first; 2D position often Y/X dominated.',
+      },
+      {
+        name: 'With-datum total',
+        meaning: '$\\sqrt{T_{stack}^2+T_{datum}^2}$—total budget including datum faces.',
+        judgement: 'Full/Professional must pass; datum margin often exhausts before main stack.',
+      },
+      {
+        name: 'Worst-case margin',
+        meaning: 'Professional: $T_{closed}-T_{stack}^{worst}$.',
+        judgement: 'Must be $\\ge 0$; fail even if RSS passes when margin negative.',
+      },
+      {
+        name: 'Bonus / effective tolerance',
+        meaning: 'MMC/LMC bonus deducted from stack and resulting $T_{eff}$.',
+        judgement: 'Auto bonus is conservative; formal judgement uses measured size vs MMC.',
       },
     ],
-    reliability: COMMON_RELIABILITY,
-    keywords: ['GD&T', 'position', 'MMC'],
+    reliability: [
+      'Formulas and stack models are documented on page and in this help—explicit engineering approximations, not AI guesses.',
+      'Datum accumulation, auto MMC bonus, and hole factor are simplified vs full ASME Y14.5 simulation.',
+      'RSS assumes independent, identically distributed errors; correlated sources may under- or over-estimate risk.',
+      'Imported ring directions and typeId from editor must be manually verified against drawing GD&T.',
+    ],
+    professionalChecks: [
+      'Critical or must-pass parts: check Professional worst margin, not RSS stack alone.',
+      'With datums entered: confirm with-datum pass in Full/Professional; Simplified result cannot release.',
+      'With MMC: verify bonus from measured hole/shaft size, not auto full allowance alone.',
+      'Pattern position: tool does not handle pattern/simultaneous—analyze per standard or dedicated software.',
+      'After optimization, reconcile with size-chain editor or batch verification for 1D budget consistency.',
+    ],
+    keywords: ['GD&T', 'position', 'flatness', 'coaxiality', 'MMC', 'datum', 'RSS', 'contribution'],
   },
 
   units: {
