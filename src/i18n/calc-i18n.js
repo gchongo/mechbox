@@ -96,7 +96,7 @@ const pagesZh = {
     },
     'thread-table': {
       title: '螺纹标准表',
-      subtitle: '规格库 · 设计制造 · 解析对照 — 一站式螺纹标准与流程指导',
+      subtitle: '左侧导航选功能，右侧查看内容 — 规格库 · 设计制造 · 解析对照',
       diagramAria: '螺纹牙型示意图',
       externalThread: '外螺纹',
       internalThread: '内螺纹',
@@ -878,7 +878,7 @@ const pagesEn = {
     },
     'thread-table': {
       title: 'Thread standards',
-      subtitle: 'Catalog · design & mfg · parse & compare — unified thread standards and workflow',
+      subtitle: 'Pick a item in the left sidebar — catalog · design & mfg · parse & compare',
       diagramAria: 'Thread profile schematic',
       externalThread: 'External thread',
       internalThread: 'Internal thread',

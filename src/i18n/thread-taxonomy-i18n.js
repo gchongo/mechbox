@@ -1,7 +1,8 @@
 /** 螺纹分类体系文案 — 合并进 calc.pages.thread-table */
 
 export const threadTaxonomyZh = {
-  navMain: '螺纹标准主导航',
+  navSidebarTitle: '功能导航',
+  navSidebarHint: '所有功能入口都在左侧 — 选体系、查表、设计或对照，从这里开始。',
   navCatalog: '规格库',
   navCatalogDesc: '按用途浏览体系，查询尺寸与元数据',
   navDesign: '设计制造',
@@ -282,7 +283,8 @@ export const threadTaxonomyZh = {
 }
 
 export const threadTaxonomyEn = {
-  navMain: 'Thread standards navigation',
+  navSidebarTitle: 'Navigation',
+  navSidebarHint: 'Everything is in the left sidebar — pick a system, design step, or tool.',
   navCatalog: 'Size catalog',
   navCatalogDesc: 'Browse by purpose — dimensions and metadata',
   navDesign: 'Design & mfg',
