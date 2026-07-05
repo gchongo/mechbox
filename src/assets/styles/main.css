@@ -281,7 +281,11 @@
   }
 
   .thread-catalog-hero {
-    @apply mb-6 grid gap-4 xl:grid-cols-[minmax(280px,480px)_1fr];
+    @apply mb-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)];
+  }
+
+  .thread-catalog-hero .thread-profile-diagram {
+    @apply min-w-0;
   }
 
   .thread-catalog-hero__aside {

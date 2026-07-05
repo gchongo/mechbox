@@ -78,6 +78,10 @@ export function buildDetailedDiagram(kind, options = {}) {
   }
   const scene = (builders[kind] ?? builders.triangular_60)()
   scene.sampleParams = buildSampleParamRows(options.sample ?? null)
+  scene.fontSize ??= 15
+  scene.titleFontSize ??= 18
+  scene.regionFontSize ??= 16
+  scene.title ??= { x: 460, y: 36 }
   return scene
 }
 
@@ -121,40 +125,56 @@ function ptsToPath(points, close = false) {
 }
 
 function dimV(x, y1, y2, label, opts = {}) {
-  const { ext = 0, side = 'left' } = opts
+  const { ext = 0, side = 'left', tickX = null } = opts
+  const ya = Math.min(y1, y2)
+  const yb = Math.max(y1, y2)
   const xa = side === 'left' ? x - ext : x + ext
+  const witness = tickX != null
+    ? [
+        { x1: tickX, y1: ya, x2: xa, y2: ya },
+        { x1: tickX, y1: yb, x2: xa, y2: yb },
+      ]
+    : []
   return {
     type: 'linear',
     x1: xa,
-    y1,
+    y1: ya,
     x2: xa,
-    y2,
+    y2: yb,
+    witness,
     label,
-    labelX: side === 'left' ? xa - 4 : xa + 4,
-    labelY: (y1 + y2) / 2 + 3,
+    labelX: side === 'left' ? xa - 10 : xa + 10,
+    labelY: (ya + yb) / 2 + 5,
     anchor: side === 'left' ? 'end' : 'start',
   }
 }
 
 function dimH(x1, x2, y, label, opts = {}) {
-  const { ext = 8 } = opts
+  const { ext = 14, tickY = null } = opts
   const ya = y + ext
+  const witness = tickY != null
+    ? [
+        { x1: x1, y1: tickY, x2: x1, y2: ya },
+        { x1: x2, y1: tickY, x2: x2, y2: ya },
+      ]
+    : []
   return {
     type: 'linear',
     x1,
     y1: ya,
     x2,
     y2: ya,
+    witness,
     label,
     labelX: (x1 + x2) / 2,
-    labelY: ya + 12,
+    labelY: ya + 20,
     anchor: 'middle',
   }
 }
 
 function angleMarkAtApex(cx, yApex, includedAngleDeg, label) {
   const half = (includedAngleDeg / 2) * (Math.PI / 180)
-  const r = 20
+  const r = 36
   const x1 = cx - r * Math.sin(half)
   const y1 = yApex + r * Math.cos(half)
   const x2 = cx + r * Math.sin(half)
@@ -169,31 +189,32 @@ function angleMarkAtApex(cx, yApex, includedAngleDeg, label) {
     y2,
     label,
     labelX: cx,
-    labelY: yApex - 8,
+    labelY: yApex - 16,
     arcSweep: 1,
   }
 }
 
-function diameterLeader(y, label, xProfileEnd) {
+function diameterLeader(y, label, xProfileEnd, opts = {}) {
+  const ext = opts.ext ?? 110
   return {
     type: 'diameter',
     y,
     label,
     xProfile: xProfileEnd,
-    x1: xProfileEnd + 4,
-    x2: xProfileEnd + 88,
-    labelX: xProfileEnd + 92,
-    labelY: y + 3,
+    x1: xProfileEnd + 8,
+    x2: xProfileEnd + ext,
+    labelX: xProfileEnd + ext + 10,
+    labelY: y + 5,
   }
 }
 
-/** ISO 60° / 惠氏 55° 基本牙型 */
+/** ISO 60° / 惠氏 55° 基本牙型 — 大画布 + 精确标注 */
 function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
-  const P = 52
+  const P = 88
   const H = P * Hfactor
-  const x0 = 108
+  const x0 = 248
   const teeth = 2
-  const yPitch = 152
+  const yPitch = 248
   const cf = P / 8
   const { crest: tCrest, root: tRoot } = trunc
 
@@ -218,8 +239,9 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
 
   const xEnd = x0 + teeth * P
   const xc = x0 + P / 2
-  const yBottom = yExtRoot + H / 3
-  const yTop = yIntRoot - H / 5
+  const yBottom = yExtRoot + H / 2.2
+  const yTop = yIntRoot - H / 4
+  const xTick = xc - P / 2 - 4
 
   const extProfile = ptsToPath(extPts)
   const intProfile = ptsToPath(intPts)
@@ -234,43 +256,48 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     )
   }
 
-  const dimXFull = xc - P - 18
-  const dimXPart = xc - P - 38
+  const xDimH = 72
+  const xDimPart = 118
 
   const dims = [
-    dimV(dimXFull, ySharpCrest, ySharpRoot, 'H', { ext: 6 }),
-    dimV(dimXPart, ySharpCrest, yExtCrest, 'H/8', { ext: 4 }),
-    dimV(dimXPart, ySharpCrest, yPitch, 'H/2', { ext: 4 }),
-    dimV(dimXPart, ySharpRoot, yExtRoot, 'H/4', { ext: 4 }),
-    dimH(xc - P / 2, xc + P / 2, yExtRoot + 10, 'P'),
-    diameterLeader(yExtCrest, 'd / D', xEnd),
-    diameterLeader(yPitch, 'd₂ / D₂', xEnd),
-    diameterLeader(yExtRoot, 'd₁ / D₁', xEnd),
+    dimV(xDimH, ySharpCrest, ySharpRoot, 'H', { ext: 8, tickX: xTick }),
+    dimV(xDimPart, ySharpCrest, yExtCrest, 'H/8', { ext: 6, tickX: xTick }),
+    dimV(xDimPart, ySharpCrest, yPitch, 'H/2', { ext: 6, tickX: xTick }),
+    dimV(xDimPart, ySharpRoot, yExtRoot, 'H/4', { ext: 6, tickX: xTick }),
+    dimH(xc - P / 2, xc + P / 2, yExtRoot, 'P', { ext: 18, tickY: yExtRoot }),
+    diameterLeader(yExtCrest, 'd / D', xEnd, { ext: 96 }),
+    diameterLeader(yPitch, 'd₂ / D₂', xEnd, { ext: 96 }),
+    diameterLeader(yExtRoot, 'd₁ / D₁', xEnd, { ext: 96 }),
   ]
 
   if (includedAngle === 55) {
-    dims[1] = dimV(dimXPart, ySharpCrest, yExtCrest, 'H/6', { ext: 4 })
-    dims[3] = dimV(dimXPart, ySharpRoot, yExtRoot, 'H/6', { ext: 4 })
+    dims[1] = dimV(xDimPart, ySharpCrest, yExtCrest, 'H/6', { ext: 6, tickX: xTick })
+    dims[3] = dimV(xDimPart, ySharpRoot, yExtRoot, 'H/6', { ext: 6, tickX: xTick })
   }
 
   const scene = {
-    viewBox: '0 0 560 300',
+    viewBox: '0 0 920 480',
+    fontSize: 15,
+    titleFontSize: 18,
+    regionFontSize: 16,
+    strokeScale: 1.6,
     regions: [
       { d: intFill, fill: 'var(--thread-diagram-internal, #d8ece8)', stroke: '#5a8f88' },
       { d: extFill, fill: 'var(--thread-diagram-external, #e4e8ec)', stroke: '#6b7280' },
     ],
     profiles: [
-      { d: intProfile, stroke: '#2d6a62', width: 1.35 },
-      { d: extProfile, stroke: '#374151', width: 1.35 },
+      { d: intProfile, stroke: '#2d6a62', width: 2.2 },
+      { d: extProfile, stroke: '#374151', width: 2.2 },
     ],
     ghosts,
-    pitchAxis: { x1: x0 - 6, y1: yPitch, x2: xEnd + 6, y2: yPitch },
+    pitchAxis: { x1: x0 - 12, y1: yPitch, x2: xEnd + 12, y2: yPitch },
     dims,
     angleMark: angleMarkAtApex(xc, ySharpCrest, includedAngle, `${includedAngle}°`),
     labels: [
-      { text: 'internal', x: x0 + P * 0.35, y: yTop + 16 },
-      { text: 'external', x: x0 + P * 0.35, y: yBottom - 6 },
+      { text: 'internal', x: x0 + P * 0.35, y: yTop + 28 },
+      { text: 'external', x: x0 + P * 0.35, y: yBottom - 12 },
     ],
+    title: { x: 460, y: 36 },
     paramKeys: ['pitch', 'major', 'pitchDia', 'minor', 'tapDrill', 'toleranceExt', 'toleranceInt'],
     legacyExternalPath: extProfile,
     legacyInternalPath: intProfile,
@@ -279,12 +306,12 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
 
   if (withTaper) {
     scene.taper = {
-      x1: 78,
-      y1: yBottom + 4,
-      x2: xEnd + 28,
-      y2: yTop - 2,
-      labelX: xEnd + 4,
-      labelY: yTop - 6,
+      x1: 180,
+      y1: yBottom + 8,
+      x2: xEnd + 48,
+      y2: yTop - 4,
+      labelX: xEnd + 12,
+      labelY: yTop - 10,
       label: '1:16',
     }
     scene.paramKeys.push('taper', 'sealing')

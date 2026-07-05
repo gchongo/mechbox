@@ -18,6 +18,7 @@ describe('thread profile diagram', () => {
     const m = buildProfilePath('triangular_60', 'external')
     const tr = buildProfilePath('trapezoidal_tr', 'external')
     expect(m).not.toBe(tr)
+    expect(m).toContain('248')
     expect(tr).toContain('135')
   })
 

@@ -1,36 +1,39 @@
 <template>
   <div class="thread-profile-diagram">
-    <svg :viewBox="scene.viewBox" class="thread-profile-diagram__svg" role="img" :aria-label="aria">
+    <svg
+      :viewBox="scene.viewBox"
+      class="thread-profile-diagram__svg"
+      role="img"
+      :aria-label="aria"
+      preserveAspectRatio="xMidYMid meet"
+    >
       <defs>
-        <marker id="thread-dim-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="currentColor" />
+        <marker id="thread-dim-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="currentColor" />
         </marker>
       </defs>
 
-      <!-- 填充区：内/外螺纹 -->
       <path
         v-for="(region, i) in scene.regions"
         :key="`region-${i}`"
         :d="region.d"
         :fill="region.fill"
         :stroke="region.stroke"
-        stroke-width="0.75"
-        opacity="0.92"
+        stroke-width="1.2"
+        opacity="0.94"
       />
 
-      <!-- 理论牙型（虚线） -->
       <path
         v-for="(ghost, i) in scene.ghosts"
         :key="`ghost-${i}`"
         :d="ghost"
         fill="none"
         stroke="currentColor"
-        stroke-width="0.75"
-        stroke-dasharray="4 3"
+        stroke-width="1.2"
+        stroke-dasharray="6 4"
         class="thread-profile-diagram__ghost"
       />
 
-      <!-- 螺距线（点划线） -->
       <line
         v-if="scene.pitchAxis"
         :x1="scene.pitchAxis.x1"
@@ -38,12 +41,11 @@
         :x2="scene.pitchAxis.x2"
         :y2="scene.pitchAxis.y2"
         stroke="currentColor"
-        stroke-width="0.85"
-        stroke-dasharray="8 3 2 3"
+        stroke-width="1.2"
+        stroke-dasharray="10 4 3 4"
         class="thread-profile-diagram__pitch-axis"
       />
 
-      <!-- 锥度示意 -->
       <template v-if="scene.taper">
         <line
           :x1="scene.taper.x1"
@@ -51,20 +53,20 @@
           :x2="scene.taper.x2"
           :y2="scene.taper.y2"
           stroke="currentColor"
-          stroke-width="1"
-          stroke-dasharray="6 4"
+          stroke-width="1.4"
+          stroke-dasharray="8 5"
           class="thread-profile-diagram__taper"
         />
         <text
           :x="scene.taper.labelX"
           :y="scene.taper.labelY"
+          :font-size="scene.fontSize"
           class="thread-profile-diagram__taper-label"
         >
           {{ scene.taper.label }}
         </text>
       </template>
 
-      <!-- 实际牙型轮廓 -->
       <path
         v-for="(profile, i) in scene.profiles"
         :key="`profile-${i}`"
@@ -74,7 +76,6 @@
         :stroke-width="profile.width"
       />
 
-      <!-- 滚珠 -->
       <circle
         v-for="(ball, i) in scene.circles ?? []"
         :key="`ball-${i}`"
@@ -83,11 +84,22 @@
         :r="ball.r"
         fill="var(--el-color-primary)"
         stroke="#374151"
-        stroke-width="0.75"
+        stroke-width="1"
       />
 
-      <!-- 尺寸标注 -->
       <g v-for="(dim, i) in scene.dims" :key="`dim-${i}`" class="thread-profile-diagram__dim">
+        <template v-if="dim.witness?.length">
+          <line
+            v-for="(w, wi) in dim.witness"
+            :key="`w-${i}-${wi}`"
+            :x1="w.x1"
+            :y1="w.y1"
+            :x2="w.x2"
+            :y2="w.y2"
+            stroke="currentColor"
+            stroke-width="1"
+          />
+        </template>
         <template v-if="dim.type === 'linear'">
           <line
             :x1="dim.x1"
@@ -95,13 +107,14 @@
             :x2="dim.x2"
             :y2="dim.y2"
             stroke="currentColor"
-            stroke-width="0.85"
+            stroke-width="1.2"
             marker-start="url(#thread-dim-arrow)"
             marker-end="url(#thread-dim-arrow)"
           />
           <text
             :x="dim.labelX"
             :y="dim.labelY"
+            :font-size="scene.fontSize"
             :text-anchor="dim.anchor ?? 'middle'"
             class="thread-profile-diagram__dim-text"
           >
@@ -110,35 +123,35 @@
         </template>
         <template v-else-if="dim.type === 'diameter'">
           <line
-            :x1="dim.xProfile ?? dim.x1 - 4"
+            :x1="dim.xProfile ?? dim.x1 - 8"
             :y1="dim.y"
             :x2="dim.x1"
             :y2="dim.y"
             stroke="currentColor"
-            stroke-width="0.75"
+            stroke-width="1"
           />
-          <line :x1="dim.x1" :y1="dim.y" :x2="dim.x2" :y2="dim.y" stroke="currentColor" stroke-width="0.75" />
-          <text :x="dim.labelX" :y="dim.labelY" class="thread-profile-diagram__dim-text" text-anchor="start">
+          <line :x1="dim.x1" :y1="dim.y" :x2="dim.x2" :y2="dim.y" stroke="currentColor" stroke-width="1.2" />
+          <text
+            :x="dim.labelX"
+            :y="dim.labelY"
+            :font-size="scene.fontSize"
+            class="thread-profile-diagram__dim-text"
+            text-anchor="start"
+          >
             {{ dim.label }}
           </text>
         </template>
       </g>
 
-      <!-- 牙型角 -->
       <g v-if="scene.angleMark" class="thread-profile-diagram__angle">
-        <path
-          :d="angleArcPath"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="0.85"
-        />
+        <path :d="angleArcPath" fill="none" stroke="currentColor" stroke-width="1.2" />
         <line
           :x1="scene.angleMark.cx"
           :y1="scene.angleMark.cy"
           :x2="scene.angleMark.x1"
           :y2="scene.angleMark.y1"
           stroke="currentColor"
-          stroke-width="0.75"
+          stroke-width="1"
         />
         <line
           :x1="scene.angleMark.cx"
@@ -146,11 +159,12 @@
           :x2="scene.angleMark.x2"
           :y2="scene.angleMark.y2"
           stroke="currentColor"
-          stroke-width="0.75"
+          stroke-width="1"
         />
         <text
           :x="scene.angleMark.labelX"
           :y="scene.angleMark.labelY"
+          :font-size="scene.fontSize"
           text-anchor="middle"
           class="thread-profile-diagram__dim-text"
         >
@@ -158,23 +172,30 @@
         </text>
       </g>
 
-      <!-- 内/外螺纹区域文字 -->
       <text
         v-for="(lbl, i) in scene.labels"
         :key="`lbl-${i}`"
         :x="lbl.x"
         :y="lbl.y"
+        :font-size="scene.regionFontSize"
         class="thread-profile-diagram__region-label"
       >
         {{ lbl.text === 'internal' ? labels.internal : labels.external }}
       </text>
 
-      <text x="280" y="22" text-anchor="middle" class="thread-profile-diagram__title">{{ title }}</text>
+      <text
+        :x="scene.title?.x ?? 460"
+        :y="scene.title?.y ?? 36"
+        :font-size="scene.titleFontSize"
+        text-anchor="middle"
+        class="thread-profile-diagram__title"
+      >
+        {{ title }}
+      </text>
     </svg>
 
     <p class="thread-profile-diagram__formula">{{ formula }}</p>
 
-    <!-- 选中规格时：表格参数对照 -->
     <dl v-if="scene.sampleParams?.length" class="thread-profile-diagram__sample">
       <div v-for="row in scene.sampleParams" :key="row.key" class="thread-profile-diagram__sample-row">
         <dt>{{ paramLabel(row.key) }}</dt>
@@ -190,7 +211,6 @@ import { computed } from 'vue'
 import { buildDetailedDiagram } from '@/utils/thread-profile-diagram'
 
 const props = defineProps({
-  /** @type {import('@/utils/thread-profile-diagram').ThreadDiagramKind} */
   kind: { type: String, default: 'triangular_60' },
   angle: { type: Number, default: 60 },
   title: { type: String, default: '' },
@@ -200,7 +220,6 @@ const props = defineProps({
     type: Object,
     default: () => ({ external: '外螺纹', internal: '内螺纹' }),
   },
-  /** @type {import('@/utils/thread-profile-diagram').DiagramSample|null} */
   sample: { type: Object, default: null },
   pt: { type: Function, default: null },
   paramHint: { type: String, default: '' },
@@ -250,6 +269,7 @@ function paramLabel(key) {
 .thread-profile-diagram {
   --thread-diagram-internal: #d8ece8;
   --thread-diagram-external: #e4e8ec;
+  width: 100%;
 }
 
 .dark .thread-profile-diagram {
@@ -258,9 +278,18 @@ function paramLabel(key) {
 }
 
 .thread-profile-diagram__svg {
+  display: block;
   width: 100%;
-  max-width: 36rem;
+  min-height: 300px;
+  height: auto;
+  max-width: none;
   color: var(--el-text-color-primary);
+}
+
+@media (min-width: 1024px) {
+  .thread-profile-diagram__svg {
+    min-height: 360px;
+  }
 }
 
 .thread-profile-diagram__ghost {
@@ -271,63 +300,54 @@ function paramLabel(key) {
   color: rgb(107 114 128);
 }
 
-.thread-profile-diagram__taper {
-  color: rgb(217 119 6);
-}
-
 .thread-profile-diagram__taper-label {
-  fill: currentColor;
-  font-size: 10px;
-  color: rgb(217 119 6);
+  fill: rgb(217 119 6);
 }
 
 .thread-profile-diagram__dim-text {
   fill: currentColor;
-  font-size: 10px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .thread-profile-diagram__region-label {
   fill: currentColor;
-  font-size: 11px;
   font-weight: 600;
-  opacity: 0.75;
+  opacity: 0.82;
 }
 
 .thread-profile-diagram__title {
   fill: currentColor;
-  font-size: 12px;
   font-weight: 600;
 }
 
 .thread-profile-diagram__formula {
-  margin-top: 0.5rem;
+  margin-top: 0.65rem;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--el-text-color-secondary);
 }
 
 .thread-profile-diagram__hint {
   margin-top: 0.5rem;
   text-align: center;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--el-text-color-placeholder);
 }
 
 .thread-profile-diagram__sample {
   margin-top: 0.75rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: 0.35rem 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.4rem 0.85rem;
   border-top: 1px solid var(--el-border-color-lighter);
   padding-top: 0.65rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
 }
 
 .thread-profile-diagram__sample-row {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.12rem;
   min-width: 0;
 }
 
