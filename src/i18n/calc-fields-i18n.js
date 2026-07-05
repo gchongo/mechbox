@@ -850,6 +850,20 @@ export const fieldsZh = {
         fitQuality: '配合品质指数',
         thermalShift: '温升间隙变化',
       },
+      recommendations: {
+        holeBasisTitle: '附表 D3-1 基孔制优先、常用配合',
+        shaftBasisTitle: '附表 D3-2 基轴制优先、常用配合',
+        subtitle: '公称尺寸 ≤500 mm；点击单元格选用配合（填入孔/轴代号）',
+        referenceHole: '基准孔',
+        referenceShaft: '基准轴',
+        clearance: '间隙配合',
+        transition: '过渡配合',
+        interference: '过盈配合',
+        preferred: '优先',
+        unsupported: '代号暂不支持计算',
+        legend:
+          '左上角色三角为优先配合（◢）；虚线框表示当前计算器暂不支持该代号；脚注①：标注 ≤3 / ≤100 者在相应尺寸下按过渡配合理解。',
+      },
     },
     'material-selection': {
       fields: {
@@ -1733,6 +1747,20 @@ export const fieldsEn = {
         meanClearance: 'Mean clearance',
         fitQuality: 'Fit quality index',
         thermalShift: 'Clearance change at ΔT',
+      },
+      recommendations: {
+        holeBasisTitle: 'Appendix D3-1 — hole-basis preferred & common fits',
+        shaftBasisTitle: 'Appendix D3-2 — shaft-basis preferred & common fits',
+        subtitle: 'Nominal size ≤500 mm; click a cell to apply hole/shaft codes',
+        referenceHole: 'Ref. hole',
+        referenceShaft: 'Ref. shaft',
+        clearance: 'Clearance',
+        transition: 'Transition',
+        interference: 'Interference',
+        preferred: 'Preferred',
+        unsupported: 'Code not supported by calculator',
+        legend:
+          'Corner triangle = preferred fit (◢); dashed cells = code not yet supported; footnote ①: values marked ≤3 / ≤100 are transition fits at those sizes.',
       },
     },
     'material-selection': {

@@ -24,19 +24,6 @@
             <span class="ml-2 text-xs text-gray-500">°C</span>
           </CalcFormItem>
         </el-form>
-
-        <p class="mb-2 text-xs font-medium text-gray-500">{{ pf('commonPresets') }}</p>
-        <div class="flex flex-wrap gap-2">
-          <el-button
-            v-for="(p, i) in COMMON_FITS"
-            :key="i"
-            size="small"
-            :type="presetIndex === i ? 'primary' : 'default'"
-            @click="applyPreset(i)"
-          >
-            {{ ol('commonFits', `${p.hole}_${p.shaft}`, 'label') }}
-          </el-button>
-        </div>
       </section>
 
       <section ref="resultRef" class="card-panel">
@@ -46,7 +33,6 @@
           <div class="mb-4 flex items-center gap-3">
             <el-tag :type="overallStatusType">{{ fc('check') }}: {{ overallStatusLabel }}</el-tag>
             <el-tag :type="fitTagType">{{ fitTypeLabel }}</el-tag>
-            <span class="text-sm text-gray-500">{{ presetUse }}</span>
           </div>
           <p v-if="statusHint" class="mb-3 text-xs" :class="overallStatus === 'fail' ? 'text-error' : 'text-warning'">
             {{ statusHint }}
@@ -88,6 +74,33 @@
       </section>
     </div>
 
+    <section class="card-panel mt-6 space-y-8">
+      <FitRecommendationTable
+        :title="prc('holeBasisTitle')"
+        :subtitle="prc('subtitle')"
+        :reference-label="prc('referenceHole')"
+        :legend="prc('legend')"
+        :rows="HOLE_BASIS_ROWS"
+        :selected-hole="holeCode"
+        :selected-shaft="shaftCode"
+        :nominal="nominal"
+        :category-labels="categoryLabels"
+        @select="applyFitSelection"
+      />
+      <FitRecommendationTable
+        :title="prc('shaftBasisTitle')"
+        :subtitle="prc('subtitle')"
+        :reference-label="prc('referenceShaft')"
+        :legend="prc('legend')"
+        :rows="SHAFT_BASIS_ROWS"
+        :selected-hole="holeCode"
+        :selected-shaft="shaftCode"
+        :nominal="nominal"
+        :category-labels="categoryLabels"
+        @select="applyFitSelection"
+      />
+    </section>
+
     <section class="card-panel mt-6">
       <h2 class="mb-2 text-sm font-semibold">{{ pf('supportedCodes') }}</h2>
       <p class="mb-2 text-xs text-gray-500">{{ pf('holeLetters') }}: {{ holeLetters.join(', ') }}</p>
@@ -111,7 +124,9 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { analyzeFit, COMMON_FITS, generateToleranceBandData, SUPPORTED_HOLE_LETTERS, SUPPORTED_SHAFT_LETTERS } from '@/utils/iso-286-calc'
+import { analyzeFit, generateToleranceBandData, SUPPORTED_HOLE_LETTERS, SUPPORTED_SHAFT_LETTERS } from '@/utils/iso-286-calc'
+import { HOLE_BASIS_ROWS, SHAFT_BASIS_ROWS } from '@/constants/fit-recommendations'
+import FitRecommendationTable from '@/components/fit/FitRecommendationTable.vue'
 import FitDiagram from '@/components/fit/FitDiagram.vue'
 import FitToleranceBand from '@/components/fit/FitToleranceBand.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
@@ -120,15 +135,27 @@ import { buildEnhancedReport } from '@/utils/enhanced-report'
 import { adaptFit } from '@/utils/calc-adapters'
 import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
-import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { getToolReplayRecord } from '@/utils/calc-history'
 
-const { pt, ct, pf, pr, fc, locale } = useCalcPage('fit')
+const { pt, ct, pf, pr, fc, t, locale } = useCalcPage('fit')
 const { exportFilename } = useContentI18n()
-const { ol } = useOptionsI18n()
 const { rm, resultError } = useResultI18n()
+
+function prc(key) {
+  const path = `calc.pages.fit.recommendations.${key}`
+  const val = t(path)
+  return val !== path ? val : key
+}
+
+const categoryLabels = computed(() => ({
+  clearance: prc('clearance'),
+  transition: prc('transition'),
+  interference: prc('interference'),
+  preferred: prc('preferred'),
+  unsupported: prc('unsupported'),
+}))
 
 const CALC_MODE = 'professional'
 
@@ -136,16 +163,12 @@ const nominal = ref(25)
 const holeCode = ref('H7')
 const shaftCode = ref('g6')
 const deltaT = ref(0)
-const presetIndex = ref(0)
 const resultRef = ref(null)
 const route = useRoute()
 const router = useRouter()
 const holeLetters = SUPPORTED_HOLE_LETTERS
 const shaftLetters = SUPPORTED_SHAFT_LETTERS
 
-const preset = computed(() => COMMON_FITS[presetIndex.value])
-const presetKey = computed(() => (preset.value ? `${preset.value.hole}_${preset.value.shaft}` : ''))
-const presetUse = computed(() => ol('commonFits', presetKey.value, 'use'))
 const fitTypeLabel = computed(() => {
   locale.value
   const ft = result.value?.fitType
@@ -205,11 +228,9 @@ const fitTagType = computed(() => {
   return { clearance: 'success', interference: 'info', transition: 'warning' }[result.value.fitType]
 })
 
-function applyPreset(i) {
-  presetIndex.value = i
-  const p = COMMON_FITS[i]
-  holeCode.value = p.hole
-  shaftCode.value = p.shaft
+function applyFitSelection({ hole, shaft }) {
+  holeCode.value = hole
+  shaftCode.value = shaft
 }
 
 async function exportPdf() {
