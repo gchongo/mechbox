@@ -205,7 +205,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import {
   analyzeGdtStack,
   GDT_STACK_PRESETS,
@@ -223,12 +223,11 @@ import { useCalcPage } from '@/composables/useCalcPage'
 import { useContentI18n } from '@/composables/useContentI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { localizedAnalysisType } from '@/i18n'
-import { getToolReplayRecord } from '@/utils/calc-history'
 
 const route = useRoute()
-const router = useRouter()
-const { pt, pf, pr, fc, locale } = useCalcPage('gdt-stack')
+const { pt, pf, pr, fc, ct, locale } = useCalcPage('gdt-stack')
 const { exportFilename } = useContentI18n()
 const { resultError } = useResultI18n()
 const { ol, optionMap } = useOptionsI18n()
@@ -326,18 +325,10 @@ function applyHistoryInput(input) {
   form.datums = Array.isArray(input.datums) ? input.datums.map((d) => ({ ...d })) : form.datums
 }
 
-function consumeHistoryReplay() {
-  const historyId = route.query.historyId
-  if (!historyId) return false
-  const record = getToolReplayRecord(historyId, 'gdt-stack')
-  if (!record) return false
-  applyHistoryInput(record.data?.input)
-  const nextQuery = { ...route.query }
-  delete nextQuery.historyId
-  delete nextQuery.replay
-  router.replace({ query: nextQuery })
-  return true
-}
+const { consumeHistoryReplay } = useHistoryReplay('gdt-stack', form, {
+  applyFn: applyHistoryInput,
+  deferMount: true,
+})
 
 onMounted(() => {
   if (consumeHistoryReplay()) return
@@ -355,7 +346,6 @@ onMounted(() => {
     }
   }
 })
-watch(() => route.query.historyId, () => consumeHistoryReplay())
 
 function loadPreset(key) {
   const p = GDT_STACK_PRESETS[key]
@@ -404,6 +394,16 @@ async function exportPdf() {
     ],
     element: resultRef.value,
     filename: exportFilename('gdtStackPdf', { typeId: form.typeId, ts: Date.now() }),
+    meta: {
+      locale: locale.value,
+      trace: {
+        toolLabel: pt('title'),
+        calcMode: ct(form.calcMode),
+        status: getCalcReviewStatus(snap),
+        units: 'mm',
+        assumptions: snap.assumptions,
+      },
+    },
   })
 }
 </script>

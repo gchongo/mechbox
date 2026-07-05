@@ -123,6 +123,17 @@
         </div>
       </el-tab-pane>
     </el-tabs>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="heat-treatment"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 
@@ -135,7 +146,11 @@ import {
 } from '@/utils/heat-treatment-calc'
 import HeatTreatmentDiagram from '@/components/heat/HeatTreatmentDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 
@@ -182,6 +197,53 @@ const temperResult = computed(() => {
   const hrc = asQuenchedHRC.value || result.value.hardenability?.surfaceHRC || 55
   return calcTemperedHardness(hrc, temperTemp.value, temperTime.value)
 })
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form: comp,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    if (tab.value === 'temper') {
+      return [
+        { label: pr('temperedHRC'), value: `${temperResult.value.temperedHRC?.toFixed(1) ?? '-'}` },
+        { label: pr('temperState'), value: temperResult.value.temperState ?? '-' },
+      ]
+    }
+    return [
+      { label: pr('surfaceHRC'), value: `${r.hardenability?.surfaceHRC?.toFixed(1) ?? '-'}` },
+      { label: pr('coreHRC'), value: `${r.hardenability?.coreHRC?.toFixed(1) ?? '-'}` },
+    ]
+  },
+})
+const historyInput = computed(() =>
+  snapshotHistoryInput({
+    calcMode: calcMode.value,
+    tab: tab.value,
+    preset: preset.value,
+    comp: { ...comp.value },
+    grainSize: grainSize.value,
+    partDiameter: partDiameter.value,
+    asQuenchedHRC: asQuenchedHRC.value,
+    temperTemp: temperTemp.value,
+    temperTime: temperTime.value,
+  }),
+)
+
+function applyHeatTreatmentReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.calcMode != null) calcMode.value = input.calcMode
+  if (input.tab != null) tab.value = input.tab
+  if (input.preset != null) preset.value = input.preset
+  if (input.comp && typeof input.comp === 'object') comp.value = { ...input.comp }
+  if (input.grainSize != null) grainSize.value = input.grainSize
+  if (input.partDiameter != null) partDiameter.value = input.partDiameter
+  if (input.asQuenchedHRC != null) asQuenchedHRC.value = input.asQuenchedHRC
+  if (input.temperTemp != null) temperTemp.value = input.temperTemp
+  if (input.temperTime != null) temperTime.value = input.temperTime
+}
+useHistoryReplay('heat-treatment', null, { applyFn: applyHeatTreatmentReplay })
 
 function applyPreset(key) {
   const p = STEEL_PRESETS[key]

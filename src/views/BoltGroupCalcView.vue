@@ -138,6 +138,17 @@
       :base-inputs="baseInputs"
       @apply="onApplyInverse"
     />
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="bolt-group"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="snapshot"
+      />
+    </div>
   </div>
 </template>
 
@@ -147,12 +158,15 @@ import { analyzeBoltGroup } from '@/utils/bolt-group-calc'
 import BoltGroupDiagram from '@/components/bolt/BoltGroupDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { adaptBoltGroup } from '@/utils/calc-adapters'
 import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('bolt-group')
 
@@ -197,6 +211,21 @@ const overallStatusLabel = computed(() => {
 })
 const reviewOnly = computed(() => isReviewOnlyResult(snapshot.value))
 const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: snapshot,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('maxBoltForce'), value: `${r.maxBoltForce?.toFixed(0) ?? '-'} N` },
+      { label: fc('check'), value: overallStatusLabel.value },
+    ]
+  },
+})
+useHistoryReplay('bolt-group', form)
 
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {

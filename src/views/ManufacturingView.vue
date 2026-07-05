@@ -136,6 +136,17 @@
         </div>
       </el-tab-pane>
     </el-tabs>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="manufacturing"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="activeResult"
+      />
+    </div>
   </div>
 </template>
 
@@ -146,7 +157,11 @@ import { calcDraftAngle, verifyDraftAngle, CAST_MATERIALS, SURFACE_TYPES } from 
 import MachiningAllowanceDiagram from '@/components/manufacturing/MachiningAllowanceDiagram.vue'
 import CastingDraftDiagram from '@/components/manufacturing/CastingDraftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 
@@ -192,4 +207,37 @@ const castResult = computed(() => calcDraftAngle(cast))
 const verifyResult = computed(() =>
   cast.actualDraftAngle > 0 ? verifyDraftAngle(cast) : { pass: true },
 )
+
+const activeResult = computed(() => (tab.value === 'casting' ? castResult.value : machResult.value))
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form: mach,
+  result: activeResult,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    if (tab.value === 'casting') {
+      const r = castResult.value
+      return [
+        { label: prCast('recommendedDraftAngle'), value: `${r.draftAngleDeg?.toFixed(2) ?? '-'}°` },
+        { label: fc('check'), value: verifyResult.value.pass ? fc('satisfy') : fc('insufficient') },
+      ]
+    }
+    const r = machResult.value
+    return [
+      { label: pr('totalRadialAllowance'), value: `${r.totalRadialAllowance?.toFixed(2) ?? '-'} mm` },
+      { label: pr('recommendedStockDiameter'), value: `${r.recommendedStockDiameter?.toFixed(1) ?? '-'} mm` },
+    ]
+  },
+})
+const historyInput = computed(() =>
+  snapshotHistoryInput({ tab: tab.value, mach: { ...mach }, cast: { ...cast } }),
+)
+
+function applyManufacturingReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.tab != null) tab.value = input.tab
+  if (input.mach && typeof input.mach === 'object') Object.assign(mach, input.mach)
+  if (input.cast && typeof input.cast === 'object') Object.assign(cast, input.cast)
+}
+useHistoryReplay('manufacturing', null, { applyFn: applyManufacturingReplay })
 </script>

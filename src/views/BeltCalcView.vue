@@ -46,6 +46,17 @@
         </div>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="belt"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 <script setup>
@@ -54,9 +65,12 @@ import MathTex from '@/components/common/MathTex.vue'
 import { analyzeBeltDrive } from '@/utils/belt-calc'
 import DriveLayoutDiagram from '@/components/drive/DriveLayoutDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 
-const { pt, ct, pf, pr } = useCalcPage('belt')
+const { pt, ct, pf, pr, fc } = useCalcPage('belt')
 
 const form = reactive({
   calcMode: 'simple',
@@ -72,4 +86,19 @@ const form = reactive({
 })
 
 const result = computed(() => analyzeBeltDrive(form))
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('ratio'), value: r.ratio?.toFixed(2) ?? '-' },
+      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+    ]
+  },
+})
+useHistoryReplay('belt', form)
 </script>

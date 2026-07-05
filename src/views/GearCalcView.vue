@@ -239,6 +239,17 @@
         </template>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="gear"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="activeResult"
+      />
+    </div>
   </div>
 </template>
 
@@ -251,13 +262,17 @@ import { analyzeGearAGMA, compareGearStandards } from '@/utils/gear-agma'
 import { ISO1328_GRADES } from '@/utils/iso-1328'
 import GearPairDiagram from '@/components/gear/GearPairDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { enrichMathText } from '@/utils/math-label'
 
-const { pt, ct, pf, pr, locale } = useCalcPage('gear')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('gear')
 const { optionEntries, gradeLabel } = useOptionsI18n()
 const { rm } = useResultI18n()
 
@@ -348,4 +363,48 @@ const simpleOverallLabel = computed(() => {
 })
 const simpleReviewOnly = computed(() => isReviewOnlyResult(simpleResult.value))
 const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
+
+const activeResult = computed(() => {
+  if (mode.value === 'simple') return simpleResult.value
+  if (mode.value === 'agma') return agmaResult.value
+  if (mode.value === 'compare') return compareResult.value
+  return isoResult.value
+})
+
+const activeOverallLabel = computed(() => {
+  const status = getCalcReviewStatus(activeResult.value)
+  if (status === 'pass') return fc('overallPass')
+  if (status === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: activeResult,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = activeResult.value
+    if (r?.errorKey) return []
+    if (mode.value === 'simple') {
+      return [
+        { label: pr('contactStress'), value: `${r.contactStress?.toFixed(1) ?? '-'} MPa` },
+        { label: fc('check'), value: activeOverallLabel.value },
+      ]
+    }
+    if (mode.value === 'compare') return [{ label: fc('check'), value: activeOverallLabel.value }]
+    return [
+      { label: 'SH', value: r.safetyContact?.toFixed(2) ?? '-' },
+      { label: fc('check'), value: activeOverallLabel.value },
+    ]
+  },
+})
+const historyInput = computed(() => snapshotHistoryInput({ calcMode: calcMode.value, mode: mode.value, ...form }))
+
+function applyGearReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.calcMode != null) calcMode.value = input.calcMode
+  if (input.mode != null) mode.value = input.mode
+  Object.assign(form, input)
+}
+useHistoryReplay('gear', null, { applyFn: applyGearReplay })
 </script>

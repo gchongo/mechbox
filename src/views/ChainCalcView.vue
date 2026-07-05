@@ -43,6 +43,17 @@
         </dl>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="chain"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 <script setup>
@@ -50,9 +61,12 @@ import { reactive, computed } from 'vue'
 import { analyzeChainDrive } from '@/utils/chain-calc'
 import DriveLayoutDiagram from '@/components/drive/DriveLayoutDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 
-const { pt, ct, pf, pr } = useCalcPage('chain')
+const { pt, ct, pf, pr, fc } = useCalcPage('chain')
 const form = reactive({
   calcMode: 'simple',
   pitch: 15.875,
@@ -67,4 +81,19 @@ const form = reactive({
   strands: 1,
 })
 const result = computed(() => analyzeChainDrive(form))
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('chainTension'), value: `${r.chainTension?.toFixed(0) ?? '-'} N` },
+      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+    ]
+  },
+})
+useHistoryReplay('chain', form)
 </script>

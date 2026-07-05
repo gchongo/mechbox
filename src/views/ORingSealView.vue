@@ -131,6 +131,17 @@
         <p class="mt-4 text-xs text-gray-500">{{ rm('oRing', `notes_${result.notesKey}`) }}</p>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="o-ring"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 
@@ -139,7 +150,10 @@ import { reactive, computed, ref } from 'vue'
 import { analyzeORingSeal, recommendGroove, ORING_SECTIONS, ORING_MATERIALS } from '@/utils/o-ring-calc'
 import ORingSealDiagram from '@/components/oring/ORingSealDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 
@@ -172,4 +186,19 @@ function applyRecommend() {
 }
 
 const result = computed(() => analyzeORingSeal(form))
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('compressionAmount'), value: `${r.compressionPercent?.toFixed(1) ?? '-'} %` },
+      { label: fc('check'), value: r.pass ? fc('designOk') : fc('designAdjust') },
+    ]
+  },
+})
+useHistoryReplay('o-ring', form)
 </script>

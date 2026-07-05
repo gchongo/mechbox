@@ -119,6 +119,17 @@
         </template>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="thermal-expansion"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="linearResult"
+      />
+    </div>
   </div>
 </template>
 
@@ -127,12 +138,16 @@ import { reactive, computed, ref } from 'vue'
 import { analyzeThermalExpansion, THERMAL_MATERIALS } from '@/utils/thermal-expansion-calc'
 import ThermalExpansionDiagram from '@/components/thermal/ThermalExpansionDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput, applyReplayToTarget } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
 import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 
-const { pt, ct, pf, pr, locale } = useCalcPage('thermal-expansion')
+const { pt, ct, pf, pr, fc, locale } = useCalcPage('thermal-expansion')
 const { optionMap } = useOptionsI18n()
 
 const thermalMaterials = computed(() => optionMap(THERMAL_MATERIALS, 'thermalMaterials'))
@@ -197,4 +212,30 @@ const fitVerdictLabel = computed(() => {
   if (linearResult.value.releaseBlocked || linearResult.value.estimateOnly) return pr('reviewPending')
   return linearResult.value.pass ? pr('serviceSafe') : pr('mayLoosen')
 })
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: linearResult,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = linearResult.value
+    if (r?.errorKey) return []
+    return [
+      { label: pf('deltaL1'), value: `${r.linearExpansion?.toFixed(4) ?? '-'} mm` },
+      { label: fc('check'), value: fitVerdictLabel.value },
+    ]
+  },
+})
+const historyInput = computed(() =>
+  snapshotHistoryInput({ calcMode: calcMode.value, mat1: mat1.value, mat2: mat2.value, ...form }),
+)
+
+function applyThermalReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.calcMode != null) calcMode.value = input.calcMode
+  if (input.mat1 != null) mat1.value = input.mat1
+  if (input.mat2 != null) mat2.value = input.mat2
+  applyReplayToTarget(form, input)
+}
+useHistoryReplay('thermal-expansion', null, { applyFn: applyThermalReplay })
 </script>

@@ -277,8 +277,7 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { reactive, computed, ref } from 'vue'
 import {
   analyzeFilletWeld,
   analyzeButtWeld,
@@ -298,8 +297,8 @@ import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
-import { getToolReplayRecord } from '@/utils/calc-history'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('weld')
 const { optionMap, ol } = useOptionsI18n()
@@ -308,8 +307,6 @@ const { rm, resultError } = useResultI18n()
 const weldSteelGrades = computed(() => optionMap(WELD_STEEL_GRADES, 'weldSteelGrades'))
 const weldDetailCategories = computed(() => optionMap(WELD_DETAIL_CATEGORIES, 'weldDetailCategories'))
 const weldStandards = computed(() => ol('weldStandards'))
-const route = useRoute()
-const router = useRouter()
 
 const tabLabels = computed(() => ({
   fillet: pf('tabFillet'),
@@ -508,18 +505,5 @@ function applyReplayInput(input) {
   Object.assign(haz, input.haz ?? {})
 }
 
-function consumeHistoryReplay() {
-  const historyId = route.query.historyId
-  if (!historyId) return
-  const record = getToolReplayRecord(historyId, 'weld')
-  if (!record) return
-  applyReplayInput(record.data?.input)
-  const nextQuery = { ...route.query }
-  delete nextQuery.historyId
-  delete nextQuery.replay
-  router.replace({ query: nextQuery })
-}
-
-onMounted(() => consumeHistoryReplay())
-watch(() => route.query.historyId, () => consumeHistoryReplay())
+useHistoryReplay('weld', null, { applyFn: applyReplayInput })
 </script>

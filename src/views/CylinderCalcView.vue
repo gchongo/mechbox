@@ -110,6 +110,17 @@
         </div>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="cylinder"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 <script setup>
@@ -118,7 +129,11 @@ import MathTex from '@/components/common/MathTex.vue'
 import { analyzeHydraulicCylinder, analyzePneumaticCylinder, END_FIXITY_PRESETS } from '@/utils/hydraulic-calc'
 import CylinderDiagram from '@/components/cylinder/CylinderDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput, applyReplayToTarget } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
 import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
@@ -156,4 +171,26 @@ const unconfirmedLabelText = computed(() =>
     locale.value === 'en' ? ', ' : '、',
   ),
 )
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('extendForce'), value: `${r.extendForce?.toFixed(0) ?? '-'} N` },
+      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+    ]
+  },
+})
+const historyInput = computed(() => snapshotHistoryInput({ mode: mode.value, ...form }))
+
+function applyCylinderReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.mode != null) mode.value = input.mode
+  applyReplayToTarget(form, input)
+}
+useHistoryReplay('cylinder', null, { applyFn: applyCylinderReplay })
 </script>

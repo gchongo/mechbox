@@ -153,6 +153,17 @@
         </router-link>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="thread"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 
@@ -166,7 +177,10 @@ import {
 } from '@/utils/thread-calc'
 import ThreadDiagram from '@/components/thread/ThreadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
 import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
@@ -202,6 +216,21 @@ const unconfirmedLabelText = computed(() =>
     locale.value === 'en' ? ', ' : '、',
   ),
 )
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('tensileStress'), value: `${r.tensileStress?.toFixed(1) ?? '-'} MPa` },
+      { label: fc('check'), value: r.pass ? fc('passOk') : fc('passFail') },
+    ]
+  },
+})
+useHistoryReplay('thread', form)
 
 function onDiameterChange() {
   markConfirmed('diameter')

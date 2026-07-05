@@ -135,8 +135,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
 import { analyzeFit, generateToleranceBandData, SUPPORTED_HOLE_LETTERS, SUPPORTED_SHAFT_LETTERS } from '@/utils/iso-286-calc'
 import { HOLE_BASIS_ROWS, SHAFT_BASIS_ROWS } from '@/constants/fit-recommendations'
 import FitRecommendationTable from '@/components/fit/FitRecommendationTable.vue'
@@ -150,7 +149,7 @@ import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useContentI18n } from '@/composables/useContentI18n'
-import { getToolReplayRecord } from '@/utils/calc-history'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 
 const { pt, ct, pf, pr, fc, t, locale } = useCalcPage('fit')
 const { exportFilename } = useContentI18n()
@@ -178,8 +177,6 @@ const shaftCode = ref('g6')
 const deltaT = ref(0)
 const basisTab = ref('hole')
 const resultRef = ref(null)
-const route = useRoute()
-const router = useRouter()
 const holeLetters = SUPPORTED_HOLE_LETTERS
 const shaftLetters = SUPPORTED_SHAFT_LETTERS
 
@@ -258,6 +255,16 @@ async function exportPdf() {
     sections: report.sections,
     element: resultRef.value,
     filename: exportFilename('fitPdf', { nominal: r.nominal, ts: Date.now() }),
+    meta: {
+      locale: locale.value,
+      trace: {
+        toolLabel: pt('title'),
+        calcMode: CALC_MODE,
+        status: overallStatus.value,
+        units: 'mm, μm',
+        assumptions: snap.assumptions,
+      },
+    },
   })
 }
 
@@ -269,18 +276,5 @@ function applyReplayInput(input) {
   if (Number.isFinite(Number(input.deltaT))) deltaT.value = Number(input.deltaT)
 }
 
-function consumeHistoryReplay() {
-  const historyId = route.query.historyId
-  if (!historyId) return
-  const record = getToolReplayRecord(historyId, 'fit')
-  if (!record) return
-  applyReplayInput(record.data?.input)
-  const nextQuery = { ...route.query }
-  delete nextQuery.historyId
-  delete nextQuery.replay
-  router.replace({ query: nextQuery })
-}
-
-onMounted(() => consumeHistoryReplay())
-watch(() => route.query.historyId, () => consumeHistoryReplay())
+useHistoryReplay('fit', null, { applyFn: applyReplayInput })
 </script>

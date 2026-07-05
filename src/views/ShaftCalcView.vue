@@ -105,6 +105,17 @@
       :base-inputs="baseInputs"
       @apply="onApplyInverse"
     />
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="shaft"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="currentSnapshot"
+      />
+    </div>
   </div>
 </template>
 <script setup>
@@ -117,12 +128,16 @@ import { materialsEn } from '@/i18n/materials-i18n'
 import ShaftDiagram from '@/components/shaft/ShaftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptShaftCombined, adaptShaftTorsion } from '@/utils/calc-adapters'
 import { getCalcReviewStatus, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput, applyReplayToTarget } from '@/utils/history-replay'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useLocale } from '@/composables/useLocale'
 
@@ -215,6 +230,28 @@ const overallStatusLabel = computed(() => {
   return fc('overallFail')
 })
 const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: currentSnapshot,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = mode.value === 'combined' ? combinedResult.value : torsionResult.value
+    if (r?.errorKey) return []
+    return [
+      { label: mode.value === 'combined' ? pr('equivalentStress') : pr('shearStress'), value: `${(mode.value === 'combined' ? r.equivalentStress : r.shearStress)?.toFixed(1) ?? '-'} MPa` },
+      { label: fc('check'), value: overallStatusLabel.value },
+    ]
+  },
+})
+const historyInput = computed(() => snapshotHistoryInput({ mode: mode.value, ...form }))
+
+function applyShaftReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.mode != null) mode.value = input.mode
+  applyReplayToTarget(form, input)
+}
+useHistoryReplay('shaft', null, { applyFn: applyShaftReplay })
 
 function localCheckClass(passFlag) {
   return typeof passFlag === 'boolean' ? reviewAwareCheckClass(passFlag, currentSnapshot.value) : ''

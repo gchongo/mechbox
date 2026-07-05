@@ -243,7 +243,9 @@ export const contentZh = {
     excelColType: '类型',
     toolCalcTitle: '{tool} 计算',
     untitled: '未命名',
-    replayUnsupported: '当前版本暂不支持从此记录还原输入，已打开工具页；请以历史摘要或导出报告为准。',
+    replayUnsupported: '此记录无法还原输入参数，请查看下方摘要或导出报告。',
+    replayNoInputSnapshot: '此记录未保存输入参数快照，无法还原计算条件，请查看摘要。',
+    replayRestored: '已从历史记录还原输入参数，请核对后重新校核结论。',
     summaryOnlyTitle: '历史记录摘要',
     summaryOnlyBody: '该记录暂无法跳转到对应工具页，请在此查看摘要。',
   },
@@ -562,7 +564,10 @@ export const contentEn = {
     toolCalcTitle: '{tool} calculation',
     untitled: 'Untitled',
     replayUnsupported:
-      'This release cannot restore inputs from this record. The tool page is opened blank — use the history summary or exported report.',
+      'Inputs cannot be restored from this record. Review the summary or exported report.',
+    replayNoInputSnapshot:
+      'No input snapshot was saved with this record; calculation conditions cannot be restored.',
+    replayRestored: 'Inputs restored from history. Re-verify conclusions before release.',
     summaryOnlyTitle: 'History summary',
     summaryOnlyBody: 'This record cannot open a tool page. Review the summary below.',
   },

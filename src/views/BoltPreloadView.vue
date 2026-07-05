@@ -274,6 +274,17 @@
       :base-inputs="baseInputs"
       @apply="onApplyInverse"
     />
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="bolt-preload"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="snapshot"
+      />
+    </div>
       </el-tab-pane>
 
       <el-tab-pane :label="pf('tabWizard')" name="wizard">
@@ -356,12 +367,15 @@ import { exportToolReportPdf } from '@/utils/export'
 import { buildEnhancedReport } from '@/utils/enhanced-report'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptBoltPreload } from '@/utils/calc-adapters'
 import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 
@@ -453,6 +467,21 @@ const overallStatusLabel = computed(() => {
 const reviewOnly = computed(() => isReviewOnlyResult(snapshot.value))
 const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: snapshot,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pf('preload'), value: `${r.preload?.toFixed(0) ?? '-'} N` },
+      { label: fc('check'), value: overallStatusLabel.value },
+    ]
+  },
+})
+useHistoryReplay('bolt-preload', form)
+
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {
     form[variable] = Number(value.toFixed ? value.toFixed(3) : value)
@@ -509,6 +538,16 @@ async function exportCalcPdf() {
     sections: [keySection, ...report.sections],
     element: resultPanelRef.value,
     filename: `bolt-preload_M${form.diameter}_${Date.now()}.pdf`,
+    meta: {
+      locale: locale.value,
+      trace: {
+        toolLabel: pt('title'),
+        calcMode: form.calcMode,
+        status: overallStatus.value,
+        units: 'N, MPa',
+        assumptions: snapshot.value?.assumptions,
+      },
+    },
   })
 }
 
@@ -535,6 +574,16 @@ async function exportWizardPdf() {
     ],
     element: wizardPanelRef.value,
     filename: `VDI2230_M${form.diameter}_${Date.now()}.pdf`,
+    meta: {
+      locale: locale.value,
+      trace: {
+        toolLabel: pt('title'),
+        calcMode: form.calcMode,
+        status: overallStatus.value,
+        units: 'N, MPa',
+        assumptions: snapshot.value?.assumptions,
+      },
+    },
   })
 }
 

@@ -127,6 +127,11 @@ async function openRecord(row) {
     router.push(target.path)
     return
   }
+  if (target.reason === 'no_input_snapshot') {
+    ElMessage.info(ct('history.replayNoInputSnapshot'))
+  } else if (target.reason === 'replay_unsupported') {
+    ElMessage.info(ct('history.replayUnsupported'))
+  }
   const summary = buildSummaryRows(row, locale.value)
   const body = summary.length
     ? summary.map((s) => `${s.label}: ${s.value}`).join('\n')

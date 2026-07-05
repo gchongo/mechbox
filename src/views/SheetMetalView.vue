@@ -115,6 +115,17 @@
         </template>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="sheet-metal"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 
@@ -123,7 +134,11 @@ import { reactive, ref, computed } from 'vue'
 import { analyzeSheetMetalUnfold, K_FACTOR_PRESETS } from '@/utils/sheet-metal-calc'
 import SheetMetalBendDiagram from '@/components/sheet-metal/SheetMetalBendDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 
@@ -179,4 +194,29 @@ const result = computed(() =>
     bendRadius: form.bendRadius || form.thickness,
   }),
 )
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pf('flatLength'), value: `${r.flatLength?.toFixed(2) ?? '-'} mm` },
+      { label: fc('check'), value: r.pass ? pf('processOk') : pf('processAdjust') },
+    ]
+  },
+})
+const historyInput = computed(() =>
+  snapshotHistoryInput({ calcMode: calcMode.value, ...form, segments: segments.value }),
+)
+
+function applySheetMetalReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.calcMode != null) calcMode.value = input.calcMode
+  if (Array.isArray(input.segments)) segments.value = structuredClone(input.segments)
+  Object.assign(form, input)
+}
+useHistoryReplay('sheet-metal', null, { applyFn: applySheetMetalReplay })
 </script>

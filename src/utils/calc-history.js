@@ -3,24 +3,55 @@
  */
 import { getAnalysisById, saveAnalysis } from '@/utils/storage'
 import { t, localizedToolLabel, localizedAnalysisType } from '@/i18n'
+import { stampHistoryInput } from '@/utils/history-replay'
 
 export const TOOL_META = {
   editor: { label: '尺寸链', route: '/editor' },
-  'gdt-stack': { label: 'GD&T 公差栈', route: '/gdt-stack' },
-  fit: { label: 'ISO 286 配合', route: '/fit' },
-  weld: { label: '焊缝强度', route: '/weld' },
-  'bolt-preload': { label: '螺栓预紧力', route: '/bolt-preload' },
-  units: { label: '单位换算', route: '/units' },
+  statistics: { label: '过程能力', route: '/statistics' },
+  'monte-carlo': { label: '蒙特卡洛', route: '/monte-carlo' },
+  batch: { label: '批量分析', route: '/batch' },
+  allocation: { label: '公差分配', route: '/allocation' },
   gear: { label: '齿轮强度', route: '/gear' },
+  thread: { label: '螺纹计算', route: '/thread' },
+  'bolt-preload': { label: '螺栓预紧力', route: '/bolt-preload' },
+  bearing: { label: '轴承寿命', route: '/bearing' },
+  shaft: { label: '轴强度', route: '/shaft' },
+  key: { label: '平键连接', route: '/key' },
+  weld: { label: '焊缝强度', route: '/weld' },
+  'bolt-group': { label: '螺栓组', route: '/bolt-group' },
+  spring: { label: '弹簧设计', route: '/spring' },
+  clutch: { label: '离合器', route: '/clutch' },
+  belt: { label: '带传动', route: '/belt' },
+  chain: { label: '链传动', route: '/chain' },
+  cylinder: { label: '油缸推力', route: '/cylinder' },
+  'interference-fit': { label: '过盈配合', route: '/interference-fit' },
   beam: { label: '梁挠度', route: '/beam' },
+  'thermal-expansion': { label: '热膨胀', route: '/thermal-expansion' },
+  quality: { label: '质量特性', route: '/quality' },
+  'sheet-metal': { label: '钣金展开', route: '/sheet-metal' },
+  'o-ring': { label: 'O 形圈密封', route: '/o-ring' },
   fatigue: { label: '疲劳寿命', route: '/fatigue' },
+  analytics: { label: '数据分析', route: '/analytics' },
+  structural: { label: '结构分析', route: '/structural' },
+  'material-selection': { label: '选材决策', route: '/material-selection' },
+  manufacturing: { label: '制造工艺', route: '/manufacturing' },
+  'heat-treatment': { label: '热处理', route: '/heat-treatment' },
+  units: { label: '单位换算', route: '/units' },
+  fit: { label: 'ISO 286 配合', route: '/fit' },
+  'gdt-stack': { label: 'GD&T 公差栈', route: '/gdt-stack' },
 }
 
-/** L1: only these tools restore saved inputs from historyId query */
-export const REPLAY_SUPPORTED_TOOLS = new Set(['fit', 'gdt-stack', 'weld'])
+const INPUT_META_KEYS = new Set(['_schemaVersion', '_savedAt', '_tool'])
 
+export function hasReplayableInput(record) {
+  const input = record?.data?.input
+  if (!input || typeof input !== 'object') return false
+  return Object.keys(input).some((key) => !INPUT_META_KEYS.has(key) && !key.startsWith('_'))
+}
+
+/** @deprecated Use hasReplayableInput(record) — replay is input-driven, not tool-whitelisted */
 export function toolSupportsReplay(tool) {
-  return REPLAY_SUPPORTED_TOOLS.has(tool)
+  return Boolean(getToolRoute(tool))
 }
 
 export function normalizeHistoryStatus(status) {
@@ -39,7 +70,7 @@ export function saveToolHistory({ tool, title, status = 'pass', summary = [], in
       tool,
       toolLabel: meta.label,
       summary,
-      input,
+      input: stampHistoryInput(input, tool),
       result,
     },
   })
@@ -51,7 +82,7 @@ export function getToolRoute(tool) {
 
 export function buildToolReplayRoute(record) {
   if (!record?.id || (record.source ?? 'editor') !== 'tool') return null
-  if (!toolSupportsReplay(record.tool)) return null
+  if (!hasReplayableInput(record)) return null
   const route = getToolRoute(record.tool)
   if (!route) return null
   return {
@@ -76,9 +107,12 @@ export function resolveHistoryOpenTarget(record) {
   }
   const path = getToolRoute(record.tool)
   if (path) {
-    // Safety-first behavior: avoid opening a blank tool page that could be mistaken
-    // as a restored historical calculation state.
-    return { kind: 'summary-only', record, reason: 'replay_unsupported' }
+    // Safety-first: never open a blank tool page that could be mistaken for restored state.
+    return {
+      kind: 'summary-only',
+      record,
+      reason: hasReplayableInput(record) ? 'replay_unsupported' : 'no_input_snapshot',
+    }
   }
   return { kind: 'summary-only', record }
 }

@@ -116,6 +116,17 @@
       :base-inputs="baseInputs"
       @apply="onApplyInverse"
     />
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="beam"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="snapshot"
+      />
+    </div>
   </div>
 </template>
 
@@ -127,10 +138,13 @@ import { materialsEn } from '@/i18n/materials-i18n'
 import BeamDiagram from '@/components/beam/BeamDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { adaptBeam } from '@/utils/calc-adapters'
 import { getCalcReviewStatus, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useLocale } from '@/composables/useLocale'
@@ -225,4 +239,19 @@ function onApplyInverse({ variable, value }) {
     form[variable] = Number(value.toFixed ? value.toFixed(2) : value)
   }
 }
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: snapshot,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('maxDeflection'), value: `${r.maxDeflection?.toFixed(3) ?? '-'} mm` },
+      { label: fc('check'), value: overallStatusLabel.value },
+    ]
+  },
+})
+useHistoryReplay('beam', form)
 </script>

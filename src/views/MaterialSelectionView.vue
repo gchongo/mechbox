@@ -77,6 +77,17 @@
         </router-link>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="material-selection"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 
@@ -84,10 +95,14 @@
 import { reactive, computed, ref } from 'vue'
 import { scoreMaterials } from '@/utils/material-selection-calc'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useResultI18n } from '@/composables/useResultI18n'
 
-const { pt, pf, pr } = useCalcPage('material-selection')
+const { pt, pf, pr, fc } = useCalcPage('material-selection')
 const { rm } = useResultI18n()
 
 const calcMode = ref('complete')
@@ -109,4 +124,29 @@ const weights = reactive({
 })
 
 const result = computed(() => scoreMaterials({ ...req, calcMode: calcMode.value }, weights))
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form: req,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    const top = r.recommendations?.[0]
+    return [
+      { label: pr('material'), value: top?.name ?? '-' },
+      { label: pr('totalScore'), value: top?.totalScore?.toFixed(1) ?? '-' },
+    ]
+  },
+})
+const historyInput = computed(() =>
+  snapshotHistoryInput({ calcMode: calcMode.value, ...req, weights: { ...weights } }),
+)
+
+function applyMaterialSelectionReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.calcMode != null) calcMode.value = input.calcMode
+  if (input.weights && typeof input.weights === 'object') Object.assign(weights, input.weights)
+  Object.assign(req, input)
+}
+useHistoryReplay('material-selection', null, { applyFn: applyMaterialSelectionReplay })
 </script>

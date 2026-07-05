@@ -197,6 +197,17 @@
       :base-inputs="baseInputs"
       @apply="onApplyInverse"
     />
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="bearing"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="snapshot"
+      />
+    </div>
   </div>
 </template>
 
@@ -207,6 +218,7 @@ import BearingLoadDiagram from '@/components/bearing/BearingLoadDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { adaptBearing } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
@@ -214,8 +226,10 @@ import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
-import { isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
+import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { localizedBearingSeriesLabel } from '@/i18n/bearing-series-i18n'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('bearing')
@@ -327,6 +341,21 @@ function formatHours(h) {
 const decisionPreset = DECISION_PRESETS.bearing
 const baseInputs = computed(() => ({ ...form }))
 const snapshot = computed(() => adaptBearing(withConfirmed(form)))
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: snapshot,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('lifeHours'), value: formatHours(r.lifeHours) },
+      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+    ]
+  },
+})
+useHistoryReplay('bearing', form)
 
 function onApplyInverse({ variable, value, row, strategy }) {
   if (strategy === 'catalog' && row) {

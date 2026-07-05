@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickMergedMethodResult } from '@/utils/export'
+import { pickMergedMethodResult, buildExportTraceSection } from '@/utils/export'
 import { resolveHistoryOpenTarget } from '@/utils/calc-history'
 
 describe('history/export safety', () => {
@@ -18,7 +18,7 @@ describe('history/export safety', () => {
     expect(picked.tolerance).toBeCloseTo(0.08)
   })
 
-  it('unsupported tool replay opens summary-only target', () => {
+  it('tool record without input opens summary-only with no_input_snapshot', () => {
     const target = resolveHistoryOpenTarget({
       id: 'x1',
       source: 'tool',
@@ -26,5 +26,11 @@ describe('history/export safety', () => {
       data: {},
     })
     expect(target.kind).toBe('summary-only')
+    expect(target.reason).toBe('no_input_snapshot')
+  })
+
+  it('export trace section carries engineering metadata', () => {
+    const sec = buildExportTraceSection({ toolLabel: 'Beam', calcMode: 'simple', status: 'pass' }, 'en')
+    expect(sec.rows.length).toBeGreaterThan(2)
   })
 })

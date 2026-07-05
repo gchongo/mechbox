@@ -174,6 +174,17 @@
         </div>
       </el-tab-pane>
     </el-tabs>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="structural"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="activeResult"
+      />
+    </div>
   </div>
 </template>
 
@@ -184,7 +195,11 @@ import { calcPlateBucklingStress, PLATE_EDGE_CONDITIONS } from '@/utils/plate-bu
 import { analyzeModal, MODAL_CASES } from '@/utils/modal-calc'
 import StructuralDiagram from '@/components/structural/StructuralDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 
@@ -247,4 +262,49 @@ function applyFluid(k) {
 const pipeResult = computed(() => analyzePipeFlow(pipe))
 const plateResult = computed(() => calcPlateBucklingStress(plate))
 const modalResult = computed(() => analyzeModal(modal))
+
+const activeResult = computed(() => {
+  if (tab.value === 'plate') return plateResult.value
+  if (tab.value === 'modal') return modalResult.value
+  return pipeResult.value
+})
+
+const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form: pipe,
+  result: activeResult,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    if (tab.value === 'plate') {
+      const r = plateResult.value
+      return [
+        { label: pr('criticalStress'), value: `${r.criticalStress?.toFixed(1) ?? '-'} MPa` },
+        { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+      ]
+    }
+    if (tab.value === 'modal') {
+      const r = modalResult.value
+      return [
+        { label: pr('naturalFreq'), value: `${r.modal?.fn?.toFixed(2) ?? '-'} Hz` },
+        { label: fc('check'), value: r.resonance?.pass ? fc('pass') : fc('fail') },
+      ]
+    }
+    const r = pipeResult.value
+    return [
+      { label: pr('totalDrop'), value: `${r.totalPressureDropKPa?.toFixed(1) ?? '-'} kPa` },
+      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+    ]
+  },
+})
+const historyInput = computed(() =>
+  snapshotHistoryInput({ tab: tab.value, pipe: { ...pipe }, plate: { ...plate }, modal: { ...modal } }),
+)
+
+function applyStructuralReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.tab != null) tab.value = input.tab
+  if (input.pipe && typeof input.pipe === 'object') Object.assign(pipe, input.pipe)
+  if (input.plate && typeof input.plate === 'object') Object.assign(plate, input.plate)
+  if (input.modal && typeof input.modal === 'object') Object.assign(modal, input.modal)
+}
+useHistoryReplay('structural', null, { applyFn: applyStructuralReplay })
 </script>

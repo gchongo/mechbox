@@ -225,6 +225,7 @@ import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useChartI18n } from '@/composables/useChartI18n'
 import { exportToolReportPdf } from '@/utils/export'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import {
   getCalcReviewStatus,
   reviewAwareCheckClass,
@@ -429,8 +430,33 @@ async function exportPdf() {
     sections: [{ heading: pt('title'), text: buildFatigueReportText(r, locale.value) }],
     element: resultRef.value,
     filename: exportFilename('fatiguePdf', { material: material.value, ts: Date.now() }),
+    meta: {
+      locale: locale.value,
+      trace: {
+        toolLabel: pt('title'),
+        calcMode: calcMode.value,
+        status: overallStatus.value,
+        units: 'MPa, cycles',
+        assumptions: r.assumptions,
+      },
+    },
   })
 }
+
+function applyFatigueReplay(input) {
+  if (!input || typeof input !== 'object') return
+  if (input.calcMode) calcMode.value = input.calcMode
+  if (input.material) material.value = input.material
+  if (Number.isFinite(Number(input.stressAmplitude))) stressAmplitude.value = Number(input.stressAmplitude)
+  if (Number.isFinite(Number(input.targetLife))) targetLife.value = Number(input.targetLife)
+  if (Number.isFinite(Number(input.meanStress))) meanStress.value = Number(input.meanStress)
+  if (input.meanStressMethod) meanStressMethod.value = input.meanStressMethod
+  if (Number.isFinite(Number(input.surfaceFactor))) surfaceFactor.value = Number(input.surfaceFactor)
+  if (Number.isFinite(Number(input.sizeFactor))) sizeFactor.value = Number(input.sizeFactor)
+  if (typeof input.loadText === 'string') loadText.value = input.loadText
+}
+
+useHistoryReplay('fatigue', null, { applyFn: applyFatigueReplay })
 
 watch([result, material, stressAmplitude, diagramLife, locale, calcMode, meanStressMethod], renderChart)
 

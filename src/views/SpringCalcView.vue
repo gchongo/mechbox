@@ -299,6 +299,17 @@
       :base-inputs="baseInputs"
       @apply="onApplyInverse"
     />
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="spring"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="snapshot"
+      />
+    </div>
   </div>
 </template>
 <script setup>
@@ -309,9 +320,12 @@ import { resolveSpringTensileStrength } from '@/utils/spring-rm-lookup'
 import SpringDiagram from '@/components/spring/SpringDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { adaptSpring } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
 import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
@@ -490,6 +504,21 @@ const fatigueIssueText = computed(() => {
 const decisionPreset = DECISION_PRESETS.spring
 const baseInputs = computed(() => ({ ...form }))
 const snapshot = computed(() => adaptSpring(withConfirmed(form)))
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result: snapshot,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('springRate'), value: `${r.springRate?.toFixed(4) ?? '-'} N/mm` },
+      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+    ]
+  },
+})
+useHistoryReplay('spring', form)
 
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {

@@ -30,6 +30,41 @@ function productDisclaimerSection(locale = 'zh') {
   }
 }
 
+/** Traceability block prepended to engineering PDF exports */
+export function buildExportTraceSection(trace = {}, locale = 'zh') {
+  const rows = []
+  const toolLabel = trace.toolLabel ?? trace.tool
+  if (toolLabel) {
+    rows.push({ label: t('calc.common.exportTraceTool', locale), value: String(toolLabel) })
+  }
+  if (trace.calcMode) {
+    rows.push({ label: t('calc.common.exportTraceMode', locale), value: String(trace.calcMode) })
+  }
+  if (trace.status) {
+    rows.push({
+      label: t('calc.common.exportTraceStatus', locale),
+      value: formatHistoryStatus(trace.status, locale),
+    })
+  }
+  rows.push({
+    label: t('calc.common.exportTraceDate', locale),
+    value: trace.recordDate ?? dateStamp(),
+  })
+  if (trace.units) {
+    rows.push({ label: t('calc.common.exportTraceUnits', locale), value: String(trace.units) })
+  }
+  if (Array.isArray(trace.assumptions) && trace.assumptions.length) {
+    rows.push({
+      label: t('calc.common.exportTraceAssumptions', locale),
+      value: trace.assumptions.join(locale === 'en' ? '; ' : '；'),
+    })
+  }
+  if (trace.formulaNote) {
+    rows.push({ label: t('calc.common.exportTraceFormula', locale), value: String(trace.formulaNote) })
+  }
+  return { heading: t('calc.common.exportTraceTitle', locale), rows }
+}
+
 function ringTypeLabel(type, locale = 'zh') {
   return type === 'increasing' ? ex('ringInc', locale) : ex('ringDec', locale)
 }
@@ -262,7 +297,12 @@ export async function exportToolReportPdf({ title, sections = [], element, filen
 
   const canvases = [await renderTextCanvas(html2canvas, headerLines, { boldFirst: true, fontSize: 11 })]
 
-  const sectionsWithDisclaimer = [...sections, productDisclaimerSection(locale)]
+  const traceSection = meta.trace ? buildExportTraceSection(meta.trace, locale) : null
+  const sectionsWithDisclaimer = [
+    ...(traceSection ? [traceSection] : []),
+    ...sections,
+    productDisclaimerSection(locale),
+  ]
   if (sectionsWithDisclaimer.length) {
     canvases.push(await renderSectionsCanvas(html2canvas, sectionsWithDisclaimer))
   }

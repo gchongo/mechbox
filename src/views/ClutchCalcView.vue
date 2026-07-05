@@ -53,6 +53,17 @@
         </div>
       </section>
     </div>
+
+    <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
+      <SaveHistoryButton
+        tool="clutch"
+        :title="historyTitle"
+        :status="saveStatus"
+        :summary="historySummary"
+        :input="historyInput"
+        :result="result"
+      />
+    </div>
   </div>
 </template>
 <script setup>
@@ -61,8 +72,11 @@ import MathTex from '@/components/common/MathTex.vue'
 import { analyzeClutch } from '@/utils/clutch-calc'
 import ClutchDiagram from '@/components/clutch/ClutchDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { getCalcReviewStatus, isReviewOnlyResult } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
+import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
+import { useHistoryReplay } from '@/composables/useHistoryReplay'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('clutch')
 
@@ -92,6 +106,21 @@ const overallStatusLabel = computed(() => {
   return fc('overallFail')
 })
 const reviewOnly = computed(() => isReviewOnlyResult(result.value))
+
+const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
+  form,
+  result,
+  buildTitle: () => pt('title'),
+  buildSummary: () => {
+    const r = result.value
+    if (r?.errorKey) return []
+    return [
+      { label: pr('torque'), value: `${r.torque?.toFixed(2) ?? '-'} N·m` },
+      { label: fc('check'), value: overallStatusLabel.value },
+    ]
+  },
+})
+useHistoryReplay('clutch', form)
 
 const clutchInnerD = computed(() =>
   form.calcMode === 'simple' ? form.radius * 2 - 20 : form.innerDiameter,
