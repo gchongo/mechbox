@@ -63,12 +63,6 @@
           </template>
         </el-form>
 
-        <div v-if="needsCriticalConfirm" class="mb-4">
-          <el-button size="small" type="primary" plain @click="confirmAllCritical">
-            {{ pf('confirmCriticalInputs') }}
-          </el-button>
-        </div>
-
         <FatigueDiagram
           :stress-amplitude="stressAmplitude"
           :endurance-limit="currentMaterial.enduranceLimit"
@@ -109,15 +103,6 @@
             {{ fc('check') }}: {{ overallStatusLabel }}
           </el-tag>
         </div>
-
-        <el-alert
-          v-if="result.releaseBlocked"
-          type="warning"
-          :closable="false"
-          show-icon
-          class="mb-3"
-          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
-        />
 
         <template v-if="calcMode === 'simple'">
           <div class="rounded bg-gray-50 p-4 text-sm dark:bg-gray-900">
@@ -232,11 +217,9 @@ import { useContentI18n } from '@/composables/useContentI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useChartI18n } from '@/composables/useChartI18n'
-import { auditCriticalInputs, formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 import { exportToolReportPdf } from '@/utils/export'
 import {
   getCalcReviewStatus,
-  isReviewOnlyResult,
   reviewAwareCheckClass,
   reviewAwareCheckMark,
 } from '@/utils/calc-result'
@@ -266,35 +249,12 @@ const sizeFactor = ref(0.85)
 const loadText = ref('')
 const chartRef = ref(null)
 const resultRef = ref(null)
-/** 用户点击「我已核对关键参数」时锁定的输入快照；任一关键输入变化则失效 */
-const confirmedSnapshot = ref(null)
 let plotly = null
 
 const loads = computed(() => parseLoadSpectrum(loadText.value))
 
-function buildConfirmSnapshot() {
-  return JSON.stringify({
-    calcMode: calcMode.value,
-    material: material.value,
-    stressAmplitude: stressAmplitude.value,
-    targetLife: targetLife.value,
-    meanStress: meanStress.value,
-    meanStressMethod: meanStressMethod.value,
-    surfaceFactor: surfaceFactor.value,
-    sizeFactor: sizeFactor.value,
-    loadText: loadText.value,
-  })
-}
-
-const currentSnapshot = computed(() => buildConfirmSnapshot())
-
-const result = computed(() => {
-  const audit = auditCriticalInputs('fatigue', calcMode.value, {})
-  const allKeys = audit.allCriticalKeys ?? []
-  const released = confirmedSnapshot.value === currentSnapshot.value
-  const confirmedFields = released ? Object.fromEntries(allKeys.map((k) => [k, true])) : {}
-
-  return analyzeFatigue({
+const result = computed(() =>
+  analyzeFatigue({
     calcMode: calcMode.value,
     material: material.value,
     stressAmplitude: stressAmplitude.value,
@@ -304,10 +264,8 @@ const result = computed(() => {
     surfaceFactor: surfaceFactor.value,
     sizeFactor: sizeFactor.value,
     loads: loads.value,
-    enforceCriticalConfirm: true,
-    confirmedFields,
-  })
-})
+  }),
+)
 
 const overallStatus = computed(() => getCalcReviewStatus(result.value))
 const saveStatus = overallStatus
@@ -322,21 +280,8 @@ const overallStatusLabel = computed(() => {
   return fc('overallFail')
 })
 
-const reviewOnly = computed(() => isReviewOnlyResult(result.value))
-const unconfirmedLabelText = computed(() =>
-  formatUnconfirmedLabels(result.value.unconfirmedCriticalInputs ?? [], locale.value).join(
-    locale.value === 'en' ? ', ' : '、',
-  ),
-)
-
-const needsCriticalConfirm = computed(() => {
-  if (calcMode.value === 'simple') return false
-  return confirmedSnapshot.value !== currentSnapshot.value
-})
-
 const minerStatusText = computed(() => {
   if (!result.value.miner) return ''
-  if (reviewOnly.value) return locale.value === 'en' ? 'Review / Not released' : '需复核 / 未放行'
   return rm('fatigue', `status_${result.value.miner.statusKey}`)
 })
 
@@ -381,10 +326,6 @@ const lifeDisplay = computed(() => {
   if (n >= 1e6) return `${(n / 1e6).toFixed(2)} × 10⁶`
   return `${Math.round(n)}`
 })
-
-function confirmAllCritical() {
-  confirmedSnapshot.value = currentSnapshot.value
-}
 
 async function renderChart() {
   if (!chartRef.value) return
@@ -462,10 +403,6 @@ async function exportPdf() {
 }
 
 watch([result, material, stressAmplitude, diagramLife, locale, calcMode, meanStressMethod], renderChart)
-
-watch(calcMode, () => {
-  confirmedSnapshot.value = null
-})
 
 watch(material, (key) => {
   stressAmplitude.value = getStressAmplitudeBounds(key).suggest

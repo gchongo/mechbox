@@ -87,7 +87,7 @@ export const FATIGUE_PASS_CHECKS = {
     { check: 'Miner 主导（有载荷谱）', rule: 'pass = (D<1)；专业模式平均应力已计入各级 $N_f$' },
     { check: '无载荷谱', rule: 'pass = ($N=\\infty$ 或 $N \\ge N_{target}$，默认 $10^6$)' },
     { check: '专业 Goodman', rule: '填 $S_m$ 时须 goodmanPass：$S_{a,eff} \\le \\sigma\'_{-1}$' },
-    { check: '关键输入确认', rule: '完整/专业未确认 → releaseBlocked，pass=false' },
+    { check: '关键输入确认', rule: '本页 complete/专业 **不启用** 确认门禁；仅简化模式 estimateOnly 不参与放行' },
     { check: '与左侧寿命关系', rule: '有 Miner 时 pass **不看**左侧单级寿命是否 $\\ge10^6$' },
     { check: 'releaseBlocked 显示', rule: '与过盈不同：阻断时 **仍显示** Miner 表，状态为「需复核/未放行」' },
   ],
@@ -96,7 +96,7 @@ export const FATIGUE_PASS_CHECKS = {
     { check: 'Miner (with spectrum)', rule: 'pass = (D<1); professional mean stress in each block $N_f$' },
     { check: 'No spectrum', rule: 'pass = ($N=\\infty$ or $N \\ge N_{target}$, default $10^6$)' },
     { check: 'Professional Goodman', rule: 'If $S_m$ set: need goodmanPass' },
-    { check: 'Critical confirm', rule: 'Unconfirmed → releaseBlocked, pass=false' },
+    { check: 'Critical confirm', rule: 'This page complete/professional **no confirm gate**; simplified estimateOnly only' },
     { check: 'Left-panel life', rule: 'With Miner, pass **ignores** single-level life on left' },
     { check: 'releaseBlocked UI', rule: 'Unlike interference fit: Miner table still visible when blocked' },
   ],
@@ -150,8 +150,8 @@ export function getFatigueCriticalInputRows(locale = 'zh') {
         : '专业模式须确认 ka、kb、N_target、平均应力修正与 Sm；修改载荷谱会清空全部确认状态。',
     confirmNote:
       locale === 'en'
-        ? 'Click the button to release the verdict for the current inputs. Any change to material, loads, target life, or correction settings invalidates confirmation until you click again.'
-        : '须点击按钮对当前全部输入放行；修改材料、载荷谱、目标寿命或修正参数后须重新点击，仅改字段不会自动消除阻断提示。',
+        ? 'The /fatigue page does not block on critical-input confirmation in complete/professional modes. Pass/fail updates with inputs immediately.'
+        : '本页完整/专业模式不再阻断「未确认关键输入」；改参数后 pass 立即更新。仅简化模式为 estimateOnly。',
   }
 }
 
