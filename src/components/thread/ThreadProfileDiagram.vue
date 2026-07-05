@@ -272,6 +272,7 @@ function paramLabel(key) {
   width: 100%;
   max-width: 480px;
   height: auto;
+  overflow: visible;
   color: var(--el-text-color-primary);
 }
 
@@ -304,14 +305,15 @@ function paramLabel(key) {
 }
 
 .thread-profile-diagram__formula {
-  margin-top: 0.65rem;
+  margin-top: 0.5rem;
   text-align: center;
   font-size: 0.8125rem;
   color: var(--el-text-color-secondary);
 }
 
 .thread-profile-diagram__hint {
-  margin-top: 0.5rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0;
   text-align: center;
   font-size: 0.75rem;
   color: var(--el-text-color-placeholder);

@@ -2,18 +2,19 @@
   <div class="thread-catalog-content">
     <div v-if="selectedSystem" class="thread-catalog-content__body">
       <div class="thread-catalog-hero">
-        <ThreadProfileDiagram
-          v-if="showDiagram"
-          :kind="diagramKind"
-          :angle="diagramAngle"
-          :title="diagramTitle"
-          :formula="diagramFormula"
-          :aria="pt('diagramAria')"
-          :labels="{ external: pt('externalThread'), internal: pt('internalThread') }"
-          :sample="diagramSample"
-          :pt="pt"
-          :param-hint="pt('diagramParamHint')"
-        />
+        <div v-if="showDiagram" class="thread-catalog-hero__diagram">
+          <ThreadProfileDiagram
+            :kind="diagramKind"
+            :angle="diagramAngle"
+            :title="diagramTitle"
+            :formula="diagramFormula"
+            :aria="pt('diagramAria')"
+            :labels="{ external: pt('externalThread'), internal: pt('internalThread') }"
+            :sample="diagramSample"
+            :pt="pt"
+            :param-hint="pt('diagramParamHint')"
+          />
+        </div>
         <div class="thread-catalog-hero__aside">
           <el-alert
             v-if="purposeId === 'pipe'"

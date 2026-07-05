@@ -82,17 +82,21 @@ export function buildDetailedDiagram(kind, options = {}) {
   scene.titleFontSize ??= 16
   scene.regionFontSize ??= 14
   if (scene.contentBounds) {
-    applyTightViewBox(scene, scene.contentBounds)
+    applyTightViewBox(scene, scene.contentBounds, { top: 18, right: 10, bottom: 12, left: 10 })
     delete scene.contentBounds
   }
   return scene
 }
 
 /** @param {{ minX:number, minY:number, maxX:number, maxY:number }} bounds */
-function applyTightViewBox(scene, bounds, pad = 10) {
-  const w = bounds.maxX - bounds.minX + pad * 2
-  const h = bounds.maxY - bounds.minY + pad * 2
-  scene.viewBox = `${bounds.minX - pad} ${bounds.minY - pad} ${w} ${h}`
+function applyTightViewBox(scene, bounds, pad = {}) {
+  const pt = pad.top ?? 14
+  const pr = pad.right ?? 10
+  const pb = pad.bottom ?? 10
+  const pl = pad.left ?? 10
+  const w = bounds.maxX - bounds.minX + pl + pr
+  const h = bounds.maxY - bounds.minY + pt + pb
+  scene.viewBox = `${bounds.minX - pl} ${bounds.minY - pt} ${w} ${h}`
 }
 
 function defaultAngle(kind) {
@@ -256,8 +260,11 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
 
   const extProfile = ptsToPath(extPts)
   const intProfile = ptsToPath(intPts)
+
+  // 内螺纹实体：顶面到「内孔轮廓 ∧ 外螺纹轮廓」的上包络，避免外牙顶被算进内螺纹区
+  const intUpperEnv = intPts.map((pt, i) => [pt[0], Math.min(pt[1], extPts[i][1])])
+  const intFill = `${ptsToPath(intUpperEnv)} L ${xEnd} ${yTop} L ${x0} ${yTop} Z`
   const extFill = `${extProfile} L ${xEnd} ${yBottom} L ${x0} ${yBottom} Z`
-  const intFill = `${intProfile} L ${xEnd} ${yTop} L ${x0} ${yTop} Z`
 
   const ghosts = []
   for (let i = 0; i < teeth; i++) {
@@ -277,15 +284,18 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     dimV(xDimPart, ySharpCrest, yPitch, 'H/2', { ext: 6, tickX: xTick }),
     dimV(xDimPart, ySharpRoot, yExtRoot, 'H/4', { ext: 6, tickX: xTick }),
     dimH(xc - P / 2, xc + P / 2, yExtRoot, 'P', { ext: 16, tickY: yExtRoot }),
-    diameterLeader(yExtCrest, 'd / D', xEnd),
+    // 右：顶 d/D₁（外顶径≈内小径），中 d₂/D₂，底 d₁/D（外小径≈内大径）
+    diameterLeader(yExtCrest, 'd / D₁', xEnd),
     diameterLeader(yPitch, 'd₂ / D₂', xEnd),
-    diameterLeader(yExtRoot, 'd₁ / D₁', xEnd),
+    diameterLeader(yExtRoot, 'd₁ / D', xEnd),
   ]
 
   if (includedAngle === 55) {
     dims[1] = dimV(xDimPart, ySharpCrest, yExtCrest, 'H/6', { ext: 6, tickX: xTick })
     dims[3] = dimV(xDimPart, ySharpRoot, yExtRoot, 'H/6', { ext: 6, tickX: xTick })
   }
+
+  const angleTopY = ySharpCrest - 34
 
   const scene = {
     viewBox: '0 0 400 240',
@@ -294,7 +304,7 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     regionFontSize: 14,
     contentBounds: {
       minX: xDimH - 42,
-      minY: yTop - 6,
+      minY: Math.min(yTop - 4, angleTopY),
       maxX: maxLabelX,
       maxY: yExtRoot + 16 + 22,
     },
@@ -311,8 +321,8 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     dims,
     angleMark: angleMarkAtApex(xc, ySharpCrest, includedAngle, `${includedAngle}°`),
     labels: [
-      { text: 'internal', x: x0 + P * 0.35, y: yTop + 22 },
-      { text: 'external', x: x0 + P * 0.35, y: yBottom - 10 },
+      { text: 'internal', x: x0 + P * 0.35, y: (yTop + yIntRoot) / 2 + 6 },
+      { text: 'external', x: x0 + P * 0.35, y: (yExtRoot + yBottom) / 2 },
     ],
     paramKeys: ['pitch', 'major', 'pitchDia', 'minor', 'tapDrill', 'toleranceExt', 'toleranceInt'],
     legacyExternalPath: extProfile,

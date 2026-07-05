@@ -281,11 +281,15 @@
   }
 
   .thread-catalog-hero {
-    @apply mb-6 grid gap-4 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:items-start;
+    @apply mb-6 grid gap-4 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:items-center;
+  }
+
+  .thread-catalog-hero__diagram {
+    @apply flex min-w-0 max-w-[480px] flex-col justify-center self-center lg:self-center;
   }
 
   .thread-catalog-hero .thread-profile-diagram {
-    @apply min-w-0 max-w-[480px];
+    @apply min-w-0 w-full;
   }
 
   .thread-catalog-hero__aside {

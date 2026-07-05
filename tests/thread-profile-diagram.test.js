@@ -26,7 +26,7 @@ describe('thread profile diagram', () => {
     const scene = buildDetailedDiagram('triangular_60')
     expect(scene.regions).toHaveLength(2)
     expect(scene.dims.some((d) => d.label === 'P')).toBe(true)
-    expect(scene.dims.some((d) => d.label === 'd / D')).toBe(true)
+    expect(scene.dims.some((d) => d.label === 'd / D₁')).toBe(true)
     expect(scene.ghosts.length).toBeGreaterThan(0)
     expect(scene.angleMark?.label).toBe('60°')
     const vb = scene.viewBox.split(/\s+/).map(Number)
