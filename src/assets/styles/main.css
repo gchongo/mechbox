@@ -281,7 +281,7 @@
   }
 
   .thread-catalog-hero {
-    @apply mb-6 grid gap-4 xl:grid-cols-[minmax(240px,320px)_1fr];
+    @apply mb-6 grid gap-4 xl:grid-cols-[minmax(280px,480px)_1fr];
   }
 
   .thread-catalog-hero__aside {

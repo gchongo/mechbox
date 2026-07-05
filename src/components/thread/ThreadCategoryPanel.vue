@@ -10,6 +10,9 @@
           :formula="diagramFormula"
           :aria="pt('diagramAria')"
           :labels="{ external: pt('externalThread'), internal: pt('internalThread') }"
+          :sample="diagramSample"
+          :pt="pt"
+          :param-hint="pt('diagramParamHint')"
         />
         <div class="thread-catalog-hero__aside">
           <el-alert
@@ -81,6 +84,8 @@ import {
   getReferenceCatalogAlternatives,
   catalogAlternativeToQuery,
 } from '@/constants/thread-standards/taxonomy'
+import { getThreadRows } from '@/constants/thread-standards'
+import { formatPitchDisplay, formatDim } from '@/utils/thread-standards'
 import { resolveDiagramKind } from '@/utils/thread-profile-diagram'
 import ThreadProfileDiagram from '@/components/thread/ThreadProfileDiagram.vue'
 import ThreadSystemMetaPanel from '@/components/thread/ThreadSystemMetaPanel.vue'
@@ -123,7 +128,7 @@ const diagramFormula = computed(() => {
   const def = activeSystemDef.value
   if (kind === 'trapezoidal_tr') return props.pt('formulaTrapezoidal')
   if (kind === 'trapezoidal_acme') return props.pt('formulaAcme')
-  if (kind === 'triangular_55' || kind === 'triangular_55_taper') return props.pt('formula55')
+  if (kind === 'triangular_55' || kind === 'triangular_55_taper') return props.pt('formulaWhitworth')
   if (kind === 'triangular_60_taper') return props.pt('formulaNptTaper')
   if (kind === 'square') return props.pt('formulaSquare')
   if (kind === 'buttress') return props.pt('formulaButtress')
@@ -131,6 +136,36 @@ const diagramFormula = computed(() => {
   if (kind === 'ball_screw') return props.pt('formulaBallScrew')
   if (def?.profile === 'trapezoidal') return props.pt('formulaTrapezoidal')
   return props.pt('formula60')
+})
+
+const diagramSample = computed(() => {
+  if (!props.highlightRowId || !selectedSystem.value?.catalog) return null
+  const rows = getThreadRows(
+    selectedSystem.value.catalog.system,
+    selectedSystem.value.catalog.subTab,
+  )
+  const row = rows.find((r) => r.id === props.highlightRowId)
+  if (!row) return null
+  const sealing =
+    row.sealing && row.sealing !== '—'
+      ? (() => {
+          const k = props.pt(`sealing_${row.sealing}`)
+          return k.includes('calc.pages.thread-table') ? row.sealing : k
+        })()
+      : null
+  return {
+    designation: row.designation,
+    pitch: formatPitchDisplay(row),
+    major: formatDim(row, row.major),
+    pitchDia: formatDim(row, row.pitchDiameter),
+    minor: formatDim(row, row.minor),
+    tapDrill: row.tapDrill != null ? formatDim(row, row.tapDrill) : null,
+    toleranceExt: row.toleranceExternal,
+    toleranceInt: row.toleranceInternal,
+    taper: row.taper && row.taper !== '—' ? row.taper : null,
+    sealing,
+    standard: row.standardRef,
+  }
 })
 
 const catalogAlternatives = computed(() =>
