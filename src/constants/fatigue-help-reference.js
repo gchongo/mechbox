@@ -150,8 +150,8 @@ export function getFatigueCriticalInputRows(locale = 'zh') {
         : '专业模式须确认 ka、kb、N_target、平均应力修正与 Sm；修改载荷谱会清空全部确认状态。',
     confirmNote:
       locale === 'en'
-        ? 'Prefilled defaults are not auto-confirmed. Changing target life, spectrum, or mean-stress method clears confirmations. Switching calc mode also clears them.'
-        : '预填默认值不会自动确认；修改目标寿命、载荷谱或平均应力修正方法会清空确认；切换计算模式亦清空。',
+        ? 'Click the button to release the verdict for the current inputs. Any change to material, loads, target life, or correction settings invalidates confirmation until you click again.'
+        : '须点击按钮对当前全部输入放行；修改材料、载荷谱、目标寿命或修正参数后须重新点击，仅改字段不会自动消除阻断提示。',
   }
 }
 

@@ -85,6 +85,32 @@ describe('fatigue engineering safety', () => {
     expect(r.pass).toBe(r.miner.pass)
   })
 
+  it('release allowed when all critical keys marked confirmed', () => {
+    const r = analyzeFatigue({
+      calcMode: 'professional',
+      material: 'steel_45',
+      stressAmplitude: 200,
+      targetLife: 1e6,
+      meanStress: 100,
+      meanStressMethod: 'goodman',
+      surfaceFactor: 0.9,
+      sizeFactor: 0.85,
+      loads: [{ stress: 250, cycles: 5000 }],
+      enforceCriticalConfirm: true,
+      confirmedFields: {
+        material: true,
+        stressAmplitude: true,
+        targetLife: true,
+        meanStress: true,
+        meanStressMethod: true,
+        surfaceFactor: true,
+        sizeFactor: true,
+      },
+    })
+    expect(r.releaseBlocked).toBeUndefined()
+    expect(r.unconfirmedCriticalInputs ?? []).toHaveLength(0)
+  })
+
   it('blocks pass when critical inputs unconfirmed', () => {
     const r = analyzeFatigue({
       calcMode: 'complete',

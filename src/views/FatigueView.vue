@@ -12,7 +12,7 @@
         <h2 class="mb-4 font-semibold">{{ pf('materialAndStress') }}</h2>
         <el-form label-width="120px">
           <CalcFormItem :label="pf('material')">
-            <el-select v-model="material" class="w-full" @change="markConfirmed('material')">
+            <el-select v-model="material" class="w-full">
               <el-option v-for="(m, k) in snMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </CalcFormItem>
@@ -23,7 +23,6 @@
               :max="saBounds.saMax"
               :precision="1"
               class="fatigue-sa-input"
-              @change="markConfirmed('stressAmplitude')"
             />
             <span class="ml-2 text-sm text-gray-500">MPa</span>
             <p class="mt-1 text-xs text-gray-400">
@@ -31,14 +30,14 @@
             </p>
           </CalcFormItem>
             <CalcFormItem v-if="calcMode !== 'simple'" :label="pf('targetLife')">
-            <el-input-number v-model="targetLife" :min="1e3" :max="1e10" :step="1e5" @change="markConfirmed('targetLife')" />
+            <el-input-number v-model="targetLife" :min="1e3" :max="1e10" :step="1e5" />
           </CalcFormItem>
           <template v-if="calcMode === 'professional'">
             <CalcFormItem :label="pf('meanStress')">
-              <el-input-number v-model="meanStress" :min="0" :precision="1" @change="markConfirmed('meanStress')" />
+              <el-input-number v-model="meanStress" :min="0" :precision="1" />
             </CalcFormItem>
             <CalcFormItem :label="pf('meanStressMethod')">
-              <el-select v-model="meanStressMethod" class="w-full" @change="markConfirmed('meanStressMethod')">
+              <el-select v-model="meanStressMethod" class="w-full">
                 <el-option value="goodman" :label="pf('meanStressGoodman')" />
                 <el-option value="soderberg" :label="pf('meanStressSoderberg')" />
               </el-select>
@@ -51,7 +50,6 @@
                 :step="0.05"
                 :precision="2"
                 class="w-28"
-                @change="markConfirmed('surfaceFactor')"
               />
               <el-input-number
                 v-model="sizeFactor"
@@ -60,7 +58,6 @@
                 :step="0.05"
                 :precision="2"
                 class="ml-2 w-28"
-                @change="markConfirmed('sizeFactor')"
               />
             </CalcFormItem>
           </template>
@@ -235,7 +232,6 @@ import { useContentI18n } from '@/composables/useContentI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useChartI18n } from '@/composables/useChartI18n'
-import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
 import { auditCriticalInputs, formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 import { exportToolReportPdf } from '@/utils/export'
 import {
@@ -270,26 +266,48 @@ const sizeFactor = ref(0.85)
 const loadText = ref('')
 const chartRef = ref(null)
 const resultRef = ref(null)
-const { markConfirmed, resetConfirmations, withConfirmed } = useCriticalInputConfirm(calcMode)
+/** 用户点击「我已核对关键参数」时锁定的输入快照；任一关键输入变化则失效 */
+const confirmedSnapshot = ref(null)
 let plotly = null
 
 const loads = computed(() => parseLoadSpectrum(loadText.value))
 
-const result = computed(() =>
-  analyzeFatigue(
-    withConfirmed({
-      calcMode: calcMode.value,
-      material: material.value,
-      stressAmplitude: stressAmplitude.value,
-      targetLife: targetLife.value,
-      meanStress: meanStress.value,
-      meanStressMethod: meanStressMethod.value,
-      surfaceFactor: surfaceFactor.value,
-      sizeFactor: sizeFactor.value,
-      loads: loads.value,
-    }),
-  ),
-)
+function buildConfirmSnapshot() {
+  return JSON.stringify({
+    calcMode: calcMode.value,
+    material: material.value,
+    stressAmplitude: stressAmplitude.value,
+    targetLife: targetLife.value,
+    meanStress: meanStress.value,
+    meanStressMethod: meanStressMethod.value,
+    surfaceFactor: surfaceFactor.value,
+    sizeFactor: sizeFactor.value,
+    loadText: loadText.value,
+  })
+}
+
+const currentSnapshot = computed(() => buildConfirmSnapshot())
+
+const result = computed(() => {
+  const audit = auditCriticalInputs('fatigue', calcMode.value, {})
+  const allKeys = audit.allCriticalKeys ?? []
+  const released = confirmedSnapshot.value === currentSnapshot.value
+  const confirmedFields = released ? Object.fromEntries(allKeys.map((k) => [k, true])) : {}
+
+  return analyzeFatigue({
+    calcMode: calcMode.value,
+    material: material.value,
+    stressAmplitude: stressAmplitude.value,
+    targetLife: targetLife.value,
+    meanStress: meanStress.value,
+    meanStressMethod: meanStressMethod.value,
+    surfaceFactor: surfaceFactor.value,
+    sizeFactor: sizeFactor.value,
+    loads: loads.value,
+    enforceCriticalConfirm: true,
+    confirmedFields,
+  })
+})
 
 const overallStatus = computed(() => getCalcReviewStatus(result.value))
 const saveStatus = overallStatus
@@ -313,7 +331,7 @@ const unconfirmedLabelText = computed(() =>
 
 const needsCriticalConfirm = computed(() => {
   if (calcMode.value === 'simple') return false
-  return (result.value.unconfirmedCriticalInputs ?? []).length > 0
+  return confirmedSnapshot.value !== currentSnapshot.value
 })
 
 const minerStatusText = computed(() => {
@@ -365,8 +383,7 @@ const lifeDisplay = computed(() => {
 })
 
 function confirmAllCritical() {
-  const audit = auditCriticalInputs('fatigue', calcMode.value, {})
-  for (const key of audit.allCriticalKeys ?? []) markConfirmed(key)
+  confirmedSnapshot.value = currentSnapshot.value
 }
 
 async function renderChart() {
@@ -446,12 +463,12 @@ async function exportPdf() {
 
 watch([result, material, stressAmplitude, diagramLife, locale, calcMode, meanStressMethod], renderChart)
 
-watch([loadText, targetLife, meanStressMethod], () => resetConfirmations())
+watch(calcMode, () => {
+  confirmedSnapshot.value = null
+})
 
 watch(material, (key) => {
-  const b = getStressAmplitudeBounds(key)
-  stressAmplitude.value = b.suggest
-  resetConfirmations()
+  stressAmplitude.value = getStressAmplitudeBounds(key).suggest
 })
 
 function loadSample() {
