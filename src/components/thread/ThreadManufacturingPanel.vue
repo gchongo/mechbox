@@ -11,11 +11,11 @@
         <h3 class="mb-3 font-semibold">{{ pt('mfgPipeTorqueTitle') }}</h3>
         <p class="mb-3 text-xs text-gray-500">{{ pt('mfgPipeTorqueNote') }}</p>
         <el-table :data="pipeTorqueRows" :fit="false" size="small" border stripe class="thread-data-table thread-sticky-header-table">
-          <el-table-column :label="pt('colDesignation')" prop="size" />
-          <el-table-column :label="pt('mfgTorqueRef')" prop="torqueKey">
+          <el-table-column :label="pt('colDesignation')" prop="size" :min-width="THREAD_TABLE_COL.mfgSize" />
+          <el-table-column :label="pt('mfgTorqueRef')" prop="torqueKey" :min-width="THREAD_TABLE_COL.mfgText">
             <template #default="{ row }">{{ pt(row.torqueKey) }}</template>
           </el-table-column>
-          <el-table-column :label="pt('mfgSealant')" prop="sealKey">
+          <el-table-column :label="pt('mfgSealant')" prop="sealKey" :min-width="THREAD_TABLE_COL.mfgText">
             <template #default="{ row }">{{ pt(row.sealKey) }}</template>
           </el-table-column>
         </el-table>
@@ -33,6 +33,8 @@
 </template>
 
 <script setup>
+import { THREAD_TABLE_COL } from '@/constants/thread-table-columns'
+
 defineProps({
   pt: { type: Function, required: true },
 })

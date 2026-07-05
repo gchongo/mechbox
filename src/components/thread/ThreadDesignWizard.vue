@@ -211,13 +211,13 @@
             stripe
             class="thread-data-table thread-sticky-header-table"
           >
-            <el-table-column :label="pt('colDesignation')" prop="designation" />
-            <el-table-column v-if="result.showTapDrill" :label="pt('colTapDrill')">
+            <el-table-column :label="pt('colDesignation')" prop="designation" :min-width="THREAD_TABLE_COL.designation" />
+            <el-table-column v-if="result.showTapDrill" :label="pt('colTapDrill')" :min-width="THREAD_TABLE_COL.dim">
               <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
             </el-table-column>
-            <el-table-column :label="pt('colToleranceExt')" prop="toleranceExternal" />
-            <el-table-column :label="pt('colToleranceInt')" prop="toleranceInternal" />
-            <el-table-column :label="pt('colActions')">
+            <el-table-column :label="pt('colToleranceExt')" prop="toleranceExternal" :min-width="THREAD_TABLE_COL.tolerance" />
+            <el-table-column :label="pt('colToleranceInt')" prop="toleranceInternal" :min-width="THREAD_TABLE_COL.tolerance" />
+            <el-table-column :label="pt('colActions')" :min-width="THREAD_TABLE_COL.actionView">
               <template #default="{ row }">
                 <el-button size="small" link type="primary" @click="$emit('open-row', row)">
                   {{ pt('wizViewDetail') }}
@@ -244,6 +244,7 @@ import {
   runThreadDesignWizard,
 } from '@/utils/thread-design-wizard'
 import { formatDim } from '@/utils/thread-standards'
+import { THREAD_TABLE_COL } from '@/constants/thread-table-columns'
 import { exportToolReportPdf } from '@/utils/export'
 import { buildDesignWizardPdfSections } from '@/utils/thread-table-report'
 

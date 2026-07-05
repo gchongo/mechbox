@@ -46,73 +46,73 @@
         :row-class-name="rowClassName"
         @row-click="(row) => $emit('row-click', row)"
       >
-        <el-table-column prop="designation" fixed>
+        <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation" fixed>
           <template #header>
             <ThreadFieldTip :label="pt('colDesignation')" :tip="pt('term_designation')" />
           </template>
         </el-table-column>
-        <el-table-column v-if="catalogSystem === 'metric'" prop="priority">
+        <el-table-column v-if="catalogSystem === 'metric'" prop="priority" :min-width="THREAD_TABLE_COL.priority">
           <template #header>
             <ThreadFieldTip :label="pt('colPriority')" :tip="pt('term_priority')" />
           </template>
         </el-table-column>
-        <el-table-column>
+        <el-table-column :min-width="THREAD_TABLE_COL.pitch">
           <template #header>
             <ThreadFieldTip :label="pitchColumnLabel" :tip="pitchTermTip" />
           </template>
           <template #default="{ row }">{{ formatPitchDisplay(row) }}</template>
         </el-table-column>
-        <el-table-column>
+        <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colMajor')" :tip="pt('term_major')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.major) }}</template>
         </el-table-column>
-        <el-table-column>
+        <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colPitchDia')" :tip="pt('term_pitchDia')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.pitchDiameter) }}</template>
         </el-table-column>
-        <el-table-column>
+        <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colMinor')" :tip="pt('term_minor')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.minor) }}</template>
         </el-table-column>
-        <el-table-column v-if="showTapCol">
+        <el-table-column v-if="showTapCol" :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colTapDrill')" :tip="pt('term_tapDrill')" />
           </template>
           <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
         </el-table-column>
-        <el-table-column prop="toleranceExternal">
+        <el-table-column prop="toleranceExternal" :min-width="THREAD_TABLE_COL.tolerance">
           <template #header>
             <ThreadFieldTip :label="pt('colToleranceExt')" :tip="pt('term_toleranceExt')" />
           </template>
         </el-table-column>
-        <el-table-column prop="toleranceInternal">
+        <el-table-column prop="toleranceInternal" :min-width="THREAD_TABLE_COL.tolerance">
           <template #header>
             <ThreadFieldTip :label="pt('colToleranceInt')" :tip="pt('term_toleranceInt')" />
           </template>
         </el-table-column>
-        <el-table-column v-if="showPipeCols" prop="taper">
+        <el-table-column v-if="showPipeCols" prop="taper" :min-width="THREAD_TABLE_COL.taper">
           <template #header>
             <ThreadFieldTip :label="pt('colTaper')" :tip="pt('term_taper')" />
           </template>
         </el-table-column>
-        <el-table-column v-if="showPipeCols">
+        <el-table-column v-if="showPipeCols" :min-width="THREAD_TABLE_COL.sealing">
           <template #header>
             <ThreadFieldTip :label="pt('colSealing')" :tip="pt('term_sealing')" />
           </template>
           <template #default="{ row }">{{ sealingLabel(row.sealing) }}</template>
         </el-table-column>
-        <el-table-column prop="standardRef">
+        <el-table-column prop="standardRef" :min-width="THREAD_TABLE_COL.standard">
           <template #header>
             <ThreadFieldTip :label="pt('colStandard')" :tip="pt('term_standard')" />
           </template>
         </el-table-column>
-        <el-table-column :label="pt('colActions')" fixed="right">
+        <el-table-column :label="pt('colActions')" :min-width="THREAD_TABLE_COL.actionCompare" fixed="right">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click.stop="$emit('toggle-compare', row)">
               {{ compareIds.includes(row.id) ? pt('inCompare') : pt('addToCompare') }}
@@ -132,6 +132,7 @@ import { ref, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { getThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
 import { filterThreadRows, formatPitchDisplay, formatDim } from '@/utils/thread-standards'
+import { THREAD_TABLE_COL } from '@/constants/thread-table-columns'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 import ThreadPitchTool from '@/components/thread/ThreadPitchTool.vue'
 

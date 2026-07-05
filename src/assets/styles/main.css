@@ -183,7 +183,7 @@
 
   .thread-data-table.el-table .el-table__header table,
   .thread-data-table.el-table .el-table__body table {
-    table-layout: auto;
+    table-layout: fixed;
     width: max-content;
   }
 
@@ -194,14 +194,11 @@
   }
 
   .thread-data-table.el-table .cell {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
     white-space: nowrap;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
     text-align: center;
   }
 
