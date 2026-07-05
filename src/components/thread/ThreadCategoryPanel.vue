@@ -1,81 +1,98 @@
 <template>
-  <div class="thread-category-panel">
-    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">{{ pt(`cat_${purposeId}_intro`) }}</p>
+  <div class="thread-catalog-panel">
+    <div class="thread-catalog-layout">
+      <aside class="thread-catalog-sidebar">
+        <p class="thread-catalog-sidebar__intro">{{ pt(`cat_${purposeId}_intro`) }}</p>
 
-    <el-table :data="overviewRows" size="small" border stripe class="mb-4">
-      <el-table-column :label="pt('catOverviewType')" prop="name" min-width="140" />
-      <el-table-column :label="pt('catOverviewUse')" prop="use" min-width="160" />
-      <el-table-column :label="pt('metaField_catalog')" width="100" align="center">
-        <template #default="{ row }">
-          <el-tag :type="row.implemented ? 'success' : 'info'" size="small">
-            {{ row.implemented ? '✓' : '—' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="pt('catOverviewNote')" prop="misconfig" min-width="180" show-overflow-tooltip />
-    </el-table>
-
-    <div class="mb-4 flex flex-wrap gap-2">
-      <el-button
-        v-for="sys in systems"
-        :key="sys.id"
-        size="small"
-        :type="selectedSystemId === sys.id ? 'primary' : 'default'"
-        @click="$emit('update:selectedSystemId', sys.id)"
-      >
-        {{ pt(`ts_${sys.id}_name`) }}
-        <el-badge v-if="sys.implemented" is-dot class="ml-1" type="success" />
-      </el-button>
-    </div>
-
-    <div v-if="selectedSystem" class="grid gap-6 xl:grid-cols-2">
-      <ThreadSystemMetaPanel :system-id="selectedSystem.id" :pt="pt" />
-      <section v-if="selectedSystem.implemented && selectedSystem.catalog" class="min-w-0">
-        <ThreadCatalogTable
-          :catalog-system="selectedSystem.catalog.system"
-          :catalog-sub-tab="selectedSystem.catalog.subTab"
-          :pt="pt"
-          :compare-ids="compareIds"
-          :highlight-row-id="highlightRowId"
-          @row-click="$emit('row-click', $event)"
-          @toggle-compare="$emit('toggle-compare', $event)"
-        />
-      </section>
-      <section v-else-if="isWhitworthSystem" class="min-w-0">
-        <ThreadWhitworthRefTable
-          :taxonomy-id="selectedSystem.id"
-          :pt="pt"
-          @row-click="$emit('row-click', $event)"
-          @open-compare="$emit('open-compare', $event)"
-        />
-      </section>
-      <section v-else class="card-panel ref-guide">
-        <el-alert type="info" show-icon :closable="false" :title="pt('refNoCatalogTitle')" />
-        <p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-          {{ refHint }}
-        </p>
-        <div v-if="catalogAlternatives.length" class="mt-4">
-          <p class="mb-2 text-xs text-gray-500">{{ pt('refSuggestLabel') }}</p>
-          <div class="flex flex-wrap gap-2">
-            <el-button
-              v-for="alt in catalogAlternatives"
-              :key="alt"
+        <nav class="thread-system-nav" :aria-label="pt('catalogSystemNav')">
+          <button
+            v-for="sys in systems"
+            :key="sys.id"
+            type="button"
+            class="thread-system-nav__item"
+            :class="{ 'is-active': selectedSystemId === sys.id }"
+            @click="$emit('update:selectedSystemId', sys.id)"
+          >
+            <span class="thread-system-nav__name">{{ pt(`ts_${sys.id}_name`) }}</span>
+            <el-tag
+              v-if="sys.implemented"
+              type="success"
               size="small"
-              type="primary"
-              plain
-              @click="openCatalogAlternative(alt)"
+              effect="plain"
+              class="thread-system-nav__tag"
             >
-              {{ catalogLabel(alt) }}
-            </el-button>
+              {{ pt('catalogBadge_yes') }}
+            </el-tag>
+            <el-tag v-else type="info" size="small" effect="plain" class="thread-system-nav__tag">
+              {{ pt('catalogBadge_ref') }}
+            </el-tag>
+          </button>
+        </nav>
+
+        <el-collapse v-model="overviewOpen" class="thread-catalog-overview">
+          <el-collapse-item :title="pt('catalogOverviewToggle')" name="overview">
+            <ul class="thread-overview-list">
+              <li v-for="row in overviewRows" :key="row.id">
+                <span class="thread-overview-list__name">{{ row.name }}</span>
+                <span class="thread-overview-list__use">{{ row.use }}</span>
+              </li>
+            </ul>
+          </el-collapse-item>
+        </el-collapse>
+      </aside>
+
+      <div v-if="selectedSystem" class="thread-catalog-main">
+        <ThreadSystemMetaPanel :system-id="selectedSystem.id" :pt="pt" />
+
+        <section v-if="selectedSystem.implemented && selectedSystem.catalog" class="thread-catalog-table-wrap">
+          <ThreadCatalogTable
+            :catalog-system="selectedSystem.catalog.system"
+            :catalog-sub-tab="selectedSystem.catalog.subTab"
+            :pt="pt"
+            :compare-ids="compareIds"
+            :highlight-row-id="highlightRowId"
+            @row-click="$emit('row-click', $event)"
+            @toggle-compare="$emit('toggle-compare', $event)"
+          />
+        </section>
+
+        <section v-else-if="isWhitworthSystem" class="thread-catalog-table-wrap">
+          <ThreadWhitworthRefTable
+            :taxonomy-id="selectedSystem.id"
+            :pt="pt"
+            @row-click="$emit('row-click', $event)"
+            @open-compare="$emit('open-compare', $event)"
+          />
+        </section>
+
+        <section v-else class="thread-ref-guide card-panel">
+          <el-alert type="info" show-icon :closable="false" :title="pt('refNoCatalogTitle')" />
+          <p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            {{ refHint }}
+          </p>
+          <div v-if="catalogAlternatives.length" class="mt-4">
+            <p class="mb-2 text-xs text-gray-500">{{ pt('refSuggestLabel') }}</p>
+            <div class="flex flex-wrap gap-2">
+              <el-button
+                v-for="alt in catalogAlternatives"
+                :key="alt"
+                size="small"
+                type="primary"
+                plain
+                @click="openCatalogAlternative(alt)"
+              >
+                {{ catalogLabel(alt) }}
+              </el-button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getSystemsForPurpose, getReferenceCatalogAlternatives, catalogAlternativeToQuery } from '@/constants/thread-standards/taxonomy'
 import ThreadSystemMetaPanel from '@/components/thread/ThreadSystemMetaPanel.vue'
 import ThreadCatalogTable from '@/components/thread/ThreadCatalogTable.vue'
@@ -91,6 +108,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedSystemId', 'row-click', 'toggle-compare', 'open-catalog', 'open-compare'])
 
+const overviewOpen = ref([])
+
 const systems = computed(() => getSystemsForPurpose(props.purposeId))
 
 const selectedSystem = computed(() =>
@@ -102,8 +121,6 @@ const overviewRows = computed(() =>
     id: s.id,
     name: props.pt(`ts_${s.id}_name`),
     use: props.pt(`ts_${s.id}_use`),
-    misconfig: props.pt(`ts_${s.id}_misconfig`),
-    implemented: s.implemented,
   })),
 )
 

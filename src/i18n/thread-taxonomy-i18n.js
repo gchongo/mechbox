@@ -1,6 +1,21 @@
 /** 螺纹分类体系文案 — 合并进 calc.pages.thread-table */
 
 export const threadTaxonomyZh = {
+  navMain: '螺纹标准主导航',
+  navCatalog: '规格库',
+  navCatalogDesc: '按用途浏览体系，查询尺寸与元数据',
+  navDesign: '设计制造',
+  navDesignDesc: '选型向导 → 公差 → 啮合 → 底孔 → 工艺',
+  navTools: '解析对照',
+  navToolsDesc: '标记解析、规格对照与误配检查',
+  designFlowHint: '按顺序完成选型与制造校核；完整拉剪强度请用独立「螺纹强度」工具。',
+  toolsFlowHint: '解析图纸标记、并排对照规格，或查阅常见误配案例。',
+  catalogPurposeLabel: '用途分类',
+  catalogSystemNav: '螺纹体系',
+  catalogOverviewToggle: '本类体系列览',
+  quickCompare: '对照 ({n})',
+  catalogBadge_yes: '可查表',
+  catalogBadge_ref: '参考',
   cat_fastener: '紧固螺纹',
   cat_pipe: '管螺纹',
   cat_power: '传动螺纹',
@@ -267,6 +282,21 @@ export const threadTaxonomyZh = {
 }
 
 export const threadTaxonomyEn = {
+  navMain: 'Thread standards navigation',
+  navCatalog: 'Size catalog',
+  navCatalogDesc: 'Browse by purpose — dimensions and metadata',
+  navDesign: 'Design & mfg',
+  navDesignDesc: 'Wizard → tolerance → engagement → tap → process',
+  navTools: 'Parse & compare',
+  navToolsDesc: 'Mark parsing, side-by-side compare, misconfig alerts',
+  designFlowHint: 'Follow the design workflow in order. Full tensile/shear strength uses the separate Thread strength tool.',
+  toolsFlowHint: 'Parse drawing marks, compare sizes side by side, or review common misconfigurations.',
+  catalogPurposeLabel: 'Purpose',
+  catalogSystemNav: 'Thread systems',
+  catalogOverviewToggle: 'Systems in this category',
+  quickCompare: 'Compare ({n})',
+  catalogBadge_yes: 'Catalog',
+  catalogBadge_ref: 'Ref',
   cat_fastener: 'Fastening threads',
   cat_pipe: 'Pipe threads',
   cat_power: 'Power transmission threads',

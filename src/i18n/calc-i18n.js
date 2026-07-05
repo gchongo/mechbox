@@ -96,7 +96,7 @@ const pagesZh = {
     },
     'thread-table': {
       title: '螺纹标准表',
-      subtitle: '按用途浏览：紧固 · 管螺纹 · 传动 · 特殊 — 统一元数据 + 规格查询 + 设计制造流程',
+      subtitle: '规格库 · 设计制造 · 解析对照 — 一站式螺纹标准与流程指导',
       diagramAria: '螺纹牙型示意图',
       externalThread: '外螺纹',
       internalThread: '内螺纹',
@@ -878,7 +878,7 @@ const pagesEn = {
     },
     'thread-table': {
       title: 'Thread standards',
-      subtitle: 'Browse by purpose: fastening · pipe · power · special — unified metadata, size lookup & design workflow',
+      subtitle: 'Catalog · design & mfg · parse & compare — unified thread standards and workflow',
       diagramAria: 'Thread profile schematic',
       externalThread: 'External thread',
       internalThread: 'Internal thread',
