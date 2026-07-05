@@ -364,20 +364,99 @@ export const toolHelpEnById = {
 
   batch: {
     title: 'Batch Verification',
-    summary: 'Run RSS/worst-case checks on many tolerance stack datasets at once—suited to tabular design comparison.',
+    summary:
+      'Quality-engineering workflow: run RSS and worst-case checks on many component tolerance lists at once against a closed-loop min/max band. Up to 50 schemes; CSV paste and export supported. Logic matches the Tolerance Stack Editor; summary panel explains methodology and method-risk hints.',
     steps: [
-      'Prepare multiple rows of component ring data per page format (or paste from a spreadsheet).',
-      'Select check method and closed-ring requirements.',
-      'Run batch calculation and review pass/fail per row.',
-      'Export results for records.',
+      'Under Target specification, enter closed-loop min and max (mm)—the allowable synthesized size band.',
+      'Under Batch input, one row per scheme: name,tol1,tol2,… (comma-separated; optional transfer factors default to 1).',
+      'Click Run verification; review per-row RSS/worst tolerance width, pass/fail, and method-risk hints.',
+      'Read the summary methodology block; if “RSS pass / worst fail” count > 0, do not release on RSS alone.',
+      'Export CSV for records; for formal release, verify ring directions and nominals in the editor.',
     ],
-    principle: 'Same stacking formulas as the single-chain editor, with batch-oriented input and output.',
-    notes: ['Validate one chain in the editor first to confirm direction and units.'],
-    useCases: COMMON_USE_CASES,
-    inputs: COMMON_INPUTS,
-    outputs: COMMON_OUTPUTS,
-    reliability: COMMON_RELIABILITY,
-    keywords: ['batch', 'verification'],
+    principle:
+      'Batch mode tabularizes editor RSS/worst-case stacking: zero nominal per ring, symmetric band $\\pm T_i/2$, all increasing rings. Pass compares synthesized interval $[L,U]$ to $[\\min,\\max]$, not merely whether total tolerance width fits a budget.',
+    formulas: [
+      {
+        latex: 'T_{\\mathrm{worst}} = \\sum_i T_i f_i',
+        note: 'Worst-case total; default $f_i=1$. Band $[L,U]=[-T_{\\mathrm{worst}}/2,\\,+T_{\\mathrm{worst}}/2]$',
+      },
+      {
+        latex: 'T_{\\mathrm{rss}} = \\sqrt{\\sum_i (T_i f_i)^2}',
+        note: 'RSS total; band $[L,U]=[-T_{\\mathrm{rss}}/2,\\,+T_{\\mathrm{rss}}/2]$',
+      },
+      {
+        latex: 'L \\ge \\min \\;\\land\\; U \\le \\max \\Rightarrow \\text{pass}',
+        note: 'RSS and worst-case judged independently',
+      },
+      {
+        latex: 'R = T_{\\mathrm{worst}} / T_{\\mathrm{rss}}',
+        note: 'Method ratio; $R\\ge 1.5$ caution, $R\\ge 2$ warning',
+      },
+    ],
+    notes: [
+      '“Fail” = both RSS and worst fail; “RSS pass / worst fail” = RSS OK but worst not—priority review for safety-critical parts.',
+      'Row hint “RSS ✓ worst ✗ — do not release on RSS alone” marks critical method gap.',
+      'Default closed-loop min = 0 with all-increasing zero-nominal rings often yields negative RSS lower bound—set min/max to match your functional band, not only a tolerance budget.',
+      'Sample data with default targets may show all fail due to target setup, not necessarily bad tolerances.',
+      'Batch input has no nominals or increasing/decreasing direction—build complex chains in the editor first.',
+    ],
+    example:
+      'Three rings 0.05, 0.04, 0.03 mm ($f_i=1$): $T_{\\mathrm{worst}}=0.12$ mm → $[-0.06,+0.06]$; $T_{\\mathrm{rss}}=0.0707$ mm → $[-0.0354,+0.0354]$. Target $[0,0.10]$ mm: both pass. Target $[0,0.05]$ mm: RSS pass, worst fail—“RSS pass / worst fail” +1 in summary.',
+    useCases: [
+      'One-shot RSS/worst-case screening of many supplier or internal tolerance proposals.',
+      'After allocation or Monte Carlo, batch-check ring lists against the same closed-loop band.',
+      'Compare tolerance widths and method-risk ratio across schemes.',
+    ],
+    inputs: [
+      {
+        name: 'Closed-loop min / max',
+        meaning: 'Allowable synthesized interval (mm); pass requires $L\\ge\\min$ and $U\\le\\max$.',
+        source: 'Functional requirement or editor step 2—do not confuse with total tolerance budget only.',
+      },
+      {
+        name: 'Tolerance list $T_i$',
+        meaning: 'Full width per ring (mm), comma-separated per row; optional factor column.',
+        source: 'Drawings, allocation output, editor component table.',
+      },
+    ],
+    outputs: [
+      {
+        name: 'RSS / worst tolerance width',
+        meaning: '$T_{\\mathrm{rss}}$, $T_{\\mathrm{worst}}$ and synthesized bands.',
+        judgement: 'Narrow width ≠ pass—interval must lie inside min/max.',
+      },
+      {
+        name: 'RSS / worst pass',
+        meaning: 'Independent pass/fail per method.',
+        judgement: 'RSS pass with worst fail is not enough for safety-critical release.',
+      },
+      {
+        name: 'Method-risk hint',
+        meaning: 'Ratio warnings, RSS✓worst✗ labels.',
+        judgement: 'Critical hints need engineer review—not calculation errors.',
+      },
+      {
+        name: 'Summary counts',
+        meaning: 'Total, RSS pass, worst pass, fail, RSS pass/worst fail.',
+        judgement: 'Non-zero “RSS pass/worst fail” deserves first review.',
+      },
+    ],
+    reliability: [
+      'RSS/worst formulas match the Tolerance Stack Editor and allocation verification.',
+      'Model: zero nominal, all increasing, symmetric bands—may differ from real decreasing rings or biased tolerances.',
+      'Default min=0 often makes RSS lower bound negative, causing counterintuitive all-fail batches.',
+    ],
+    beginnerTips: [
+      'Validate one chain in the editor and understand min/max before batch paste.',
+      'When you see “RSS pass / worst fail”, read the methodology block—don’t only tweak tolerances.',
+      'If sample data all fails, check closed-loop min/max first.',
+    ],
+    professionalChecks: [
+      'Safety-critical parts need worst-case pass as conservative baseline; RSS alone is insufficient.',
+      'When worst/RSS ratio $\\ge 2$, consider Monte Carlo or measured Cpk.',
+      'Confirm all values are mm before CSV export.',
+    ],
+    keywords: ['batch', 'verification', 'RSS', 'worst-case', 'quality'],
   },
 
   allocation: {
@@ -510,31 +589,136 @@ export const toolHelpEnById = {
   },
 
   fit: {
-    title: 'ISO 286 Fits',
+    title: 'ISO 286 Fit Lookup',
     summary:
-      'Look up upper/lower deviations from hole/shaft tolerance zone codes (e.g. H7/g6) and determine clearance or interference range.',
+      'Compute limit sizes, max/min clearance or interference, fit quality index, and optional assembly ΔT effects from hole/shaft codes (e.g. H7/g6, H7/n6). For preliminary sizing only—verify against GB/T 1800 / ISO 286-2 tables before release.',
     steps: [
-      'Enter basic size (nominal diameter).',
-      'Select hole and shaft tolerance zones (or common fit pairs).',
-      'Review hole/shaft ES/EI, es/ei, and max/min clearance (or interference).',
-      'Judge fit type (clearance/transition/interference) against design intent.',
+      'Enter nominal size (1–500 mm), hole code (e.g. H7) and shaft code (e.g. g6, n6), or pick a common fit preset.',
+      'Optionally enter assembly ΔT vs 20°C; equal default materials give zero thermal shift.',
+      'Review limit sizes, clearances (μm), mean clearance, quality index Q, and fit type.',
+      'Read check status and assumptions—“Review” means engineer verification, not automatic fail.',
+      'For transition/interference fits and temperature service, cross-check every deviation against the standard handbook.',
     ],
     principle:
-      'ISO 286 defines deviations by zone letter (position) and grade (magnitude). Hole basis commonly uses H; shaft basis uses h. Fit type follows relative hole/shaft zone positions.',
+      'The tool follows ISO 286 structure: letter = zone position, number = IT grade. Hole $EI$ and shaft $es$ come from built-in fundamental-deviation tables by size segment; $IT$ width uses the continuous unit $i$ formula (not segment-rounded standard tables). Clearances are differences of limit sizes. Compared with GB/T 1800 / ISO 286-2, common clearance fits (H + g/f/h) are usually close; some positive-deviation shaft letters (n, k, p) may disagree with the standard at certain sizes—manual verification required.',
     formulas: [
-      { latex: 'X_{\\max} = ES - ei', note: 'Maximum clearance (clearance fit)' },
-      { latex: 'Y_{\\max} = es - EI', note: 'Maximum interference (interference fit; sign per tool display)' },
+      {
+        latex: 'i = 0.45 \\cdot D^{1/3} + 0.001 \\cdot D \\quad (\\mu m)',
+        note: 'Tolerance unit; $D$ = nominal (mm). Bandwidth $IT = k \\cdot i / 1000$ (mm), $k$ = IT5–IT11 factor (e.g. IT7→16, IT6→10)',
+      },
+      {
+        latex: 'ES = EI + IT \\; (\\text{hole}), \\quad ei = es - IT \\; (\\text{shaft})',
+        note: 'H hole $EI=0$; h shaft $es=0$; other letters from built-in tables by size segment',
+      },
+      {
+        latex: 'D_{\\max} = D_{\\mathrm{nom}} + ES, \\quad D_{\\min} = D_{\\mathrm{nom}} + EI',
+        note: 'Limit sizes (mm) shown as “hole H7 / shaft n6” ranges',
+      },
+      {
+        latex: 'X_{\\max} = D_{\\mathrm{hole,max}} - D_{\\mathrm{shaft,min}} = ES - ei',
+        note: 'Maximum clearance (mm)',
+      },
+      {
+        latex: 'X_{\\min} = D_{\\mathrm{hole,min}} - D_{\\mathrm{shaft,max}} = EI - es',
+        note: 'Minimum clearance (mm); negative = interference ($|X_{\\min}|$ = max interference)',
+      },
+      {
+        latex: 'X_{\\min} \\ge 0 \\Rightarrow \\text{clearance}; \\; X_{\\max} \\le 0 \\Rightarrow \\text{interference}; \\; \\text{else transition}',
+        note: 'Fit type classification',
+      },
+      {
+        latex: 'Q = \\frac{X_{\\max} + X_{\\min}}{2\\,(X_{\\max} - X_{\\min})}',
+        note: 'Fit quality index; 0.5 = centered in band—for comparison only',
+      },
+      {
+        latex: '\\Delta X_{\\mathrm{th}} = \\alpha_h L \\Delta T - \\alpha_s L \\Delta T',
+        note: 'Thermal clearance shift; default equal steel $\\alpha$ → 0; unlike materials not configurable on this page',
+      },
     ],
     notes: [
-      'Same code yields different deviation values in different size segments.',
-      'Transition fits may be clearance or interference—consider assembly process.',
+      'Vs standard tables: $IT$ uses continuous $i$ at nominal $D$; standard uses segment values (e.g. Ø11 IT7 ≈16.2 μm here vs 18 μm in tables; Ø25 IT7 ≈21.5 vs 21 μm).',
+      'Shaft n deviation: Small sizes match ISO 286-2 reasonably; at Ø25 H7/n6 tool may give shaft $es$ +8 μm vs standard +15 μm—clearances can differ by ~20 μm. Transition/interference fits must use the handbook.',
+      'Check “Review”: Without thermal failure, status is estimateOnly (not a failed fit). Assumptions state results are for classification when functional targets are not entered.',
+      'H7/g6: g deviations are reliable in common ranges; IT formula error typically ~10%.',
+      'Diagram labels like (+8/-5) vs handbook (+28/+15) reflect deviation data difference—compare limit sizes and clearances to the standard.',
+      'When comparing to external calculators or handbooks, clearance formulas $X_{\\max}=ES-ei$, $X_{\\min}=EI-es$ are the same; differences come from IT formula or shaft n/k/p deviation tables, not different fit math.',
+      'Nominal >500 mm unsupported; IT grades 5–11 only; letter set is a common subset, not full ISO 286.',
     ],
-    standards: ['ISO 286'],
-    useCases: COMMON_USE_CASES,
-    inputs: COMMON_INPUTS,
-    outputs: COMMON_OUTPUTS,
-    reliability: COMMON_RELIABILITY,
-    keywords: ['fit', 'H7', 'g6', 'ISO286'],
+    example:
+      'Ex.1 — Ø11 H7/g6 (clearance, close to standard): Tool hole 11.000–11.0162 mm, shaft 10.9829–10.9930 mm, $X_{\\max}\\approx 33.3\\ \\mu m$, $X_{\\min}\\approx 7.0\\ \\mu m$, mean clearance $\\approx 20.2\\ \\mu m$, $Q\\approx 0.77$ (comparison only). Standard IT7=18 μm gives $X_{\\max}\\approx 36\\ \\mu m$—IT formula gap. Ex.2 — Ø25 H7/n6 (transition, large vs standard calculators): Standard hole +21/0, shaft +28/+15 μm → $X_{\\max}=+6\\ \\mu m$, $X_{\\min}=-28\\ \\mu m$. Tool shaft n fundamental deviation +8 μm (not +15 μm) → shaft ~+8/−5 μm, $X_{\\max}\\approx 26.9\\ \\mu m$, $X_{\\min}\\approx -8\\ \\mu m$—max interference underestimated by ~20 μm. Use GB/T 1800 for transition/interference fits.',
+    useCases: [
+      'Screen fit codes (H7/g6, H7/n6) for clearance/interference magnitude and fit type.',
+      'Compare tolerance-zone combinations before locking part tolerances.',
+      'Rough thermal direction check with optional ΔT (zero shift for same material is expected).',
+    ],
+    inputs: [
+      {
+        name: 'Nominal size $D$',
+        meaning: 'Basic size (mm); sets segment and $i$; range 1–500 mm.',
+        source: 'Drawing nominal; >500 mm rejected by tool.',
+      },
+      {
+        name: 'Hole / shaft code',
+        meaning: 'e.g. H7, n6—letter = fundamental deviation, number = IT grade.',
+        source: 'Design selection or company standard; built-in letter set is a subset.',
+      },
+      {
+        name: 'Assembly ΔT',
+        meaning: 'Temperature change vs 20°C reference; $\\Delta X_{\\mathrm{th}}=\\alpha_h L\\Delta T-\\alpha_s L\\Delta T$.',
+        source: 'Assembly/service conditions; default equal $\\alpha$ shows 0 μm.',
+      },
+    ],
+    outputs: [
+      {
+        name: 'Limit sizes',
+        meaning: 'Hole/shaft $D_{\\min}$–$D_{\\max}$ (mm).',
+        judgement: 'Compare ES/EI, es/ei to handbook; n/k/p shafts may diverge at some sizes.',
+      },
+      {
+        name: 'Max / min clearance',
+        meaning: '$X_{\\max}$, $X_{\\min}$ (μm); negative = interference.',
+        judgement: 'Functional clearance/interference is a separate design requirement.',
+      },
+      {
+        name: 'Fit type',
+        meaning: 'Clearance / transition / interference.',
+        judgement: 'Trust type only when deviations match the standard; otherwise use handbook.',
+      },
+      {
+        name: 'Fit quality $Q$',
+        meaning: 'Complete/Professional; mean position in clearance band.',
+        judgement: 'Comparison metric only—not a release criterion.',
+      },
+      {
+        name: 'Check: Review / Pass',
+        meaning: '“Review” = estimateOnly—engineer must verify, not a calculation error.',
+        judgement: 'Formal release requires GB/T 1800 and functional checks.',
+      },
+      {
+        name: 'Thermal clearance shift',
+        meaning: 'Professional mode; 0 for equal default materials.',
+        judgement: 'Dissimilar materials not configurable on this page.',
+      },
+    ],
+    reliability: [
+      'Clearance formulas match ISO conventions; deviation data = simplified tables + continuous $i$, not a full GB/T 1800 reproduction.',
+      'H hole + g/f/h clearance fits: usually reliable in common segments; IT ~±10% formula tolerance.',
+      'n, k, p shafts: known mismatch with ISO 286-2 at some sizes (e.g. Ø25 n6)—handbook mandatory for transition/interference.',
+      '“Review” is product disclaimer (estimateOnly), not a failed H7/g6 fit.',
+      'Professional hint mentions Monte Carlo but this page has no MC; equal default $\\alpha$ → 0 thermal shift at any ΔT is expected.',
+    ],
+    beginnerTips: [
+      'Start with H7/g6 presets; when switching to n6 or p6, compare immediately to the handbook.',
+      '“Review” means read assumptions—not automatic unqualified fit.',
+      'Clearances are μm; limit sizes are mm—watch units.',
+    ],
+    professionalChecks: [
+      'Verify hole ES/EI and shaft es/ei and IT width against GB/T 1800 / ISO 286-2, especially n/k/p and IT rounding.',
+      'For transition fits, check max interference $|X_{\\min}|$ against press force, stress, and torque transfer.',
+      'Thermal service: dissimilar materials need separate $\\Delta X_{\\mathrm{th}}$; equal material means unchanged relative clearance.',
+      'Recompute after rounding to IT bands; form error, ovality, taper not in this model.',
+    ],
+    keywords: ['fit', 'H7', 'g6', 'n6', 'ISO286', 'clearance', 'interference', 'transition'],
   },
 
   'gdt-stack': {

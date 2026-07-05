@@ -5,8 +5,6 @@
       {{ pt('subtitle') }}
     </p>
 
-    <CalcModePanel v-model="calcMode" page-key="fit" />
-
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
@@ -21,12 +19,10 @@
           <CalcFormItem :label="pf('shaftCode')">
             <el-input v-model="shaftCode" placeholder="g6" class="w-32" />
           </CalcFormItem>
-          <template v-if="calcMode === 'professional'">
-            <CalcFormItem :label="pf('assemblyDeltaT')">
-              <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
-              <span class="ml-2 text-xs text-gray-500">°C</span>
-            </CalcFormItem>
-          </template>
+          <CalcFormItem :label="pf('assemblyDeltaT')">
+            <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
+            <span class="ml-2 text-xs text-gray-500">°C</span>
+          </CalcFormItem>
         </el-form>
 
         <p class="mb-2 text-xs font-medium text-gray-500">{{ pf('commonPresets') }}</p>
@@ -105,7 +101,7 @@
         :title="historyTitle"
         :status="saveStatus"
         :summary="historySummary"
-        :input="{ nominal: nominal, holeCode, shaftCode, calcMode, deltaT }"
+        :input="{ nominal: nominal, holeCode, shaftCode, calcMode: CALC_MODE, deltaT }"
         :result="snapshot"
       />
     </div>
@@ -121,7 +117,6 @@ import FitToleranceBand from '@/components/fit/FitToleranceBand.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { exportToolReportPdf } from '@/utils/export'
 import { buildEnhancedReport } from '@/utils/enhanced-report'
-import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import { adaptFit } from '@/utils/calc-adapters'
 import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
@@ -135,11 +130,12 @@ const { exportFilename } = useContentI18n()
 const { ol } = useOptionsI18n()
 const { rm, resultError } = useResultI18n()
 
+const CALC_MODE = 'professional'
+
 const nominal = ref(25)
 const holeCode = ref('H7')
 const shaftCode = ref('g6')
-const calcMode = ref('simple')
-const deltaT = ref(80)
+const deltaT = ref(0)
 const presetIndex = ref(0)
 const resultRef = ref(null)
 const route = useRoute()
@@ -158,7 +154,7 @@ const fitTypeLabel = computed(() => {
 
 const result = computed(() =>
   analyzeFit(nominal.value, holeCode.value, shaftCode.value, {
-    calcMode: calcMode.value,
+    calcMode: CALC_MODE,
     deltaT: deltaT.value,
   }),
 )
@@ -167,7 +163,7 @@ const snapshot = computed(() =>
     nominal: nominal.value,
     holeCode: holeCode.value,
     shaftCode: shaftCode.value,
-    calcMode: calcMode.value,
+    calcMode: CALC_MODE,
     deltaT: deltaT.value,
   }),
 )
@@ -235,7 +231,6 @@ function applyReplayInput(input) {
   if (Number.isFinite(Number(input.nominal))) nominal.value = Number(input.nominal)
   if (typeof input.holeCode === 'string') holeCode.value = input.holeCode
   if (typeof input.shaftCode === 'string') shaftCode.value = input.shaftCode
-  if (typeof input.calcMode === 'string') calcMode.value = input.calcMode
   if (Number.isFinite(Number(input.deltaT))) deltaT.value = Number(input.deltaT)
 }
 
