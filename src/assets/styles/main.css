@@ -118,6 +118,10 @@
   }
 
   /* ── 螺纹标准模块 ── */
+  .thread-standards-page {
+    --thread-table-sticky-top: 3.5rem;
+  }
+
   .thread-shell {
     @apply grid min-h-[640px] gap-0 p-0 lg:grid-cols-[280px_1fr];
   }
@@ -138,22 +142,37 @@
   }
 
   .thread-table-scroll {
-    @apply min-w-0 overflow-x-auto;
+    @apply min-w-0;
   }
 
-  /* 主内容滚动时表头吸顶；勿对 el-table 设 max-height，否则会与 flex 布局冲突导致只显示一行 */
-  .thread-sticky-header-table.el-table :deep(.el-table__header-wrapper) {
+  /* 页面滚动时表头吸顶（紧贴全局顶栏下方）；勿对 el-table 设 max-height */
+  .thread-sticky-header-table.el-table {
+    overflow: visible;
+  }
+
+  .thread-sticky-header-table.el-table .el-table__inner-wrapper {
+    overflow: visible;
+  }
+
+  .thread-sticky-header-table.el-table .el-table__header-wrapper {
     position: sticky;
-    top: 0;
-    z-index: 3;
+    top: var(--thread-table-sticky-top, 3.5rem);
+    z-index: 5;
+    overflow: visible;
+    box-shadow: 0 1px 0 var(--el-table-border-color);
   }
 
-  .thread-sticky-header-table.el-table :deep(.el-table__header-wrapper th.el-table__cell) {
+  .thread-sticky-header-table.el-table .el-table__header-wrapper th.el-table__cell {
     background: var(--el-table-header-bg-color, var(--el-fill-color-light));
   }
 
-  .dark .thread-sticky-header-table.el-table :deep(.el-table__header-wrapper th.el-table__cell) {
-    background: rgb(31 41 55);
+  .thread-sticky-header-table.el-table .el-table__header-wrapper th.el-table-fixed-column--left,
+  .thread-sticky-header-table.el-table .el-table__header-wrapper th.el-table-fixed-column--right {
+    z-index: 6;
+  }
+
+  .dark .thread-sticky-header-table.el-table .el-table__header-wrapper th.el-table__cell {
+    background: rgb(17 24 39);
   }
 
   .thread-nav-favorites {
@@ -289,7 +308,7 @@
   }
 
   .thread-catalog-table-wrap {
-    @apply min-w-0 overflow-x-auto;
+    @apply min-w-0;
   }
 
   .thread-ref-guide {
