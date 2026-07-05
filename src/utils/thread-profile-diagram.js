@@ -222,12 +222,30 @@ function diameterLeader(y, label, xProfileEnd, opts = {}) {
   }
 }
 
+function yOnProfileAtX(pts, x) {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i]
+    const [x2, y2] = pts[i + 1]
+    if (x >= x1 - 0.001 && x <= x2 + 0.001) {
+      if (Math.abs(x2 - x1) < 0.001) return y1
+      const t = (x - x1) / (x2 - x1)
+      return y1 + t * (y2 - y1)
+    }
+  }
+  const first = pts[0]
+  const last = pts[pts.length - 1]
+  if (x <= first[0]) return first[1]
+  if (x >= last[0]) return last[1]
+  return null
+}
+
 /** ISO 60° / 惠氏 55° 基本牙型 */
 function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
   const P = 88
   const H = P * Hfactor
   const x0 = 128
   const teeth = 2
+  const halfP = P / 2
   const y0 = 56
   const yPitch = y0 + H * 1.05
   const cf = P / 8
@@ -248,11 +266,21 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     const xr = xl + P
     if (i === 0) extPts.push([xl, yExtRoot])
     extPts.push([xc - cf / 2, yExtCrest], [xc + cf / 2, yExtCrest], [xr, yExtRoot])
+  }
+  // 内螺纹相对外螺纹错开 P/2，牙顶对牙谷啮合
+  const intX0 = x0 + halfP
+  for (let i = 0; i < teeth; i++) {
+    const xl = intX0 + i * P
+    const xc = xl + P / 2
+    const xr = xl + P
     if (i === 0) intPts.push([xl, yIntRoot])
     intPts.push([xc - cf / 2, yIntCrest], [xc + cf / 2, yIntCrest], [xr, yIntRoot])
   }
 
   const xEnd = x0 + teeth * P
+  const intXEnd = intX0 + teeth * P
+  const xFillLeft = x0
+  const xFillRight = Math.max(xEnd, intXEnd)
   const xc = x0 + P / 2
   const yBottom = yExtRoot + H / 2.4
   const yTop = yIntRoot - H / 5
@@ -261,9 +289,11 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
   const extProfile = ptsToPath(extPts)
   const intProfile = ptsToPath(intPts)
 
-  // 内螺纹实体：顶面到「内孔轮廓 ∧ 外螺纹轮廓」的上包络，避免外牙顶被算进内螺纹区
-  const intUpperEnv = intPts.map((pt, i) => [pt[0], Math.min(pt[1], extPts[i][1])])
-  const intFill = `${ptsToPath(intUpperEnv)} L ${xEnd} ${yTop} L ${x0} ${yTop} Z`
+  const intUpperEnv = intPts.map(([x, yi]) => {
+    const ye = yOnProfileAtX(extPts, x)
+    return [x, ye != null ? Math.min(yi, ye) : yi]
+  })
+  const intFill = `${ptsToPath(intUpperEnv)} L ${xFillRight} ${yTop} L ${xFillLeft} ${yTop} Z`
   const extFill = `${extProfile} L ${xEnd} ${yBottom} L ${x0} ${yBottom} Z`
 
   const ghosts = []
@@ -276,7 +306,7 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
 
   const xDimH = 52
   const xDimPart = 92
-  const maxLabelX = xEnd + 6 + 72 + 58
+  const maxLabelX = Math.max(xEnd, intXEnd) + 6 + 72 + 58
 
   const dims = [
     dimV(xDimH, ySharpCrest, ySharpRoot, 'H', { ext: 8, tickX: xTick }),
@@ -285,9 +315,9 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
     dimV(xDimPart, ySharpRoot, yExtRoot, 'H/4', { ext: 6, tickX: xTick }),
     dimH(xc - P / 2, xc + P / 2, yExtRoot, 'P', { ext: 16, tickY: yExtRoot }),
     // 右：顶 d/D₁（外顶径≈内小径），中 d₂/D₂，底 d₁/D（外小径≈内大径）
-    diameterLeader(yExtCrest, 'd / D₁', xEnd),
-    diameterLeader(yPitch, 'd₂ / D₂', xEnd),
-    diameterLeader(yExtRoot, 'd₁ / D', xEnd),
+    diameterLeader(yExtCrest, 'd / D₁', Math.max(xEnd, intXEnd)),
+    diameterLeader(yPitch, 'd₂ / D₂', Math.max(xEnd, intXEnd)),
+    diameterLeader(yExtRoot, 'd₁ / D', Math.max(xEnd, intXEnd)),
   ]
 
   if (includedAngle === 55) {
@@ -317,11 +347,11 @@ function buildIsoTriangular(withTaper, includedAngle, Hfactor, trunc) {
       { d: extProfile, stroke: '#374151', width: 2.2 },
     ],
     ghosts,
-    pitchAxis: { x1: x0 - 12, y1: yPitch, x2: xEnd + 12, y2: yPitch },
+    pitchAxis: { x1: x0 - 12, y1: yPitch, x2: xFillRight + 12, y2: yPitch },
     dims,
     angleMark: angleMarkAtApex(xc, ySharpCrest, includedAngle, `${includedAngle}°`),
     labels: [
-      { text: 'internal', x: x0 + P * 0.35, y: (yTop + yIntRoot) / 2 + 6 },
+      { text: 'internal', x: intX0 + P * 0.35, y: (yTop + yIntRoot) / 2 + 6 },
       { text: 'external', x: x0 + P * 0.35, y: (yExtRoot + yBottom) / 2 },
     ],
     paramKeys: ['pitch', 'major', 'pitchDia', 'minor', 'tapDrill', 'toleranceExt', 'toleranceInt'],
