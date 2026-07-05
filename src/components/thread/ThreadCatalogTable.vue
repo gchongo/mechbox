@@ -37,11 +37,10 @@
     <div class="thread-table-scroll">
       <el-table
         :data="filteredRows"
-        :max-height="THREAD_TABLE_MAX_HEIGHT"
         border
         stripe
         size="small"
-        class="thread-standards-table min-w-[960px] cursor-pointer"
+        class="thread-standards-table thread-sticky-header-table min-w-[960px] cursor-pointer"
         highlight-current-row
         :row-class-name="rowClassName"
         @row-click="(row) => $emit('row-click', row)"
@@ -131,7 +130,6 @@
 import { ref, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { getThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
-import { THREAD_TABLE_MAX_HEIGHT } from '@/constants/thread-ui'
 import { filterThreadRows, formatPitchDisplay, formatDim } from '@/utils/thread-standards'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 import ThreadPitchTool from '@/components/thread/ThreadPitchTool.vue'

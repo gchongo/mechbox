@@ -205,11 +205,10 @@
           </div>
           <el-table
             :data="result.sampleRows"
-            :max-height="THREAD_TABLE_MAX_HEIGHT"
             size="small"
             border
             stripe
-            class="min-w-[640px] thread-scroll-table"
+            class="min-w-[640px] thread-sticky-header-table"
           >
             <el-table-column :label="pt('colDesignation')" prop="designation" min-width="120" />
             <el-table-column v-if="result.showTapDrill" :label="pt('colTapDrill')" width="100">
@@ -244,7 +243,6 @@ import {
   runThreadDesignWizard,
 } from '@/utils/thread-design-wizard'
 import { formatDim } from '@/utils/thread-standards'
-import { THREAD_TABLE_MAX_HEIGHT } from '@/constants/thread-ui'
 import { exportToolReportPdf } from '@/utils/export'
 import { buildDesignWizardPdfSections } from '@/utils/thread-table-report'
 

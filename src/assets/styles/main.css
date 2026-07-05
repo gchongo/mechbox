@@ -119,11 +119,12 @@
 
   /* ── 螺纹标准模块 ── */
   .thread-shell {
-    @apply grid max-h-[calc(100vh-7rem)] min-h-[640px] gap-0 overflow-hidden p-0 lg:grid-cols-[280px_1fr];
+    @apply grid min-h-[640px] gap-0 p-0 lg:grid-cols-[280px_1fr];
   }
 
   .thread-shell__sidebar {
-    @apply flex min-h-0 flex-col overflow-hidden border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-900/40 lg:border-b-0 lg:border-r;
+    @apply flex flex-col border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-900/40
+      lg:sticky lg:top-6 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-hidden lg:border-b-0 lg:border-r;
   }
 
   .thread-shell__sidebar--desktop {
@@ -137,11 +138,22 @@
   }
 
   .thread-table-scroll {
-    @apply min-w-0;
+    @apply min-w-0 overflow-x-auto;
   }
 
-  .thread-scroll-table :deep(.el-table__header-wrapper) {
-    @apply sticky top-0 z-10;
+  /* 主内容滚动时表头吸顶；勿对 el-table 设 max-height，否则会与 flex 布局冲突导致只显示一行 */
+  .thread-sticky-header-table.el-table :deep(.el-table__header-wrapper) {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
+  .thread-sticky-header-table.el-table :deep(.el-table__header-wrapper th.el-table__cell) {
+    background: var(--el-table-header-bg-color, var(--el-fill-color-light));
+  }
+
+  .dark .thread-sticky-header-table.el-table :deep(.el-table__header-wrapper th.el-table__cell) {
+    background: rgb(31 41 55);
   }
 
   .thread-nav-favorites {
@@ -162,7 +174,7 @@
   }
 
   .thread-shell__main {
-    @apply min-h-0 min-w-0 overflow-y-auto p-4 sm:p-6;
+    @apply min-w-0 p-4 sm:p-6;
   }
 
   .thread-main-header {

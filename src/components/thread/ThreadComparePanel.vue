@@ -261,8 +261,7 @@ function formatCell(key, val) {
   border: 1px solid var(--el-border-color);
 }
 .compare-table-wrap {
-  max-height: 520px;
-  overflow: auto;
+  overflow-x: auto;
 }
 
 .compare-table thead th {

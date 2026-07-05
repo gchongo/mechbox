@@ -10,14 +10,7 @@
       <section class="card-panel">
         <h3 class="mb-3 font-semibold">{{ pt('mfgPipeTorqueTitle') }}</h3>
         <p class="mb-3 text-xs text-gray-500">{{ pt('mfgPipeTorqueNote') }}</p>
-        <el-table
-          :data="pipeTorqueRows"
-          :max-height="THREAD_TABLE_MAX_HEIGHT"
-          size="small"
-          border
-          stripe
-          class="thread-scroll-table"
-        >
+        <el-table :data="pipeTorqueRows" size="small" border stripe class="thread-sticky-header-table">
           <el-table-column :label="pt('colDesignation')" prop="size" width="100" />
           <el-table-column :label="pt('mfgTorqueRef')" prop="torqueKey" min-width="160">
             <template #default="{ row }">{{ pt(row.torqueKey) }}</template>
@@ -40,8 +33,6 @@
 </template>
 
 <script setup>
-import { THREAD_TABLE_MAX_HEIGHT } from '@/constants/thread-ui'
-
 defineProps({
   pt: { type: Function, required: true },
 })
