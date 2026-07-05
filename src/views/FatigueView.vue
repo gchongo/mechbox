@@ -112,11 +112,18 @@
         </template>
 
         <template v-else>
-          <p class="mb-3 text-xs text-gray-500">{{ pr('minerVerdictHint') }}</p>
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            class="mb-3"
+            :title="correctionBannerText"
+          />
+          <p class="mb-3 text-xs text-gray-500">{{ modeVerdictHint }}</p>
 
           <div class="mb-4 rounded border border-gray-100 p-3 dark:border-gray-800">
             <h3 class="mb-1 text-sm font-semibold">{{ pr('singleLevelTitle') }}</h3>
-            <p class="mb-2 text-xs text-gray-500">{{ pr('singleLevelHint') }}</p>
+            <p class="mb-2 text-xs text-gray-500">{{ modeSingleLevelHint }}</p>
             <div class="grid grid-cols-2 gap-3 text-sm">
               <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <ResultLabel label-class="text-gray-500" :text="pf('estimatedLife')" />
@@ -278,6 +285,29 @@ const overallStatusLabel = computed(() => {
   if (overallStatus.value === 'pass') return fc('overallPass')
   if (overallStatus.value === 'review') return fc('overallWarn')
   return fc('overallFail')
+})
+
+const modeVerdictHint = computed(() =>
+  calcMode.value === 'professional' ? pr('minerVerdictHintProfessional') : pr('minerVerdictHintComplete'),
+)
+
+const modeSingleLevelHint = computed(() =>
+  calcMode.value === 'professional' ? pr('singleLevelHintProfessional') : pr('singleLevelHintComplete'),
+)
+
+const correctionBannerText = computed(() => {
+  const cs = result.value.correctionSummary
+  if (!cs) return ''
+  if (cs.calcMode === 'professional') {
+    return pf('correctionBannerProfessional', {
+      sm: cs.meanStress ?? 0,
+      method: cs.meanStressMethod ?? 'goodman',
+      ka: cs.surfaceFactor ?? 1,
+      kb: cs.sizeFactor ?? 1,
+      se: Math.round((cs.enduranceLimitMpA ?? 0) * 10) / 10,
+    })
+  }
+  return pf('correctionBannerComplete', { se: cs.enduranceLimitMpA ?? result.value.enduranceLimit })
 })
 
 const minerStatusText = computed(() => {

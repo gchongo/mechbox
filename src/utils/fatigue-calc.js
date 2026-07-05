@@ -333,6 +333,8 @@ export function calcMinerDamage(material, loads, options = {}) {
   if (!Number.isFinite(damage) || damage >= 1) statusKey = 'fail'
   else if (damage >= 0.8) statusKey = 'warn'
 
+  const meanStressApplied = meanStress != null && meanStress > 0
+
   return {
     totalDamage: damage,
     damagePercent: Number.isFinite(damage) ? damage * 100 : Infinity,
@@ -340,9 +342,43 @@ export function calcMinerDamage(material, loads, options = {}) {
     statusKey,
     pass: Number.isFinite(damage) && damage < 1,
     adjustedEndurance,
-    meanStressApplied: meanStress != null && meanStress > 0,
+    enduranceLimitUsed: adjustedEndurance,
+    meanStressApplied,
+    meanStressMethod: meanStressApplied ? meanStressMethod : null,
+    rawSaUsed: !meanStressApplied,
     details,
   }
+}
+
+function buildFatigueCorrectionSummary(calcMode, input, materialKey) {
+  const m = SN_MATERIALS[materialKey] ?? SN_MATERIALS.steel_45
+  if (calcMode === 'complete') {
+    return {
+      calcMode,
+      minerMeanStress: false,
+      minerSurfaceSize: false,
+      enduranceLimitMpA: m.enduranceLimit,
+      singleLevelGoodman: false,
+    }
+  }
+  if (calcMode === 'professional') {
+    const ka = input.surfaceFactor ?? 1
+    const kb = input.sizeFactor ?? 1
+    const sm = input.meanStress ?? 0
+    return {
+      calcMode,
+      minerMeanStress: sm > 0,
+      meanStress: sm,
+      meanStressMethod: input.meanStressMethod ?? 'goodman',
+      minerSurfaceSize: true,
+      surfaceFactor: ka,
+      sizeFactor: kb,
+      enduranceLimitMpA: m.enduranceLimit * ka * kb,
+      materialEnduranceMpA: m.enduranceLimit,
+      singleLevelGoodman: sm > 0,
+    }
+  }
+  return { calcMode, estimateOnly: true }
 }
 
 export function analyzeFatigue(input) {
@@ -409,6 +445,7 @@ export function analyzeFatigue(input) {
     enduranceLimit: m.enduranceLimit,
     singleLevelPass,
     pass: miner ? miner.pass : singleLevelPass,
+    correctionSummary: buildFatigueCorrectionSummary(calcMode, input, material),
   }
 
   if (calcMode === 'professional') {
@@ -468,6 +505,16 @@ export function buildFatigueReportText(result, locale = 'zh') {
     )
   }
   if (result.miner && !result.miner.errorKey) {
+    const cs = result.correctionSummary
+    if (cs?.calcMode === 'complete') {
+      lines.push(
+        `${zh ? 'Miner 修正' : 'Miner correction'}: ${zh ? '谱面原始 Sa，σ₋₁=' : 'raw Sa, σ₋₁='}${cs.enduranceLimitMpA} MPa`,
+      )
+    } else if (cs?.calcMode === 'professional') {
+      lines.push(
+        `${zh ? 'Miner 修正' : 'Miner correction'}: Sm=${cs.meanStress} (${cs.meanStressMethod}), Se′=${cs.enduranceLimitMpA} MPa`,
+      )
+    }
     lines.push(`${zh ? 'Miner 累积损伤 D' : 'Miner D'}: ${result.miner.totalDamage?.toFixed(4)}`)
     lines.push(
       `${zh ? 'Miner 判定' : 'Miner verdict'}: ${result.miner.pass ? (zh ? 'D<1 通过' : 'D<1 pass') : zh ? 'D≥1 不通过' : 'D≥1 fail'}`,

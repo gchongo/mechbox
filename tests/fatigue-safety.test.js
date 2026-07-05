@@ -160,4 +160,24 @@ describe('fatigue engineering safety', () => {
     expect(r.pass).toBe(false)
     expect(r.totalDamage).toBe(Infinity)
   })
+
+  it('complete vs professional: same spectrum, different Miner D by design', () => {
+    const loads = parseLoadSpectrum('350,10000\n300,50000\n250,100000\n220,200000')
+    const base = { material: 'steel_45', stressAmplitude: 444, targetLife: 300000, loads }
+    const complete = analyzeFatigue({ ...base, calcMode: 'complete' })
+    const professional = analyzeFatigue({
+      ...base,
+      calcMode: 'professional',
+      meanStress: 100,
+      meanStressMethod: 'goodman',
+      surfaceFactor: 0.9,
+      sizeFactor: 0.85,
+    })
+    expect(complete.correctionSummary.minerMeanStress).toBe(false)
+    expect(professional.correctionSummary.minerMeanStress).toBe(true)
+    expect(complete.miner.totalDamage).toBeLessThan(0.5)
+    expect(professional.miner.totalDamage).toBeGreaterThan(1)
+    expect(complete.pass).toBe(true)
+    expect(professional.pass).toBe(false)
+  })
 })
