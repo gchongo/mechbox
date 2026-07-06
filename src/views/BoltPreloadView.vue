@@ -522,20 +522,11 @@ function stepStatusLabel(s) {
 }
 
 async function exportCalcPdf() {
-  const r = result.value
   const report = buildEnhancedReport({ snapshot: snapshot.value })
-  const keySection = {
-    heading: ct('results'),
-    rows: [
-      { label: `${pf('preload')} (N)`, value: r.preload.toFixed(0) },
-      { label: `${pf('torque')} (N·m)`, value: r.torque.toFixed(2) },
-      { label: `${pr('tensileStress')} (MPa)`, value: r.stress.toFixed(1) },
-    ],
-  }
   await exportToolReportPdf({
     title: pt('title'),
     subtitle: `M${form.diameter} · ${form.grade} · ${form.calcMode}`,
-    sections: [keySection, ...report.sections],
+    sections: report.sections,
     element: resultPanelRef.value,
     filename: `bolt-preload_M${form.diameter}_${Date.now()}.pdf`,
     meta: {

@@ -300,7 +300,7 @@ const correctionBannerText = computed(() => {
   const cs = result.value.correctionSummary
   if (!cs) return ''
   if (cs.calcMode === 'professional') {
-    return pf('correctionBannerProfessional', {
+    return pr('correctionBannerProfessional', {
       sm: cs.meanStress ?? 0,
       method: cs.meanStressMethod ?? 'goodman',
       ka: cs.surfaceFactor ?? 1,
@@ -308,7 +308,7 @@ const correctionBannerText = computed(() => {
       se: Math.round((cs.enduranceLimitMpA ?? 0) * 10) / 10,
     })
   }
-  return pf('correctionBannerComplete', { se: cs.enduranceLimitMpA ?? result.value.enduranceLimit })
+  return pr('correctionBannerComplete', { se: cs.enduranceLimitMpA ?? result.value.enduranceLimit })
 })
 
 const minerStatusText = computed(() => {
