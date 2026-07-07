@@ -547,6 +547,23 @@ describe('bolt group friction and prying', () => {
     expect(r.friction.slipPass).toBe(false)
     expect(r.pass).toBe(false)
   })
+
+  it('does not apply prying when pryingArm is zero', () => {
+    const r = analyzeBoltGroup({
+      calcMode: 'complete',
+      boltCount: 8,
+      boltCircleRadius: 60,
+      shearX: 5000,
+      shearY: 2000,
+      moment: 120000,
+      pryingArm: 0,
+      allowPerBolt: 8000,
+    })
+    expect(r.prying.pryingTension).toBe(0)
+    expect(r.prying.totalTension).toBe(0)
+    expect(r.maxBoltForce).toBeLessThan(2000)
+    expect(r.maxBoltForce).toBe(r.bolts.reduce((m, b) => Math.max(m, b.combinedForce), 0))
+  })
 })
 
 describe('bearing life temperature factor', () => {

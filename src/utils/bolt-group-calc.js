@@ -29,14 +29,14 @@ export function calcSlipResistance(frictionCoeff, clampForcePerBolt, boltCount) 
   }
 }
 
-/** 撬力引起的附加栓拉力（简化杠杆模型） */
+/** 撬力引起的附加栓拉力（简化杠杆模型；pryingArm≤0 时不启用撬力） */
 export function calcPryingTension(input) {
   const n = input.boltCount ?? 4
   const M = input.moment ?? 0
   const axialGroup = input.axialTension ?? 0
-  const pryingArm = Math.max(input.pryingArm ?? 0, 1e-6)
+  const pryingArm = input.pryingArm ?? 0
   const directTension = axialGroup / n
-  const pryingTension = M > 0 ? M / (n * pryingArm) : 0
+  const pryingTension = M > 0 && pryingArm > 0 ? M / (n * pryingArm) : 0
   return {
     directTension,
     pryingTension,
