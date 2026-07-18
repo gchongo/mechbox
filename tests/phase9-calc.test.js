@@ -1040,6 +1040,21 @@ describe('weld-calc modes', () => {
     expect(r.haz).toBeDefined()
     expect(r.combined.equivalentStress).toBeGreaterThan(r.shearStress)
   })
+
+  it('combined bending uses N·mm without spurious ×1000', () => {
+    const r = analyzeFilletWeld({
+      ...input,
+      calcMode: 'professional',
+      eccentricity: 20,
+    })
+    const throat = 6 * 0.7
+    const area = throat * 80
+    const W = (80 * throat ** 2) / 6
+    const expectedSigmaB = (12000 * 20) / W
+    expect(r.combined.bendingStress).toBeCloseTo(expectedSigmaB, 4)
+    expect(r.combined.bendingStress).toBeLessThan(2000)
+    expect(r.combined.shearStress).toBeCloseTo(12000 / area, 4)
+  })
 })
 
 describe('beam-calc modes', () => {
@@ -1136,6 +1151,17 @@ describe('o-ring-calc modes', () => {
     expect(r.fillPercent).toBeGreaterThan(0)
   })
 
+  it('derives free catalog ID from installed groove diameter and stretch', () => {
+    const r = analyzeORingSeal({ ...base, calcMode: 'simple', stretchPercent: 2 })
+    expect(r.installedID).toBeCloseTo(18.5, 6)
+    expect(r.freeID).toBeCloseTo(18.5 / 1.02, 6)
+    expect(r.freeID).toBeLessThan(r.installedID)
+  })
+
+  it('rejects out-of-range stretch percent', () => {
+    expect(analyzeORingSeal({ ...base, stretchPercent: 12 }).errorKey).toBe('invalid_stretch')
+  })
+
   it('complete mode checks extrusion', () => {
     const r = analyzeORingSeal({ ...base, calcMode: 'complete', pressure: 5, extrusionGap: 0.1 })
     expect(r.extrusionPass).toBeDefined()
@@ -1154,7 +1180,8 @@ describe('clutch-calc modes', () => {
     expect(r.torque).toBeGreaterThan(0)
     expect(r.estimateOnly).toBe(true)
     expect(r.pass).toBe(false)
-    expect(r.torquePass).toBe(true)
+    expect(r.torquePass).toBe(false)
+    expect(r.allowableRequired).toBe(true)
   })
 
   it('complete uses effective radius', () => {
@@ -1165,9 +1192,26 @@ describe('clutch-calc modes', () => {
       innerDiameter: 100,
       outerDiameter: 160,
       surfaces: 2,
+      allowableTorque: 200,
     })
     expect(r.effectiveRadius).toBeGreaterThan(50)
     expect(r.contactPressure).toBeGreaterThan(0)
+    expect(r.torquePass).toBe(true)
+  })
+
+  it('complete without allowable torque cannot formally pass', () => {
+    const r = analyzeClutch({
+      calcMode: 'complete',
+      frictionCoeff: 0.15,
+      force: 5000,
+      innerDiameter: 100,
+      outerDiameter: 160,
+      surfaces: 2,
+    })
+    expect(r.allowableRequired).toBe(true)
+    expect(r.torquePass).toBe(false)
+    expect(r.pass).toBe(false)
+    expect(r.estimateOnly).toBe(true)
   })
 
   it('professional derates at speed', () => {
@@ -1226,6 +1270,25 @@ describe('chain-calc modes', () => {
     const r = analyzeChainDrive({ ...base, calcMode: 'professional', strands: 2 })
     expect(r.estimatedLifeHours).toBeGreaterThan(0)
   })
+
+  it('multi-strand tensionPass uses per-strand capacity', () => {
+    const single = analyzeChainDrive({
+      ...base,
+      calcMode: 'complete',
+      allowTension: 1500,
+      strands: 1,
+    })
+    const triple = analyzeChainDrive({
+      ...base,
+      calcMode: 'complete',
+      allowTension: 1500,
+      strands: 3,
+    })
+    expect(single.tensionPass).toBe(false)
+    expect(triple.tensionPerStrand).toBeCloseTo(triple.chainTension / 3, 6)
+    expect(triple.tensionPass).toBe(true)
+    expect(triple.pass).toBe(true)
+  })
 })
 
 describe('hydraulic-calc modes', () => {
@@ -1280,6 +1343,50 @@ describe('hydraulic-calc modes', () => {
     expect(pneumatic.extendForce).toBeLessThan(hydraulic.extendForce)
     expect(pneumatic.loadPass).toBe(false)
     expect(pneumatic.pass).toBe(false)
+  })
+
+  it('rejects pneumatic efficiency greater than one because it would amplify force', () => {
+    const r = analyzePneumaticCylinder({ ...base, calcMode: 'complete', efficiency: 1.05 })
+    expect(r.errorKey).toBe('invalid_efficiency')
+  })
+
+  it('rejects rod diameter greater than or equal to bore diameter', () => {
+    const r = analyzeHydraulicCylinder({
+      calcMode: 'simple',
+      boreDiameter: 50,
+      rodDiameter: 50,
+      pressure: 16,
+      flowRate: 20,
+    })
+    expect(r.errorKey).toBe('invalid_rod_diameter')
+  })
+
+  it('rejects missing or negative pressure instead of returning NaN force', () => {
+    expect(analyzeHydraulicCylinder({
+      calcMode: 'simple',
+      boreDiameter: 50,
+      rodDiameter: 20,
+    }).errorKey).toBe('invalid_pressure')
+    expect(analyzeHydraulicCylinder({
+      calcMode: 'simple',
+      boreDiameter: 50,
+      rodDiameter: 20,
+      pressure: -1,
+    }).errorKey).toBe('invalid_pressure')
+  })
+
+  it('rejects non-finite cylinder inputs before formulas run', () => {
+    expect(analyzeHydraulicCylinder({
+      calcMode: 'simple',
+      boreDiameter: 50,
+      rodDiameter: 20,
+      pressure: Number.NaN,
+    }).errorKey).toBe('invalid_pressure')
+    expect(analyzePneumaticCylinder({
+      ...base,
+      calcMode: 'complete',
+      efficiency: Number.POSITIVE_INFINITY,
+    }).errorKey).toBe('invalid_efficiency')
   })
 })
 
@@ -1344,6 +1451,23 @@ describe('plate-buckling modes', () => {
   it('simple mode critical stress', () => {
     const r = calcPlateBucklingStress({ ...base, calcMode: 'simple' })
     expect(r.criticalStress).toBeGreaterThan(0)
+    expect(r.bucklingCoeff).toBe(4)
+  })
+
+  it('does not inflate buckling coefficient with aspect ratio', () => {
+    const square = calcPlateBucklingStress({
+      ...base,
+      length: 200,
+      calcMode: 'simple',
+    })
+    const long = calcPlateBucklingStress({
+      ...base,
+      length: 600,
+      calcMode: 'simple',
+    })
+    expect(square.bucklingCoeff).toBe(4)
+    expect(long.bucklingCoeff).toBe(4)
+    expect(long.criticalStress).toBeCloseTo(square.criticalStress, 6)
   })
 
   it('complete mode lowers k with imperfection', () => {
@@ -1463,6 +1587,43 @@ describe('sheet-metal modes', () => {
       springbackFactor: 0.5,
     })
     expect(r.compensatedFlatLength).toBeGreaterThan(r.flatLength)
+    expect(r.springbackEstimateOnly).toBe(true)
+  })
+
+  it('rejects negative straight length instead of clamping it to zero', () => {
+    const r = analyzeSheetMetalUnfold({
+      calcMode: 'simple',
+      thickness: 1.5,
+      segments: [{ type: 'straight', length: -10 }],
+    })
+    expect(r.errorKey).toBe('invalid_segment_length')
+  })
+
+  it('rejects impossible bend angle and K factor', () => {
+    expect(analyzeSheetMetalUnfold({
+      calcMode: 'simple',
+      kFactor: 0.8,
+      segments: segs,
+    }).errorKey).toBe('invalid_k_factor')
+    expect(analyzeSheetMetalUnfold({
+      calcMode: 'simple',
+      thickness: 1.5,
+      segments: [{ type: 'bend', angle: 180 }],
+    }).errorKey).toBe('invalid_bend_angle')
+  })
+
+  it('rejects non-finite sheet metal inputs before formulas run', () => {
+    expect(analyzeSheetMetalUnfold({
+      calcMode: 'simple',
+      thickness: Number.NaN,
+      segments: segs,
+    }).errorKey).toBe('invalid_thickness')
+    expect(analyzeSheetMetalUnfold({
+      calcMode: 'professional',
+      thickness: 1.5,
+      segments: segs,
+      springbackFactor: Number.POSITIVE_INFINITY,
+    }).errorKey).toBe('invalid_springback')
   })
 })
 
@@ -1520,6 +1681,18 @@ describe('pipe-flow modes', () => {
     expect(r.totalPressureDropKPa).toBe(r.pressureDropKPa)
   })
 
+  it('complete mode includes local loss in total pressure drop', () => {
+    const r = analyzePipeFlow({ ...base, calcMode: 'complete', localLossK: 2 })
+    expect(r.localLoss).toBeGreaterThan(0)
+    expect(r.totalPressureDropKPa).toBeGreaterThan(r.pressureDropKPa)
+  })
+
+  it('treats pipe length as meters, not millimeters', () => {
+    const r = analyzePipeFlow({ ...base, calcMode: 'simple' })
+    expect(r.length).toBe(10)
+    expect(r.pressureDropKPa).toBeGreaterThan(1)
+  })
+
   it('complete hazen williams compare', () => {
     const r = analyzePipeFlow({ ...base, calcMode: 'complete', localLossK: 2 })
     expect(r.methodCompare).toBeTruthy()
@@ -1535,6 +1708,12 @@ describe('modal modes', () => {
   it('simple sdof frequency', () => {
     const r = analyzeModal({ calcMode: 'simple', caseId: 'sdof', stiffness: 10000, mass: 10 })
     expect(r.modal.fn).toBeCloseTo(5.03, 1)
+  })
+
+  it('uses MPa-mm-density units for simply supported beam frequency', () => {
+    const r = analyzeModal({ calcMode: 'simple', caseId: 'beam_ss', spanLength: 500, diameter: 30 })
+    // Steel Ø30×500 mm simply supported: fn ≈ 244 Hz (N-mm-s density)
+    expect(r.modal.fn).toBeCloseTo(243.7, 0)
   })
 
   it('complete critical speed', () => {

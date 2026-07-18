@@ -282,13 +282,13 @@ const STRUCTURAL_PLATE_FORMULAS = {
 const STRUCTURAL_MODAL_FORMULAS = {
   zh: [
     { name: 'SDOF 固有频率', latex: 'f_n = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}}', note: 'modal 标签页默认工况' },
-    { name: '简支梁一阶', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E MPa，尺寸 mm，ρ kg/mm³' },
+    { name: '简支梁一阶', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E MPa，尺寸 mm，ρ 按 N·mm·s（tonne/mm³）换算' },
     { name: '共振裕度', latex: 'M = \\frac{|f_{exc}-f_n|}{f_n}', note: 'pass 当 $M \\ge 0.2$（≥20%）' },
     { name: '放大因子 (专业)', latex: 'H = \\frac{1}{\\sqrt{(1-r^2)^2+(2\\zeta r)^2}}', note: '$r=f_{exc}/f_n$，$\\zeta$ 阻尼比' },
   ],
   en: [
     { name: 'SDOF natural freq.', latex: 'f_n = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}}', note: 'Default modal tab case' },
-    { name: 'Simply supported beam', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E in MPa, mm units, ρ kg/mm³' },
+    { name: 'Simply supported beam', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E in MPa, mm units, ρ in N·mm·s mass units (tonne/mm³)' },
     { name: 'Resonance margin', latex: 'M = \\frac{|f_{exc}-f_n|}{f_n}', note: 'pass when $M \\ge 0.2$ (≥20%)' },
     { name: 'Amplification (Pro)', latex: 'H = \\frac{1}{\\sqrt{(1-r^2)^2+(2\\zeta r)^2}}', note: '$r=f_{exc}/f_n$, $\\zeta$ damping ratio' },
   ],

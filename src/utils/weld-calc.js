@@ -159,7 +159,8 @@ export function analyzeFilletWeldCombined(input) {
   const W = (L * throat ** 2) / 6
 
   const tau = F / area
-  const sigmaB = W ? M * 1000 / W : 0
+  // M is N·mm (F·e with e in mm), W is mm³ → σ in MPa; do not scale by 1000
+  const sigmaB = W ? M / W : 0
   const equiv = Math.sqrt(sigmaB ** 2 + 3 * tau ** 2)
 
   return {

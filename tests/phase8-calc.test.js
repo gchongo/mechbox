@@ -112,16 +112,25 @@ describe('calc-history', () => {
     expect(getToolReplayRecord(entry.id, 'weld')).toBe(null)
   })
 
-  it('only whitelisted tools support input replay', () => {
+  it('uses replayable input snapshots instead of a fixed tool whitelist', () => {
     expect(toolSupportsReplay('fit')).toBe(true)
     expect(toolSupportsReplay('gdt-stack')).toBe(true)
     expect(toolSupportsReplay('weld')).toBe(true)
-    expect(toolSupportsReplay('beam')).toBe(false)
-    expect(toolSupportsReplay('bolt-preload')).toBe(false)
+    expect(toolSupportsReplay('beam')).toBe(true)
+    expect(toolSupportsReplay('bolt-preload')).toBe(true)
 
     const beamEntry = saveToolHistory({ tool: 'beam', title: '梁', status: 'pass' })
     savedIds.push(beamEntry.id)
     expect(buildToolReplayRoute(beamEntry)).toBe(null)
+
+    const replayableBeamEntry = saveToolHistory({
+      tool: 'beam',
+      title: '梁回放',
+      status: 'pass',
+      input: { spanLength: 500, load: 2000 },
+    })
+    savedIds.push(replayableBeamEntry.id)
+    expect(buildToolReplayRoute(replayableBeamEntry)?.path).toBe('/beam')
   })
 
   it('resolveHistoryOpenTarget routes editor vs replay vs blank tool', () => {
@@ -136,7 +145,12 @@ describe('calc-history', () => {
       id: String(editorEntry.id),
     })
 
-    const fitEntry = saveToolHistory({ tool: 'fit', title: '配合', status: 'pass', input: {} })
+    const fitEntry = saveToolHistory({
+      tool: 'fit',
+      title: '配合',
+      status: 'pass',
+      input: { nominal: 25, holeCode: 'H7', shaftCode: 'g6' },
+    })
     savedIds.push(fitEntry.id)
     const fitTarget = resolveHistoryOpenTarget(fitEntry)
     expect(fitTarget.kind).toBe('replay')
@@ -145,9 +159,9 @@ describe('calc-history', () => {
     const beamEntry = saveToolHistory({ tool: 'beam', title: '梁', status: 'pass' })
     savedIds.push(beamEntry.id)
     expect(resolveHistoryOpenTarget(beamEntry)).toEqual({
-      kind: 'tool-blank',
-      path: '/beam',
-      tool: 'beam',
+      kind: 'summary-only',
+      record: beamEntry,
+      reason: 'no_input_snapshot',
     })
   })
 

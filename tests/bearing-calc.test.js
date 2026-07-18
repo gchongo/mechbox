@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analyzeBearingLife } from '@/utils/bearing-calc'
 
 describe('bearing-calc', () => {
-  it('professional modified life uses linear a2 factor', () => {
+  it('professional modified life applies temperature factor by life exponent', () => {
     const result = analyzeBearingLife({
       calcMode: 'professional',
       dynamicLoad: 35000,
@@ -19,7 +19,7 @@ describe('bearing-calc', () => {
       autoLookup: false,
     })
 
-    const expected = result.l10MillionRev * 0.64 * 1.0 * 0.8
+    const expected = result.l10MillionRev * 0.64 * 1.0 * 0.8 ** 3
     expect(result.modifiedLifeMillionRev).toBeCloseTo(expected, 8)
   })
 })

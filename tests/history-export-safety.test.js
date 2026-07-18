@@ -3,7 +3,7 @@ import { pickMergedMethodResult, buildExportTraceSection } from '@/utils/export'
 import { resolveHistoryOpenTarget } from '@/utils/calc-history'
 
 describe('history/export safety', () => {
-  it('merged export prefers recorded method regardless of review status', () => {
+  it('merged export uses worst-case result for review status', () => {
     const picked = pickMergedMethodResult(
       {
         method: 'rss',
@@ -14,8 +14,8 @@ describe('history/export safety', () => {
       },
       'review',
     )
-    expect(picked.method).toBe('rss')
-    expect(picked.tolerance).toBeCloseTo(0.08)
+    expect(picked.method).toBe('worst')
+    expect(picked.tolerance).toBeCloseTo(0.15)
   })
 
   it('tool record without input opens summary-only with no_input_snapshot', () => {

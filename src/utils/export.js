@@ -526,6 +526,9 @@ export function pickMergedMethodResult(data, snapshotStatus = 'draft') {
         : []
   if (!methodResults.length) return null
   const worst = methodResults.find((x) => x.method === 'worst') ?? methodResults[0]
+  if (snapshotStatus === 'review' || snapshotStatus === 'fail') {
+    return worst
+  }
   const methodKey =
     data?.method === 'modifiedRss'
       ? 'modified-rss'

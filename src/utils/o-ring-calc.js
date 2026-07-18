@@ -24,11 +24,16 @@ export function analyzeORingSeal(input) {
   const cs = input.crossSection ?? 3.53
   const grooveD = input.grooveDiameter ?? 20
   const grooveW = input.grooveWidth ?? 4.5
-  const stretch = (input.stretchPercent ?? 2) / 100
+  const stretchPct = input.stretchPercent ?? 2
+  if (!Number.isFinite(stretchPct) || stretchPct < 0 || stretchPct > 8) {
+    return { errorKey: 'invalid_stretch', calcMode }
+  }
+  const stretch = stretchPct / 100
   const pressure = input.pressure ?? 0
 
-  const installedID = grooveD * (1 + stretch)
-  const freeID = installedID / (1 + stretch)
+  // grooveDiameter is the installed/gland diameter; free catalog ID is smaller by stretch
+  const installedID = grooveD
+  const freeID = grooveD / (1 + stretch)
   const targetCompression = (input.compressionPercent ?? 20) / 100
   const compression = cs * targetCompression
   const grooveDepth = cs - compression

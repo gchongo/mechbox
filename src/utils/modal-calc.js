@@ -10,16 +10,20 @@ export function calcSDOFFrequency(stiffness, mass) {
   return { omega, fn, period: 1 / fn, modeKey: 'sdof' }
 }
 
+/** Density in N-mm-s mass units (tonne/mm³): 7850 kg/m³ → 7.85e-9 */
+function densityTonnePerMm3(densityKgPerM3 = 7850) {
+  return densityKgPerM3 * 1e-12
+}
+
 /** 简支梁一阶弯曲固有频率 fn = (π/2L²)√(EI/ρA) */
 export function calcSimplySupportedBeamFreq(input) {
-  const E = input.elasticModulus ?? 210e9
-  const rho = (input.density ?? 7850) * 1e-9 // kg/mm³
+  const E = input.elasticModulus ?? 210000
+  const rho = densityTonnePerMm3(input.density ?? 7850)
   const L = input.spanLength ?? 500
   const I = input.inertia ?? (Math.PI * (input.diameter ?? 30) ** 4) / 64
   const A = input.area ?? (Math.PI * (input.diameter ?? 30) ** 2) / 4
 
-  const fn = (Math.PI / (2 * L ** 2)) * Math.sqrt((E * I) / (rho * A)) * 1000 // mm单位修正
-  // E in MPa = N/mm², I mm⁴, ρ kg/mm³, L mm → fn Hz
+  // E MPa (N/mm²), I mm⁴, ρ tonne/mm³, L mm → fn Hz (1 N = 1 tonne·mm/s²)
   const fnCorrect = (Math.PI / (2 * L ** 2)) * Math.sqrt((E * I) / (rho * A))
 
   return {
@@ -33,7 +37,7 @@ export function calcSimplySupportedBeamFreq(input) {
 /** 悬臂梁一阶 fn = (1.875²/2πL²)√(EI/ρA) */
 export function calcCantileverBeamFreq(input) {
   const E = input.elasticModulus ?? 210000
-  const rho = (input.density ?? 7850) * 1e-9
+  const rho = densityTonnePerMm3(input.density ?? 7850)
   const L = input.spanLength ?? 300
   const d = input.diameter ?? 25
   const I = (Math.PI * d ** 4) / 64

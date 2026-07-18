@@ -28,10 +28,9 @@ export function calcPlateBucklingStress(input) {
   const edge = PLATE_EDGE_CONDITIONS[input.edgeCondition ?? 'ssss'] ?? PLATE_EDGE_CONDITIONS.ssss
 
   const aspect = a / b
+  // Keep base plate factor k (e.g. SSSS uniaxial ≈ 4). Do not inflate k with aspect —
+  // longer plates do not gain critical stress that way for the classical formula.
   let k = edge.k
-  if (aspect > 1) {
-    k *= 1 + 0.1 * Math.min(aspect - 1, 2)
-  }
 
   if (calcMode !== 'simple') {
     const imperfection = input.imperfectionFactor ?? 0.8

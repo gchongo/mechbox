@@ -34,6 +34,9 @@ export function analyzeSheetMetalUnfold(input) {
   const method = input.method ?? 'k_factor'
   const segments = input.segments ?? []
 
+  if (!Number.isFinite(thickness) || thickness <= 0) return { errorKey: 'invalid_thickness', calcMode }
+  if (!Number.isFinite(defaultRadius) || defaultRadius < 0) return { errorKey: 'invalid_radius', calcMode }
+  if (!Number.isFinite(defaultK) || defaultK < 0 || defaultK > 0.5) return { errorKey: 'invalid_k_factor', calcMode }
   if (!segments.length) return { errorKey: 'need_one_segment', calcMode }
 
   let flatLength = 0
@@ -43,7 +46,8 @@ export function analyzeSheetMetalUnfold(input) {
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i]
     if (seg.type === 'straight') {
-      const len = Math.max(seg.length ?? 0, 0)
+      const len = seg.length ?? 0
+      if (!Number.isFinite(len) || len < 0) return { errorKey: 'invalid_segment_length', calcMode, segmentIndex: i }
       flatLength += len
       details.push({ index: i, type: 'straight', length: len, contribution: len })
     } else if (seg.type === 'bend') {
@@ -51,6 +55,9 @@ export function analyzeSheetMetalUnfold(input) {
       const angle = seg.angle ?? 90
       const R = seg.radius ?? defaultRadius
       const K = seg.kFactor ?? defaultK
+      if (!Number.isFinite(angle) || angle <= 0 || angle >= 180) return { errorKey: 'invalid_bend_angle', calcMode, segmentIndex: i }
+      if (!Number.isFinite(R) || R < 0) return { errorKey: 'invalid_radius', calcMode, segmentIndex: i }
+      if (!Number.isFinite(K) || K < 0 || K > 0.5) return { errorKey: 'invalid_k_factor', calcMode, segmentIndex: i }
       const ba = calcBendAllowance(angle, R, thickness, K)
       const bd = calcBendDeduction(angle, R, thickness, K)
 
@@ -122,7 +129,9 @@ export function analyzeSheetMetalUnfold(input) {
 
   if (calcMode === 'professional') {
     const springback = input.springbackFactor ?? 0.5
+    if (!Number.isFinite(springback) || springback < 0) return { errorKey: 'invalid_springback', calcMode }
     result.springbackDeg = springback
+    result.springbackEstimateOnly = true
     result.compensatedFlatLength = result.flatLength * (1 + springback / (90 * Math.max(bendCount, 1)))
     const innerRadius = defaultRadius
     result.minInnerRadius = thickness

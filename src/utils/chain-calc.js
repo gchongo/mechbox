@@ -49,26 +49,28 @@ export function analyzeChainDrive(input) {
     serviceFactor,
   }
 
+  const strands = Math.max(1, input.strands ?? 1)
+  result.strands = strands
+  result.tensionPerStrand = tension / strands
+
   if (calcMode === 'complete' || calcMode === 'professional') {
     const maxSpeed = input.maxChainSpeed ?? 15
     result.maxChainSpeed = maxSpeed
     result.speedPass = speed <= maxSpeed
     const allowTension = input.allowTension ?? 20000
     result.allowTension = allowTension
-    result.tensionPass = tension <= allowTension
-    result.tensionUtilization = allowTension ? tension / allowTension : 0
+    // allowTension is per-strand capacity; multi-row chains share the design tension
+    result.tensionPass = result.tensionPerStrand <= allowTension
+    result.tensionUtilization = allowTension ? result.tensionPerStrand / allowTension : 0
     result.pass = result.speedPass && result.tensionPass
   }
 
   if (calcMode === 'professional') {
     const lubrication = input.lubricationFactor ?? 1
     const lifeBase = 15000
-    const lifeFactor = (input.allowTension ?? 20000) / Math.max(tension, 1)
+    const lifeFactor = (input.allowTension ?? 20000) / Math.max(result.tensionPerStrand, 1)
     result.lubricationFactor = lubrication
     result.estimatedLifeHours = lifeBase * lifeFactor ** 2 * lubrication
-    result.strands = input.strands ?? 1
-    result.tensionPerStrand = tension / result.strands
-    result.pass = result.pass && result.tensionPerStrand <= (input.allowTension ?? 20000)
   }
 
   return result

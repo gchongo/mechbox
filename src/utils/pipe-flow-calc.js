@@ -25,7 +25,7 @@ export function calcFrictionFactor(Re, roughness, diameter) {
 /** 压降 ΔP (Pa) = f · (L/D) · (ρv²/2) */
 export function calcPipePressureDrop(input) {
   const D = (input.diameter ?? 50) / 1000 // mm → m
-  const L = (input.length ?? 100) / 1000
+  const L = input.length ?? 100 // m
   const Q = input.flowRate ?? 10 // L/min
   const rho = input.density ?? 998
   const mu = input.viscosity ?? 1.002e-3
@@ -48,7 +48,7 @@ export function calcPipePressureDrop(input) {
 
   return {
     diameter: D * 1000,
-    length: L * 1000,
+    length: L,
     flowRate: Q,
     velocity: v,
     reynolds: Re,
@@ -107,7 +107,7 @@ export function analyzePipeFlow(input) {
 /** Hazen-Williams 水力（水管道，m/s 流速） */
 export function calcHazenWilliams(diameter, length, flowRate, C = 130) {
   const D = diameter / 1000
-  const L = length / 1000
+  const L = length // m
   const Q = flowRate / 1000 / 60 // m³/s
   const A = (Math.PI * D ** 2) / 4
   const v = Q / A

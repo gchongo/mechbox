@@ -55,7 +55,10 @@ export function analyzeClutch(input) {
 
   const rpm = input.rpm ?? 0
   const power = (torque * 2 * Math.PI * rpm) / 60000
-  const allow = input.allowableTorque ?? Infinity
+  const hasAllowable =
+    input.allowableTorque != null && Number.isFinite(input.allowableTorque) && input.allowableTorque > 0
+  const allow = hasAllowable ? input.allowableTorque : null
+  const torquePass = hasAllowable ? torque <= allow : false
 
   const result = {
     calcMode,
@@ -63,9 +66,10 @@ export function analyzeClutch(input) {
     clampForce: force,
     effectiveRadius: radius,
     power,
-    torquePass: torque <= allow,
-    pass: torque <= allow,
+    torquePass,
+    pass: torquePass,
     allowableTorque: allow,
+    allowableRequired: !hasAllowable,
   }
 
   if (calcMode === 'simple') {
@@ -82,8 +86,9 @@ export function analyzeClutch(input) {
     result.contactPressure = area ? force / area : 0
     result.maxPressure = input.maxPressure ?? 1.5
     result.pressurePass = !result.contactPressure || result.contactPressure <= result.maxPressure
-    result.utilization = allow !== Infinity ? torque / allow : 0
-    result.pass = result.torquePass && result.pressurePass
+    result.utilization = hasAllowable ? torque / allow : null
+    result.pass = torquePass && result.pressurePass
+    if (!hasAllowable) result.estimateOnly = true
   }
 
   if (calcMode === 'professional') {

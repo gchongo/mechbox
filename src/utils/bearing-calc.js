@@ -8,8 +8,12 @@ import { auditCriticalInputsWithKeys, applyReleaseGate } from '@/utils/critical-
 /** 轴承额定寿命 L10（百万转） ISO 281 */
 export function calcL10MillionRevolutions(dynamicLoad, equivalentLoad, bearingType = 'ball') {
   if (!equivalentLoad || equivalentLoad <= 0) return Infinity
-  const exp = bearingType === 'roller' ? 10 / 3 : 3
+  const exp = bearingLifeExponent(bearingType)
   return (dynamicLoad / equivalentLoad) ** exp
+}
+
+export function bearingLifeExponent(bearingType = 'ball') {
+  return bearingType === 'roller' ? 10 / 3 : 3
 }
 
 /** 修正额定寿命 Lnm = a1 · L10 (百万转) */
@@ -274,9 +278,10 @@ export function analyzeBearingLife(input) {
   if (calcMode === 'professional') {
     a2 = input.temperatureFactor ?? getTemperatureFactor(input.operatingTemp ?? 120)
   }
-  // Keep life modifiers consistent with ISO-style multiplicative correction chain:
-  // Lnm = L10 * a1 * aISO * a2
-  const lnm = calcModifiedLife(l10, a1 * aIso * a2)
+  // Temperature derates effective dynamic capacity, so its impact follows
+  // the bearing life exponent: Lnm = L10 * a1 * aISO * a2^p.
+  const temperatureLifeFactor = calcMode === 'professional' ? a2 ** bearingLifeExponent(bearingType) : 1
+  const lnm = calcModifiedLife(l10, a1 * aIso * temperatureLifeFactor)
   const hours = calcLifeHours(lnm, input.rpm)
   const targetHours = input.targetHours ?? 10000
   const staticSafety = staticLoad

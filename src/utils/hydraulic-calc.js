@@ -112,7 +112,13 @@ export function calcRodBucklingLoad(
 
 export function analyzeHydraulicCylinder(input) {
   const calcMode = input.calcMode ?? 'simple'
-  const areas = calcCylinderArea(input.boreDiameter, input.rodDiameter)
+  const boreDiameter = input.boreDiameter
+  const rodDiameter = input.rodDiameter ?? 0
+  const pressure = input.pressure
+  if (!Number.isFinite(boreDiameter) || boreDiameter <= 0) return { errorKey: 'invalid_bore_diameter', calcMode }
+  if (!Number.isFinite(rodDiameter) || rodDiameter < 0 || rodDiameter >= boreDiameter) return { errorKey: 'invalid_rod_diameter', calcMode }
+  if (pressure == null || !Number.isFinite(pressure) || pressure < 0) return { errorKey: 'invalid_pressure', calcMode }
+  const areas = calcCylinderArea(boreDiameter, rodDiameter)
   const extendForce = calcCylinderForce(input.pressure, areas.bore)
   const retractForce = calcCylinderForce(input.pressure, areas.annular)
   const extendVel = input.flowRate
@@ -203,11 +209,12 @@ export function analyzeHydraulicCylinder(input) {
 }
 
 export function analyzePneumaticCylinder(input) {
+  const calcMode = input.calcMode ?? 'simple'
   const efficiency = input.efficiency ?? 0.85
-  const result = analyzeHydraulicCylinder({ ...input, calcMode: input.calcMode ?? 'simple' })
+  if (!Number.isFinite(efficiency) || efficiency <= 0 || efficiency > 1) return { errorKey: 'invalid_efficiency', calcMode }
+  const result = analyzeHydraulicCylinder({ ...input, calcMode })
   const extendForce = result.extendForce * efficiency
   const retractForce = result.retractForce * efficiency
-  const calcMode = result.calcMode ?? input.calcMode ?? 'simple'
   const updated = {
     ...result,
     extendForce,
