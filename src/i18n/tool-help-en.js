@@ -1825,6 +1825,23 @@ export const toolHelpEnById = {
     keywords: ['key', 'pin', 'O-ring', 'retaining ring'],
   },
 
+  'gdt-symbols': {
+    title: 'GD&T Symbol Legend',
+    summary: 'ASME Y14.5 / ISO 1101 geometric tolerance symbols, material modifiers, and feature-control-frame sketch.',
+    steps: [
+      'Browse form / profile / orientation / location / runout symbols.',
+      'Review MMC/LMC/RFS modifiers and the sample feature control frame.',
+      'Jump to GD&T stack or the size-chain editor for analysis.',
+    ],
+    principle: 'Geometric requirements live in feature control frames; material condition modifiers change effective zone size.',
+    notes: ['Teaching legend — not a full standards text.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['GD&T', 'symbols', 'MMC', 'datum', 'Y14.5'],
+  },
+
   'vibration-isolation': {
     title: 'Vibration Isolation',
     summary: 'SDOF isolation: natural frequency, ratio, transmissibility TR, and isolation-region checks.',

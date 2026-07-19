@@ -33,6 +33,7 @@ export const TOOL_GROUPS = [
       { path: '/allocation', label: '公差分配', desc: '遗传算法 / Pareto', icon: 'ScaleToOriginal', keywords: ['公差', '遗传', 'Pareto'] },
       { path: '/fit', label: 'ISO 286 配合', desc: '轴孔公差带 / 间隙', icon: 'ScaleToOriginal', keywords: ['ISO286', '配合', 'H7', 'g6'] },
       { path: '/gdt-stack', label: 'GD&T 公差栈', desc: '形位公差叠加 / 贡献度', icon: 'Aim', keywords: ['GD&T', '形位', '位置度', '基准'] },
+      { path: '/gdt-symbols', label: '形位公差符号', desc: 'GD&T 符号 / 修饰符图解', icon: 'Collection', keywords: ['GD&T', '形位公差', '符号', 'Y14.5'] },
       { path: '/units', label: '单位换算', desc: 'MPa/psi · mm/in', icon: 'Switch', keywords: ['单位', '换算', 'MPa', 'psi'] },
       { path: '/interference-fit', label: '过盈配合', desc: 'DIN 7190 压装/扭矩', icon: 'Coin', keywords: ['过盈', '配合', 'DIN7190'] },
       { path: '/thermal-expansion', label: '热膨胀', desc: '间隙/过盈温变', icon: 'Sunrise', keywords: ['热膨胀', '温度'] },

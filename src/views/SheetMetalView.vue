@@ -7,7 +7,111 @@
 
     <CalcModePanel v-model="calcMode" page-key="sheet-metal" />
 
-    <div class="grid gap-6 lg:grid-cols-2">
+    <el-radio-group v-model="workMode" class="mb-4" size="small">
+      <el-radio-button value="unfold">{{ pf('workUnfold') }}</el-radio-button>
+      <el-radio-button value="punch">{{ pf('workPunch') }}</el-radio-button>
+      <el-radio-button value="flange">{{ pf('workFlange') }}</el-radio-button>
+    </el-radio-group>
+
+    <div v-if="workMode === 'punch'" class="grid gap-6 lg:grid-cols-2">
+      <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
+        <el-form label-width="120px">
+          <CalcFormItem :label="pf('thickness')" unit="mm">
+            <el-input-number v-model="punchForm.thickness" :min="0.3" :max="20" :precision="2" :step="0.1" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('perimeter')" unit="mm">
+            <el-input-number v-model="punchForm.perimeter" :min="1" :precision="1" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('punchMaterial')">
+            <el-select v-model="punchMaterial" class="w-44" @change="applyPunchMat">
+              <el-option v-for="(p, k) in punchMats" :key="k" :label="p.label" :value="k" />
+            </el-select>
+          </CalcFormItem>
+          <CalcFormItem :label="pf('shearMPa')" unit="MPa">
+            <el-input-number v-model="punchForm.shearMPa" :min="10" :max="800" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('clearancePct')" unit="%">
+            <el-input-number v-model="punchForm.clearancePct" :min="5" :max="20" :precision="1" />
+          </CalcFormItem>
+          <template v-if="calcMode !== 'simple'">
+            <CalcFormItem :label="pf('pressCapacity')" unit="kN">
+              <el-input-number v-model="punchForm.pressCapacitykN" :min="1" />
+            </CalcFormItem>
+          </template>
+        </el-form>
+      </section>
+      <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-alert v-if="punchResult.errorKey" :title="re(punchResult.errorKey)" type="error" show-icon />
+        <dl v-else class="space-y-3 text-sm">
+          <div class="flex justify-between rounded bg-primary/5 p-3">
+            <ResultLabel :text="pr('punchForce')" />
+            <dd class="font-mono text-lg text-primary">{{ punchResult.punchForcekN?.toFixed(2) }} kN</dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('sideClearance')" />
+            <dd class="font-mono">{{ punchResult.sideClearance?.toFixed(3) }} mm</dd>
+          </div>
+          <div v-if="punchResult.stripperForcekN != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('stripperForce')" />
+            <dd class="font-mono">{{ punchResult.stripperForcekN?.toFixed(2) }} kN</dd>
+          </div>
+          <el-tag v-if="typeof punchResult.pass === 'boolean'" :type="punchResult.pass ? 'success' : 'danger'">
+            {{ punchResult.pass ? pf('processOk') : pf('processAdjust') }}
+          </el-tag>
+          <p class="text-xs text-gray-500">{{ pr('punchHint') }}</p>
+        </dl>
+      </section>
+    </div>
+
+    <div v-else-if="workMode === 'flange'" class="grid gap-6 lg:grid-cols-2">
+      <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
+        <el-form label-width="120px">
+          <CalcFormItem :label="pf('thickness')" unit="mm">
+            <el-input-number v-model="flangeForm.thickness" :min="0.3" :max="20" :precision="2" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('holeDia')" unit="mm">
+            <el-input-number v-model="flangeForm.holeDia" :min="1" :precision="1" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('flangeHeight')" unit="mm">
+            <el-input-number v-model="flangeForm.flangeHeight" :min="0.5" :precision="1" />
+          </CalcFormItem>
+          <CalcFormItem v-if="calcMode !== 'simple'" :label="pf('dieOpening')">
+            <el-input-number v-model="flangeForm.dieOpening" :min="0" :precision="1" />
+          </CalcFormItem>
+        </el-form>
+      </section>
+      <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-alert v-if="flangeResult.errorKey" :title="re(flangeResult.errorKey)" type="error" show-icon />
+        <dl v-else class="space-y-3 text-sm">
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('preHoleDia')" />
+            <dd class="font-mono">
+              {{ flangeResult.preHoleDia != null ? flangeResult.preHoleDia.toFixed(2) + ' mm' : '—' }}
+            </dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('hdRatio')" />
+            <dd class="font-mono" :class="flangeResult.ratioPass ? 'text-success' : 'text-warning'">
+              {{ flangeResult.hdRatio?.toFixed(3) }}
+            </dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pf('minFlangeScreen')" />
+            <dd class="font-mono">{{ flangeResult.minFlangeRule?.toFixed(1) }} mm</dd>
+          </div>
+          <el-tag v-if="calcMode !== 'simple'" :type="flangeResult.pass ? 'success' : 'danger'">
+            {{ flangeResult.pass ? pf('processOk') : pf('processAdjust') }}
+          </el-tag>
+          <p class="text-xs text-gray-500">{{ pr('flangeFormHint') }}</p>
+        </dl>
+      </section>
+    </div>
+
+    <div v-show="workMode === 'unfold'" class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="120px">
@@ -203,7 +307,7 @@
         :status="saveStatus"
         :summary="historySummary"
         :input="historyInput"
-        :result="result"
+        :result="activeResult"
       />
     </div>
   </div>
@@ -214,7 +318,13 @@ import { reactive, ref, computed } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
 import FormulaPanel from '@/components/common/FormulaPanel.vue'
-import { analyzeSheetMetalUnfold, K_FACTOR_PRESETS } from '@/utils/sheet-metal-calc'
+import {
+  analyzeSheetMetalUnfold,
+  analyzePunchBlanking,
+  analyzeFlangeForm,
+  K_FACTOR_PRESETS,
+  PUNCH_MATERIAL_SHEAR,
+} from '@/utils/sheet-metal-calc'
 import SheetMetalBendDiagram from '@/components/sheet-metal/SheetMetalBendDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
@@ -230,8 +340,11 @@ const { optionMap } = useOptionsI18n()
 const { re } = useResultI18n()
 
 const kFactorPresets = computed(() => optionMap(K_FACTOR_PRESETS, 'kFactorPresets'))
+const punchMats = computed(() => optionMap(PUNCH_MATERIAL_SHEAR, 'punchMaterials'))
 
 const calcMode = ref('simple')
+const workMode = ref('unfold')
+const punchMaterial = ref('mild_steel')
 
 const form = reactive({
   method: 'k_factor',
@@ -243,6 +356,28 @@ const form = reactive({
   compensationSource: 'empirical',
   bendProcess: 'air_bend',
 })
+
+const punchForm = reactive({
+  thickness: 1.5,
+  perimeter: 200,
+  shearMPa: 320,
+  clearancePct: 10,
+  pressCapacitykN: 100,
+  stripperFactor: 0.08,
+})
+
+const flangeForm = reactive({
+  thickness: 1.5,
+  holeDia: 20,
+  flangeHeight: 8,
+  dieOpening: null,
+  maxHdRatio: 0.6,
+})
+
+function applyPunchMat(k) {
+  const p = PUNCH_MATERIAL_SHEAR[k]
+  if (p) punchForm.shearMPa = p.shearMPa
+}
 
 const segments = ref([
   { type: 'straight', length: 50 },
@@ -305,6 +440,27 @@ const result = computed(() =>
   }),
 )
 
+const punchResult = computed(() =>
+  analyzePunchBlanking({
+    calcMode: calcMode.value,
+    ...punchForm,
+    materialId: punchMaterial.value,
+  }),
+)
+
+const flangeResult = computed(() =>
+  analyzeFlangeForm({
+    calcMode: calcMode.value,
+    ...flangeForm,
+  }),
+)
+
+const activeResult = computed(() => {
+  if (workMode.value === 'punch') return punchResult.value
+  if (workMode.value === 'flange') return flangeResult.value
+  return result.value
+})
+
 const formulaBa = String.raw`BA = \dfrac{\pi}{180}\,\theta\,(R + K\,T)`
 const formulaBd = String.raw`BD = 2(R+T)\tan\dfrac{\theta}{2} - BA`
 const formulaFlat = computed(() =>
@@ -321,11 +477,17 @@ const formulaSpringback = String.raw`L_{\mathrm{try}} \approx L_{\mathrm{flat}}\
 
 const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form,
-  result,
+  result: activeResult,
   buildTitle: () => pt('title'),
   buildSummary: () => {
-    const r = result.value
+    const r = activeResult.value
     if (r?.errorKey) return []
+    if (workMode.value === 'punch') {
+      return [{ label: pr('punchForce'), value: `${r.punchForcekN?.toFixed(2) ?? '-'} kN` }]
+    }
+    if (workMode.value === 'flange') {
+      return [{ label: pr('preHoleDia'), value: r.preHoleDia != null ? `${r.preHoleDia.toFixed(2)} mm` : '—' }]
+    }
     return [
       { label: pf('flatLength'), value: `${r.flatLength?.toFixed(2) ?? '-'} mm` },
       { label: fc('check'), value: r.pass ? pf('processOk') : pf('processAdjust') },
@@ -333,13 +495,23 @@ const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   },
 })
 const historyInput = computed(() =>
-  snapshotHistoryInput({ calcMode: calcMode.value, ...form, segments: segments.value }),
+  snapshotHistoryInput({
+    workMode: workMode.value,
+    calcMode: calcMode.value,
+    ...form,
+    segments: segments.value,
+    punchForm: { ...punchForm },
+    flangeForm: { ...flangeForm },
+  }),
 )
 
 function applySheetMetalReplay(input) {
   if (!input || typeof input !== 'object') return
   if (input.calcMode != null) calcMode.value = input.calcMode
+  if (input.workMode != null) workMode.value = input.workMode
   if (Array.isArray(input.segments)) segments.value = structuredClone(input.segments)
+  if (input.punchForm) Object.assign(punchForm, input.punchForm)
+  if (input.flangeForm) Object.assign(flangeForm, input.flangeForm)
   Object.assign(form, input)
 }
 useHistoryReplay('sheet-metal', null, { applyFn: applySheetMetalReplay })

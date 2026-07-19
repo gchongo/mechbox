@@ -1190,6 +1190,23 @@ export const TOOL_HELP_ARTICLES = [
     related: ['key', 'pin-retainer', 'o-ring'],
   },
   {
+    id: 'gdt-symbols',
+    path: '/gdt-symbols',
+    groupId: 'chain',
+    level: 'beginner',
+    title: '形位公差符号图解',
+    summary: 'ASME Y14.5 / ISO 1101 常用形位公差符号、材料状态修饰符与特征控制框示意。',
+    steps: [
+      '在「公差符号」Tab 按形状 / 轮廓 / 方向 / 位置 / 跳动浏览。',
+      '「修饰符」查看 MMC/LMC/RFS 等；「公差框」对照特征控制框结构。',
+      '需要叠加分析时跳转 GD&T 公差栈或尺寸链编辑器。',
+    ],
+    principle: '形位公差在特征控制框中表达几何要求；材料状态修饰符影响公差带有效尺寸。',
+    notes: ['教学图解，非正式标准全文；制图与验收以现行标准与企业规范为准。'],
+    keywords: ['GD&T', '形位公差', '符号', 'MMC', '基准', 'Y14.5'],
+    related: ['gdt-stack', 'fit', 'editor'],
+  },
+  {
     id: 'cylinder',
     path: '/cylinder',
     groupId: 'material',

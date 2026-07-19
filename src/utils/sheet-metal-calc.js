@@ -175,3 +175,119 @@ export const K_FACTOR_PRESETS = {
   coining: { label: '压印折弯', k: 0.42 },
   aluminum: { label: '铝合金（经验）', k: 0.35 },
 }
+
+/** 冲裁剪切强度参考 (MPa) */
+export const PUNCH_MATERIAL_SHEAR = {
+  mild_steel: { label: '低碳钢', shearMPa: 320 },
+  stainless: { label: '不锈钢', shearMPa: 450 },
+  aluminum: { label: '铝合金', shearMPa: 180 },
+  copper: { label: '紫铜', shearMPa: 220 },
+}
+
+/**
+ * 冲裁 / 落料估算
+ * F = L · T · τ；单边间隙 ≈ c% · T；卸料力约 0.05–0.1 F
+ */
+export function analyzePunchBlanking(input = {}) {
+  const calcMode = input.calcMode ?? 'simple'
+  const thickness = Number(input.thickness) || 0
+  const perimeter = Number(input.perimeter) || 0
+  const shearMPa = Number(input.shearMPa) || PUNCH_MATERIAL_SHEAR.mild_steel.shearMPa
+  const clearancePct = Number(input.clearancePct) ?? 10
+  const materialId = input.materialId ?? 'mild_steel'
+
+  if (!(thickness > 0)) return { errorKey: 'invalid_thickness', calcMode }
+  if (!(perimeter > 0)) return { errorKey: 'invalid_perimeter', calcMode }
+  if (!(shearMPa > 0)) return { errorKey: 'invalid_shear', calcMode }
+
+  const punchForceN = perimeter * thickness * shearMPa
+  const punchForcekN = punchForceN / 1000
+  const sideClearance = (clearancePct / 100) * thickness
+  const dieClearance = 2 * sideClearance
+
+  const result = {
+    calcMode,
+    materialId,
+    thickness,
+    perimeter,
+    shearMPa,
+    clearancePct,
+    punchForceN,
+    punchForcekN,
+    sideClearance,
+    dieClearance,
+    estimateOnly: true,
+    pass: false,
+  }
+
+  if (calcMode === 'complete' || calcMode === 'professional') {
+    const stripperFactor = Number(input.stripperFactor) ?? 0.08
+    result.stripperForcekN = punchForcekN * stripperFactor
+    result.stripperFactor = stripperFactor
+    const pressCapacitykN = Number(input.pressCapacitykN)
+    if (Number.isFinite(pressCapacitykN) && pressCapacitykN > 0) {
+      result.pressCapacitykN = pressCapacitykN
+      result.capacityPass = punchForcekN <= pressCapacitykN * 0.8
+      result.pass = result.capacityPass
+    }
+  }
+
+  if (calcMode === 'professional') {
+    const shearPct = Number(input.shearPct) ?? 60
+    result.shearPct = shearPct
+    result.peakForcekN = punchForcekN * (shearPct / 100)
+    result.energyHintJ = (punchForceN * thickness * 0.5) / 1000
+  }
+
+  return result
+}
+
+/**
+ * 翻边 / 拉伸翻边预孔与高度校核（经验）
+ * d0 ≈ √(d² − 2·d·h)（筒形翻边近似）；h/d 限值经验
+ */
+export function analyzeFlangeForm(input = {}) {
+  const calcMode = input.calcMode ?? 'simple'
+  const thickness = Number(input.thickness) || 0
+  const holeDia = Number(input.holeDia) || 0
+  const flangeHeight = Number(input.flangeHeight) || 0
+  const dieOpening = input.dieOpening
+
+  if (!(thickness > 0)) return { errorKey: 'invalid_thickness', calcMode }
+  if (!(holeDia > 0)) return { errorKey: 'invalid_hole', calcMode }
+  if (!(flangeHeight > 0)) return { errorKey: 'invalid_flange_height', calcMode }
+
+  const minFlange = estimateMinFlange(thickness, dieOpening)
+  const hdRatio = flangeHeight / holeDia
+  const preHoleSq = holeDia ** 2 - 2 * holeDia * flangeHeight
+  const preHoleDia = preHoleSq > 0 ? Math.sqrt(preHoleSq) : null
+  const maxHdRatio = Number(input.maxHdRatio) ?? 0.6
+
+  const result = {
+    calcMode,
+    thickness,
+    holeDia,
+    flangeHeight,
+    minFlangeRule: minFlange,
+    minFlangeBasis: dieOpening > 0 ? 'die_opening' : '4t',
+    hdRatio,
+    maxHdRatio,
+    preHoleDia,
+    flangePass: flangeHeight >= minFlange,
+    ratioPass: hdRatio <= maxHdRatio,
+    preHoleOk: preHoleDia != null && preHoleDia > 0,
+    estimateOnly: true,
+    pass: false,
+  }
+
+  if (calcMode !== 'simple') {
+    result.pass = result.flangePass && result.ratioPass && result.preHoleOk
+  }
+
+  if (calcMode === 'professional') {
+    result.recommendedPreHole = preHoleDia
+    result.stretchHint = hdRatio > 0.45 ? 'high_stretch' : 'moderate'
+  }
+
+  return result
+}

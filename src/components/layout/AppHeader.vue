@@ -241,7 +241,7 @@ const toolsPopperOptions = {
 
 const TOOL_PATHS = {
   chain: [
-    '/batch', '/allocation', '/fit', '/gdt-stack', '/units', '/fatigue',
+    '/batch', '/allocation', '/fit', '/gdt-stack', '/gdt-symbols', '/units', '/fatigue',
     '/interference-fit', '/thermal-expansion', '/gear', '/bevel-gear', '/thread', '/bolt-preload', '/bearing',
     '/standards-ref',
   ],

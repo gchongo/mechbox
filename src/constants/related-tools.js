@@ -16,9 +16,13 @@ export const RELATED_TOOLS = {
   cylinder: ['column-buckling', 'pin-retainer', 'materials'],
   spring: ['fatigue', 'materials'],
   manufacturing: ['standards-ref', 'materials', 'heat-treatment'],
-  'standards-ref': ['key', 'pin-retainer', 'o-ring'],
+  'standards-ref': ['key', 'pin-retainer', 'o-ring', 'gdt-symbols'],
+  'gdt-symbols': ['gdt-stack', 'fit', 'editor'],
+  'gdt-stack': ['gdt-symbols', 'fit', 'editor'],
   'modal-freq': ['vibration-isolation', 'shaft'],
   'vibration-isolation': ['modal-freq', 'spring'],
+  'sheet-metal': ['manufacturing', 'materials'],
+  'pipe-flow': ['o-ring', 'cylinder'],
   'heat-transfer': ['thermal-expansion', 'materials'],
 }
 
@@ -48,6 +52,12 @@ const PATH_BY_ID = {
   'heat-treatment': '/heat-treatment',
   'column-buckling': '/column-buckling',
   'thermal-expansion': '/thermal-expansion',
+  'gdt-symbols': '/gdt-symbols',
+  'gdt-stack': '/gdt-stack',
+  fit: '/fit',
+  editor: '/editor',
+  'sheet-metal': '/sheet-metal',
+  'pipe-flow': '/pipe-flow',
 }
 
 /**

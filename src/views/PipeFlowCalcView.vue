@@ -27,7 +27,40 @@
           </CalcFormItem>
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('localLossK')">
             <el-input-number v-model="form.localLossK" :min="0" :precision="1" />
+            <span class="ml-2 text-xs text-gray-500">{{ pf('localLossKHint') }}</span>
           </CalcFormItem>
+          <template v-if="form.calcMode !== 'simple'">
+            <CalcFormItem :label="pf('lossMethod')">
+              <el-radio-group v-model="form.lossMethod" size="small">
+                <el-radio-button value="K">{{ pf('lossMethodK') }}</el-radio-button>
+                <el-radio-button value="LeD">{{ pf('lossMethodLeD') }}</el-radio-button>
+              </el-radio-group>
+            </CalcFormItem>
+            <h3 class="mb-2 text-sm font-medium">{{ pf('fittingsTitle') }}</h3>
+            <div class="mb-3 space-y-2">
+              <div
+                v-for="(fit, i) in fittings"
+                :key="i"
+                class="flex flex-wrap items-center gap-2 rounded border border-gray-200 p-2 dark:border-gray-700"
+              >
+                <el-select v-model="fit.type" class="w-44" size="small">
+                  <el-option
+                    v-for="(f, k) in fittingOptions"
+                    :key="k"
+                    :label="f.label"
+                    :value="k"
+                  />
+                </el-select>
+                <el-input-number v-model="fit.qty" :min="0" :max="50" size="small" />
+                <el-button v-if="fittings.length > 1" type="danger" link size="small" @click="fittings.splice(i, 1)">
+                  {{ fc('delete') }}
+                </el-button>
+              </div>
+            </div>
+            <el-button size="small" @click="fittings.push({ type: 'elbow_90_std', qty: 1 })">
+              {{ pf('addFitting') }}
+            </el-button>
+          </template>
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('hazenC')">
             <el-input-number v-model="form.hazenC" :min="80" :max="150" :precision="0" />
           </CalcFormItem>
@@ -75,6 +108,24 @@
             <ResultLabel :text="pr('localLoss')" />
             <dd class="font-mono">{{ ((result.localLoss ?? 0) / 1000).toFixed(2) }} kPa</dd>
           </div>
+          <div
+            v-if="result.fittingSummary?.items?.length"
+            class="rounded bg-gray-50 p-3 text-xs dark:bg-gray-900"
+          >
+            <p class="mb-1 font-medium">{{ pr('fittingBreakdown') }}</p>
+            <ul class="space-y-0.5 text-gray-600 dark:text-gray-400">
+              <li v-for="(it, idx) in result.fittingSummary.items" :key="idx">
+                {{ it.label }} ×{{ it.qty }}
+                <template v-if="form.lossMethod === 'LeD'">
+                  · Le≈{{ it.contributionLeM.toFixed(2) }} m
+                </template>
+                <template v-else>· K={{ it.contributionK.toFixed(2) }}</template>
+              </li>
+            </ul>
+            <p v-if="form.lossMethod === 'LeD'" class="mt-1 text-gray-500">
+              {{ pr('effectiveLength') }}: {{ result.effectiveLength?.toFixed(2) }} m
+            </p>
+          </div>
           <div v-if="result.methodCompare" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel :text="pr('hwCompare')" />
             <dd class="font-mono">
@@ -115,7 +166,7 @@
 
 <script setup>
 import { reactive, ref, computed } from 'vue'
-import { analyzePipeFlow, FLUID_PRESETS } from '@/utils/pipe-flow-calc'
+import { analyzePipeFlow, FLUID_PRESETS, PIPE_FITTINGS } from '@/utils/pipe-flow-calc'
 import StructuralDiagram from '@/components/structural/StructuralDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import MathContent from '@/components/common/MathContent.vue'
@@ -136,7 +187,13 @@ const formulaDarcy = String.raw`\Delta p = f\cdot\frac{L}{D}\cdot\frac{\rho v^{2
 const formulaLocal = String.raw`\Delta p_{\mathrm{local}} = K\cdot\frac{\rho v^{2}}{2}`
 
 const fluidPresets = computed(() => optionMap(FLUID_PRESETS, 'fluidPresets'))
+const fittingOptions = computed(() => optionMap(PIPE_FITTINGS, 'pipeFittings'))
 const fluid = ref('water')
+
+const fittings = reactive([
+  { type: 'elbow_90_std', qty: 2 },
+  { type: 'gate_open', qty: 1 },
+])
 
 const form = reactive({
   calcMode: 'simple',
@@ -146,7 +203,8 @@ const form = reactive({
   density: 998,
   viscosity: 1.002e-3,
   roughness: 0.045,
-  localLossK: 2,
+  localLossK: 0,
+  lossMethod: 'K',
   hazenC: 130,
   maxVelocity: 3,
   maxPressureDropKPa: 200,
@@ -160,7 +218,12 @@ function applyFluid(k) {
   }
 }
 
-const result = computed(() => analyzePipeFlow(form))
+const result = computed(() =>
+  analyzePipeFlow({
+    ...form,
+    fittings: form.calcMode === 'simple' ? [] : fittings,
+  }),
+)
 const regimeLabel = computed(() => {
   const key = result.value.flowRegimeKey
   return key ? pr(`regime_${key}`) : result.value.flowRegime
@@ -191,12 +254,15 @@ const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
     { label: fc('check'), value: hasPassFail.value ? overallStatusLabel.value : '—' },
   ],
 })
-const historyInput = computed(() => snapshotHistoryInput({ ...form }))
+const historyInput = computed(() => snapshotHistoryInput({ ...form, fittings: [...fittings] }))
 
 function applyReplay(input) {
   if (!input || typeof input !== 'object') return
   const src = input.pipe && typeof input.pipe === 'object' ? input.pipe : input
   Object.assign(form, src)
+  if (Array.isArray(src.fittings)) {
+    fittings.splice(0, fittings.length, ...src.fittings.map((f) => ({ ...f })))
+  }
 }
 useHistoryReplay('pipe-flow', null, { applyFn: applyReplay })
 </script>

@@ -2,11 +2,15 @@
  * 管路流阻 / 压降 — Darcy-Weisbach
  */
 
+import { sumFittingLosses } from '@/constants/pipe-fittings'
+
 export const FLUID_PRESETS = {
   water: { label: '水 (20°C)', density: 998, viscosity: 1.002e-3 },
   oil: { label: '液压油', density: 870, viscosity: 46e-3 },
   air: { label: '空气 (20°C)', density: 1.2, viscosity: 18.1e-6 },
 }
+
+export { PIPE_FITTINGS, sumFittingLosses } from '@/constants/pipe-fittings'
 
 /** Reynolds 数 */
 export function calcReynolds(velocity, diameter, density, viscosity) {
@@ -35,12 +39,27 @@ function erosionRiskKey(velocity) {
 
 /** 压降 ΔP (Pa) = f · (L/D) · (ρv²/2) */
 export function calcPipePressureDrop(input) {
-  const D = (input.diameter ?? 50) / 1000 // mm → m
-  const L = input.length ?? 100 // m
+  const Dmm = input.diameter ?? 50
+  const D = Dmm / 1000 // mm → m
+  const Lpipe = input.length ?? 100 // m
   const Q = input.flowRate ?? 10 // L/min
   const rho = input.density ?? 998
   const mu = input.viscosity ?? 1.002e-3
   const eps = (input.roughness ?? 0.045) / 1000 // mm → m
+
+  const fittings = Array.isArray(input.fittings) ? input.fittings : []
+  const lossMethod = input.lossMethod ?? 'K'
+  const fittingSum =
+    fittings.length > 0
+      ? sumFittingLosses(fittings, lossMethod, Dmm)
+      : null
+
+  // 手动 K 与管件库叠加；Le/D 法时库贡献走等效长度
+  const manualK = Number(input.localLossK) || 0
+  const libraryK = fittingSum ? fittingSum.effectiveK : 0
+  const kLocal = manualK + libraryK
+  const extraL = fittingSum ? fittingSum.extraLengthM : 0
+  const L = Lpipe + extraL
 
   const area = (Math.PI * D ** 2) / 4
   const Qm3s = (Q / 1000) / 60
@@ -52,14 +71,13 @@ export function calcPipePressureDrop(input) {
   const deltaPkPa = deltaP / 1000
   const headLoss = deltaP / (rho * 9.81)
 
-  // 局部损失
-  const kLocal = input.localLossK ?? 0
   const deltaPLocal = kLocal * dynamicHead
   const totalDeltaP = deltaP + deltaPLocal
 
   return {
     diameter: D * 1000,
-    length: L,
+    length: Lpipe,
+    effectiveLength: L,
     flowRate: Q,
     velocity: v,
     reynolds: Re,
@@ -67,6 +85,9 @@ export function calcPipePressureDrop(input) {
     pressureDrop: deltaP,
     pressureDropKPa: deltaPkPa,
     localLoss: deltaPLocal,
+    localLossK: kLocal,
+    fittingSummary: fittingSum,
+    lossMethod,
     totalPressureDrop: totalDeltaP,
     totalPressureDropKPa: totalDeltaP / 1000,
     headLoss,

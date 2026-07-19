@@ -10,6 +10,20 @@
           <CalcFormItem :label="pf('mass')">
             <el-input-number v-model="form.mass" :min="0.1" :step="1" />
           </CalcFormItem>
+          <CalcFormItem :label="pf('mountPreset')">
+            <el-select v-model="form.mountId" clearable class="w-48" @change="applyMount">
+              <el-option :label="pf('mountManual')" value="" />
+              <el-option
+                v-for="(m, k) in mountOptions"
+                :key="k"
+                :label="m.label"
+                :value="k"
+              />
+            </el-select>
+          </CalcFormItem>
+          <CalcFormItem :label="pf('mountCount')">
+            <el-input-number v-model="form.mountCount" :min="1" :max="12" />
+          </CalcFormItem>
           <CalcFormItem :label="pf('stiffness')">
             <el-input-number v-model="form.stiffness" :min="10" :step="1000" />
           </CalcFormItem>
@@ -30,6 +44,12 @@
             </CalcFormItem>
           </template>
         </el-form>
+        <VibrationIsolationDiagram
+          :mount-style="result.mountStyle || 'cylindrical'"
+          :stiffness="result.stiffness"
+          :load-per-mount-kg="result.loadPerMountKg"
+          :static-deflection-mm="result.staticDeflectionMm"
+        />
       </section>
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
@@ -51,6 +71,16 @@
             <ResultLabel :text="pr('isolationDb')" />
             <dd class="font-mono">{{ result.isolationDb.toFixed(1) }} dB</dd>
           </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('staticDeflection')" />
+            <dd class="font-mono">{{ result.staticDeflectionMm.toFixed(2) }} mm</dd>
+          </div>
+          <div v-if="result.mountLoadPass != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('mountLoad')" />
+            <dd :class="result.mountLoadPass ? 'text-success' : 'text-error'">
+              {{ result.loadPerMountKg.toFixed(1) }} kg / {{ result.mountLoadPass ? '✓' : '✗' }}
+            </dd>
+          </div>
           <template v-if="form.calcMode !== 'simple'">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('isolationRegion')" />
@@ -63,6 +93,10 @@
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('recommendedStiffness')" />
               <dd class="font-mono">{{ result.recommendedStiffness.toFixed(0) }} N/m</dd>
+            </div>
+            <div v-if="result.suggestedMount" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('suggestedMount')" />
+              <dd class="font-mono">{{ result.suggestedMount.label }}</dd>
             </div>
           </template>
         </dl>
@@ -87,17 +121,22 @@
 
 <script setup>
 import { computed, reactive } from 'vue'
-import { analyzeVibrationIsolation } from '@/utils/vibration-isolation-calc'
+import { analyzeVibrationIsolation, RUBBER_MOUNT_CATALOG, getRubberMount } from '@/utils/vibration-isolation-calc'
 import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import MathTex from '@/components/common/MathTex.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import VibrationIsolationDiagram from '@/components/vibration/VibrationIsolationDiagram.vue'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('vibration-isolation')
+const { optionMap } = useOptionsI18n()
+const mountOptions = computed(() => optionMap(RUBBER_MOUNT_CATALOG, 'rubberMounts'))
+
 const form = reactive({
   calcMode: 'complete',
   mass: 50,
@@ -106,7 +145,16 @@ const form = reactive({
   excitationFreq: 25,
   maxTransmissibility: 0.25,
   isolationTargetDb: 10,
+  mountId: 'cyl_med',
+  mountCount: 4,
 })
+
+function applyMount(id) {
+  const m = getRubberMount(id)
+  if (!m) return
+  form.stiffness = m.stiffness
+  form.dampingRatio = m.dampingRatio
+}
 const result = computed(() => analyzeVibrationIsolation(form))
 const overallStatus = computed(() => getCalcReviewStatus(result.value))
 const overallStatusType = computed(() =>

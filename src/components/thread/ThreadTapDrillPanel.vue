@@ -31,6 +31,11 @@
           <CalcFormItem :label="pt('engInputLength')" unit="mm / in">
             <el-input-number v-model="engagementLength" :min="0" :precision="2" :step="0.5" />
           </CalcFormItem>
+          <el-form-item :label="pt('tapLubrication')">
+            <el-select v-model="lubrication" class="w-full">
+              <el-option v-for="k in lubes" :key="k" :label="pt(`tapLubeOpt_${k}`)" :value="k" />
+            </el-select>
+          </el-form-item>
         </el-form>
       </section>
 
@@ -61,9 +66,19 @@
               <dt>{{ pt('tapEffectiveLength') }}</dt>
               <dd>{{ result.engagementLength }} {{ result.unit }}</dd>
             </div>
+            <div v-if="result.torqueOk">
+              <dt>{{ pt('tapTorque') }}</dt>
+              <dd class="font-semibold text-primary">
+                ≈ {{ result.tapTorqueNm.toFixed(2) }} N·m
+                <span class="text-xs font-normal text-gray-500">
+                  ({{ result.tapTorqueMinNm.toFixed(2) }}–{{ result.tapTorqueMaxNm.toFixed(2) }})
+                </span>
+              </dd>
+            </div>
           </dl>
           <ul class="mt-4 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
             <li v-for="key in result.tipKeys" :key="key">{{ pt(key) }}</li>
+            <li v-for="key in result.torqueTipKeys || []" :key="key">{{ pt(key) }}</li>
           </ul>
           <p class="mt-3 text-[10px] text-gray-400">{{ pt('tapDisclaimer') }}</p>
         </template>
@@ -80,7 +95,7 @@ import { ref, computed } from 'vue'
 import CalcFormItem from '@/components/calc/CalcFormItem.vue'
 import ThreadRowPicker from '@/components/thread/ThreadRowPicker.vue'
 import { findThreadRowById } from '@/utils/thread-engagement-calc'
-import { analyzeTapDrill, TAP_MATERIALS } from '@/utils/thread-tap-drill-calc'
+import { analyzeTapDrill, TAP_MATERIALS, TAP_LUBRICATION } from '@/utils/thread-tap-drill-calc'
 import { exportToolReportPdf } from '@/utils/export'
 import { buildTapDrillPdfSections } from '@/utils/thread-table-report'
 
@@ -89,9 +104,11 @@ const props = defineProps({
 })
 
 const materials = Object.keys(TAP_MATERIALS)
+const lubes = Object.keys(TAP_LUBRICATION)
 const rowId = ref('')
 const material = ref('steel')
 const holeType = ref('through')
+const lubrication = ref('cutting_oil')
 const engagementLength = ref(null)
 const resultRef = ref(null)
 
@@ -101,6 +118,7 @@ const result = computed(() => {
     material: material.value,
     holeType: holeType.value,
     engagementLength: engagementLength.value ?? undefined,
+    lubrication: lubrication.value,
   })
 })
 

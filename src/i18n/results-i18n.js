@@ -73,6 +73,10 @@ export const messagesZh = {
     invalid_segment_length: '直段长度须 ≥ 0',
     invalid_bend_angle: '弯曲角须在 (0°, 180°) 范围内',
     invalid_springback: '回弹系数须为非负有效数值',
+    invalid_perimeter: '冲裁周长须大于 0',
+    invalid_shear: '剪切强度须大于 0',
+    invalid_hole: '翻边孔径须大于 0',
+    invalid_flange_height: '翻边高度须大于 0',
     invalid_stretch: 'O 形圈安装拉伸须在 0–8% 范围内',
   },
   fit: {
@@ -339,6 +343,10 @@ export const messagesEn = {
     invalid_segment_length: 'Straight segment length must be ≥ 0',
     invalid_bend_angle: 'Bend angle must be in (0°, 180°)',
     invalid_springback: 'Springback factor must be a non-negative finite value',
+    invalid_perimeter: 'Punch perimeter must be greater than zero',
+    invalid_shear: 'Shear strength must be greater than zero',
+    invalid_hole: 'Flange hole diameter must be greater than zero',
+    invalid_flange_height: 'Flange height must be greater than zero',
     invalid_stretch: 'O-ring installation stretch must be between 0% and 8%',
   },
   fit: {

@@ -263,6 +263,11 @@ const routes = [
     component: () => import('@/views/StandardsRefView.vue'),
   },
   {
+    path: '/gdt-symbols',
+    name: 'gdt-symbols',
+    component: () => import('@/views/GdtSymbolsView.vue'),
+  },
+  {
     path: '/heat-treatment',
     name: 'heat-treatment',
     component: () => import('@/views/HeatTreatmentView.vue'),
@@ -371,6 +376,7 @@ const ENGINEERING_ROUTE_NAMES = new Set([
   'vibration-isolation',
   'heat-transfer',
   'standards-ref',
+  'gdt-symbols',
   'heat-treatment',
   'units',
   'fit',
