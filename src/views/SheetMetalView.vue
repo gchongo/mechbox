@@ -57,10 +57,13 @@
             <ResultLabel :text="pr('stripperForce')" />
             <dd class="font-mono">{{ punchResult.stripperForcekN?.toFixed(2) }} kN</dd>
           </div>
-          <el-tag v-if="typeof punchResult.pass === 'boolean'" :type="punchResult.pass ? 'success' : 'danger'">
-            {{ punchResult.pass ? pf('processOk') : pf('processAdjust') }}
+          <el-tag
+            v-if="punchResult.capacityPass != null"
+            :type="punchResult.capacityPass ? 'success' : 'danger'"
+          >
+            {{ punchResult.capacityPass ? pf('punchCapacityOk') : pf('punchCapacityFail') }}
           </el-tag>
-          <p class="text-xs text-gray-500">{{ pr('punchHint') }}</p>
+          <p class="text-xs text-gray-500"><MathContent :text="pr('punchHint')" /></p>
         </dl>
       </section>
     </div>
@@ -106,7 +109,7 @@
           <el-tag v-if="calcMode !== 'simple'" :type="flangeResult.pass ? 'success' : 'danger'">
             {{ flangeResult.pass ? pf('processOk') : pf('processAdjust') }}
           </el-tag>
-          <p class="text-xs text-gray-500">{{ pr('flangeFormHint') }}</p>
+          <p class="text-xs text-gray-500"><MathContent :text="pr('flangeFormHint')" /></p>
         </dl>
       </section>
     </div>

@@ -11,7 +11,7 @@
             <el-input-number v-model="form.mass" :min="0.1" :step="1" />
           </CalcFormItem>
           <CalcFormItem :label="pf('mountPreset')">
-            <el-select v-model="form.mountId" clearable class="w-48" @change="applyMount">
+            <el-select v-model="form.mountId" clearable class="w-48" @change="onMountChange">
               <el-option :label="pf('mountManual')" value="" />
               <el-option
                 v-for="(m, k) in mountOptions"
@@ -22,13 +22,26 @@
             </el-select>
           </CalcFormItem>
           <CalcFormItem :label="pf('mountCount')">
-            <el-input-number v-model="form.mountCount" :min="1" :max="12" />
+            <el-input-number v-model="form.mountCount" :min="1" :max="12" @change="syncMountStiffness" />
           </CalcFormItem>
           <CalcFormItem :label="pf('stiffness')">
-            <el-input-number v-model="form.stiffness" :min="10" :step="1000" />
+            <el-input-number
+              v-model="form.stiffness"
+              :min="10"
+              :step="1000"
+              :disabled="!!form.mountId"
+            />
+            <p v-if="form.mountId" class="mt-1 text-xs text-gray-500">{{ pf('stiffnessFromMountHint') }}</p>
           </CalcFormItem>
           <CalcFormItem :label="pf('dampingRatio')">
-            <el-input-number v-model="form.dampingRatio" :min="0.001" :max="0.5" :step="0.01" :precision="3" />
+            <el-input-number
+              v-model="form.dampingRatio"
+              :min="0.001"
+              :max="0.5"
+              :step="0.01"
+              :precision="3"
+              :disabled="!!form.mountId"
+            />
           </CalcFormItem>
           <CalcFormItem :label="pf('excitationFreq')">
             <el-input-number v-model="form.excitationFreq" :min="0.1" :precision="2" />
@@ -54,6 +67,7 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <el-tag class="mb-3" :type="overallStatusType">{{ pr('overall') }}: {{ overallStatusLabel }}</el-tag>
+        <p v-if="failReason" class="mb-3 text-xs text-error">{{ failReason }}</p>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel :text="pr('naturalFreq')" />
@@ -88,9 +102,21 @@
                 {{ result.aboveIsolationRegion ? 'r>√2 ✓' : 'r≤√2 ✗' }}
               </dd>
             </div>
-          </template>
-          <template v-if="form.calcMode === 'professional' && result.recommendedStiffness">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('trCheck')" />
+              <dd :class="result.trPass ? 'text-success' : 'text-error'">
+                TR≤{{ form.maxTransmissibility }} {{ result.trPass ? '✓' : '✗' }}
+              </dd>
+            </div>
+          </template>
+          <template v-if="form.calcMode === 'professional'">
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('dbCheck')" />
+              <dd :class="result.dbPass ? 'text-success' : 'text-error'">
+                ≥{{ form.isolationTargetDb }} dB {{ result.dbPass ? '✓' : '✗' }}
+              </dd>
+            </div>
+            <div v-if="result.recommendedStiffness" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('recommendedStiffness')" />
               <dd class="font-mono">{{ result.recommendedStiffness.toFixed(0) }} N/m</dd>
             </div>
@@ -103,6 +129,14 @@
         <FormulaPanel :columns="1">
           <MathTex expr="f_n=\dfrac{1}{2\pi}\sqrt{k/m},\quad r=f/f_n" block />
           <MathTex expr="TR=\dfrac{\sqrt{1+(2\zeta r)^2}}{\sqrt{(1-r^2)^2+(2\zeta r)^2}}" block />
+          <MathTex expr="A_{\mathrm{dB}}=-20\log_{10}(TR)" block />
+          <template #hints>
+            <ul>
+              <li><MathContent :text="pr('vibHintRegion')" /></li>
+              <li><MathContent :text="pr('vibHintPass')" /></li>
+              <li v-if="form.mountId"><MathContent :text="pr('vibHintMountK')" /></li>
+            </ul>
+          </template>
         </FormulaPanel>
       </section>
     </div>
@@ -129,6 +163,7 @@ import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import FormulaPanel from '@/components/common/FormulaPanel.vue'
+import MathContent from '@/components/common/MathContent.vue'
 import MathTex from '@/components/common/MathTex.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import VibrationIsolationDiagram from '@/components/vibration/VibrationIsolationDiagram.vue'
@@ -145,16 +180,22 @@ const form = reactive({
   excitationFreq: 25,
   maxTransmissibility: 0.25,
   isolationTargetDb: 10,
-  mountId: 'cyl_med',
+  mountId: '',
   mountCount: 4,
 })
 
-function applyMount(id) {
-  const m = getRubberMount(id)
+function syncMountStiffness() {
+  const m = getRubberMount(form.mountId)
   if (!m) return
-  form.stiffness = m.stiffness
+  form.stiffness = m.stiffness * form.mountCount
   form.dampingRatio = m.dampingRatio
 }
+
+function onMountChange(id) {
+  if (!id) return
+  syncMountStiffness()
+}
+
 const result = computed(() => analyzeVibrationIsolation(form))
 const overallStatus = computed(() => getCalcReviewStatus(result.value))
 const overallStatusType = computed(() =>
@@ -165,6 +206,18 @@ const overallStatusLabel = computed(() => {
   if (overallStatus.value === 'review') return fc('overallWarn')
   return fc('overallFail')
 })
+
+const failReason = computed(() => {
+  const r = result.value
+  if (overallStatus.value !== 'fail') return ''
+  const parts = []
+  if (r.aboveIsolationRegion === false) parts.push(pr('failRegion'))
+  if (r.trPass === false) parts.push(pr('failTr'))
+  if (r.dbPass === false) parts.push(pr('failDb'))
+  if (r.mountLoadPass === false) parts.push(pr('failMountLoad'))
+  return parts.length ? parts.join(' · ') : ''
+})
+
 const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form,
   result,

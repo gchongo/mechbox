@@ -229,6 +229,10 @@ export function analyzePunchBlanking(input = {}) {
       result.pressCapacitykN = pressCapacitykN
       result.capacityPass = punchForcekN <= pressCapacitykN * 0.8
       result.pass = result.capacityPass
+    } else {
+      // 未给压力机吨位：仅估算，不判综合失败
+      result.estimateOnly = true
+      result.pass = false
     }
   }
 
