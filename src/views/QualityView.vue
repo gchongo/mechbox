@@ -10,7 +10,7 @@
       <el-tab-pane :label="pt('tabMsa')" name="msa">
         <section class="card-panel mb-6">
           <h2 class="mb-2 font-semibold">{{ pt('sectionMeasureData') }}</h2>
-          <p class="mb-3 text-xs text-gray-500">
+          <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
             {{ pt('hintMsaRows') }}
           </p>
           <el-input
@@ -70,10 +70,10 @@
         </section>
         <template v-if="xrResult && !xrResult.errorKey">
           <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
-            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel label-class="text-gray-500" text="X̿" /><dd class="font-mono">{{ xrResult.xBarBar?.toFixed(4) }}</dd></div>
-            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel label-class="text-gray-500" text="R̄" /><dd class="font-mono">{{ xrResult.rBar?.toFixed(4) }}</dd></div>
-            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel label-class="text-gray-500" text="σ" /><dd class="font-mono">{{ xrResult.sigma?.toFixed(4) }}</dd></div>
-            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60"><ResultLabel label-class="text-gray-500 dark:text-gray-400" text="X̿" /><dd class="font-mono text-gray-900 dark:text-gray-100">{{ xrResult.xBarBar?.toFixed(4) }}</dd></div>
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60"><ResultLabel label-class="text-gray-500 dark:text-gray-400" text="R̄" /><dd class="font-mono text-gray-900 dark:text-gray-100">{{ xrResult.rBar?.toFixed(4) }}</dd></div>
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60"><ResultLabel label-class="text-gray-500 dark:text-gray-400" text="σ" /><dd class="font-mono text-gray-900 dark:text-gray-100">{{ xrResult.sigma?.toFixed(4) }}</dd></div>
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60">
               <ResultLabel label-class="text-gray-500" :text="pt('outOfControl')" />
               <dd>{{ pt('outOfControlCount', { count: outOfControlCount }) }}</dd>
             </div>
@@ -107,9 +107,9 @@
           </el-form>
         </section>
         <template v-if="pResult && !pResult.errorKey">
-          <div class="mb-4 rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
-            <span class="text-gray-500">{{ pt('pBarLabel') }}</span>
-            <span class="font-mono">{{ (pResult.pBar * 100).toFixed(2) }}%</span>
+          <div class="mb-4 rounded bg-gray-50 p-3 text-sm dark:bg-gray-900/60">
+            <span class="text-gray-500 dark:text-gray-400">{{ pt('pBarLabel') }}</span>
+            <span class="ml-2 font-mono text-gray-900 dark:text-gray-100">{{ (pResult.pBar * 100).toFixed(2) }}%</span>
           </div>
           <section class="card-panel">
             <div ref="pChartRef" class="min-h-[360px]" />
@@ -121,7 +121,7 @@
       <!-- FMEA -->
       <el-tab-pane :label="pt('tabFmea')" name="fmea">
         <section class="card-panel mb-6">
-          <p class="mb-2 text-xs text-gray-500">{{ pt('hintFmeaRows') }}</p>
+          <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">{{ pt('hintFmeaRows') }}</p>
           <el-input v-model="fmeaText" type="textarea" :rows="8" />
           <el-button class="mt-2" size="small" @click="loadFmeaSample">{{ pt('loadSample') }}</el-button>
         </section>
@@ -174,13 +174,13 @@
           </section>
           <section class="card-panel">
             <dl class="space-y-3 text-sm">
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('sampleCode')" /><dd class="font-mono">{{ aqlPlan.sampleSizeCode }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900/60"><ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('sampleCode')" /><dd class="font-mono text-gray-900 dark:text-gray-100">{{ aqlPlan.sampleSizeCode }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('sampleN')" /><dd class="font-mono">{{ aqlPlan.sampleSize }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900/60"><ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('sampleN')" /><dd class="font-mono text-gray-900 dark:text-gray-100">{{ aqlPlan.sampleSize }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('acRe')" /><dd class="font-mono">{{ aqlPlan.acceptNumber }} / {{ aqlPlan.rejectNumber }}</dd>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900/60"><ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('acRe')" /><dd class="font-mono text-gray-900 dark:text-gray-100">{{ aqlPlan.acceptNumber }} / {{ aqlPlan.rejectNumber }}</dd>
               </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('decision')" />
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900/60"><ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('decision')" />
                 <dd :class="aqlPlan.pass ? 'text-success' : 'text-error'">{{ rm('aql', aqlPlan.decisionKey) }}</dd>
               </div>
             </dl>
@@ -204,10 +204,12 @@ import { designAQLPlan, calcOCCurve, AQL_LEVELS } from '@/utils/aql-calc'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useDemoData } from '@/composables/useDemoData'
+import { useDarkMode, applyPlotlyTheme } from '@/composables/useDarkMode'
 
 const { pt, pf, pr, locale } = useCalcPage('quality')
 const { rm, resultError } = useResultI18n()
 const { demo } = useDemoData()
+const { isDark } = useDarkMode()
 
 const activeTab = ref('msa')
 const msaText = ref('')
@@ -292,17 +294,23 @@ async function renderPChart() {
       { x: [x[0], x[x.length - 1]], y: [r.pBar, r.pBar], type: 'scatter', mode: 'lines', name: 'p̄', line: { color: '#2ecc71' } },
     ],
     {
-      title: pt('charts.pTitle'),
-      xaxis: { title: pt('charts.pX') },
-      yaxis: { title: pt('charts.pY'), tickformat: '.1%' },
-      margin: { t: 40, b: 48, l: 56, r: 24 },
-      height: 360,
+      ...applyPlotlyTheme(
+        {
+          title: pt('charts.pTitle'),
+          xaxis: { title: pt('charts.pX') },
+          yaxis: { title: pt('charts.pY'), tickformat: '.1%' },
+          margin: { t: 40, b: 48, l: 56, r: 24 },
+          height: 360,
+          legend: { font: { color: isDark.value ? '#e5e7eb' : '#374151' } },
+        },
+        isDark.value,
+      ),
     },
     { responsive: true, displayModeBar: false },
   )
 }
 
-watch([pResult, activeTab, locale], () => {
+watch([pResult, activeTab, locale, isDark], () => {
   if (activeTab.value === 'p') renderPChart()
   if (activeTab.value === 'aql') renderOCChart()
 })
@@ -323,17 +331,22 @@ async function renderOCChart() {
       line: { color: '#409EFF' },
     }],
     {
-      title: pt('charts.ocTitle', { aql: aqlLevel.value, n: p.sampleSize }),
-      xaxis: { title: pt('charts.ocX') },
-      yaxis: { title: pt('charts.ocY') },
-      height: 300,
-      margin: { t: 40, l: 56, b: 48, r: 16 },
+      ...applyPlotlyTheme(
+        {
+          title: pt('charts.ocTitle', { aql: aqlLevel.value, n: p.sampleSize }),
+          xaxis: { title: pt('charts.ocX') },
+          yaxis: { title: pt('charts.ocY') },
+          height: 300,
+          margin: { t: 40, l: 56, b: 48, r: 16 },
+        },
+        isDark.value,
+      ),
     },
     { responsive: true, displayModeBar: false },
   )
 }
 
-watch([aqlLot, aqlLevel, aqlDefects, locale], () => {
+watch([aqlLot, aqlLevel, aqlDefects, locale, isDark], () => {
   if (activeTab.value === 'aql') renderOCChart()
 })
 

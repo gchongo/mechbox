@@ -32,7 +32,11 @@ export const TOOL_META = {
   'o-ring': { label: 'O 形圈密封', route: '/o-ring' },
   fatigue: { label: '疲劳寿命', route: '/fatigue' },
   analytics: { label: '数据分析', route: '/analytics' },
-  structural: { label: '结构分析', route: '/structural' },
+  'pipe-flow': { label: '管路压降', route: '/pipe-flow' },
+  'plate-buckling': { label: '薄板屈曲', route: '/plate-buckling' },
+  'modal-freq': { label: '固有频率', route: '/modal-freq' },
+  /** @deprecated 旧合并页；按 input.tab 解析到新路由 */
+  structural: { label: '结构分析', route: '/pipe-flow' },
   'material-selection': { label: '选材决策', route: '/material-selection' },
   manufacturing: { label: '制造工艺', route: '/manufacturing' },
   'heat-treatment': { label: '热处理', route: '/heat-treatment' },
@@ -76,14 +80,30 @@ export function saveToolHistory({ tool, title, status = 'pass', summary = [], in
   })
 }
 
-export function getToolRoute(tool) {
+const STRUCTURAL_TAB_ROUTE = {
+  pipe: '/pipe-flow',
+  plate: '/plate-buckling',
+  modal: '/modal-freq',
+}
+
+const STRUCTURAL_TAB_TOOL = {
+  pipe: 'pipe-flow',
+  plate: 'plate-buckling',
+  modal: 'modal-freq',
+}
+
+export function getToolRoute(tool, record) {
+  if (tool === 'structural') {
+    const tab = record?.data?.input?.tab ?? 'pipe'
+    return STRUCTURAL_TAB_ROUTE[tab] ?? '/pipe-flow'
+  }
   return TOOL_META[tool]?.route ?? null
 }
 
 export function buildToolReplayRoute(record) {
   if (!record?.id || (record.source ?? 'editor') !== 'tool') return null
   if (!hasReplayableInput(record)) return null
-  const route = getToolRoute(record.tool)
+  const route = getToolRoute(record.tool, record)
   if (!route) return null
   return {
     path: route,
@@ -105,7 +125,7 @@ export function resolveHistoryOpenTarget(record) {
   if (replayRoute) {
     return { kind: 'replay', route: replayRoute }
   }
-  const path = getToolRoute(record.tool)
+  const path = getToolRoute(record.tool, record)
   if (path) {
     // Safety-first: never open a blank tool page that could be mistaken for restored state.
     return {
@@ -121,13 +141,19 @@ export function getToolReplayRecord(historyId, tool) {
   if (!historyId) return null
   const record = getAnalysisById(String(historyId))
   if (!record || record.source !== 'tool') return null
-  if (tool && record.tool !== tool) return null
+  if (tool && record.tool !== tool) {
+    if (record.tool === 'structural') {
+      const tab = record.data?.input?.tab ?? 'pipe'
+      if (STRUCTURAL_TAB_TOOL[tab] === tool) return record
+    }
+    return null
+  }
   return record
 }
 
 export function formatHistorySource(record, locale = 'zh') {
   if (record.source === 'tool') {
-    const route = getToolRoute(record.tool)
+    const route = getToolRoute(record.tool, record)
     if (route) return localizedToolLabel(route, locale)
     return record.data?.toolLabel ?? t('content.history.sourceTool', locale)
   }
@@ -149,7 +175,7 @@ export function formatHistoryTitle(record, locale = 'zh') {
     return `${typeName} ${ringName}`
   }
   if (record.source === 'tool' && record.tool) {
-    const route = getToolRoute(record.tool)
+    const route = getToolRoute(record.tool, record)
     const label = route ? localizedToolLabel(route, locale) : record.tool
     return t('content.history.toolCalcTitle', locale, { tool: label })
   }
@@ -162,7 +188,7 @@ export function formatHistoryType(record, locale = 'zh') {
     return localizedAnalysisType(data.selectedType.id, locale)
   }
   if (record.source === 'tool') {
-    const route = getToolRoute(record.tool)
+    const route = getToolRoute(record.tool, record)
     if (route) return localizedToolLabel(route, locale)
     return record.data?.toolLabel ?? record.tool ?? '-'
   }

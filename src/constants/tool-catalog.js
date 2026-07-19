@@ -57,7 +57,9 @@ export const TOOL_GROUPS = [
       { path: '/clutch', label: '离合器', desc: '摩擦扭矩', icon: 'Connection', keywords: ['离合器'] },
       { path: '/belt', label: '皮带传动', desc: '链长 / 张力', icon: 'Minus', keywords: ['皮带'] },
       { path: '/chain', label: '链传动', desc: '节距 / 链张力', icon: 'Link', keywords: ['链传动'] },
-      { path: '/structural', label: '结构/流体', desc: '压降 · 屈曲 · 模态', icon: 'Odometer', keywords: ['压降', '屈曲', '模态'] },
+      { path: '/pipe-flow', label: '管路压降', desc: 'Darcy · 局部损失', icon: 'Odometer', keywords: ['压降', '管路', 'Darcy'] },
+      { path: '/plate-buckling', label: '薄板屈曲', desc: '临界应力 · 安全系数', icon: 'Grid', keywords: ['屈曲', '薄板'] },
+      { path: '/modal-freq', label: '固有频率', desc: '梁/SDOF · 共振裕度', icon: 'TrendCharts', keywords: ['固有频率', '模态', '共振'] },
     ],
   },
   {

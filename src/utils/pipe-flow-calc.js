@@ -17,9 +17,20 @@ export function calcReynolds(velocity, diameter, density, viscosity) {
 export function calcFrictionFactor(Re, roughness, diameter) {
   if (Re < 2300) return 64 / Math.max(Re, 1)
   const relRough = roughness / diameter
-  const term =
-    relRough / 3.7 + 5.74 / Re ** 0.9
+  const term = relRough / 3.7 + 5.74 / Re ** 0.9
   return 0.25 / Math.log10(term) ** 2
+}
+
+function flowRegimeKey(Re) {
+  if (Re < 2300) return 'laminar'
+  if (Re < 4000) return 'transition'
+  return 'turbulent'
+}
+
+function erosionRiskKey(velocity) {
+  if (velocity > 5) return 'high'
+  if (velocity > 3) return 'medium'
+  return 'low'
 }
 
 /** 压降 ΔP (Pa) = f · (L/D) · (ρv²/2) */
@@ -59,6 +70,8 @@ export function calcPipePressureDrop(input) {
     totalPressureDrop: totalDeltaP,
     totalPressureDropKPa: totalDeltaP / 1000,
     headLoss,
+    flowRegimeKey: flowRegimeKey(Re),
+    /** @deprecated 使用 flowRegimeKey + i18n */
     flowRegime: Re < 2300 ? '层流' : Re < 4000 ? '过渡' : '湍流',
   }
 }
@@ -76,17 +89,22 @@ export function analyzePipeFlow(input) {
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
+    const hazenC = input.hazenC ?? 130
     const hw = calcHazenWilliams(
       input.diameter ?? 50,
       input.length ?? 100,
       input.flowRate ?? 10,
-      input.hazenC ?? 130,
+      hazenC,
     )
+    result.hazenC = hazenC
     result.hazenWilliams = hw
+    // H-W 仅对照沿程；不得把局部损失并入 Darcy 侧
+    const darcyFrictionKPa = darcy.pressureDropKPa
     result.methodCompare = {
-      darcyKPa: darcy.totalPressureDropKPa,
+      darcyKPa: darcyFrictionKPa,
       hazenKPa: hw.pressureDropKPa,
-      deltaPercent: Math.abs(darcy.totalPressureDropKPa - hw.pressureDropKPa) / Math.max(darcy.totalPressureDropKPa, 0.01) * 100,
+      deltaPercent:
+        (Math.abs(darcyFrictionKPa - hw.pressureDropKPa) / Math.max(darcyFrictionKPa, 0.01)) * 100,
     }
   }
 
@@ -98,19 +116,25 @@ export function analyzePipeFlow(input) {
     result.velocityPass = darcy.velocity <= maxV
     result.pressurePass = darcy.totalPressureDropKPa <= maxDP
     result.pass = result.velocityPass && result.pressurePass
-    result.erosionRisk = darcy.velocity > 5 ? '高' : darcy.velocity > 3 ? '中' : '低'
+    result.erosionRiskKey = erosionRiskKey(darcy.velocity)
+    /** @deprecated 使用 erosionRiskKey + i18n */
+    result.erosionRisk =
+      result.erosionRiskKey === 'high' ? '高' : result.erosionRiskKey === 'medium' ? '中' : '低'
   }
 
   return result
 }
 
-/** Hazen-Williams 水力（水管道，m/s 流速） */
+/**
+ * Hazen-Williams 水头损失（仅适用于水管道）
+ * hf [m]；压降按水柱近似 Δp[kPa] ≈ hf · 9.81（ρ≈1000）
+ */
 export function calcHazenWilliams(diameter, length, flowRate, C = 130) {
   const D = diameter / 1000
   const L = length // m
   const Q = flowRate / 1000 / 60 // m³/s
   const A = (Math.PI * D ** 2) / 4
-  const v = Q / A
+  const v = A > 0 ? Q / A : 0
   const hf = 10.67 * L * Q ** 1.852 / (C ** 1.852 * D ** 4.871)
   return { headLoss: hf, velocity: v, pressureDropKPa: hf * 9.81 }
 }

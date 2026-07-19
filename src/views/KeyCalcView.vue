@@ -43,7 +43,9 @@
           :shaft-diameter="form.shaftDiameter"
           :key-width="form.keyWidth"
           :key-length="form.keyLength"
-          :key-height="stdKey.height"
+          :key-height="result.keyHeight ?? stdKey.height"
+          :torque="form.torque"
+          :hub-length="form.calcMode !== 'simple' ? form.hubLength : 0"
         />
       </section>
       <section class="card-panel">
@@ -59,6 +61,22 @@
           <div v-if="result.shearAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
         </dl>
         <p v-if="reviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
+
+        <FormulaPanel>
+          <MathTex :expr="formulaForce" block />
+          <MathTex :expr="formulaShear" block />
+          <MathTex :expr="formulaCrush" block />
+          <MathTex v-if="form.calcMode !== 'simple'" :expr="formulaMinL" block />
+          <MathTex v-if="form.calcMode === 'professional'" :expr="formulaAmp" block />
+          <template #hints>
+            <ul>
+              <li><MathContent :text="pr('keyHintForce')" /></li>
+              <li><MathContent :text="pr('keyHintStress')" /></li>
+              <li v-if="form.calcMode !== 'simple'"><MathContent :text="pr('keyHintLength')" /></li>
+              <li v-if="form.calcMode === 'professional'"><MathContent :text="pr('keyHintPro')" /></li>
+            </ul>
+          </template>
+        </FormulaPanel>
       </section>
     </div>
 
@@ -84,6 +102,8 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { analyzeKeyConnection, lookupKeySize } from '@/utils/key-calc'
 import KeyConnectionDiagram from '@/components/key/KeyConnectionDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
@@ -121,6 +141,12 @@ const {
 
 const stdKey = computed(() => lookupKeySize(form.shaftDiameter))
 const result = computed(() => analyzeKeyConnection(form))
+
+const formulaForce = String.raw`F = \dfrac{2000\,T}{d}`
+const formulaShear = String.raw`\tau = \dfrac{F}{n\,b\,L}`
+const formulaCrush = String.raw`\sigma_c = \dfrac{2F}{n\,h\,L_h}`
+const formulaMinL = String.raw`L_{\min} = \max\!\left(\dfrac{F}{n\,b\,[\tau]},\,\dfrac{2F}{n\,h\,[\sigma_c]}\right)`
+const formulaAmp = String.raw`\tau_a = \dfrac{2000\,T_a}{n\,b\,L\,d}`
 
 function applyStdKey() {
   form.keyWidth = stdKey.value.width

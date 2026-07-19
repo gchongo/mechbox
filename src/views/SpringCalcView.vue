@@ -9,11 +9,15 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="130px">
-          <el-form-item v-if="form.calcMode !== 'simple'" :label="fc('material')">
+          <CalcFormItem
+            v-if="form.calcMode !== 'simple'"
+            :label="fc('material')"
+            :pending-confirm="isPending('material')"
+          >
             <el-select v-model="form.material" class="w-full" @change="markConfirmed('material')">
               <el-option v-for="(m, k) in materials" :key="k" :label="m.label" :value="k" />
             </el-select>
-          </el-form-item>
+          </CalcFormItem>
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('springProcess')">
             <el-select v-model="form.springProcess" class="w-full">
               <el-option :label="pf('processCold')" value="cold" />
@@ -23,19 +27,24 @@
           <CalcFormItem v-if="form.calcMode !== 'simple' && form.springProcess === 'hot'" :label="pf('hotCoilHardnessHrc')">
             <el-input-number v-model="form.hotCoilHardnessHrc" :min="42" :max="52" :precision="1" :step="1" />
           </CalcFormItem>
-          <CalcFormItem :label="pf('wireDiameter')"><el-input-number v-model="form.wireDiameter" :min="0.2" :precision="2" :step="0.1" @change="markConfirmed('wireDiameter')" /></CalcFormItem>
-          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('meanDiameter')">
-            <el-input-number v-model="form.meanDiameter" :min="1" :precision="2" />
+          <CalcFormItem :label="pf('wireDiameter')" :pending-confirm="isPending('wireDiameter')">
+            <el-input-number v-model="form.wireDiameter" :min="0.2" :precision="2" :step="0.1" @change="markConfirmed('wireDiameter')" />
           </CalcFormItem>
-          <template v-else>
-            <CalcFormItem :label="pf('outerDiameter')">
-              <el-input-number v-model="form.outerDiameter" :min="1" :precision="2" @change="onOuterDiameterChange" />
-            </CalcFormItem>
-            <CalcFormItem :label="pf('meanDiameter')">
-              <el-input-number v-model="form.meanDiameter" :min="1" :precision="2" disabled />
-            </CalcFormItem>
-          </template>
-          <CalcFormItem :label="pf('activeCoils')"><el-input-number v-model="form.activeCoils" :min="1" :step="0.5" :precision="1" @change="markConfirmed('activeCoils')" /></CalcFormItem>
+          <CalcFormItem :label="pf('meanDiameter')" :pending-confirm="isPending('meanDiameter')">
+            <el-input-number
+              v-model="form.meanDiameter"
+              :min="1"
+              :precision="2"
+              @change="onMeanDiameterChange"
+            />
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('outerDiameter')">
+            <el-input-number v-model="form.outerDiameter" :min="1" :precision="2" disabled />
+            <p class="mt-1 text-xs text-gray-500"><MathContent :text="pf('outerDiameterHint')" /></p>
+          </CalcFormItem>
+          <CalcFormItem :label="pf('activeCoils')" :pending-confirm="isPending('activeCoils')">
+            <el-input-number v-model="form.activeCoils" :min="1" :step="0.5" :precision="1" @change="markConfirmed('activeCoils')" />
+          </CalcFormItem>
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('totalCoils')">
             <el-input-number v-model="form.totalCoils" :min="form.activeCoils + 1" :step="1" :precision="0" />
           </CalcFormItem>
@@ -55,16 +64,16 @@
             </el-select>
           </CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <CalcFormItem :label="pf('freeLength')">
+            <CalcFormItem :label="pf('freeLength')" :pending-confirm="isPending('freeLength')">
               <el-input-number v-model="form.freeLength" :min="1" :precision="1" @change="markConfirmed('freeLength')" />
             </CalcFormItem>
-            <CalcFormItem :label="pf('installHeight')">
+            <CalcFormItem :label="pf('installHeight')" :pending-confirm="isPending('installHeight')">
               <el-input-number v-model="form.installHeight" :min="0" :max="form.freeLength" :precision="1" @change="markConfirmed('installHeight')" />
             </CalcFormItem>
-            <CalcFormItem :label="pf('workingHeight')">
+            <CalcFormItem :label="pf('workingHeight')" :pending-confirm="isPending('workingHeight')">
               <el-input-number v-model="form.workingHeight" :min="0" :max="form.installHeight ?? form.freeLength" :precision="1" @change="markConfirmed('workingHeight')" />
             </CalcFormItem>
-            <CalcFormItem :label="pf('endType')">
+            <CalcFormItem :label="pf('endType')" :pending-confirm="isPending('endType')">
               <el-select v-model="form.endType" class="w-full" @change="markConfirmed('endType')">
                 <el-option :label="pf('endFixed')" value="fixed" />
                 <el-option :label="pf('endFree')" value="free" />
@@ -85,11 +94,11 @@
                 <el-input-number v-model="form.loadMax" :min="0" :precision="1" />
               </CalcFormItem>
             </template>
-            <CalcFormItem :label="pf('targetCycles')">
-                <el-input-number v-model="form.targetCycles" :min="1e4" :step="1e5" @change="markConfirmed('targetCycles')" />
+            <CalcFormItem :label="pf('targetCycles')" :pending-confirm="isPending('targetCycles')">
+              <el-input-number v-model="form.targetCycles" :min="1e4" :step="1e5" @change="markConfirmed('targetCycles')" />
             </CalcFormItem>
-            <CalcFormItem :label="pf('tensileStrength')">
-                <el-input-number v-model="form.tensileStrength" :min="500" :step="10" @change="onTensileStrengthChange" />
+            <CalcFormItem :label="pf('tensileStrength')" :pending-confirm="isPending('tensileStrength')">
+              <el-input-number v-model="form.tensileStrength" :min="500" :step="10" @change="onTensileStrengthChange" />
               <p class="mt-1 text-xs text-gray-500">{{ pf('tensileStrengthHint') }}</p>
             </CalcFormItem>
             <CalcFormItem :label="pf('excitationFrequency')">
@@ -107,18 +116,22 @@
           :free-length="form.calcMode !== 'simple' ? form.freeLength : 0"
           :install-height="form.calcMode !== 'simple' ? form.installHeight : 0"
           :working-height="form.calcMode !== 'simple' ? form.workingHeight : 0"
+          :load="form.calcMode === 'simple' ? form.load : (result.workingLoad ?? 0)"
+          :end-type="form.calcMode === 'simple' ? 'fixed' : form.endType"
+          :show-end-type="form.calcMode !== 'simple'"
         />
       </section>
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-alert
-          v-if="result.releaseBlocked"
-          class="mb-4"
-          type="warning"
-          :closable="false"
-          show-icon
-          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
-        />
+        <div class="mb-3 flex flex-col gap-1">
+          <div class="flex items-center gap-2">
+            <el-tag :type="reviewOnly ? 'warning' : result.pass ? 'success' : 'danger'">
+              {{ reviewOnly ? overallReviewText : result.pass ? ct('pass') : ct('fail') }}
+            </el-tag>
+            <span v-if="result.estimateOnly" class="text-xs text-amber-600">（估算/未放行）</span>
+          </div>
+          <p v-if="form.calcMode !== 'simple'" class="text-xs text-gray-500 dark:text-gray-400">{{ pf('passDisclaimer') }}</p>
+        </div>
         <el-alert
           v-if="form.calcMode !== 'simple' && !result.heightsValid && result.heightValidation?.issues?.length"
           class="mb-4"
@@ -170,15 +183,15 @@
           :title="pr('fatigueBlocked')"
           :description="fatigueIssueText"
         />
-        <div class="mb-4 flex flex-col gap-1">
-          <div class="flex items-center gap-2">
-            <el-tag :type="reviewOnly ? 'warning' : result.pass ? 'success' : 'danger'" effect="plain">
-              {{ reviewOnly ? overallReviewText : result.pass ? ct('pass') : ct('fail') }}
-            </el-tag>
-            <span v-if="result.estimateOnly" class="text-xs text-amber-600">（估算/未放行）</span>
-          </div>
-          <p v-if="form.calcMode !== 'simple'" class="text-xs text-gray-500 dark:text-gray-400">{{ pf('passDisclaimer') }}</p>
-        </div>
+        <el-alert
+          v-if="shearFailBanner"
+          class="mb-4"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="pr('shearFailTitle')"
+          :description="shearFailHint"
+        />
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springRate')" /><dd class="font-mono">{{ result.springRate.toFixed(4) }} N/mm</dd></div>
           <template v-if="result.usesHeightLoads">
@@ -257,15 +270,27 @@
                 {{ reviewAwareCheckMark(result.resonancePass, result) }}
               </dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel :text="pr('solidMargin')" />
-              <dd class="font-mono" :class="reviewAwareCheckClass(result.solidPass, result)">
-                <template v-if="result.geometryPass">
-                  {{ result.remainingDeflectionMargin.toFixed(2) }} mm
-                </template>
-                <template v-else>{{ pr('solidBad') }}</template>
-                {{ reviewAwareCheckMark(result.solidPass, result) }}
-              </dd>
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <div class="flex justify-between gap-2">
+                <ResultLabel :text="pr('solidMargin')" />
+                <dd class="shrink-0 font-mono" :class="reviewAwareCheckClass(result.solidPass, result)">
+                  <template v-if="result.geometryPass">
+                    {{ result.remainingDeflectionMargin.toFixed(2) }} mm
+                  </template>
+                  <template v-else>{{ pr('solidBad') }}</template>
+                  {{ reviewAwareCheckMark(result.solidPass, result) }}
+                </dd>
+              </div>
+              <p v-if="result.geometryPass" class="mt-1 text-xs text-gray-500">
+                <MathContent
+                  :text="
+                    pr('solidMarginHint', {
+                      clearance: (result.solidClearance ?? 0).toFixed(2),
+                      reserve: (result.solidReserve ?? 0).toFixed(2),
+                    })
+                  "
+                />
+              </p>
             </div>
           </template>
           <template v-if="form.calcMode === 'professional' && result.fatigueLife != null">
@@ -286,10 +311,10 @@
             </div>
           </template>
         </dl>
-        <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-          <MathTex expr="k = \frac{G d^4}{8 D^3 n}" />
-          <MathTex expr="\tau = \frac{8 F D}{\pi d^3} K" />
-        </div>
+        <FormulaPanel :columns="1">
+          <MathTex expr="k = \frac{G d^4}{8 D^3 n}" block />
+          <MathTex expr="\tau = \frac{8 F D}{\pi d^3} K" block />
+        </FormulaPanel>
       </section>
     </div>
 
@@ -315,6 +340,8 @@
 <script setup>
 import { reactive, computed, watch, toRef } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { analyzeSpring, SPRING_MATERIALS, resolveSpringAllowableShear, resolveSpringLoadCategory, resolveSpringStressRatio } from '@/utils/spring-calc'
 import { resolveSpringTensileStrength } from '@/utils/spring-rm-lookup'
 import SpringDiagram from '@/components/spring/SpringDiagram.vue'
@@ -328,7 +355,6 @@ import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
-import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 import { isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('spring')
@@ -337,30 +363,31 @@ const { optionMap } = useOptionsI18n()
 const materials = computed(() => optionMap(SPRING_MATERIALS, 'springMaterials'))
 const form = reactive({
   calcMode: 'simple',
-  material: '50CrVA',
+  material: '65Mn',
   springProcess: 'cold',
   hotCoilHardnessHrc: 42,
-  wireDiameter: 1.1,
-  outerDiameter: 6.5,
-  meanDiameter: 5.4,
-  activeCoils: 5,
-  totalCoils: 7,
-  load: 150,
-  allowableShear: 529,
+  /** 开箱可通过静强度的示意弹簧（完整/专业同几何；简化用 F≈F₂） */
+  wireDiameter: 1.5,
+  outerDiameter: 12,
+  meanDiameter: 10.5,
+  activeCoils: 10,
+  totalCoils: 12,
+  load: 55,
+  allowableShear: 540,
   allowableShearManual: false,
   loadCategory: 'auto',
-  freeLength: 15,
-  installHeight: 13,
-  workingHeight: 12,
+  freeLength: 45,
+  installHeight: 38,
+  workingHeight: 32,
   endType: 'fixed',
-  loadMin: 50,
-  loadMax: 200,
+  loadMin: 30,
+  loadMax: 60,
   targetCycles: 1e6,
-  tensileStrength: 1810,
+  tensileStrength: 1570,
   tensileStrengthManual: false,
   excitationFrequency: 0,
 })
-const { markConfirmed, withConfirmed } = useCriticalInputConfirm(toRef(form, 'calcMode'))
+const { markConfirmed, withConfirmed, isPending } = useCriticalInputConfirm(toRef(form, 'calcMode'), 'spring')
 
 function syncAllowableShear() {
   if (form.allowableShearManual) return
@@ -414,15 +441,16 @@ function syncRmFromWireTable() {
   }
 }
 
-function syncMeanFromOuter() {
-  if (form.wireDiameter != null && form.outerDiameter != null) {
-    form.meanDiameter = Number((form.outerDiameter - form.wireDiameter).toFixed(2))
+/** 几何关系：D₂ = D + d（中径为主，改线径不改中径） */
+function syncOuterFromMean() {
+  if (form.wireDiameter != null && form.meanDiameter != null) {
+    form.outerDiameter = Number((form.meanDiameter + form.wireDiameter).toFixed(2))
   }
 }
 
-function onOuterDiameterChange() {
-  markConfirmed('outerDiameter')
-  syncMeanFromOuter()
+function onMeanDiameterChange() {
+  markConfirmed('meanDiameter')
+  syncOuterFromMean()
 }
 
 function onTensileStrengthChange() {
@@ -433,9 +461,16 @@ function onTensileStrengthChange() {
 watch(
   () => form.wireDiameter,
   () => {
-    syncMeanFromOuter()
+    syncOuterFromMean()
     syncRmFromWireTable()
     syncAllowableShear()
+  },
+)
+
+watch(
+  () => form.meanDiameter,
+  () => {
+    syncOuterFromMean()
   },
 )
 
@@ -485,11 +520,6 @@ watch(
 const result = computed(() => analyzeSpring(withConfirmed(form)))
 const reviewOnly = computed(() => isReviewOnlyResult(result.value))
 const overallReviewText = computed(() => (locale.value === 'en' ? 'Review / Not released' : '需复核 / 未放行'))
-const unconfirmedLabelText = computed(() =>
-  formatUnconfirmedLabels(result.value.unconfirmedCriticalInputs ?? [], locale.value).join(
-    locale.value === 'en' ? ', ' : '、',
-  ),
-)
 
 const heightIssueText = computed(() => {
   const issues = result.value.heightValidation?.issues ?? []
@@ -500,6 +530,13 @@ const fatigueIssueText = computed(() => {
   const key = result.value.fatigueIssue
   return key ? pr(`fatigueIssue_${key}`) : ''
 })
+
+const shearFailBanner = computed(
+  () => result.value?.shearPass === false && !result.value?.heightLoadBlocked && !result.value?.errorKey,
+)
+const shearFailHint = computed(() =>
+  result.value?.usesHeightLoads ? pr('shearFailHintHeights') : pr('shearFailHintForce'),
+)
 
 const decisionPreset = DECISION_PRESETS.spring
 const baseInputs = computed(() => ({ ...form }))
@@ -523,6 +560,8 @@ useHistoryReplay('spring', form)
 function onApplyInverse({ variable, value }) {
   if (variable in form && Number.isFinite(value)) {
     form[variable] = Number(value.toFixed ? value.toFixed(2) : value)
+    if (variable === 'wireDiameter' || variable === 'meanDiameter') syncOuterFromMean()
+    markConfirmed(variable)
   }
 }
 

@@ -76,6 +76,7 @@ export const toolHelpEnById = {
       'Site results are for learning and preliminary sizing only. Formal products must be verified per company standards and complete code requirements.',
       'Keep units consistent: force in N, stress in MPa, length in mm, speed in rpm.',
       'Pass only means the built-in criteria are met for current inputs—it does not guarantee assembly or manufacturability.',
+      'Critical inputs in Full/Professional: pending fields show amber border and a trailing *; numeric results stay visible while overall status is often review until each field is edited. Simple mode has no gate and no highlight.',
     ],
     useCases: [
       'First time using MechBox and unsure where to begin.',
@@ -862,19 +863,22 @@ export const toolHelpEnById = {
 
   units: {
     title: 'Unit Conversion',
-    summary: 'Convert common mechanics and length units to avoid mixing MPa with psi or mm with in.',
+    summary: 'Convert common mechanics, length, and area units to avoid mixing MPa with psi or mm with in.',
     steps: [
-      'Select quantity type (length, stress, force, etc.).',
+      'Select quantity type (length, area, stress, force, etc.).',
       'Enter value and source unit; choose target unit.',
       'Copy result into other calculation tools.',
     ],
-    principle: 'Conversion factors between unit systems are constants (e.g. 1 in = 25.4 mm, 1 ksi ≈ 6.895 MPa).',
-    notes: ['Unit mix-ups are a leading cause of engineering errors—sanity-check magnitude after conversion.'],
+    principle: 'Conversion factors between unit systems are constants (e.g. 1 in = 25.4 mm, 1 ksi ≈ 6.895 MPa, 1 MPa = 1 N/mm²).',
+    notes: [
+      'Unit mix-ups are a leading cause of engineering errors—sanity-check magnitude after conversion.',
+      'Stress units include MPa, N/mm², ksi; area includes mm²/m², hectare, Chinese mu/fen/qing, and ft²/yd²/acre/mi².',
+    ],
     useCases: COMMON_USE_CASES,
     inputs: COMMON_INPUTS,
     outputs: COMMON_OUTPUTS,
     reliability: COMMON_RELIABILITY,
-    keywords: ['units', 'MPa', 'psi'],
+    keywords: ['units', 'MPa', 'N/mm²', 'psi', 'area', 'mu'],
   },
 
   'interference-fit': {
@@ -891,13 +895,13 @@ export const toolHelpEnById = {
       'Choose mode: Simplified (magnitude only, pass always false) / Full (hollow shaft + hoop + confirm gate) / Professional (+ thermal).',
       'Enter shaft d, bore D (interference i=d−D shown), hub OD D_A, fit length L, friction μ.',
       'Full/Professional: shaft bore d_i (0=solid), E/ν, hoop allowables; use Recommend ~1.8d for D_A.',
-      'Professional: ΔT and α for shaft/hub (steel ~11.5×10⁻⁶/°C); α=0 disables thermal correction.',
-      'Full/Professional: edit and confirm each critical field or releaseBlocked shows warning only—see help gate table.',
+      'Professional: ΔT and α for shaft/hub (physical α, steel ~11.5×10⁻⁶/°C—unlike the ×10⁻⁶ entry on the thermal-expansion page); α=0 disables thermal correction.',
+      'Full/Professional: edit and confirm each critical field. Pending fields show amber border and *; results stay visible while overall status is review (releaseBlocked)—see help gate table.',
       'Review p, hoopPass, press force F, torque T vs design torque and press capacity.',
       'If i is mm-scale on cm-scale diameters, verify bore D before trusting stress results.',
     ],
     principle:
-      'Interference creates radial overlap Δr=i/2; Lame thick-cylinder theory gives contact pressure p from hub compliance C_h and shaft compliance C_s (solid or hollow). Friction torque T=πpd²Lμ/2, press force F=πpdL(μ+0.02). Full/Professional compare hoop stress to allowables (hoopPass). Full/Professional also require critical-input confirmation before pass—prefilled defaults are not auto-confirmed. Professional adjusts i\'=i+α_s dΔT−α_h DΔT.',
+      'Interference creates radial overlap Δr=i/2; Lame thick-cylinder theory gives contact pressure p from hub compliance C_h and shaft compliance C_s (solid or hollow). Friction torque T=πpd²Lμ/2, press force F=πpdL(μ+0.02). Full/Professional compare hoop stress to allowables (hoopPass). Full/Professional also require critical-input confirmation before pass—prefilled defaults are not auto-confirmed; numeric results remain visible while blocked. Professional adjusts i\'=i+α_s dΔT−α_h DΔT.',
     formulas: [
       { latex: 'i = d - D', note: 'Interference (mm); require i>0' },
       { latex: 'p = \\frac{i/2}{r_i(C_h+C_s)}', note: 'r_i=D/2; C_h,C_s from E, ν, radii' },
@@ -920,14 +924,14 @@ export const toolHelpEnById = {
     notes: [
       'Typical ISO interference is **μm to tens of μm**; mm-scale i often means wrong bore (e.g. 45.98 vs 49.98).',
       'Simplified mode **pass always false** (estimateOnly)—even if hoopPass passes.',
-      'Full/Professional: **releaseBlocked** until critical fields confirmed—right panel shows warning only; intentional design.',
+      'Full/Professional: **releaseBlocked** until critical fields confirmed—results stay visible with amber border + * on pending fields; intentional design.',
       'Switching calc mode **clears** confirmations.',
       'Thin wall: (D_A−D)/2 < 0.1d → thinWallWarning; small D_A overestimates p.',
       'Professional UI mentions roughness—not implemented; thermal correction only.',
       'Use with /fit and /thermal-expansion for tolerance band and α.',
     ],
     example:
-      'Example — Ø50 press fit (d=50, D=49.975, i=0.025 mm): p≈39 MPa, hoop ~66/39 MPa (<350 MPa allow.), F≈3.4×10⁵ N, T≈180 N·m (L=40, μ=0.12). Full mode needs confirmed critical inputs to clear releaseBlocked. Counterexample — D=45.98 → i=4 mm: GPa-scale p, hoopPass fails—likely typo.',
+      'Example — Ø50 press fit (d=50, D=49.975, i=0.025 mm): p≈39 MPa, hoop ~66/39 MPa (<350 MPa allow.), F≈3.4×10⁵ N, T≈180 N·m (L=40, μ=0.12). Full mode needs confirmed critical inputs to clear releaseBlocked (values already visible). Counterexample — D=45.98 → i=4 mm: GPa-scale p, hoopPass fails—likely typo.',
     standards: ['DIN 7190 (reference)', 'ISO 286 (interference from /fit)'],
     inputs: [
       {
@@ -984,8 +988,8 @@ export const toolHelpEnById = {
       },
       {
         name: 'releaseBlocked',
-        meaning: 'Process gate when critical inputs unconfirmed (Full/Professional).',
-        judgement: 'Not a math error—confirm fields to clear. Simplified has no gate but pass always false.',
+        meaning: 'Process gate when critical inputs unconfirmed (Full/Professional): overall status = review; numeric results still shown.',
+        judgement: 'Not a math error—amber border + * mark pending fields; edit to clear. Simplified has no gate but pass always false.',
       },
     ],
     reliability: [
@@ -996,7 +1000,7 @@ export const toolHelpEnById = {
     professionalChecks: [
       'Cross-check i with /fit: μm normal, mm suspect wrong bore.',
       'Full/Professional: confirm all critical fields before pass; or use Simplified to preview magnitudes.',
-      'Thermal: do not leave α=0 in Professional; use material values for dissimilar pairs.',
+      'Thermal: do not leave α=0 in Professional (physical α on this page); use material values for dissimilar pairs.',
       'On thin-wall warning, increase D_A or verify thick-cylinder applicability.',
       'After F/T comparison, still follow company process or full DIN 7190 for release.',
     ],
@@ -1007,22 +1011,26 @@ export const toolHelpEnById = {
     title: 'Thermal Expansion',
     summary: 'Estimate dimensional change from temperature and its effect on clearance/interference fits.',
     steps: [
-      'Enter original length, linear expansion coefficient, and temperature rise (or operating vs assembly temperature).',
-      'Review elongation; for fits, compute differential thermal deformation of hole and shaft separately.',
+      'Choose mode: Simplified (linear ΔL) / Full (dual-material fit change) / Professional (assembly vs service ΔT steps).',
+      'Enter length and ΔT; enter α as a **×10⁻⁶ value** (steel ≈ 11.5 meaning 11.5×10⁻⁶/°C).',
+      'Full/Professional: shaft/bore diameters and second-material α; Professional adds assembly/service ΔT. Pending critical fields show amber border and *.',
+      'Review ΔL; for fits, check interference change and whether clearance appears.',
     ],
-    principle: 'Most metals expand when heated: ΔL = α L ΔT. Different hole/shaft materials change fit tightness with temperature.',
+    principle: 'Most metals expand when heated: ΔL = α L ΔT (α in formulas is the physical value). Different hole/shaft materials change fit tightness with temperature.',
     formulas: [
-      { latex: '\\Delta L = \\alpha L \\Delta T', note: 'Linear thermal expansion' },
+      { latex: '\\Delta L = \\alpha L \\Delta T', note: 'Linear expansion; UI α is entered as ×10⁻⁶ then scaled' },
     ],
     notes: [
-      'α varies by material; steel is roughly 1.2×10⁻⁵ /°C.',
+      'UI α is the ×10⁻⁶ magnitude (e.g. 11.5), not 11.5×10⁻⁶ typed as a tiny decimal; steel physical α ≈ 1.2×10⁻⁵/°C.',
+      'Interference-fit Professional α uses physical values (e.g. 11.5×10⁻⁶)—different from this page.',
+      'Full/Professional critical-input gate: unconfirmed → review status with values still shown; Simple mode has no gate.',
       'High-temperature equipment must include hot-state clearance in tolerance stacks.',
     ],
     useCases: COMMON_USE_CASES,
     inputs: COMMON_INPUTS,
     outputs: COMMON_OUTPUTS,
     reliability: COMMON_RELIABILITY,
-    keywords: ['thermal expansion', 'temperature'],
+    keywords: ['thermal expansion', 'temperature', 'alpha', '×10⁻⁶'],
   },
 
   fatigue: {
@@ -1092,28 +1100,29 @@ export const toolHelpEnById = {
 
   gear: {
     title: 'Gear Strength',
-    summary: 'Check contact and bending strength per ISO 6336 / AGMA approaches.',
+    summary: 'Mode selects the path: Simplified Lewis, Full ISO 6336, Professional ISO+AGMA side-by-side.',
     steps: [
-      'Enter module, tooth count, face width, power/torque, speed, and material allowables.',
-      'Select standard system (ISO / AGMA) and calculation mode.',
-      'Review contact stress, bending stress, and safety factors.',
+      'Choose mode: Simplified = Lewis estimate; Full = ISO 6336; Professional = ISO and AGMA in parallel (no separate standard tabs).',
+      'Enter module, tooth count, face width, power/torque, speed, and material allowables; Full/Professional can adjust load factors and accuracy grade.',
+      'Review contact/bending stresses and safety factors; Professional requires all four ISO/AGMA sub-checks (bothPass) for overall pass.',
     ],
     principle:
-      'Common gear failures are pitting (contact fatigue) and tooth breakage (bending fatigue). Check flank and root separately; include load factors, dynamic load, and accuracy.',
+      'Common gear failures are pitting (contact fatigue) and tooth breakage (bending fatigue). Check flank and root separately; include load factors, dynamic load, and accuracy. Mode is the standard path—there is no separate ISO/AGMA tab switch.',
     formulas: [
       { latex: '\\sigma_H \\le \\sigma_{HP}', note: 'Contact stress within allowable' },
       { latex: '\\sigma_F \\le \\sigma_{FP}', note: 'Root bending stress within allowable' },
     ],
     notes: [
-      'Accuracy grade and mounting errors strongly affect dynamic load.',
-      'Poor lubrication significantly reduces contact fatigue life.',
+      'Lewis Simplified is for magnitude only; use Full ISO or Professional dual-standard for design.',
+      'Professional AGMA vs ISO stresses can differ 10–30% for the same inputs; bothPass requires both suites.',
+      'Accuracy grade and mounting errors strongly affect dynamic load; poor lubrication cuts contact life.',
     ],
-    standards: ['ISO 6336', 'AGMA'],
+    standards: ['ISO 6336', 'ISO 1328', 'AGMA 2101', 'GB/T 3480'],
     useCases: COMMON_USE_CASES,
     inputs: COMMON_INPUTS,
     outputs: COMMON_OUTPUTS,
     reliability: COMMON_RELIABILITY,
-    keywords: ['gear', 'contact', 'bending'],
+    keywords: ['gear', 'contact', 'bending', 'Lewis', 'ISO6336', 'AGMA'],
   },
 
   thread: {
@@ -1608,25 +1617,62 @@ export const toolHelpEnById = {
     keywords: ['chain drive', 'pitch'],
   },
 
-  structural: {
-    title: 'Structure / Fluids',
-    summary: 'Collection of structure and fluid estimates: pressure drop, column buckling, simple modes, etc.',
+  'pipe-flow': {
+    title: 'Pipe Pressure Drop',
+    summary: 'Darcy-Weisbach friction loss, local losses, and velocity/Δp limit checks.',
     steps: [
-      'Choose sub-function (pressure drop / buckling / modes, etc.).',
-      'Enter geometry and material parameters as prompted.',
-      'Review critical load or pressure drop results.',
+      'Pick a fluid preset and enter diameter, length, flow rate, and roughness.',
+      'Full mode adds local loss K and Hazen-Williams friction compare.',
+      'Professional mode checks max velocity and allowable Δp.',
     ],
-    principle:
-      'Column buckling follows Euler theory for slender members; pipe pressure drop relates to velocity and friction loss coefficients.',
+    principle: 'ΔP = f(L/D)(ρv²/2); turbulent f via Swamee-Jain approximation of Colebrook.',
     formulas: [
-      { latex: 'F_{cr} = \\frac{\\pi^2 EI}{(\\mu L)^2}', note: 'Euler critical load' },
+      { latex: '\\Delta P = f \\cdot \\frac{L}{D} \\cdot \\frac{\\rho v^2}{2}', note: 'Darcy-Weisbach' },
     ],
-    notes: ['Euler applies to slender columns; short stocky columns need other empirical formulas.'],
+    notes: ['Single straight-run estimate; no full fitting library or detailed compressible model.'],
     useCases: COMMON_USE_CASES,
     inputs: COMMON_INPUTS,
     outputs: COMMON_OUTPUTS,
     reliability: COMMON_RELIABILITY,
-    keywords: ['buckling', 'pressure drop', 'modes'],
+    keywords: ['pressure drop', 'pipe', 'Darcy'],
+  },
+  'plate-buckling': {
+    title: 'Plate Buckling',
+    summary: 'Elastic critical stress, imperfection reduction, and safety-factor screening for plates.',
+    steps: [
+      'Choose edge condition and enter thickness, width, length, and applied stress.',
+      'Full mode includes transverse stress and imperfection factor.',
+      'Professional mode can check in-plane shear and post-buckling capacity.',
+    ],
+    principle: 'σ_cr = k π²E / [12(1−ν²)] (t/b)² with tabulated edge k.',
+    formulas: [
+      { latex: '\\sigma_{cr} = k \\cdot \\frac{\\pi^2 E}{12(1-\\nu^2)}\\left(\\frac{t}{b}\\right)^2', note: 'Elastic plate buckling' },
+    ],
+    notes: ['Default SF≥2; length a does not refine half-wave count.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['buckling', 'plate'],
+  },
+  'modal-freq': {
+    title: 'Natural Frequency',
+    summary: 'SDOF / first-mode beam frequency, resonance margin, and transmissibility.',
+    steps: [
+      'Choose model (SDOF / simply supported / cantilever) and enter parameters.',
+      'Enter excitation frequency or rpm to review resonance margin.',
+      'Professional mode uses damping ratio for H(r).',
+    ],
+    principle: 'Beam fn from EI, ρA, span, and supports; margin M=|f_n−f_exc|/f_n.',
+    formulas: [
+      { latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'Simply supported first mode' },
+    ],
+    notes: ['First-mode pre-check only—not a substitute for full modal analysis.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['natural frequency', 'modal', 'resonance'],
   },
 
   'material-selection': {

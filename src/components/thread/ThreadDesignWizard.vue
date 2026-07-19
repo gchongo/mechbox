@@ -2,7 +2,7 @@
   <div class="thread-design-wizard">
     <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">{{ pt('wizIntro') }}</p>
 
-    <el-steps :active="stepIndex" finish-status="success" align-center class="mb-6">
+    <el-steps :active="stepsActive" finish-status="success" align-center class="mb-6">
       <el-step v-for="id in activeSteps" :key="id" :title="pt(`wizStep_${id}`)" />
     </el-steps>
 
@@ -272,6 +272,10 @@ const resultRef = ref(null)
 const activeSteps = computed(() => getActiveWizardSteps(answers))
 const currentStepId = computed(() => activeSteps.value[stepIndex.value] ?? 'purpose')
 const isLastStep = computed(() => stepIndex.value >= activeSteps.value.length - 1)
+/** 结果页时 active = 步数，三步全部显示为 success（绿勾） */
+const stepsActive = computed(() =>
+  showResult.value ? activeSteps.value.length : stepIndex.value,
+)
 
 const result = computed(() => runThreadDesignWizard(answers))
 

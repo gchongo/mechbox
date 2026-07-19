@@ -7,9 +7,8 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ pt('sectionParams') }}</h2>
         <el-form label-width="120px">
-          <CalcFormItem :label="pf('targetRss')">
+          <CalcFormItem :label="pf('targetRss')" unit="mm">
             <el-input-number v-model="targetTolerance" :min="0.001" :precision="4" :step="0.01" />
-            <span class="ml-2 text-sm text-gray-500">mm</span>
           </CalcFormItem>
           <CalcFormItem :label="pf('method')">
             <el-select v-model="methodId" class="w-full">

@@ -14,6 +14,13 @@ export function useDecisionI18n() {
     return val !== path ? val : fallback ?? invId
   }
 
+  function reasonLabel(reason) {
+    if (!reason) return '-'
+    const path = `calc.decision.reasons.${reason}`
+    const val = t(path, {})
+    return val !== path ? val : reason
+  }
+
   function metricLabel(toolId, metricKey) {
     const pagePath = `calc.pages.${toolId}.results.${metricKey}`
     const pageVal = t(pagePath, {})
@@ -38,5 +45,5 @@ export function useDecisionI18n() {
     return fallback ?? paramKey
   }
 
-  return { dt, t, locale, inverseLabel, metricLabel, paramLabel }
+  return { dt, t, locale, inverseLabel, reasonLabel, metricLabel, paramLabel }
 }

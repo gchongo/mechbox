@@ -1,7 +1,7 @@
 /** Per-route meta descriptions for applySeoMeta (falls back to pageDescription template) */
 
 export const seoRoutesZh = {
-  home: '机械工具箱首页 — 尺寸链分析、概率统计与机械强度计算工具入口。',
+  home: '机械工具箱首页 — 尺寸链公差、机械强度与传动工艺计算工具入口。',
   editor: '在线尺寸链编辑器，支持 RSS、极值法、修正 RSS 与 GD&T 公差叠加分析。',
   'editor-detail': '查看或继续编辑已保存的尺寸链分析结果。',
   statistics: '公差转换、RSS 计算、西格玛分析、分布曲线与 Cpk 统计工具。',
@@ -39,7 +39,9 @@ export const seoRoutesZh = {
   'o-ring': 'O 型圈密封沟槽设计，压缩率、填充率与挤出间隙校核。',
   fatigue: 'S-N 曲线寿命估算与 Miner 线性累积损伤分析。',
   analytics: '线性/多项式回归、正交试验主效应与响应面分析。',
-  structural: '管路压降、薄板屈曲与单自由度固有频率估算。',
+  'pipe-flow': '管路 Darcy-Weisbach 压降、局部损失与流速校核。',
+  'plate-buckling': '矩形薄板弹性屈曲临界应力与安全系数估算。',
+  'modal-freq': 'SDOF/梁一阶固有频率与共振裕度前置验算。',
   'material-selection': '按工况筛选材料并对比许用应力与密度。',
   manufacturing: '机加工余量与铸造拔模斜度快速估算。',
   'heat-treatment': '碳当量、Jominy 淬透性与 Hollomon-Jaffe 回火硬度估算。',
@@ -53,7 +55,7 @@ export const seoRoutesZh = {
 }
 
 export const seoRoutesEn = {
-  home: 'MechBox home — tolerance stack analysis, statistics, and mechanical strength tools.',
+  home: 'MechBox home — tolerance stacks, strength checks, and drive & process calculators.',
   editor: 'Interactive tolerance stack editor with RSS, worst-case, modified RSS, and GD&T stack-up.',
   'editor-detail': 'View or continue editing a saved tolerance stack analysis.',
   statistics: 'Tolerance conversion, RSS calculator, sigma analysis, distribution plots, and Cpk tools.',
@@ -91,7 +93,9 @@ export const seoRoutesEn = {
   'o-ring': 'O-ring groove design — compression ratio, gland fill, and extrusion gap checks.',
   fatigue: 'S-N curve life estimates and Miner linear damage accumulation.',
   analytics: 'Linear/polynomial regression, DOE main effects, and response surface analysis.',
-  structural: 'Pipe pressure drop, plate buckling, and single-DOF natural frequency estimates.',
+  'pipe-flow': 'Pipe Darcy-Weisbach pressure drop, local losses, and velocity checks.',
+  'plate-buckling': 'Elastic critical stress and safety factor for rectangular plates.',
+  'modal-freq': 'SDOF / first-mode beam natural frequency and resonance margin screening.',
   'material-selection': 'Filter and compare materials by allowable stress and density for your load case.',
   manufacturing: 'Machining allowance and casting draft angle estimates.',
   'heat-treatment': 'Carbon equivalent, Jominy hardenability, and Hollomon–Jaffe temper hardness.',

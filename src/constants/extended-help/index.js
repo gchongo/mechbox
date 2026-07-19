@@ -26,7 +26,9 @@ import {
   getORingHelp,
   getCylinderHelp,
   getThermalExpansionHelp,
-  getStructuralHelp,
+  getPipeFlowHelp,
+  getPlateBucklingHelp,
+  getModalFreqHelp,
 } from './mechanical-misc.js'
 import {
   getEditorHelp,
@@ -190,7 +192,9 @@ const REGISTRY = {
   'o-ring': getORingHelp,
   cylinder: getCylinderHelp,
   'thermal-expansion': getThermalExpansionHelp,
-  structural: getStructuralHelp,
+  'pipe-flow': getPipeFlowHelp,
+  'plate-buckling': getPlateBucklingHelp,
+  'modal-freq': getModalFreqHelp,
   editor: getEditorHelp,
   batch: getBatchHelp,
   allocation: getAllocationHelp,

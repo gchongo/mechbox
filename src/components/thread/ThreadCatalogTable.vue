@@ -2,7 +2,16 @@
   <div class="thread-catalog-table">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="font-semibold">{{ tableTitle }}</h3>
-      <span class="text-xs text-gray-500">{{ unitLabel }}</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <template v-if="isImperialSeries">
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ pt('displayUnit') }}</span>
+          <el-radio-group v-model="displayUnit" size="small">
+            <el-radio-button value="in">{{ pt('displayUnitIn') }}</el-radio-button>
+            <el-radio-button value="mm">{{ pt('displayUnitMm') }}</el-radio-button>
+          </el-radio-group>
+        </template>
+        <span v-else class="text-xs text-gray-500 dark:text-gray-400">{{ unitLabel }}</span>
+      </div>
     </div>
 
     <div class="mb-4 flex flex-wrap items-center gap-3">
@@ -24,12 +33,12 @@
         <el-option label="2" :value="2" />
       </el-select>
       <template v-if="showTpiFilter">
-        <span class="text-xs text-gray-500">{{ pt('filterTpi') }}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">{{ pt('filterTpi') }}</span>
         <el-input-number v-model="tpiMin" :min="1" :step="1" :precision="0" controls-position="right" class="w-24" />
         <span class="text-gray-400">–</span>
         <el-input-number v-model="tpiMax" :min="1" :step="1" :precision="0" controls-position="right" class="w-24" />
       </template>
-      <span class="text-xs text-gray-500">{{ pt('rowCount', { n: filteredRows.length }) }}</span>
+      <span class="text-xs text-gray-500 dark:text-gray-400">{{ pt('rowCount', { n: filteredRows.length }) }}</span>
     </div>
 
     <ThreadPitchTool v-if="showPitchTool" :pt="pt" />
@@ -39,7 +48,6 @@
         ref="tableRef"
         :data="filteredRows"
         :max-height="tableMaxHeight"
-        :fit="false"
         border
         stripe
         size="small"
@@ -58,9 +66,24 @@
             <ThreadFieldTip :label="pt('colPriority')" :tip="pt('term_priority')" />
           </template>
         </el-table-column>
-        <el-table-column :min-width="THREAD_TABLE_COL.pitch">
+        <!-- Imperial: TPI and pitch as separate columns -->
+        <template v-if="isImperialSeries">
+          <el-table-column :min-width="THREAD_TABLE_COL.tpi">
+            <template #header>
+              <ThreadFieldTip :label="pt('colTpi')" :tip="pt('term_tpi')" />
+            </template>
+            <template #default="{ row }">{{ row.tpi != null ? row.tpi : '—' }}</template>
+          </el-table-column>
+          <el-table-column :min-width="THREAD_TABLE_COL.pitch">
+            <template #header>
+              <ThreadFieldTip :label="pitchLengthColumnLabel" :tip="pt('term_pitch')" />
+            </template>
+            <template #default="{ row }">{{ formatPitchLength(row, displayUnit) }}</template>
+          </el-table-column>
+        </template>
+        <el-table-column v-else :min-width="THREAD_TABLE_COL.pitch">
           <template #header>
-            <ThreadFieldTip :label="pitchColumnLabel" :tip="pitchTermTip" />
+            <ThreadFieldTip :label="pt('colPitch')" :tip="pt('term_pitch')" />
           </template>
           <template #default="{ row }">{{ formatPitchDisplay(row) }}</template>
         </el-table-column>
@@ -68,27 +91,27 @@
           <template #header>
             <ThreadFieldTip :label="pt('colMajor')" :tip="pt('term_major')" />
           </template>
-          <template #default="{ row }">{{ formatDim(row, row.major) }}</template>
+          <template #default="{ row }">{{ formatDim(row, row.major, displayUnit) }}</template>
         </el-table-column>
         <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colPitchDia')" :tip="pt('term_pitchDia')" />
           </template>
-          <template #default="{ row }">{{ formatDim(row, row.pitchDiameter) }}</template>
+          <template #default="{ row }">{{ formatDim(row, row.pitchDiameter, displayUnit) }}</template>
         </el-table-column>
         <el-table-column :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colMinor')" :tip="pt('term_minor')" />
           </template>
-          <template #default="{ row }">{{ formatDim(row, row.minor) }}</template>
+          <template #default="{ row }">{{ formatDim(row, row.minor, displayUnit) }}</template>
         </el-table-column>
         <el-table-column v-if="showTapCol" :min-width="THREAD_TABLE_COL.dim">
           <template #header>
             <ThreadFieldTip :label="pt('colTapDrill')" :tip="pt('term_tapDrill')" />
           </template>
-          <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
+          <template #default="{ row }">{{ formatDim(row, row.tapDrill, displayUnit) }}</template>
         </el-table-column>
-        <el-table-column :min-width="THREAD_TABLE_COL.tolerancePair">
+        <el-table-column v-if="showToleranceCol" :min-width="THREAD_TABLE_COL.tolerancePair">
           <template #header>
             <ThreadFieldTip :label="pt('colTolerancePair')" :tip="pt('term_tolerancePair')" />
           </template>
@@ -105,7 +128,13 @@
           </template>
           <template #default="{ row }">{{ sealingLabel(row.sealing) }}</template>
         </el-table-column>
-        <el-table-column :min-width="THREAD_TABLE_COL.actionIcon" align="center" class-name="thread-col-action">
+        <el-table-column
+          :min-width="THREAD_TABLE_COL.actionIcon"
+          :width="THREAD_TABLE_COL.actionIcon"
+          align="center"
+          fixed="right"
+          class-name="thread-col-action"
+        >
           <template #header><span aria-hidden="true">+</span></template>
           <template #default="{ row }">
             <el-button
@@ -132,7 +161,7 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { Search, Plus, Check } from '@element-plus/icons-vue'
 import { getThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
-import { filterThreadRows, formatPitchDisplay, formatDim } from '@/utils/thread-standards'
+import { filterThreadRows, formatPitchDisplay, formatPitchLength, formatDim } from '@/utils/thread-standards'
 import { THREAD_TABLE_COL } from '@/constants/thread-table-columns'
 import { useThreadTableMaxHeight } from '@/utils/thread-table-layout'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
@@ -146,15 +175,38 @@ const props = defineProps({
   highlightRowId: { type: String, default: '' },
 })
 
-defineEmits(['row-click', 'toggle-compare'])
+const emit = defineEmits(['row-click', 'toggle-compare', 'display-unit-change'])
 
 const searchQuery = ref('')
 const priorityFilter = ref('all')
 const tpiMin = ref(null)
 const tpiMax = ref(null)
+const displayUnit = ref('in')
 const tableRef = ref(null)
 const tableHostRef = ref(null)
 const { maxHeight: tableMaxHeight, updateMaxHeight } = useThreadTableMaxHeight(tableHostRef, { min: 320, gap: 24 })
+
+const DISPLAY_UNIT_KEY = 'mechbox-thread-imperial-display-unit'
+
+function loadDisplayUnit() {
+  try {
+    const saved = localStorage.getItem(DISPLAY_UNIT_KEY)
+    if (saved === 'in' || saved === 'mm') displayUnit.value = saved
+  } catch {
+    /* ignore */
+  }
+}
+
+loadDisplayUnit()
+
+watch(displayUnit, (u) => {
+  try {
+    localStorage.setItem(DISPLAY_UNIT_KEY, u)
+  } catch {
+    /* ignore */
+  }
+  emit('display-unit-change', u)
+})
 
 function layoutTable() {
   nextTick(() => {
@@ -164,6 +216,8 @@ function layoutTable() {
 }
 
 const activeMeta = computed(() => THREAD_SYSTEMS.find((s) => s.id === props.catalogSystem))
+
+const isImperialSeries = computed(() => activeMeta.value?.unit === 'in')
 
 const tableTitle = computed(() => {
   const key = `tableTitle_${props.catalogSystem}`
@@ -175,12 +229,8 @@ const unitLabel = computed(() =>
   activeMeta.value?.unit === 'in' ? props.pt('unitIn') : props.pt('unitMm'),
 )
 
-const pitchColumnLabel = computed(() =>
-  activeMeta.value?.unit === 'in' ? props.pt('colTpiPitch') : props.pt('colPitch'),
-)
-
-const pitchTermTip = computed(() =>
-  activeMeta.value?.unit === 'in' ? props.pt('term_tpi') : props.pt('term_pitch'),
+const pitchLengthColumnLabel = computed(() =>
+  displayUnit.value === 'mm' ? props.pt('colPitchMm') : props.pt('colPitchIn'),
 )
 
 const showTpiFilter = computed(() => ['unc', 'unf', 'unef', 'npt', 'nptf', 'acme'].includes(props.catalogSystem))
@@ -201,11 +251,25 @@ const filteredRows = computed(() =>
   }),
 )
 
+function rowHasTolerance(row) {
+  const ext = row.toleranceExternal
+  const int = row.toleranceInternal
+  return (ext && ext !== '—') || (int && int !== '—')
+}
+
+/** Hide blank tolerance column (e.g. NPT/G/R pipe series). */
+const showToleranceCol = computed(() => filteredRows.value.some(rowHasTolerance))
+
 watch(filteredRows, layoutTable)
 
 watch(tableMaxHeight, layoutTable)
 
-onMounted(layoutTable)
+watch(showToleranceCol, layoutTable)
+
+onMounted(() => {
+  layoutTable()
+  if (isImperialSeries.value) emit('display-unit-change', displayUnit.value)
+})
 
 watch(
   () => [props.catalogSystem, props.catalogSubTab],
@@ -214,6 +278,7 @@ watch(
     priorityFilter.value = 'all'
     tpiMin.value = null
     tpiMax.value = null
+    if (isImperialSeries.value) emit('display-unit-change', displayUnit.value)
     layoutTable()
   },
 )

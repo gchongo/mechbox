@@ -166,7 +166,8 @@ export function analyzeBeam(input) {
     result.stressConcentration = input.stressConcentration ?? 1
     if (input.loadMin != null && input.loadMax != null) {
       const Kt = input.stressConcentration ?? 1
-      const mMin = beamCase.maxMoment(input.loadMin, L)
+      // Apply Kd to both extremes so σ_a = Kt·Kd·(M(Fmax)-M(Fmin))/(2W)
+      const mMin = beamCase.maxMoment(input.loadMin * loadFactor, L)
       const mMax = beamCase.maxMoment(input.loadMax * loadFactor, L)
       const sigmaAmp = (((mMax - mMin) / section.W) * Kt) / 2
       const sigmaMean = (((mMax + mMin) / section.W) * Kt) / 2

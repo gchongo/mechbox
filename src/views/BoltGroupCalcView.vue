@@ -23,9 +23,8 @@
           <CalcFormItem :label="pf('boltCount')">
             <el-input-number v-model="form.boltCount" :min="2" :max="24" />
           </CalcFormItem>
-          <CalcFormItem :label="pf('boltCircleRadius')">
+          <CalcFormItem :label="pf('boltCircleRadius')" unit="mm">
             <el-input-number v-model="form.boltCircleRadius" :min="10" />
-            <span class="ml-2 text-sm text-gray-500">mm</span>
           </CalcFormItem>
           <CalcFormItem :label="pf('shearX')">
             <el-input-number v-model="form.shearX" :step="100" />
@@ -39,7 +38,7 @@
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('allowPerBolt')">
             <el-input-number v-model="form.allowPerBolt" :min="100" :step="500" />
           </CalcFormItem>
-          <template v-if="form.calcMode !== 'simple'">
+          <template v-if="form.calcMode === 'professional'">
             <CalcFormItem :label="pf('frictionCoeff')">
               <el-input-number v-model="form.frictionCoeff" :min="0" :max="0.6" :precision="2" :step="0.05" />
             </CalcFormItem>
@@ -51,7 +50,6 @@
             </CalcFormItem>
             <CalcFormItem :label="pf('pryingArm')">
               <el-input-number v-model="form.pryingArm" :min="0" :step="5" />
-              <span class="ml-2 text-xs text-gray-500">mm</span>
             </CalcFormItem>
             <CalcFormItem :label="pf('allowTensionPerBolt')">
               <el-input-number v-model="form.allowTensionPerBolt" :min="100" :step="500" />
@@ -66,6 +64,7 @@
           :shear-y="form.shearY"
           :moment="form.moment"
           :critical-index="result.criticalBoltIndex ?? 0"
+          :bolts="result.bolts ?? []"
         />
       </section>
 
@@ -75,15 +74,26 @@
           {{ pr('overall') }}: {{ overallStatusLabel }}
         </el-tag>
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('directPerBolt')" />
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('directPerBolt')" />
             <dd class="font-mono">{{ result.directPerBolt?.toFixed(0) }} N</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torsionPerBolt')" />
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('torsionPerBolt')" />
             <dd class="font-mono">{{ result.torsionPerBolt?.toFixed(0) }} N</dd>
           </div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('maxBoltForce')" />
+          <div
+            v-if="result.hasTension && result.maxShearForce != null"
+            class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
+          >
+            <ResultLabel :text="pr('maxShearForce')" />
+            <dd class="font-mono">{{ result.maxShearForce?.toFixed(0) }} N</dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="maxForceLabel" />
             <dd class="font-mono text-lg" :class="reviewAwareCheckClass(result.forcePass ?? result.pass, snapshot)">
-              {{ result.maxBoltForce?.toFixed(0) }} N {{ reviewAwareCheckMark(result.forcePass ?? result.pass, snapshot, reviewMarkText) }}
+              {{ result.maxBoltForce?.toFixed(0) }} N
+              {{ reviewAwareCheckMark(result.forcePass ?? result.pass, snapshot, reviewMarkText) }}
             </dd>
           </div>
           <div v-if="result.criticalBoltIndex" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
@@ -110,6 +120,9 @@
           </template>
         </dl>
 
+        <p v-if="form.calcMode === 'simple'" class="mt-3 text-xs text-gray-500">
+          {{ pr('simpleScalarHint') }}
+        </p>
         <p v-if="reviewOnly" class="mt-3 text-xs text-warning">
           {{ pt('hintSimple') }}
         </p>
@@ -122,9 +135,14 @@
             <el-table-column prop="y" label="y (mm)" />
             <el-table-column prop="fx" label="Fx (N)" />
             <el-table-column prop="fy" label="Fy (N)" />
-            <el-table-column prop="force" label="|F| (N)">
+            <el-table-column prop="force" :label="pr('shearCol')">
               <template #default="{ row }">
                 <span :class="row.pass ? '' : 'text-error font-medium'">{{ row.force }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column v-if="result.hasTension" prop="combinedForce" :label="pr('combinedCol')">
+              <template #default="{ row }">
+                <span :class="row.pass ? '' : 'text-error font-medium'">{{ row.combinedForce }}</span>
               </template>
             </el-table-column>
           </el-table>
@@ -211,6 +229,9 @@ const overallStatusLabel = computed(() => {
 })
 const reviewOnly = computed(() => isReviewOnlyResult(snapshot.value))
 const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
+const maxForceLabel = computed(() =>
+  result.value?.hasTension ? pr('maxBoltForceCombined') : pr('maxBoltForce'),
+)
 
 const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form,

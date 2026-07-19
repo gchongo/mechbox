@@ -19,9 +19,12 @@
         :aria-expanded="expanded[group.id]"
         @click="toggleGroup(group.id)"
       >
-        <span class="thread-nav-group__icon" aria-hidden="true">{{ group.icon }}</span>
+        <el-icon class="thread-nav-group__icon" :size="18"><component :is="group.icon" /></el-icon>
         <span class="thread-nav-group__title">{{ pt(group.titleKey) }}</span>
-        <span class="thread-nav-group__chevron" aria-hidden="true">{{ expanded[group.id] ? '▾' : '▸' }}</span>
+        <el-icon class="thread-nav-group__chevron" :size="12">
+          <ArrowDown v-if="expanded[group.id]" />
+          <ArrowRight v-else />
+        </el-icon>
       </button>
 
       <div v-show="expanded[group.id]" class="thread-nav-group__body">
@@ -34,10 +37,11 @@
               :aria-expanded="expandedPurpose[purpose]"
               @click="togglePurpose(purpose)"
             >
-              <span>{{ pt(`cat_${purpose}`) }}</span>
-              <span class="thread-nav-subgroup__chevron" aria-hidden="true">
-                {{ expandedPurpose[purpose] ? '▾' : '▸' }}
-              </span>
+              <span class="thread-nav-subgroup__title">{{ pt(`cat_${purpose}`) }}</span>
+              <el-icon class="thread-nav-subgroup__chevron" :size="11">
+                <ArrowDown v-if="expandedPurpose[purpose]" />
+                <ArrowRight v-else />
+              </el-icon>
             </button>
             <ul v-show="expandedPurpose[purpose]" class="thread-nav-list">
               <li v-for="sys in systemsByPurpose[purpose]" :key="sys.id">
@@ -45,8 +49,14 @@
                   type="button"
                   class="thread-nav-item"
                   :class="{ 'is-active': isCatalogActive(purpose, sys.id) }"
+                  :title="sys.implemented ? pt('catalogBadge_yes') : pt('catalogBadge_ref')"
                   @click="selectCatalog(purpose, sys.id)"
                 >
+                  <span
+                    class="thread-nav-item__dot"
+                    :class="sys.implemented ? 'is-catalog' : 'is-ref'"
+                    aria-hidden="true"
+                  />
                   <span class="thread-nav-item__label">{{ pt(`ts_${sys.id}_name`) }}</span>
                 </button>
               </li>
@@ -98,6 +108,13 @@
 
 <script setup>
 import { computed, reactive, watch } from 'vue'
+import {
+  Collection,
+  Compass,
+  Search,
+  ArrowDown,
+  ArrowRight,
+} from '@element-plus/icons-vue'
 import { THREAD_PURPOSE_ORDER, getSystemsForPurpose } from '@/constants/thread-standards/taxonomy'
 
 const props = defineProps({
@@ -112,9 +129,9 @@ const emit = defineEmits(['update:modelValue', 'open-favorite', 'nav-selected'])
 const purposeOrder = THREAD_PURPOSE_ORDER
 
 const groups = [
-  { id: 'catalog', icon: '📋', titleKey: 'navCatalog' },
-  { id: 'design', icon: '🧭', titleKey: 'navDesign' },
-  { id: 'tools', icon: '🔍', titleKey: 'navTools' },
+  { id: 'catalog', icon: Collection, titleKey: 'navCatalog' },
+  { id: 'design', icon: Compass, titleKey: 'navDesign' },
+  { id: 'tools', icon: Search, titleKey: 'navTools' },
 ]
 
 const designItems = [

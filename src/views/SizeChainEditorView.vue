@@ -123,9 +123,6 @@
           </el-radio-group>
         </CalcFormItem>
       </el-form>
-      <p class="text-sm text-gray-500">
-        {{ pt('closedRingHint') }}
-      </p>
       <div class="mt-6 flex justify-between">
         <el-button @click="clearClosedRing">{{ pt('clear') }}</el-button>
         <div class="flex gap-2">
@@ -138,26 +135,25 @@
     <!-- 步骤 3 -->
     <section v-show="currentStep === 3" class="card-panel">
       <h2 class="mb-2 text-lg font-semibold">{{ pt('step3Title') }}</h2>
-      <p class="mb-4 text-sm text-gray-500">
-        {{ pt('step3Desc') }}
-      </p>
-
-      <div class="mb-3 flex flex-wrap items-center gap-2">
-        <el-button
-          v-if="selectedType && getGdtCalcMode(selectedType.id)"
-          plain
-          @click="loadRingTemplate"
-        >
-          {{ pt('loadTemplate', { name: typeName(selectedType.id) }) }}
-        </el-button>
-        <el-button plain @click="loadDefaultDemo">{{ pt('loadDemo') }}</el-button>
-        <p v-if="componentRings.length >= 50" class="text-sm text-warning">{{ pt('maxRings') }}</p>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p class="min-w-0 flex-1 text-sm text-gray-500">
+          {{ pt('step3Desc') }}
+        </p>
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+          <el-button
+            v-if="selectedType && getGdtCalcMode(selectedType.id)"
+            plain
+            size="small"
+            @click="loadRingTemplate"
+          >
+            {{ pt('loadTemplate', { name: typeName(selectedType.id) }) }}
+          </el-button>
+          <el-button type="primary" plain size="small" @click="loadDefaultDemo">
+            {{ pt('loadDemo') }}
+          </el-button>
+        </div>
       </div>
-
-      <p v-if="isDemoLoaded" class="mb-2 text-xs text-gray-500">
-        {{ pt('demoLoaded') }}
-        <button type="button" class="text-primary hover:underline" @click="isDemoLoaded = false">{{ pt('hideDemoHint') }}</button>
-      </p>
+      <p v-if="componentRings.length >= 50" class="mb-2 text-sm text-warning">{{ pt('maxRings') }}</p>
 
       <div class="space-y-4">
         <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-700">
@@ -458,7 +454,6 @@ const canvasRef = ref(null)
 const prevUnit = ref('mm')
 const savedId = ref(route.params.id ? String(route.params.id) : null)
 const advancedMode = ref(getSettings().editorAdvancedMode ?? false)
-const isDemoLoaded = ref(false)
 
 const closedRing = ref({
   name: '',
@@ -755,14 +750,12 @@ function loadDefaultDemoIfEmpty() {
   const state = prepareEditorDemoState(locale.value)
   if (!state) return
   applyEditorState(state)
-  isDemoLoaded.value = true
 }
 
 function loadDefaultDemo() {
   const state = prepareEditorDemoState(locale.value)
   if (!state) return
   applyEditorState(state)
-  isDemoLoaded.value = true
   ElMessage.success(pt('msgDemoLoaded'))
 }
 
@@ -962,7 +955,6 @@ function removeRing(index) {
 
 function clearRings() {
   componentRings.value = []
-  isDemoLoaded.value = false
 }
 
 function resetAll() {
@@ -976,7 +968,6 @@ function resetAll() {
   touched.value = {}
   clearClosedRing()
   clearRings()
-  isDemoLoaded.value = false
   applyDefaultSettings()
 }
 

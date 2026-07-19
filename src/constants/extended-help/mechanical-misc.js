@@ -204,8 +204,8 @@ const THERMAL_MODES = {
     simplePass: '**pass 恒为 false**（estimateOnly）',
     completePass: '**pass = ¬becomesClearance**（最终过盈仍 >0）',
     proPass: '同完整；serviceFit 为装配后 + 服役温升叠加结果',
-    simpleCaveat: 'α 为参考温度常数',
-    completeCaveat: '双材料配合：$\\Delta I = \\Delta d_{shaft} - \\Delta D_{hole}$',
+    simpleCaveat: '界面 α 填 ×10⁻⁶ 数值（钢≈11.5）；公式用物理 α',
+    completeCaveat: '双材料配合：$\\Delta I = \\Delta d_{shaft} - \\Delta D_{hole}$；关键字段琥珀色边框 + *',
     proCaveat: '$\\alpha(T)=\\alpha_{ref}(1+k(T-T_{ref}))$ 默认 professional 开启',
   },
   en: {
@@ -215,21 +215,21 @@ const THERMAL_MODES = {
     simplePass: '**pass always false** (estimateOnly)',
     completePass: '**pass = ¬becomesClearance** (final interference > 0)',
     proPass: 'Same as Full; serviceFit = assembly state + service heating',
-    simpleCaveat: 'α constant at reference temperature',
-    completeCaveat: 'Dual material: $\\Delta I = \\Delta d_{shaft} - \\Delta D_{hole}$',
+    simpleCaveat: 'UI α is ×10⁻⁶ magnitude (steel ≈ 11.5); formulas use physical α',
+    completeCaveat: 'Dual material: $\\Delta I = \\Delta d_{shaft} - \\Delta D_{hole}$; critical fields amber + *',
     proCaveat: '$\\alpha(T)=\\alpha_{ref}(1+k(T-T_{ref}))$ on by default in Professional',
   },
 }
 
 const THERMAL_FORMULAS = {
   zh: [
-    { name: '线性膨胀', latex: '\\Delta L = \\alpha \\cdot L \\cdot \\Delta T', note: '简化/完整：常数 α' },
+    { name: '线性膨胀', latex: '\\Delta L = \\alpha \\cdot L \\cdot \\Delta T', note: '界面 α 按 ×10⁻⁶ 输入（如 11.5）后再换算' },
     { name: 'α(T) 均值 (专业)', latex: '\\Delta L \\approx \\alpha_{ref}\\left(1+\\frac{k\\Delta T}{2}\\right)L\\Delta T', note: '相对温度系数 $k$ (/°C)' },
     { name: '配合变化', latex: '\\Delta I = \\alpha_1 d \\Delta T - \\alpha_2 D \\Delta T', note: '最终过盈 $I_f = I_0 + \\Delta I$' },
     { name: '变间隙判定', latex: 'becomesClearance \\Leftrightarrow I_f < 0', note: 'pass 取反' },
   ],
   en: [
-    { name: 'Linear expansion', latex: '\\Delta L = \\alpha \\cdot L \\cdot \\Delta T', note: 'Simple/Full: constant α' },
+    { name: 'Linear expansion', latex: '\\Delta L = \\alpha \\cdot L \\cdot \\Delta T', note: 'UI α entered as ×10⁻⁶ (e.g. 11.5) then scaled' },
     { name: 'α(T) mean (Pro)', latex: '\\Delta L \\approx \\alpha_{ref}\\left(1+\\frac{k\\Delta T}{2}\\right)L\\Delta T', note: 'Relative temp coeff. $k$ (/°C)' },
     { name: 'Fit change', latex: '\\Delta I = \\alpha_1 d \\Delta T - \\alpha_2 D \\Delta T', note: 'Final interference $I_f = I_0 + \\Delta I$' },
     { name: 'Clearance check', latex: 'becomesClearance \\Leftrightarrow I_f < 0', note: 'pass is negation' },
@@ -241,13 +241,13 @@ const THERMAL_PASS = {
     { check: '简化', rule: 'estimateOnly → pass=false' },
     { check: '完整/专业', rule: 'pass = finalInterference ≥ 0（未变间隙）' },
     { check: '专业分步', rule: '先 assemblyΔT 再 serviceΔT−assemblyΔT 叠加至 serviceFit' },
-    { check: '关键输入', rule: 'complete：shaftDiameter, holeDiameter, deltaT；professional：assemblyDeltaT, serviceDeltaT' },
+    { check: '关键输入', rule: 'complete：shaftDiameter, holeDiameter, deltaT；professional：assemblyDeltaT, serviceDeltaT；未确认 → 琥珀边框 + *，总判待复核（数值仍显示）' },
   ],
   en: [
     { check: 'Simplified', rule: 'estimateOnly → pass=false' },
     { check: 'Full/Pro', rule: 'pass = finalInterference ≥ 0 (no clearance)' },
     { check: 'Pro stepped', rule: 'assemblyΔT then serviceΔT−assemblyΔT → serviceFit' },
-    { check: 'Critical inputs', rule: 'complete: shaftDiameter, holeDiameter, deltaT; pro: assembly/service ΔT' },
+    { check: 'Critical inputs', rule: 'complete: shaftDiameter, holeDiameter, deltaT; pro: assembly/service ΔT; unconfirmed → amber + *, status=review (values still shown)' },
   ],
 }
 
@@ -257,55 +257,44 @@ const STRUCTURAL_PIPE_FORMULAS = {
   zh: [
     { name: 'Darcy-Weisbach', latex: '\\Delta P = f \\cdot \\frac{L}{D} \\cdot \\frac{\\rho v^2}{2}', note: 'Swamee-Jain 求 $f$；Re<2300 层流 $f=64/Re$' },
     { name: '局部损失', latex: '\\Delta P_{local} = K \\cdot \\frac{\\rho v^2}{2}', note: '完整/专业模式叠加' },
-    { name: 'Hazen-Williams (对照)', latex: 'h_f = 10.67 \\frac{L Q^{1.852}}{C^{1.852} D^{4.871}}', note: '完整模式与 Darcy 对比 deltaPercent' },
+    { name: 'Hazen-Williams (对照)', latex: 'h_f = 10.67 \\frac{L Q^{1.852}}{C^{1.852} D^{4.871}}', note: '仅水；与 Darcy **沿程**对比 deltaPercent（不含局部 K）' },
   ],
   en: [
     { name: 'Darcy-Weisbach', latex: '\\Delta P = f \\cdot \\frac{L}{D} \\cdot \\frac{\\rho v^2}{2}', note: 'Swamee-Jain for $f$; laminar Re<2300: $f=64/Re$' },
     { name: 'Local loss', latex: '\\Delta P_{local} = K \\cdot \\frac{\\rho v^2}{2}', note: 'Added in Full/Professional' },
-    { name: 'Hazen-Williams (compare)', latex: 'h_f = 10.67 \\frac{L Q^{1.852}}{C^{1.852} D^{4.871}}', note: 'Full mode vs Darcy deltaPercent' },
+    { name: 'Hazen-Williams (compare)', latex: 'h_f = 10.67 \\frac{L Q^{1.852}}{C^{1.852} D^{4.871}}', note: 'Water only; vs Darcy **friction** (excludes local K)' },
   ],
 }
 
 const STRUCTURAL_PLATE_FORMULAS = {
   zh: [
-    { name: '薄板屈曲', latex: '\\sigma_{cr} = k \\cdot \\frac{\\pi^2 E}{12(1-\\nu^2)} \\left(\\frac{t}{b}\\right)^2', note: '$k$ 随边界条件；长宽比 >1 时 $k$ 略增' },
-    { name: '安全系数', latex: 'SF = \\sigma_{cr} / \\sigma_{applied}', note: '$\\sigma_{applied}=\\sigma_x + 0.5\\sigma_y$（完整+）' },
+    { name: '薄板屈曲', latex: '\\sigma_{cr} = k \\cdot \\frac{\\pi^2 E}{12(1-\\nu^2)} \\left(\\frac{t}{b}\\right)^2', note: '$k$ 取边界表值（SSSS=4）；不随 $a/b$ 半波数变化' },
+    { name: '安全系数', latex: 'SF = \\sigma_{cr} / \\sigma_{applied}', note: '$\\sigma_{applied}=\\sigma_x + 0.5\\sigma_y$（完整+）；默认要求 SF≥2' },
+    { name: '后屈曲 (专业)', latex: '\\sigma_{pb} \\approx \\varphi \\cdot \\sigma_{cr}', note: '默认 $\\varphi=1.5$，估算承载，非 $\\sigma_{ult}-\\sigma_{cr}$' },
     { name: '剪切 (专业)', latex: '\\tau_{cr} \\approx 0.3 \\sigma_{cr}', note: 'τ_pass: $\\tau \\le \\tau_{cr}/SF_{min}$' },
   ],
   en: [
-    { name: 'Plate buckling', latex: '\\sigma_{cr} = k \\cdot \\frac{\\pi^2 E}{12(1-\\nu^2)} \\left(\\frac{t}{b}\\right)^2', note: '$k$ by edge condition; aspect >1 slightly increases $k$' },
-    { name: 'Safety factor', latex: 'SF = \\sigma_{cr} / \\sigma_{applied}', note: '$\\sigma_{applied}=\\sigma_x + 0.5\\sigma_y$ (Full+)' },
+    { name: 'Plate buckling', latex: '\\sigma_{cr} = k \\cdot \\frac{\\pi^2 E}{12(1-\\nu^2)} \\left(\\frac{t}{b}\\right)^2', note: 'Tabulated $k$ (SSSS=4); not refined by $a/b$ half-waves' },
+    { name: 'Safety factor', latex: 'SF = \\sigma_{cr} / \\sigma_{applied}', note: '$\\sigma_{applied}=\\sigma_x + 0.5\\sigma_y$ (Full+); default SF≥2' },
+    { name: 'Post-buckling (Pro)', latex: '\\sigma_{pb} \\approx \\varphi \\cdot \\sigma_{cr}', note: 'Default $\\varphi=1.5$; capacity estimate, not $\\sigma_{ult}-\\sigma_{cr}$' },
     { name: 'Shear (Pro)', latex: '\\tau_{cr} \\approx 0.3 \\sigma_{cr}', note: 'τ_pass: $\\tau \\le \\tau_{cr}/SF_{min}$' },
   ],
 }
 
 const STRUCTURAL_MODAL_FORMULAS = {
   zh: [
-    { name: 'SDOF 固有频率', latex: 'f_n = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}}', note: 'modal 标签页默认工况' },
-    { name: '简支梁一阶', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E MPa，尺寸 mm，ρ 按 N·mm·s（tonne/mm³）换算' },
-    { name: '共振裕度', latex: 'M = \\frac{|f_{exc}-f_n|}{f_n}', note: 'pass 当 $M \\ge 0.2$（≥20%）' },
-    { name: '放大因子 (专业)', latex: 'H = \\frac{1}{\\sqrt{(1-r^2)^2+(2\\zeta r)^2}}', note: '$r=f_{exc}/f_n$，$\\zeta$ 阻尼比' },
+    { name: 'SDOF 固有频率', latex: 'f_n = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}}', note: '弹簧-质量模型' },
+    { name: '简支梁一阶', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E MPa，尺寸 mm，ρ 按 N·mm·s（tonne/mm³）；$E=210\\,\\mathrm{GPa}$' },
+    { name: '共振裕度', latex: 'M = \\frac{|f_{exc}-f_n|}{f_n}', note: '≥20% 安全；10–20% 关注；<10% 危险' },
+    { name: '临界转速 (完整+)', latex: 'n_{cr} = f_n \\times 60', note: 'rpm' },
+    { name: '传递率 (专业)', latex: 'H(r) = \\frac{1}{\\sqrt{(1-r^2)^2+(2\\zeta r)^2}}', note: '位移传递率，非共振 $Q=1/(2\\zeta)$' },
   ],
   en: [
     { name: 'SDOF natural freq.', latex: 'f_n = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}}', note: 'Default modal tab case' },
-    { name: 'Simply supported beam', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E in MPa, mm units, ρ in N·mm·s mass units (tonne/mm³)' },
-    { name: 'Resonance margin', latex: 'M = \\frac{|f_{exc}-f_n|}{f_n}', note: 'pass when $M \\ge 0.2$ (≥20%)' },
-    { name: 'Amplification (Pro)', latex: 'H = \\frac{1}{\\sqrt{(1-r^2)^2+(2\\zeta r)^2}}', note: '$r=f_{exc}/f_n$, $\\zeta$ damping ratio' },
-  ],
-}
-
-const STRUCTURAL_PASS = {
-  zh: [
-    { check: '管路 (专业)', rule: 'velocityPass: $v \\le v_{max}$；pressurePass: $\\Delta P_{total} \\le \\Delta P_{max}$；pass=两者' },
-    { check: '薄板屈曲', rule: 'SF ≥ minSafety（默认 2）或 applied≤0；完整+含横向应力与缺陷系数' },
-    { check: '模态 (专业)', rule: '有激励频率时 resonance.pass（M≥20%）；无激励则 pass=true' },
-    { check: '管路简化', rule: '无 pass；不计局部损失' },
-  ],
-  en: [
-    { check: 'Pipe (Pro)', rule: 'velocityPass: $v \\le v_{max}$; pressurePass: $\\Delta P_{total} \\le \\Delta P_{max}$; both required' },
-    { check: 'Plate buckling', rule: 'SF ≥ minSafety (default 2) or applied≤0; Full+ includes transverse & imperfection' },
-    { check: 'Modal (Pro)', rule: 'With excitation: resonance.pass (M≥20%); none → pass=true' },
-    { check: 'Pipe Simplified', rule: 'No pass; local loss omitted' },
+    { name: 'Simply supported beam', latex: 'f_n = \\frac{\\pi}{2L^2}\\sqrt{\\frac{EI}{\\rho A}}', note: 'E in MPa, mm units, ρ tonne/mm³; $E=210\\,\\mathrm{GPa}$' },
+    { name: 'Resonance margin', latex: 'M = \\frac{|f_{exc}-f_n|}{f_n}', note: '≥20% safe; 10–20% caution; <10% danger' },
+    { name: 'Critical speed (Full+)', latex: 'n_{cr} = f_n \\times 60', note: 'rpm' },
+    { name: 'Transmissibility (Pro)', latex: 'H(r) = \\frac{1}{\\sqrt{(1-r^2)^2+(2\\zeta r)^2}}', note: 'Displacement H(r), not resonant $Q=1/(2\\zeta)$' },
   ],
 }
 
@@ -591,17 +580,19 @@ export function getThermalExpansionHelp(locale = 'zh') {
     titleGuide: L ? 'Thermal fit guide' : '热装/温升指南',
     guideOpts: pickLocale(locale, {
       zh: {
-        intro: '材料库 α 含 referenceTemp 与 alphaTempCoeff；专业模式默认 **useAlphaTemperature**。',
+        intro: '材料库 α 含 referenceTemp 与 alphaTempCoeff；专业模式默认 **useAlphaTemperature**。界面 α 填 **×10⁻⁶ 数值**（钢≈11.5），计算时再换算为物理 α。',
         sections: [
           { title: '双材料配合', bullets: ['轴 α₁、孔 α₂ 可不同', 'ΔT>0 且 α_shaft>α_hole → 过盈增大（钢轴铝孔反之）'] },
           { title: '分步温升', bullets: ['assemblyΔT：装配态', 'serviceΔT：服役相对装配再叠加'] },
+          { title: '关键输入', bullets: ['完整/专业待确认字段：琥珀色边框 + *', '数值仍显示，总判待复核直至确认', '与过盈配合页不同：彼处专业 α 填物理值'] },
         ],
       },
       en: {
-        intro: 'Material library α includes referenceTemp & alphaTempCoeff; Professional defaults **useAlphaTemperature**.',
+        intro: 'Material library α includes referenceTemp & alphaTempCoeff; Professional defaults **useAlphaTemperature**. UI α is a **×10⁻⁶ magnitude** (steel ≈ 11.5), scaled to physical α in calc.',
         sections: [
           { title: 'Dual-material fit', bullets: ['Shaft α₁, hole α₂ may differ', 'ΔT>0 & α_shaft>α_hole → interference increases'] },
           { title: 'Stepped heating', bullets: ['assemblyΔT: assembly state', 'serviceΔT: service increment over assembly'] },
+          { title: 'Critical inputs', bullets: ['Full/Pro pending fields: amber border + *', 'Values stay visible; status=review until confirmed', 'Unlike interference-fit page, which uses physical α'] },
         ],
       },
     }),
@@ -628,10 +619,12 @@ export function getThermalExpansionHelp(locale = 'zh') {
     titleFaq: L ? 'FAQ' : '常见问题',
     faqRows: {
       zh: [
+        { q: 'α 怎么填？', a: '本页填 ×10⁻⁶ 数值（钢≈11.5）。过盈配合页专业模式填物理 α（如 11.5e-6）。' },
         { q: 'α 是否随温度变？', a: '专业模式可选 α(T) 线性修正；简化/完整用常数 α。' },
         { q: '与干涉配合页关系？', a: '本页温升 ΔI；干涉配合页算装配力/应力。可组合使用。' },
       ],
       en: [
+        { q: 'How to enter α?', a: 'This page: ×10⁻⁶ magnitude (steel ≈ 11.5). Interference-fit Professional: physical α (e.g. 11.5e-6).' },
         { q: 'Temperature-dependent α?', a: 'Pro optional linear α(T); Simple/Full use constant α.' },
         { q: 'vs interference-fit page?', a: 'This page: thermal ΔI; interference page: assembly force/stress.' },
       ],
@@ -644,116 +637,197 @@ export function getThermalExpansionHelp(locale = 'zh') {
     },
     titleLimits: L ? 'Limitations' : '适用边界',
     limitItems: {
-      zh: ['未含瞬态热应力、非线性 α、相变。', '长杆/薄壁非均匀温度场未建模。', '变间隙仅判 I_f<0，不给出最小过盈安全裕度（专业仅示 interferenceMargin）。'],
-      en: ['No transient thermal stress, nonlinear α, or phase change.', 'Non-uniform fields in long/thin parts not modeled.', 'Clearance check is I_f<0 only—min interference margin shown in Pro only.'],
+      zh: [
+        '未含瞬态热应力、非线性 α、相变。',
+        '长杆/薄壁非均匀温度场未建模。',
+        '变间隙仅判 I_f<0，不给出最小过盈安全裕度（专业仅示 interferenceMargin）。',
+        '界面 α 为 ×10⁻⁶ 输入约定，勿与过盈配合页物理 α 混用。',
+      ],
+      en: [
+        'No transient thermal stress, nonlinear α, or phase change.',
+        'Non-uniform fields in long/thin parts not modeled.',
+        'Clearance check is I_f<0 only—min interference margin shown in Pro only.',
+        'UI α uses ×10⁻⁶ entry—do not mix with physical α on the interference-fit page.',
+      ],
     },
   })
 }
 
-/** @param {'zh'|'en'} locale — 结构/流体页三标签：管路 / 薄板 / 模态 */
-export function getStructuralHelp(locale = 'zh') {
+/** @param {'zh'|'en'} locale */
+export function getPipeFlowHelp(locale = 'zh') {
   const L = locale === 'en'
-  const modes = {
-    zh: {
-      simpleModel: '三标签各自基础输出；管路无局部损失；薄板无横向应力；模态无共振判定',
-      completeModel: '管路 +局部 K + HW 对照；薄板 +横向应力 +缺陷系数；模态 +rpm 转速共振',
-      proModel: '管路 v/ΔP 双限 pass；薄板 +剪切 +后屈曲储备；模态 +阻尼放大因子',
-      simplePass: '管路/模态：**无 pass**；薄板：SF≥minSafety',
-      completePass: '薄板 SF 同左；模态有 f_exc 时显示裕度（pass 仅专业）',
-      proPass: '管路 velocity∧pressure；薄板 SF∧τ；模态 resonance M≥20%',
-      simpleCaveat: 'Darcy 单段直管',
-      completeCaveat: '薄板 k 为经验边界系数',
-      proCaveat: 'SDOF/一阶梁仅为前置估算',
-    },
-    en: {
-      simpleModel: 'Per-tab basic outputs; pipe no local loss; plate no transverse; modal no resonance gate',
-      completeModel: 'Pipe + local K + HW compare; plate + transverse + imperfection; modal + rpm resonance',
-      proModel: 'Pipe v/ΔP dual limit; plate + shear + post-buckling; modal + damping amplification',
-      simplePass: 'Pipe/modal: **no pass**; plate: SF≥minSafety',
-      completePass: 'Plate SF as left; modal shows margin if f_exc (pass Pro only)',
-      proPass: 'Pipe velocity∧pressure; plate SF∧τ; modal resonance M≥20%',
-      simpleCaveat: 'Darcy single straight run',
-      completeCaveat: 'Plate k is empirical edge factor',
-      proCaveat: 'SDOF/first beam is pre-check only',
-    },
-  }
-
   return {
     blocks: [
-      modesBlock(L ? 'Calculation modes (3 tabs)' : '计算模式（三标签）', stdCalcModes(locale, pickLocale(locale, modes))),
-      formulasBlock(L ? 'Tab 1 — Pipe (Darcy-Weisbach)' : '标签 1 — 管路 (Darcy-Weisbach)', pickLocale(locale, STRUCTURAL_PIPE_FORMULAS)),
-      formulasBlock(L ? 'Tab 2 — Plate buckling' : '标签 2 — 薄板屈曲', pickLocale(locale, STRUCTURAL_PLATE_FORMULAS)),
-      formulasBlock(L ? 'Tab 3 — Modal SDOF' : '标签 3 — 模态 SDOF', pickLocale(locale, STRUCTURAL_MODAL_FORMULAS)),
-      passBlock(L ? 'Pass criteria by tab' : '各标签判定', pickLocale(locale, STRUCTURAL_PASS)),
-      guideBlock(L ? 'Structural / fluid guide' : '结构/流体指南', pickLocale(locale, {
+      modesBlock(L ? 'Calculation modes' : '计算模式', stdCalcModes(locale, pickLocale(locale, {
         zh: {
-          intro: '同一页面三个独立模型：**管路压降**、**薄板屈曲**、**SDOF/梁模态**。calcMode 三档对三标签同时生效。',
+          simpleModel: 'Darcy 沿程压降；不计局部损失',
+          completeModel: '+局部 K + Hazen-Williams 沿程对照',
+          proModel: '流速/压降双限 pass + 冲蚀粗评',
+          simplePass: '**无 pass**',
+          completePass: '无硬性 pass；展示对照 Δ%',
+          proPass: 'velocityPass ∧ pressurePass',
+          simpleCaveat: '单段直管',
+          completeCaveat: 'H-W 仅适用于水',
+          proCaveat: '冲蚀阈值为经验值',
+        },
+        en: {
+          simpleModel: 'Darcy friction only; no local loss',
+          completeModel: '+ local K + Hazen-Williams friction compare',
+          proModel: 'Velocity/Δp dual limit + coarse erosion',
+          simplePass: '**No pass**',
+          completePass: 'No hard pass; shows compare Δ%',
+          proPass: 'velocityPass ∧ pressurePass',
+          simpleCaveat: 'Single straight run',
+          completeCaveat: 'H-W is for water only',
+          proCaveat: 'Erosion thresholds are empirical',
+        },
+      }))),
+      formulasBlock(L ? 'Pipe (Darcy-Weisbach)' : '管路 (Darcy-Weisbach)', pickLocale(locale, STRUCTURAL_PIPE_FORMULAS)),
+      passBlock(L ? 'Pass criteria' : '判定', pickLocale(locale, {
+        zh: [{ check: '专业', rule: 'v ≤ v_max 且 ΔP_total ≤ ΔP_max' }],
+        en: [{ check: 'Pro', rule: 'v ≤ v_max and ΔP_total ≤ ΔP_max' }],
+      })),
+      guideBlock(L ? 'Guide' : '指南', pickLocale(locale, {
+        zh: {
+          intro: '单页工具：**管路压降**（Darcy / 局部损失 / 流速校核）。',
           sections: [
-            { title: '管路', bullets: ['Re<2300 层流；2300–4000 过渡；>4000 湍流', '专业：erosionRisk v>3 中、>5 高', '流体预设：水/油/空气 ρ、μ'] },
-            { title: '薄板', bullets: ['边界：SSSS k=4 … CCCC k≈6.97', 'imperfectionFactor 默认 0.8 折减 k', 'minSafety 默认 2'] },
-            { title: '模态', bullets: ['sdof / beam_ss / beam_cant', 'M<10% danger；10–20% warn；≥20% safe/pass', 'criticalSpeed = fn×60 rpm'] },
+            { title: '流态', bullets: ['Re<2300 层流；2300–4000 过渡；>4000 湍流', '专业：erosionRisk v>3 中、>5 高', '流体预设：水/油/空气 ρ、μ'] },
           ],
         },
         en: {
-          intro: 'Three models on one page: **pipe drop**, **plate buckling**, **SDOF/beam modal**. calcMode applies to all tabs.',
+          intro: 'Standalone tool: **pipe pressure drop**.',
           sections: [
-            { title: 'Pipe', bullets: ['Re<2300 laminar; 2300–4000 transition; >4000 turbulent', 'Pro: erosionRisk medium v>3, high v>5', 'Presets: water/oil/air ρ, μ'] },
-            { title: 'Plate', bullets: ['Edges: SSSS k=4 … CCCC k≈6.97', 'imperfectionFactor default 0.8 on k', 'minSafety default 2'] },
-            { title: 'Modal', bullets: ['sdof / beam_ss / beam_cant', 'M<10% danger; 10–20% warn; ≥20% safe/pass', 'criticalSpeed = fn×60 rpm'] },
+            { title: 'Regime', bullets: ['Re<2300 laminar; 2300–4000 transition; >4000 turbulent', 'Pro: erosion medium v>3, high v>5', 'Presets: water/oil/air'] },
           ],
         },
       })),
-      examplesBlock(L ? 'Worked examples' : '算例', pickLocale(locale, {
-        zh: [
-          { step: '管路', detail: 'DN50，Q=20 L/min，L=100 m，水 20°C → Re、f、ΔP_kPa；专业 v_max=3 m/s' },
-          { step: '薄板', detail: 't=2，b=200，SSSS，σ_x=50 MPa → σ_cr、SF；SF<2 失败' },
-          { step: 'SDOF', detail: 'k=50000 N/m，m=20 kg → fn≈7.96 Hz；f_exc=10 Hz → M≈25.6% pass' },
-        ],
-        en: [
-          { step: 'Pipe', detail: 'DN50, Q=20 L/min, L=100 m, water 20°C → Re, f, ΔP_kPa; Pro v_max=3 m/s' },
-          { step: 'Plate', detail: 't=2, b=200, SSSS, σ_x=50 MPa → σ_cr, SF; SF<2 fails' },
-          { step: 'SDOF', detail: 'k=50000 N/m, m=20 kg → fn≈7.96 Hz; f_exc=10 Hz → M≈25.6% pass' },
-        ],
-      }), L ? 'One step per tab' : '每标签一步'),
-      howToPassBlock(L ? 'How to pass' : '如何让判定通过', pickLocale(locale, {
-        zh: [
-          { goal: '管路 (专业)', steps: ['增大管径降 v 与 ΔP', '降低流量或缩短 L', '减小粗糙度或局部 K'] },
-          { goal: '薄板', steps: ['增 t 或减 b', '改善边界（提高 k）', '降低 σ_x / 提高 minSafety 仅改指标'] },
-          { goal: '模态 (专业)', steps: ['调 k 或 m 使 fn 远离 f_exc', '保证 M≥20%', '增阻尼 ζ 降放大（专业显示 H）'] },
-        ],
-        en: [
-          { goal: 'Pipe (Pro)', steps: ['Increase diameter to cut v and ΔP', 'Reduce Q or length L', 'Lower roughness or local K'] },
-          { goal: 'Plate', steps: ['Increase t or reduce b', 'Better edge fixity (higher k)', 'Lower σ_x / raising minSafety only changes target'] },
-          { goal: 'Modal (Pro)', steps: ['Tune k or m to separate fn from f_exc', 'Keep M≥20%', 'Increase ζ to reduce H (Pro display)'] },
-        ],
+      faqBlock(L ? 'FAQ' : '常见问题', pickLocale(locale, {
+        zh: [{ q: 'Darcy 与 Hazen-Williams 差很多？', a: '对照只用沿程压降（不含局部 K）。默认 C=130；油/气不适用 H-W。' }],
+        en: [{ q: 'Darcy vs Hazen-Williams differ?', a: 'Compare uses friction Δp only (no local K). Default C=130; H-W is for water.' }],
+      })),
+      limitsBlock(L ? 'Limitations' : '适用边界', pickLocale(locale, {
+        zh: ['单直管段，未含配件库、可压缩气体详细模型。'],
+        en: ['Single straight run; no fitting library or detailed compressible gas model.'],
+      })),
+    ],
+  }
+}
+
+/** @param {'zh'|'en'} locale */
+export function getPlateBucklingHelp(locale = 'zh') {
+  const L = locale === 'en'
+  return {
+    blocks: [
+      modesBlock(L ? 'Calculation modes' : '计算模式', stdCalcModes(locale, pickLocale(locale, {
+        zh: {
+          simpleModel: '表值 k 的弹性屈曲应力与 SF',
+          completeModel: '+横向应力 +缺陷系数 η',
+          proModel: '+面内剪切 +后屈曲 σ_pb≈φ·σ_cr',
+          simplePass: 'SF ≥ minSafety（默认 2）',
+          completePass: '同左',
+          proPass: 'SF ∧ τ（有剪切时）',
+          simpleCaveat: 'k 不随 a/b 半波数变化',
+          completeCaveat: 'η 为经验折减',
+          proCaveat: '后屈曲为估算，非极限减临界',
+        },
+        en: {
+          simpleModel: 'Elastic buckling with tabulated k and SF',
+          completeModel: '+ transverse stress + imperfection η',
+          proModel: '+ in-plane shear + post-buckling σ_pb≈φ·σ_cr',
+          simplePass: 'SF ≥ minSafety (default 2)',
+          completePass: 'Same as left',
+          proPass: 'SF ∧ τ when shear > 0',
+          simpleCaveat: 'k not refined by a/b half-waves',
+          completeCaveat: 'η is empirical',
+          proCaveat: 'Post-buckling is an estimate, not σ_ult−σ_cr',
+        },
+      }))),
+      formulasBlock(L ? 'Plate buckling' : '薄板屈曲', pickLocale(locale, STRUCTURAL_PLATE_FORMULAS)),
+      passBlock(L ? 'Pass criteria' : '判定', pickLocale(locale, {
+        zh: [{ check: '薄板', rule: 'SF ≥ minSafety（默认 2）；专业另校 τ' }],
+        en: [{ check: 'Plate', rule: 'SF ≥ minSafety (default 2); Pro also checks τ' }],
+      })),
+      guideBlock(L ? 'Guide' : '指南', pickLocale(locale, {
+        zh: {
+          intro: '单页工具：**薄板屈曲**。',
+          sections: [
+            { title: '边界与缺陷', bullets: ['SSSS k=4 … CCCC k≈6.97', 'imperfectionFactor 默认 0.8', 'minSafety 默认 2'] },
+          ],
+        },
+        en: {
+          intro: 'Standalone tool: **plate buckling**.',
+          sections: [
+            { title: 'Edges & imperfection', bullets: ['SSSS k=4 … CCCC k≈6.97', 'imperfectionFactor default 0.8', 'minSafety default 2'] },
+          ],
+        },
       })),
       faqBlock(L ? 'FAQ' : '常见问题', pickLocale(locale, {
-        zh: [
-          { q: 'Darcy 与 Hazen-Williams 差很多？', a: '完整模式显示 methodCompare.deltaPercent；C 值、单位与适用流体不同。' },
-          { q: '薄板 pass 但专业 shear 失败？', a: '专业 pass 需 SF 与 τ 均满足。' },
-          { q: '模态简化为何无 pass？', a: '仅算 fn；须专业模式输入 f_exc 才 resonance.pass。' },
-        ],
-        en: [
-          { q: 'Darcy vs Hazen-Williams differ?', a: 'Full mode shows methodCompare.deltaPercent; C value and fluid scope differ.' },
-          { q: 'Plate pass but Pro shear fails?', a: 'Pro pass requires both SF and τ checks.' },
-          { q: 'Modal Simple no pass?', a: 'fn only; Pro with f_exc enables resonance.pass.' },
-        ],
+        zh: [{ q: 'SF≈1.5 仍显示可能失稳？', a: '默认要求 SF≥2；可在完整+中调整要求安全系数。' }],
+        en: [{ q: 'SF≈1.5 still fails?', a: 'Default required SF is 2; adjust in Full+.' }],
       })),
-      standardsBlock(L ? 'Standards' : '标准', pickLocale(locale, {
-        zh: ['Darcy-Weisbach / Swamee-Jain — 流体力学教材', '薄板屈曲 — Timoshenko 板壳稳定', '模态 — 单自由度/欧拉-伯努利梁近似'],
-        en: ['Darcy-Weisbach / Swamee-Jain — fluid mechanics texts', 'Plate buckling — Timoshenko plate stability', 'Modal — SDOF / Euler-Bernoulli beam approximation'],
-      }), pickLocale(locale, { zh: '工程估算引用，非规范直接条文。', en: 'Engineering estimates—not direct code clauses.' })),
       limitsBlock(L ? 'Limitations' : '适用边界', pickLocale(locale, {
-        zh: [
-          '管路：单直管段，未含配件库、可压缩气体详细模型。',
-          '薄板：弹性屈曲；专业圆筒外压为 Donnell 长筒 estimateOnly。',
-          '模态：一阶近似；未含支撑刚度、连接非线性、完整 FE 模态。',
-        ],
-        en: [
-          'Pipe: single straight run; no fitting library or detailed compressible gas model.',
-          'Plate: elastic buckling; Pro cylinder external pressure is Donnell long-shell estimateOnly.',
-          'Modal: first mode only; no support stiffness, joint nonlinearity, or full FE modal.',
-        ],
+        zh: ['弹性屈曲估算；专业圆筒外压为 Donnell 长筒 estimateOnly。'],
+        en: ['Elastic buckling estimate; Pro cylinder external pressure is Donnell long-shell estimateOnly.'],
+      })),
+    ],
+  }
+}
+
+/** @param {'zh'|'en'} locale */
+export function getModalFreqHelp(locale = 'zh') {
+  const L = locale === 'en'
+  return {
+    blocks: [
+      modesBlock(L ? 'Calculation modes' : '计算模式', stdCalcModes(locale, pickLocale(locale, {
+        zh: {
+          simpleModel: 'SDOF/梁一阶 fn；可填激励看裕度',
+          completeModel: '+临界转速 +rpm 运行共振',
+          proModel: '+阻尼比与位移传递率 H(r)；pass=M≥20%',
+          simplePass: '有 f_exc 时显示评估；**无硬性 pass**',
+          completePass: '同左',
+          proPass: 'resonance.pass（M≥20%）',
+          simpleCaveat: '一阶近似',
+          completeCaveat: '转速与激励宜一致理解',
+          proCaveat: 'H(r) 非共振 Q',
+        },
+        en: {
+          simpleModel: 'SDOF/first beam fn; optional excitation margin',
+          completeModel: '+ critical speed + rpm operating resonance',
+          proModel: '+ damping and H(r); pass if M≥20%',
+          simplePass: 'Shows assessment with f_exc; **no hard pass**',
+          completePass: 'Same as left',
+          proPass: 'resonance.pass (M≥20%)',
+          simpleCaveat: 'First-mode only',
+          completeCaveat: 'rpm and f_exc should be interpreted together',
+          proCaveat: 'H(r) is not resonant Q',
+        },
+      }))),
+      formulasBlock(L ? 'Modal' : '固有频率', pickLocale(locale, STRUCTURAL_MODAL_FORMULAS)),
+      passBlock(L ? 'Pass criteria' : '判定', pickLocale(locale, {
+        zh: [{ check: '专业', rule: '有激励时 M≥20%；无激励则 pass=true' }],
+        en: [{ check: 'Pro', rule: 'With excitation M≥20%; none → pass=true' }],
+      })),
+      guideBlock(L ? 'Guide' : '指南', pickLocale(locale, {
+        zh: {
+          intro: '单页工具：**固有频率 / 共振裕度**。',
+          sections: [
+            { title: '模型', bullets: ['sdof / beam_ss / beam_cant', 'M<10% 危险；10–20% 关注；≥20% 安全', 'criticalSpeed = fn×60 rpm'] },
+          ],
+        },
+        en: {
+          intro: 'Standalone tool: **natural frequency / resonance margin**.',
+          sections: [
+            { title: 'Models', bullets: ['sdof / beam_ss / beam_cant', 'M<10% danger; 10–20% caution; ≥20% safe', 'criticalSpeed = fn×60 rpm'] },
+          ],
+        },
+      })),
+      faqBlock(L ? 'FAQ' : '常见问题', pickLocale(locale, {
+        zh: [{ q: '放大因子为何只有 1.04？', a: '显示的是非共振传递率 H(r)，不是 Q=1/(2ζ)。' }],
+        en: [{ q: 'Why is amplification only 1.04?', a: 'It is transmissibility H(r), not resonant Q=1/(2ζ).' }],
+      })),
+      limitsBlock(L ? 'Limitations' : '适用边界', pickLocale(locale, {
+        zh: ['一阶近似；未含支撑刚度、连接非线性、完整 FE 模态。'],
+        en: ['First mode only; no support stiffness, joint nonlinearity, or full FE modal.'],
       })),
     ],
   }

@@ -37,6 +37,27 @@ describe('heat-treatment-calc', () => {
     expect(r.hollomonJaffe).toBeGreaterThan(0)
   })
 
+  it('H-J uses time in seconds', () => {
+    const r = calcTemperedHardness(49.9, 551, 2)
+    const T = 551 + 273
+    const expected = T * (20 + Math.log10(2 * 3600))
+    expect(r.hollomonJaffe).toBeCloseTo(expected, 0)
+    expect(r.temperedHRC).toBeCloseTo(29.4, 0)
+    expect(r.temperStateKey).toBe('soft')
+  })
+
+  it('4140 Ø50 uses CE-based Di not Grossmann', () => {
+    const r = analyzeHeatTreatment({
+      composition: STEEL_PRESETS['4140'],
+      grainSize: 7,
+      partDiameter: 50,
+    })
+    expect(r.carbonEquivalent).toBeCloseTo(0.772, 3)
+    expect(r.hardenability.idealCriticalDiameter).toBeCloseTo(18.8, 0)
+    expect(r.hardenability.verdictKey).toBe('surface_only')
+    expect(r.preheatTemp).toBe(200)
+  })
+
   it('full analysis returns curve', () => {
     const r = analyzeHeatTreatment({ composition: STEEL_PRESETS['4340'], partDiameter: 60 })
     expect(r.jominyCurve.length).toBeGreaterThan(10)

@@ -58,8 +58,13 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 5180,
+    strictPort: true,
     open: true,
+    watch: {
+      // Windows 上短时探测脚本易触发 EBUSY 使 watcher 崩溃
+      ignored: ['**/tmp-*-probe.mjs', '**/tmp-*.mjs'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',

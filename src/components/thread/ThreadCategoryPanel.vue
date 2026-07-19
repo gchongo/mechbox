@@ -22,6 +22,7 @@
           :highlight-row-id="highlightRowId"
           @row-click="$emit('row-click', $event)"
           @toggle-compare="$emit('toggle-compare', $event)"
+          @display-unit-change="$emit('display-unit-change', $event)"
         />
       </section>
 
@@ -29,13 +30,20 @@
         <ThreadWhitworthRefTable
           :taxonomy-id="selectedSystem.id"
           :pt="pt"
+          :compare-ids="compareIds"
           @row-click="$emit('row-click', $event)"
+          @toggle-compare="$emit('toggle-compare', $event)"
           @open-compare="$emit('open-compare', $event)"
         />
       </section>
 
       <section v-else-if="selectedSystem.id === 'uns'" class="thread-catalog-table-wrap">
-        <ThreadUnsRefTable :pt="pt" @row-click="$emit('row-click', $event)" />
+        <ThreadUnsRefTable
+          :pt="pt"
+          :compare-ids="compareIds"
+          @row-click="$emit('row-click', $event)"
+          @toggle-compare="$emit('toggle-compare', $event)"
+        />
       </section>
 
       <section v-else class="thread-ref-guide card-panel">
@@ -83,7 +91,7 @@ const props = defineProps({
   highlightRowId: { type: String, default: '' },
 })
 
-const emit = defineEmits(['row-click', 'toggle-compare', 'open-catalog', 'open-compare'])
+const emit = defineEmits(['row-click', 'toggle-compare', 'open-catalog', 'open-compare', 'display-unit-change'])
 
 const systems = computed(() => getSystemsForPurpose(props.purposeId))
 

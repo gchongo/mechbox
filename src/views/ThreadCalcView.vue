@@ -11,7 +11,11 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <CalcFormItem :label="pf('nominalDiameter')">
+          <CalcFormItem
+            :label="pf('nominalDiameter')"
+            unit=""
+            :pending-confirm="isPending('diameter')"
+          >
             <el-input-number v-model="form.diameter" :min="3" :max="48" :step="1" @change="onDiameterChange" />
             <span class="ml-2 text-sm text-gray-500">mm (M{{ form.diameter }})</span>
           </CalcFormItem>
@@ -21,15 +25,24 @@
               {{ fc('standard') }} {{ suggestedPitch }}
             </el-button>
           </CalcFormItem>
-          <CalcFormItem :label="pf('grade')">
+          <CalcFormItem
+            :label="pf('grade')"
+            :pending-confirm="isPending('grade')"
+          >
             <el-select v-model="form.grade" class="w-full" @change="markConfirmed('grade')">
               <el-option v-for="(g, k) in grades" :key="k" :label="g.label" :value="k" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem :label="pf('axialForce')">
+          <CalcFormItem
+            :label="pf('axialForce')"
+            :pending-confirm="isPending('axialForce')"
+          >
             <el-input-number v-model="form.axialForce" :min="0" :step="500" @change="markConfirmed('axialForce')" />
           </CalcFormItem>
-          <CalcFormItem :label="pf('engagedLength')">
+          <CalcFormItem
+            :label="pf('engagedLength')"
+            :pending-confirm="isPending('engagedLength')"
+          >
             <el-input-number v-model="form.engagedLength" :min="1" :precision="1" @change="markConfirmed('engagedLength')" />
           </CalcFormItem>
           <template v-if="form.calcMode === 'simple'">
@@ -47,10 +60,16 @@
           </template>
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerVdi') }}</el-divider>
-            <CalcFormItem :label="pf('muG')">
+            <CalcFormItem
+              :label="pf('muG')"
+              :pending-confirm="isPending('muG')"
+            >
               <el-input-number v-model="form.muG" :min="0.05" :max="0.5" :precision="2" :step="0.02" @change="markConfirmed('muG')" />
             </CalcFormItem>
-            <CalcFormItem :label="pf('muK')">
+            <CalcFormItem
+              :label="pf('muK')"
+              :pending-confirm="isPending('muK')"
+            >
               <el-input-number v-model="form.muK" :min="0.05" :max="0.5" :precision="2" :step="0.02" @change="markConfirmed('muK')" />
             </CalcFormItem>
             <CalcFormItem :label="pf('dKm')">
@@ -71,14 +90,12 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-alert
-          v-if="result.releaseBlocked"
-          type="warning"
-          :closable="false"
-          show-icon
-          class="mb-3"
-          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
-        />
+        <div class="mb-3 flex items-center gap-2">
+          <el-tag :type="overallStatusType">
+            {{ pr('overall') }}: {{ overallStatusLabel }}
+          </el-tag>
+          <span v-if="result.estimateOnly" class="text-xs text-amber-600">（估算/未放行）</span>
+        </div>
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('stressArea')" />
@@ -135,19 +152,13 @@
               <dd class="font-mono">{{ ((result.utilization ?? 0) * 100).toFixed(1) }} %</dd>
             </div>
           </template>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel label-class="text-gray-500" :text="pr('overall')" />
-            <dd class="font-mono" :class="reviewOnly ? 'text-warning' : result.pass ? 'text-success' : 'text-error'">
-              {{ reviewOnly ? overallReviewText : result.pass ? fc('passOk') : fc('passFail') }}
-              <span v-if="result.estimateOnly" class="text-xs text-amber-600">（估算/未放行）</span>
-            </dd>
-          </div>
         </dl>
-        <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-          <MathTex expr="A_s = \frac{\pi}{4}(d - 0.9382P)^2" />
-          <MathTex v-if="form.calcMode === 'simple'" expr="\sigma = F / A_s,\quad T = \mu d F / 1000" />
-          <MathTex v-else-if="form.calcMode === 'professional'" expr="T = F \cdot (0.16P + 0.58 d_2 \mu_G + 0.5 D_{km} \mu_K) / 1000" />
-        </div>
+        <p v-if="reviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
+        <FormulaPanel :columns="1">
+          <MathTex expr="A_s = \frac{\pi}{4}(d - 0.9382P)^2" block />
+          <MathTex v-if="form.calcMode === 'simple'" expr="\sigma = F / A_s,\quad T = \mu d F / 1000" block />
+          <MathTex v-else-if="form.calcMode === 'professional'" expr="T = F \cdot (0.16P + 0.58 d_2 \mu_G + 0.5 D_{km} \mu_K) / 1000" block />
+        </FormulaPanel>
         <router-link to="/bolt-preload" class="mt-3 inline-block text-xs text-primary hover:underline">
           {{ pf('linkBoltPreload') }}
         </router-link>
@@ -170,6 +181,7 @@
 <script setup>
 import { reactive, computed, toRef } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import {
   analyzeThreadStrength,
   THREAD_GRADES,
@@ -183,10 +195,9 @@ import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
-import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
-import { isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
+import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 
-const { pt, ct, pf, pr, fc, locale } = useCalcPage('thread')
+const { pt, ct, pf, pr, fc } = useCalcPage('thread')
 const { optionMap } = useOptionsI18n()
 
 const grades = computed(() => optionMap(THREAD_GRADES, 'threadGrades'))
@@ -205,17 +216,22 @@ const form = reactive({
   dKm: 17.4,
 })
 
-const { markConfirmed, withConfirmed } = useCriticalInputConfirm(toRef(form, 'calcMode'))
+const { markConfirmed, withConfirmed, isPending } = useCriticalInputConfirm(toRef(form, 'calcMode'), 'thread')
 
 const suggestedPitch = computed(() => suggestPitch(form.diameter))
 const result = computed(() => analyzeThreadStrength(withConfirmed(form)))
 const reviewOnly = computed(() => isReviewOnlyResult(result.value))
-const overallReviewText = computed(() => (locale.value === 'en' ? 'Review / Not released' : '需复核 / 未放行'))
-const unconfirmedLabelText = computed(() =>
-  formatUnconfirmedLabels(result.value.unconfirmedCriticalInputs ?? [], locale.value).join(
-    locale.value === 'en' ? ', ' : '、',
-  ),
-)
+const overallStatus = computed(() => getCalcReviewStatus(result.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
 
 const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form,
@@ -226,7 +242,7 @@ const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistor
     if (r?.errorKey) return []
     return [
       { label: pr('tensileStress'), value: `${r.tensileStress?.toFixed(1) ?? '-'} MPa` },
-      { label: fc('check'), value: r.pass ? fc('passOk') : fc('passFail') },
+      { label: fc('check'), value: overallStatusLabel.value },
     ]
   },
 })

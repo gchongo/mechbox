@@ -15,8 +15,8 @@
       <h3 class="glossary-group__title">{{ pt(group.titleKey) }}</h3>
       <dl class="glossary-list">
         <div v-for="item in group.items" :key="item.key" class="glossary-item">
-          <dt>{{ item.labelKey ? pt(item.labelKey) : pt(item.key) }}</dt>
-          <dd>{{ pt(item.key) }}</dd>
+          <dt><MathContent :text="item.labelKey ? pt(item.labelKey) : pt(item.key)" /></dt>
+          <dd><MathContent :text="pt(item.key)" /></dd>
         </div>
       </dl>
     </div>
@@ -28,6 +28,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Search } from '@element-plus/icons-vue'
+import MathContent from '@/components/common/MathContent.vue'
 import { THREAD_GLOSSARY_GROUPS } from '@/constants/thread-standards/glossary'
 
 defineProps({
@@ -69,7 +70,13 @@ const filteredGroups = computed(() => {
 .glossary-item dt {
   @apply mb-1 text-sm font-medium text-gray-900 dark:text-gray-100;
 }
+.glossary-item dt :deep(.katex) {
+  font-size: 1em;
+}
 .glossary-item dd {
   @apply m-0 text-xs leading-relaxed text-gray-600 dark:text-gray-400;
+}
+.glossary-item dd :deep(.katex) {
+  font-size: 1em;
 }
 </style>

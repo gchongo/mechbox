@@ -7,19 +7,38 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <CalcFormItem :label="pf('driverDiameter')"><el-input-number v-model="form.driverDiameter" :min="50" /></CalcFormItem>
-          <CalcFormItem :label="pf('drivenDiameter')"><el-input-number v-model="form.drivenDiameter" :min="50" /></CalcFormItem>
-          <CalcFormItem :label="pf('centerDistance')"><el-input-number v-model="form.centerDistance" :min="100" :step="50" /></CalcFormItem>
-          <CalcFormItem :label="pf('rpm')"><el-input-number v-model="form.rpm" :min="0" /></CalcFormItem>
-          <CalcFormItem :label="pf('power')"><el-input-number v-model="form.power" :min="0" :precision="2" /></CalcFormItem>
-          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('wrapAngle')"><el-input-number v-model="form.wrapAngle" :min="120" :max="180" /></CalcFormItem>
+          <CalcFormItem :label="pf('driverDiameter')">
+            <el-input-number v-model="form.driverDiameter" :min="50" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('drivenDiameter')">
+            <el-input-number v-model="form.drivenDiameter" :min="50" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('centerDistance')">
+            <el-input-number v-model="form.centerDistance" :min="100" :step="50" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('rpm')">
+            <el-input-number v-model="form.rpm" :min="0" />
+          </CalcFormItem>
+          <CalcFormItem :label="pf('power')">
+            <el-input-number v-model="form.power" :min="0" :precision="2" />
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('wrapAngle')">
+            <el-input-number v-model="form.wrapAngle" :min="120" :max="180" />
+          </CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
-            <CalcFormItem :label="pf('powerPerBelt')"><el-input-number v-model="form.powerPerBelt" :min="0.5" :precision="1" :step="0.5" /></CalcFormItem>
-            <CalcFormItem :label="pf('maxBeltSpeed')"><el-input-number v-model="form.maxBeltSpeed" :min="10" :max="40" /></CalcFormItem>
+            <CalcFormItem :label="pf('powerPerBelt')">
+              <el-input-number v-model="form.powerPerBelt" :min="0.5" :precision="1" :step="0.5" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('maxBeltSpeed')">
+              <el-input-number v-model="form.maxBeltSpeed" :min="10" :max="40" />
+            </CalcFormItem>
           </template>
           <template v-if="form.calcMode === 'professional'">
-            <CalcFormItem :label="pf('serviceFactor')"><el-input-number v-model="form.serviceFactor" :min="1" :max="2" :step="0.1" :precision="1" /></CalcFormItem>
+            <CalcFormItem :label="pf('serviceFactor')">
+              <el-input-number v-model="form.serviceFactor" :min="1" :max="2" :step="0.1" :precision="1" />
+            </CalcFormItem>
           </template>
         </el-form>
 
@@ -32,18 +51,58 @@
         />
       </section>
       <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag v-if="hasPassFail" class="mb-3" :type="overallStatusType">
+          {{ pr('overall') }}: {{ overallStatusLabel }}
+        </el-tag>
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('ratio')" /><dd class="font-mono">{{ result.ratio.toFixed(2) }}</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('beltLength')" /><dd class="font-mono">{{ result.beltLength.toFixed(0) }} mm</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('beltSpeedWrap')" /><dd class="font-mono">{{ result.beltSpeed.toFixed(2) }} m/s · {{ result.wrapAngle?.toFixed(1) }}°</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('tightSide')" /><dd class="font-mono">{{ result.F1.toFixed(0) }} N</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('slackSide')" /><dd class="font-mono">{{ result.F2.toFixed(0) }} N</dd></div>
-          <div v-if="result.beltCount" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('beltCount')" /><dd class="font-mono">{{ result.beltCount }} {{ pr('beltCountUnit') }}</dd></div>
-          <div v-if="result.estimatedLifeHours" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('lifeHours')" /><dd class="font-mono">{{ Math.round(result.estimatedLifeHours).toLocaleString() }} h</dd></div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('ratio')" />
+            <dd class="font-mono">{{ result.ratio.toFixed(2) }}</dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('beltLength')" />
+            <dd class="font-mono">{{ result.beltLength.toFixed(0) }} mm</dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('beltSpeedWrap')" />
+            <dd class="font-mono">
+              {{ result.beltSpeed.toFixed(2) }} m/s · {{ result.wrapAngle?.toFixed(1) }}°
+            </dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('effectiveForce')" />
+            <dd class="font-mono">{{ result.effectiveForce?.toFixed(0) }} N</dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('tightSide')" />
+            <dd class="font-mono">{{ result.F1.toFixed(0) }} N</dd>
+          </div>
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('slackSide')" />
+            <dd class="font-mono">{{ result.F2.toFixed(0) }} N</dd>
+          </div>
+          <div v-if="result.beltCount" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pr('beltCount')" />
+            <dd class="font-mono">{{ result.beltCount }} {{ pr('beltCountUnit') }}</dd>
+          </div>
+          <div
+            v-if="result.estimatedLifeHours"
+            class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
+          >
+            <ResultLabel :text="pr('lifeHours')" />
+            <dd class="font-mono">{{ Math.round(result.estimatedLifeHours).toLocaleString() }} h</dd>
+          </div>
         </dl>
-        <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-          <MathTex expr="L = 2C + \frac{\pi(D_1+D_2)}{2} + \frac{(D_2-D_1)^2}{4C}" />
-        </div>
+        <FormulaPanel :columns="1">
+          <MathTex :expr="formulaLength" block />
+          <MathTex :expr="formulaTension" block />
+          <template #hints>
+            <ul>
+              <li><MathContent :text="tensionAssumption" /></li>
+            </ul>
+          </template>
+        </FormulaPanel>
       </section>
     </div>
 
@@ -62,15 +121,21 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { analyzeBeltDrive } from '@/utils/belt-calc'
 import DriveLayoutDiagram from '@/components/drive/DriveLayoutDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('belt')
+
+const formulaLength = String.raw`L = 2C + \dfrac{\pi(D_1+D_2)}{2} + \dfrac{(D_2-D_1)^2}{4C}`
+const formulaTension = String.raw`F_e=\dfrac{1000P}{\eta v},\quad \dfrac{F_1}{F_2}=e^{\mu\theta},\quad F_1-F_2=F_e`
 
 const form = reactive({
   calcMode: 'simple',
@@ -86,6 +151,24 @@ const form = reactive({
 })
 
 const result = computed(() => analyzeBeltDrive(form))
+const tensionAssumption = computed(() =>
+  pr('tensionAssumption', {
+    eta: (result.value.efficiency ?? 0.95).toFixed(2),
+    mu: (result.value.friction ?? 0.3).toFixed(2),
+  }),
+)
+const hasPassFail = computed(() => typeof result.value.pass === 'boolean')
+const overallStatus = computed(() => getCalcReviewStatus(result.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
 
 const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form,
@@ -96,7 +179,7 @@ const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistor
     if (r?.errorKey) return []
     return [
       { label: pr('ratio'), value: r.ratio?.toFixed(2) ?? '-' },
-      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+      { label: fc('check'), value: hasPassFail.value ? overallStatusLabel.value : '—' },
     ]
   },
 })

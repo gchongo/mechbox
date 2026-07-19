@@ -26,27 +26,23 @@
               <el-option v-for="(s, k) in sectionTypes" :key="k" :label="s.label" :value="k" />
             </el-select>
           </CalcFormItem>
-          <el-form-item v-for="p in sectionParams" :key="p.key" :label="p.label">
+          <CalcFormItem v-for="p in sectionParams" :key="p.key" :label="p.label">
             <el-input-number v-model="form[p.key]" :min="p.min ?? 0.1" :precision="2" />
-          </el-form-item>
-          <CalcFormItem :label="pf('spanLength')">
+          </CalcFormItem>
+          <CalcFormItem :label="pf('spanLength')" unit="mm">
             <el-input-number v-model="form.spanLength" :min="10" :max="10000" />
-            <span class="ml-2 text-sm text-gray-500">mm</span>
           </CalcFormItem>
           <CalcFormItem :label="loadLabel">
             <el-input-number v-model="form.load" :min="0" :precision="2" />
           </CalcFormItem>
-          <CalcFormItem :label="pf('elasticModulus')">
+          <CalcFormItem :label="pf('elasticModulus')" unit="MPa">
             <el-input-number v-model="form.elasticModulus" :min="1000" :step="10000" />
-            <span class="ml-2 text-sm text-gray-500">MPa</span>
           </CalcFormItem>
-          <CalcFormItem :label="pf('allowableStress')">
+          <CalcFormItem :label="pf('allowableStress')" unit="MPa">
             <el-input-number v-model="form.allowableStress" :min="1" :disabled="form.calcMode === 'simple'" />
-            <span class="ml-2 text-sm text-gray-500">MPa</span>
           </CalcFormItem>
-          <CalcFormItem :label="pf('allowableDeflection')">
+          <CalcFormItem :label="pf('allowableDeflection')" unit="mm">
             <el-input-number v-model="form.allowableDeflection" :min="0.001" :precision="4" :step="0.01" />
-            <span class="ml-2 text-sm text-gray-500">mm</span>
           </CalcFormItem>
           <template v-if="form.calcMode === 'professional'">
             <CalcFormItem :label="pf('dynamicFactor')">
@@ -106,6 +102,21 @@
               <dd class="font-mono">{{ result.stressAmplitude?.toFixed(1) }} MPa</dd>
             </div>
           </dl>
+          <FormulaPanel>
+            <MathTex :expr="formulaMoment" block />
+            <MathTex :expr="formulaDeflection" block />
+            <MathTex :expr="formulaStress" block />
+            <MathTex :expr="formulaSectionI" block />
+            <MathTex v-if="form.calcMode === 'professional'" :expr="formulaDynamic" block />
+            <MathTex :expr="formulaSectionW" block />
+            <template #hints>
+              <ul>
+                <li><MathContent :text="pr('beamHintCase')" /></li>
+                <li><MathContent :text="pr('beamHintSection')" /></li>
+                <li v-if="form.calcMode === 'professional'"><MathContent :text="pr('beamHintPro')" /></li>
+              </ul>
+            </template>
+          </FormulaPanel>
         </template>
       </section>
     </div>
@@ -132,6 +143,9 @@
 
 <script setup>
 import { reactive, computed, watch } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { analyzeBeam, BEAM_CASES, SECTION_TYPES } from '@/utils/beam-calc'
 import { MATERIALS, findMaterial } from '@/constants/materials'
 import { materialsEn } from '@/i18n/materials-i18n'
@@ -216,6 +230,62 @@ watch(
 )
 
 const result = computed(() => analyzeBeam(form))
+
+const formulaMoment = computed(() => {
+  switch (form.caseId) {
+    case 'cantilever_end':
+      return String.raw`M = P L`
+    case 'simply_uniform':
+      return String.raw`M = \dfrac{q L^{2}}{8}`
+    case 'cantilever_uniform':
+      return String.raw`M = \dfrac{q L^{2}}{2}`
+    default:
+      return String.raw`M = \dfrac{P L}{4}`
+  }
+})
+
+const formulaDeflection = computed(() => {
+  switch (form.caseId) {
+    case 'cantilever_end':
+      return String.raw`\delta = \dfrac{P L^{3}}{3 E I}`
+    case 'simply_uniform':
+      return String.raw`\delta = \dfrac{5 q L^{4}}{384 E I}`
+    case 'cantilever_uniform':
+      return String.raw`\delta = \dfrac{q L^{4}}{8 E I}`
+    default:
+      return String.raw`\delta = \dfrac{P L^{3}}{48 E I}`
+  }
+})
+
+const formulaStress = computed(() =>
+  form.calcMode === 'professional'
+    ? String.raw`\sigma = K_t\dfrac{M}{W}`
+    : String.raw`\sigma = \dfrac{M}{W}`,
+)
+
+const formulaSectionI = computed(() => {
+  switch (form.sectionType) {
+    case 'hollow_round':
+      return String.raw`I = \dfrac{\pi}{64}(D^{4}-d^{4})`
+    case 'rectangle':
+      return String.raw`I = \dfrac{b h^{3}}{12}`
+    default:
+      return String.raw`I = \dfrac{\pi d^{4}}{64}`
+  }
+})
+
+const formulaSectionW = computed(() => {
+  switch (form.sectionType) {
+    case 'hollow_round':
+      return String.raw`W = \dfrac{\pi}{32 D}(D^{4}-d^{4})`
+    case 'rectangle':
+      return String.raw`W = \dfrac{b h^{2}}{6}`
+    default:
+      return String.raw`W = \dfrac{\pi d^{3}}{32}`
+  }
+})
+
+const formulaDynamic = String.raw`P_{\mathrm{eff}} = K_d P`
 
 const decisionPreset = DECISION_PRESETS.beam
 const baseInputs = computed(() => ({ ...form }))

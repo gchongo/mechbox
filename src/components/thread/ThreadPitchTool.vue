@@ -1,31 +1,34 @@
 <template>
   <el-collapse class="thread-pitch-tool mb-4">
     <el-collapse-item :title="pt('pitchToolTitle')" name="pitch">
-      <p class="mb-3 text-xs text-gray-500">{{ pt('pitchToolIntro') }}</p>
-      <div class="flex flex-wrap items-end gap-4">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
         <el-radio-group v-model="mode" size="small">
           <el-radio-button value="tpi2pitch">{{ pt('pitchToolTpiToPitch') }}</el-radio-button>
           <el-radio-button value="pitch2tpi">{{ pt('pitchToolPitchToTpi') }}</el-radio-button>
         </el-radio-group>
-        <div>
-          <label class="mb-1 block text-xs text-gray-500">
-            {{ mode === 'tpi2pitch' ? 'TPI' : pt('colPitch') + ' (mm)' }}
-          </label>
-          <el-input-number
-            v-model="inputVal"
-            :min="0.01"
-            :step="mode === 'tpi2pitch' ? 1 : 0.05"
-            :precision="mode === 'tpi2pitch' ? 0 : 3"
-            controls-position="right"
-            class="w-36"
-          />
+
+        <span class="text-xs text-gray-600 dark:text-gray-300">
+          {{ mode === 'tpi2pitch' ? 'TPI' : 'P (mm)' }}
+        </span>
+        <el-input-number
+          v-model="inputVal"
+          :min="0.01"
+          :step="mode === 'tpi2pitch' ? 1 : 0.05"
+          :precision="mode === 'tpi2pitch' ? 0 : 3"
+          controls-position="right"
+          size="small"
+          class="w-32"
+        />
+
+        <div class="rounded bg-gray-100 px-3 py-1.5 text-sm dark:bg-gray-800">
+          <span class="text-gray-600 dark:text-gray-400">{{ pt('pitchToolResult') }}：</span>
+          <span class="font-mono font-medium text-primary">{{ resultText }}</span>
         </div>
-        <div class="rounded bg-gray-50 px-4 py-2 text-sm dark:bg-gray-900">
-          <span class="text-gray-500">{{ pt('pitchToolResult') }}：</span>
-          <span class="font-mono font-medium">{{ resultText }}</span>
-        </div>
+
+        <span class="text-[10px] text-gray-500 dark:text-gray-400" :title="pt('pitchToolIntro')">
+          {{ pt('pitchToolFormula') }}
+        </span>
       </div>
-      <p class="mt-2 text-[10px] text-gray-400">{{ pt('pitchToolFormula') }}</p>
     </el-collapse-item>
   </el-collapse>
 </template>
@@ -54,8 +57,21 @@ const resultText = computed(() => {
 </script>
 
 <style scoped>
+.thread-pitch-tool {
+  --el-collapse-header-bg-color: transparent;
+  --el-collapse-content-bg-color: transparent;
+  border-color: var(--el-border-color-lighter);
+}
 .thread-pitch-tool :deep(.el-collapse-item__header) {
   font-size: 0.875rem;
   font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+.thread-pitch-tool :deep(.el-collapse-item__content) {
+  padding-bottom: 12px;
+  color: var(--el-text-color-regular);
+}
+.thread-pitch-tool :deep(.el-collapse-item__wrap) {
+  background-color: transparent;
 }
 </style>

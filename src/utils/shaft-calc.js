@@ -72,17 +72,28 @@ export function analyzeShaftTorsion(input) {
     twistAngle: theta,
     polarMoment: calcPolarMoment(d, di),
     minDiameter: dMin,
+    minDiameterBasis: 'pure_torsion_static',
     pass: tau <= allow,
     allowableShear: allow,
     hollowShaft: di > 0,
     innerDiameter: di,
     utilization: allow ? tau / allow : 0,
+    unitNote: 'N_mm_MPa',
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
     result.torsionPass = tau <= allow
-    result.anglePass = input.maxTwistAngle == null || theta <= input.maxTwistAngle
-    result.pass = result.torsionPass && result.anglePass
+    result.staticPass = result.torsionPass
+    if (input.maxTwistAngle != null && Number.isFinite(input.maxTwistAngle)) {
+      result.anglePass = theta <= input.maxTwistAngle
+      result.angleCriterion = input.maxTwistAngle
+      result.angleCriterionMissing = false
+    } else {
+      result.anglePass = null
+      result.angleCriterionMissing = true
+    }
+    // Stiffness does not auto-pass without a user limit
+    result.pass = result.torsionPass && result.anglePass !== false
   }
 
   if (calcMode === 'professional') {

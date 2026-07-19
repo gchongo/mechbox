@@ -14,6 +14,15 @@ export function calcBendingStress(moment, diameter, innerDiameter = 0) {
   return (moment * 1000) / W
 }
 
+export function calcTorsionStressCombined(torque, diameter, innerDiameter = 0) {
+  const J =
+    innerDiameter > 0 && innerDiameter < diameter
+      ? (Math.PI * (diameter ** 4 - innerDiameter ** 4)) / 32
+      : (Math.PI * diameter ** 4) / 32
+  if (!J) return 0
+  return (torque * 1000 * (diameter / 2)) / J
+}
+
 export function calcCombinedEquivalentStress(bending, torsion, theory = 'vonMises') {
   if (theory === 'third') {
     return Math.sqrt(bending ** 2 + 4 * torsion ** 2)
@@ -28,7 +37,7 @@ export function analyzeShaftCombined(input) {
   const theory = input.strengthTheory ?? 'vonMises'
   const mat = input.materialId ? findMaterial(input.materialId) : null
 
-  let torsion = calcTorsionStressLocal(input.torque, d, di)
+  let torsion = calcTorsionStressCombined(input.torque, d, di)
   let bending = calcBendingStress(input.bendingMoment ?? 0, d, di)
 
   if (calcMode === 'professional') {
@@ -69,6 +78,8 @@ export function analyzeShaftCombined(input) {
     hollowShaft: di > 0,
     utilization: allow ? equiv / allow : 0,
     needsMaterialInput: allow == null,
+    unitNote: 'N_mm_MPa',
+    estimateOnly: calcMode !== 'professional',
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {
@@ -77,49 +88,62 @@ export function analyzeShaftCombined(input) {
       result.torsionPass = torsion <= torsionAllow
       result.combinedPass = equiv <= allow
       result.pass = result.combinedPass
+      result.staticPass = result.combinedPass
     }
   }
 
   if (calcMode === 'professional') {
-    result.stressConcentrationBending = input.stressConcentrationBending ?? 1
-    result.stressConcentrationTorsion = input.stressConcentrationTorsion ?? 1
+    const Kt = input.stressConcentrationBending ?? 1
+    const Ktau = input.stressConcentrationTorsion ?? 1
+    result.stressConcentrationBending = Kt
+    result.stressConcentrationTorsion = Ktau
 
-    if (input.bendingAmplitude != null && input.bendingAmplitude > 0) {
-      const Kt = input.stressConcentrationBending ?? 1
-      const sigmaAmp = calcBendingStress(input.bendingAmplitude, d, di) * Kt
-      const sigmaMean =
-        calcBendingStress(input.bendingMean ?? Math.max(0, (input.bendingMoment ?? 0) - input.bendingAmplitude), d, di) *
-        Kt
+    const hasFatigueLoad =
+      (input.bendingAmplitude != null && input.bendingAmplitude > 0) ||
+      (input.torqueAmplitude != null && input.torqueAmplitude > 0)
+
+    if (hasFatigueLoad) {
+      const Ma = input.bendingAmplitude ?? 0
+      const Ta = input.torqueAmplitude ?? 0
+      const Mm =
+        input.bendingMean ?? Math.max(0, (input.bendingMoment ?? 0) - Ma)
+      const Tm = input.torqueMean ?? Math.max(0, (input.torque ?? 0) - Ta)
+
+      const sigmaA = calcBendingStress(Ma, d, di) * Kt
+      const tauA = calcTorsionStressCombined(Ta, d, di) * Ktau
+      const sigmaM = calcBendingStress(Mm, d, di) * Kt
+      const tauM = calcTorsionStressCombined(Tm, d, di) * Ktau
+      // von Mises (or 3rd theory) equivalent amplitude — not bending-only
+      const sigmaVmA = calcCombinedEquivalentStress(sigmaA, tauA, theory)
+      const sigmaVmM = calcCombinedEquivalentStress(sigmaM, tauM, theory)
+
       const fatigue = assessComponentFatigue({
         materialId: input.materialId,
         snMaterial: input.snMaterial,
         yieldStrength: input.yieldStrength ?? mat?.sigmaS,
-        stressAmplitude: sigmaAmp,
-        meanStress: sigmaMean,
+        stressAmplitude: sigmaVmA,
+        meanStress: sigmaVmM,
         meanStressMethod: input.meanStressMethod,
         surfaceFactor: input.surfaceFactor,
         sizeFactor: input.sizeFactor,
         targetCycles: input.targetCycles ?? 1e6,
       })
-      result.fatigueAmplitude = sigmaAmp
-      result.fatigueMean = fatigue.meanStress
+      result.fatigueBendingAmplitude = sigmaA
+      result.fatigueTorsionAmplitude = tauA
+      result.fatigueAmplitude = sigmaVmA
+      result.fatigueMean = sigmaVmM
       result.effectiveFatigueAmplitude = fatigue.effectiveAmplitude
       result.fatigueEndurance = fatigue.adjustedEndurance
       result.fatigueLife = fatigue.fatigueLife
       result.snMaterial = fatigue.snMaterial
       result.fatiguePass = fatigue.fatiguePass
+      result.fatigueEstimateOnly = true
       result.pass = result.pass && result.fatiguePass
     }
+
+    result.structureNotChecked = true
+    result.verdictKey = result.pass ? 'static_ok_need_full' : 'need_adjust'
   }
 
   return result
-}
-
-function calcTorsionStressLocal(torque, diameter, innerDiameter = 0) {
-  const J =
-    innerDiameter > 0 && innerDiameter < diameter
-      ? (Math.PI * (diameter ** 4 - innerDiameter ** 4)) / 32
-      : (Math.PI * diameter ** 4) / 32
-  if (!J) return 0
-  return (torque * 1000 * (diameter / 2)) / J
 }

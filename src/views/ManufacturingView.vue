@@ -10,9 +10,8 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <CalcFormItem :label="pf('nominalDiameter')">
+              <CalcFormItem :label="pf('nominalDiameter')" unit="mm">
                 <el-input-number v-model="mach.nominalDiameter" :min="5" />
-                <span class="ml-2 text-sm text-gray-500">mm</span>
               </CalcFormItem>
               <CalcFormItem :label="pf('length')">
                 <el-input-number v-model="mach.length" :min="1" />
@@ -47,7 +46,7 @@
           </section>
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-            <el-tag class="mb-3" size="small">{{ machResult.calcMode }} · {{ machResult.operations?.join(' + ') }}</el-tag>
+            <el-tag class="mb-3" size="small">{{ machModeTag }}</el-tag>
             <dl class="space-y-3 text-sm">
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('totalRadialAllowance')" /><dd class="font-mono">{{ machResult.totalRadialAllowance?.toFixed(2) }} mm</dd>
               </div>
@@ -77,6 +76,20 @@
                 <template #default="{ row }">{{ row.radialAllowance?.toFixed(2) }}</template>
               </el-table-column>
             </el-table>
+            <FormulaPanel>
+              <MathTex :expr="formulaStockD" block />
+              <MathTex :expr="formulaStockL" block />
+              <MathTex :expr="formulaVolume" block />
+              <MathTex v-if="mach.calcMode === 'professional'" :expr="formulaTime" block />
+              <template #hints>
+                <ul>
+                  <li><MathContent :text="pr('machHintRadial')" /></li>
+                  <li><MathContent :text="pr('machHintVolume')" /></li>
+                  <li v-if="mach.calcMode !== 'simple'"><MathContent :text="pr('machHintGrind')" /></li>
+                  <li v-if="mach.calcMode === 'professional'"><MathContent :text="pr('machHintMrr')" /></li>
+                </ul>
+              </template>
+            </FormulaPanel>
           </section>
         </div>
       </el-tab-pane>
@@ -97,12 +110,14 @@
                   <el-option v-for="(s, k) in surfaceTypes" :key="k" :label="s.label" :value="k" />
                 </el-select>
               </el-form-item>
-              <el-form-item :label="pfCast('draftDepth')">
+              <CalcFormItem :label="pfCast('draftDepth')" unit="mm">
                 <el-input-number v-model="cast.depth" :min="1" :max="500" />
-                <span class="ml-2 text-sm text-gray-500">mm</span>
-              </el-form-item>
+              </CalcFormItem>
               <el-form-item :label="pfCast('roughSurface')">
                 <el-switch v-model="cast.roughSurface" />
+              </el-form-item>
+              <el-form-item v-if="cast.calcMode === 'professional'" :label="pfCast('imperfectionFactor')">
+                <el-input-number v-model="cast.imperfectionFactor" :min="1" :max="1.3" :step="0.01" :precision="2" />
               </el-form-item>
               <el-form-item :label="pfCast('actualDraftAngle')">
                 <el-input-number v-model="cast.actualDraftAngle" :min="0" :max="15" :precision="2" />
@@ -127,11 +142,32 @@
               </div>
               <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="prCast('totalWidthIncrease')" /><dd class="font-mono">{{ castResult.totalWidthIncrease?.toFixed(2) }} mm</dd>
               </div>
+              <div v-if="cast.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCast('baseAngle')" /><dd class="font-mono">{{ castResult.baseAngleDeg?.toFixed(2) }}°</dd>
+              </div>
+              <div v-if="cast.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCast('imperfectionFactor')" /><dd class="font-mono">× {{ castResult.imperfectionFactor?.toFixed(2) }}</dd>
+              </div>
             </dl>
             <p class="mt-3 text-xs text-gray-500">{{ rm('casting', `note_${castResult.noteKey}`) }}</p>
             <el-tag v-if="cast.actualDraftAngle > 0" class="mt-3" :type="verifyResult.pass ? 'success' : 'danger'">
               {{ prCast('actualAngleLabel') }} {{ cast.actualDraftAngle }}° — {{ verifyResult.pass ? fc('satisfy') : fc('insufficient') }}
+              <span v-if="cast.calcMode === 'professional' && verifyResult.margin != null" class="ml-1">
+                ({{ prCast('margin') }} {{ verifyResult.margin >= 0 ? '+' : '' }}{{ verifyResult.margin.toFixed(2) }}°)
+              </span>
             </el-tag>
+            <FormulaPanel :columns="1">
+              <MathTex :expr="formulaDraft" block />
+              <MathTex :expr="formulaDelta" block />
+              <template #hints>
+                <ul>
+                  <li><MathContent :text="prCast('castHintBase')" /></li>
+                  <li><MathContent :text="prCast('castHintDelta')" /></li>
+                  <li v-if="cast.calcMode !== 'simple'"><MathContent :text="prCast('castHintPhi')" /></li>
+                  <li><MathContent :text="prCast('castHintNote')" /></li>
+                </ul>
+              </template>
+            </FormulaPanel>
           </section>
         </div>
       </el-tab-pane>
@@ -158,6 +194,9 @@ import MachiningAllowanceDiagram from '@/components/manufacturing/MachiningAllow
 import CastingDraftDiagram from '@/components/manufacturing/CastingDraftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import MathTex from '@/components/common/MathTex.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
@@ -191,6 +230,7 @@ const cast = reactive({
   surfaceType: 'external',
   depth: 80,
   roughSurface: false,
+  imperfectionFactor: 1.05,
   actualDraftAngle: 0,
 })
 
@@ -207,6 +247,18 @@ const castResult = computed(() => calcDraftAngle(cast))
 const verifyResult = computed(() =>
   cast.actualDraftAngle > 0 ? verifyDraftAngle(cast) : { pass: true },
 )
+
+const machModeTag = computed(() =>
+  (machResult.value.operations ?? []).map((op) => ol('machiningOps', op)).join(' + '),
+)
+
+const formulaStockD = String.raw`D_s = D + 2\sum a_i`
+const formulaStockL = String.raw`L_s = L + 2a_{\mathrm{end}}`
+const formulaVolume = String.raw`V_{\mathrm{rem}} = \frac{\pi}{4}(D_s^{2} L_s - D^{2} L)`
+const formulaTime = String.raw`t \approx V_{\mathrm{rem}} / \mathrm{MRR}`
+
+const formulaDraft = String.raw`\alpha = (a_0 + k\sqrt{h})\,f_{\mathrm{surf}}\,f_{\mathrm{tex}}\,\varphi`
+const formulaDelta = String.raw`\Delta = h\tan\alpha,\quad \Delta_{\mathrm{total}} = 2\Delta`
 
 const activeResult = computed(() => (tab.value === 'casting' ? castResult.value : machResult.value))
 

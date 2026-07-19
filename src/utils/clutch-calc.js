@@ -9,7 +9,7 @@ export function calcRequiredForce({ torque, frictionCoeff, radius, surfaces = 1 
   return (torque * 1000) / (frictionCoeff * radius * surfaces)
 }
 
-/** 均匀压力模型有效半径 (内外径) */
+/** 均匀磨损模型有效半径 R = 2/3 · (Ro³−Ri³)/(Ro²−Ri²) */
 export function calcMeanFrictionRadius(innerDiameter, outerDiameter) {
   const Ri = innerDiameter / 2
   const Ro = outerDiameter / 2
@@ -17,7 +17,7 @@ export function calcMeanFrictionRadius(innerDiameter, outerDiameter) {
   return (2 * (Ro ** 3 - Ri ** 3)) / (3 * (Ro ** 2 - Ri ** 2))
 }
 
-/** 离心效应减载 (简化) */
+/** 离心效应减载 (简化)：ΔF ≈ m ω² (Do/2) */
 export function calcCentrifugalReduction(rpm, outerDiameter, massPerPlate = 0.5) {
   const omega = (rpm * 2 * Math.PI) / 60
   const r = outerDiameter / 2000
@@ -59,6 +59,8 @@ export function analyzeClutch(input) {
     input.allowableTorque != null && Number.isFinite(input.allowableTorque) && input.allowableTorque > 0
   const allow = hasAllowable ? input.allowableTorque : null
   const torquePass = hasAllowable ? torque <= allow : false
+  const hasRequired =
+    input.requiredTorque != null && Number.isFinite(input.requiredTorque) && input.requiredTorque > 0
 
   const result = {
     calcMode,
@@ -69,7 +71,7 @@ export function analyzeClutch(input) {
     torquePass,
     pass: torquePass,
     allowableTorque: allow,
-    allowableRequired: !hasAllowable,
+    allowableRequired: !hasAllowable && !(calcMode === 'professional' && hasRequired),
   }
 
   if (calcMode === 'simple') {
@@ -81,7 +83,7 @@ export function analyzeClutch(input) {
     const area =
       input.innerDiameter && input.outerDiameter
         ? (Math.PI * (input.outerDiameter ** 2 - input.innerDiameter ** 2)) / 4
-        : Math.PI * (2 * radius) ** 2 / 4
+        : (Math.PI * (2 * radius) ** 2) / 4
     result.contactArea = area
     result.contactPressure = area ? force / area : 0
     result.maxPressure = input.maxPressure ?? 1.5
@@ -92,9 +94,14 @@ export function analyzeClutch(input) {
   }
 
   if (calcMode === 'professional') {
-    const centrifugal = calcCentrifugalReduction(rpm, input.outerDiameter ?? radius * 2, input.plateMass ?? 0.5)
+    const centrifugal = calcCentrifugalReduction(
+      rpm,
+      input.outerDiameter ?? radius * 2,
+      input.plateMass ?? 0.5,
+    )
     result.centrifugalForce = centrifugal
     const effectiveForce = Math.max(0, force - centrifugal)
+    result.effectiveClampForce = effectiveForce
     const torqueAtSpeed = calcClutchTorque({
       frictionCoeff: input.frictionCoeff ?? 0.15,
       force: effectiveForce,
@@ -105,9 +112,17 @@ export function analyzeClutch(input) {
     const fade = input.thermalFade ?? 1
     result.thermalFade = fade
     result.deratedTorque = torqueAtSpeed * fade
-    result.safetyFactor = input.safetyFactor ?? 1.2
-    if (input.requiredTorque) {
-      result.pass = result.deratedTorque >= input.requiredTorque * result.safetyFactor && result.pressurePass !== false
+    const sf = input.safetyFactor ?? 1.2
+    result.safetyFactor = sf
+    if (hasRequired) {
+      result.designTorqueRequired = input.requiredTorque * sf
+      result.designPass =
+        result.deratedTorque >= result.designTorqueRequired && result.pressurePass !== false
+      result.pass = result.designPass
+      result.estimateOnly = false
+    } else if (!hasAllowable) {
+      result.estimateOnly = true
+      result.pass = false
     }
   }
 

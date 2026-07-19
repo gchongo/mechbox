@@ -65,7 +65,7 @@ export const PRIMARY_UNITS = {
   force: ['N', 'kN', 'lbf', 'kgf'],
   torque: ['N·m', 'N·mm', 'lbf·ft', 'lbf·in'],
   length: ['mm', 'm', 'in', 'ft'],
-  area: ['mm²', 'cm²', 'm²', 'in²'],
+  area: ['mm²', 'cm²', 'm²', '亩', '公顷', 'in²'],
   volume: ['cm³', 'L', 'm³', 'in³'],
   mass: ['g', 'kg', 't', 'lb'],
   temperature: ['°C', '°F', 'K'],

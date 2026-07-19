@@ -53,6 +53,7 @@
           @toggle-compare="toggleCompare"
           @open-catalog="onDesignOpenQuery"
           @open-compare="onMisconfigCompare"
+          @display-unit-change="imperialDisplayUnit = $event"
         />
 
         <ThreadDesignWorkbench
@@ -97,6 +98,7 @@
       :visible="detailVisible"
       :row="detailRow"
       :pt="pt"
+      :display-unit="imperialDisplayUnit"
       @close="detailVisible = false"
       @select-row="openDetailRow"
       @add-compare="addToCompare"
@@ -138,6 +140,7 @@ const navKey = ref('catalog|fastener|metric_coarse')
 const detailVisible = ref(false)
 const detailRow = ref(null)
 const compareIds = ref([])
+const imperialDisplayUnit = ref('in')
 const highlightRowId = ref(null)
 const mobileNavOpen = ref(false)
 const favoritesVersion = ref(0)

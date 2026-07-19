@@ -17,6 +17,13 @@ const REPLACEMENTS = [
   ['F_V', '$F_V$'],
   ['F_A', '$F_A$'],
   ['F_Z', '$F_Z$'],
+  ['F_Kerf', '$F_{\\mathrm{Kerf}}$'],
+  ['F_Mmin', '$F_{M\\mathrm{min}}$'],
+  ['F_Mmax', '$F_{M\\mathrm{max}}$'],
+  ['F_Ax', '$F_{\\mathrm{Ax}}$'],
+  ['F_Q', '$F_Q$'],
+  ['F_KR', '$F_{KR}$'],
+  ['F_S', '$F_S$'],
   ['ΔF_VT', '$\\Delta F_{VT}$'],
   ['σs', '$\\sigma_s$'],
   ['l_K', '$l_K$'],
@@ -28,6 +35,42 @@ const REPLACEMENTS = [
   ['μ_G/μ_K', '$\\mu_G / \\mu_K$'],
   ['μ_G、μ_K、D_km', '$\\mu_G$、$\\mu_K$、$D_{km}$'],
   ['μ_G, μ_K, D_km', '$\\mu_G$, $\\mu_K$, $D_{km}$'],
+  ['σ_S', '$\\sigma_S$'],
+  ['σ_M', '$\\sigma_M$'],
+  ['μ_T', '$\\mu_T$'],
+  ['d_W', '$d_W$'],
+  ['p_max', '$p_{\\max}$'],
+  ['m_eff', '$m_{\\mathrm{eff}}$'],
+  ['μ_G', '$\\mu_G$'],
+  ['μ_K', '$\\mu_K$'],
+  ['k_S', '$k_S$'],
+  ['k_P', '$k_P$'],
+  ['f_Z', '$f_Z$'],
+  ['A_s', '$A_s$'],
+  ['D_km', '$D_{km}$'],
+  ['d₂', '$d_2$'],
+  ['d_2', '$d_2$'],
+  ['mm²', '$\\mathrm{mm}^{2}$'],
+  ['cm²', '$\\mathrm{cm}^{2}$'],
+  ['m²', '$\\mathrm{m}^{2}$'],
+  ['km²', '$\\mathrm{km}^{2}$'],
+  ['in²', '$\\mathrm{in}^{2}$'],
+  ['ft²', '$\\mathrm{ft}^{2}$'],
+  ['yd²', '$\\mathrm{yd}^{2}$'],
+  ['mi²', '$\\mathrm{mi}^{2}$'],
+  ['mm³', '$\\mathrm{mm}^{3}$'],
+  ['cm³', '$\\mathrm{cm}^{3}$'],
+  ['m³', '$\\mathrm{m}^{3}$'],
+  ['in³', '$\\mathrm{in}^{3}$'],
+  ['ft³', '$\\mathrm{ft}^{3}$'],
+  ['g/cm³', '$\\mathrm{g/cm}^{3}$'],
+  ['kg/m³', '$\\mathrm{kg/m}^{3}$'],
+  ['lb/in³', '$\\mathrm{lb/in}^{3}$'],
+  ['lb/ft³', '$\\mathrm{lb/ft}^{3}$'],
+  ['N/mm²', '$\\mathrm{N/mm}^{2}$'],
+  ['N·m', '$\\mathrm{N \\cdot m}$'],
+  ['N·mm', '$\\mathrm{N \\cdot mm}$'],
+  ['N/mm', '$\\mathrm{N/mm}$'],
   // 统计 / 公差缩写
   ['X̿', '$\\bar{X}$'],
   ['X̄', '$\\bar{X}$'],
@@ -35,6 +78,7 @@ const REPLACEMENTS = [
   // 复合符号（长匹配优先）
   ['σ_eq', '$\\sigma_{eq}$'],
   ['σ_cr', '$\\sigma_{cr}$'],
+  ['σ_c', '$\\sigma_c$'],
   ['σc', '$\\sigma_c$'],
   ['σt', '$\\sigma_t$'],
   ['σ₋₁', '$\\sigma_{-1}$'],
@@ -75,6 +119,10 @@ const REPLACEMENTS = [
   ['k_P', '$k_P$'],
   ['d_cs', '$d_{cs}$'],
   ['d_g', '$d_g$'],
+  ['ε_c', '$\\varepsilon_c$'],
+  ['ε_s', '$\\varepsilon_s$'],
+  ['Δd', '$\\Delta d$'],
+
   ['D_A', '$D_A$'],
   ['KHbeta', '$K_{H\\beta}$'],
   ['KHalpha', '$K_{H\\alpha}$'],
@@ -252,10 +300,13 @@ function bindCjkToSymbol(text) {
 }
 
 function applySymbolReplacements(plain) {
+  // 只在非 $...$ 片段上替换，避免 A_s → $A_s$ 后再被二次匹配成 $$A_s$$
   let out = plain
   for (const [from, to] of SORTED_REPLACEMENTS) {
     if (to == null) continue
-    out = out.split(from).join(to)
+    out = splitMathSegments(out)
+      .map((seg) => (seg.math ? seg.content : seg.content.split(from).join(to)))
+      .join('')
   }
   return out
 }

@@ -42,8 +42,11 @@ export function analyzeTapDrill(row, options = {}) {
 
   const baseDrill = row.tapDrill
   const recommendedDrill = roundDrill(baseDrill * mat.drillFactor, row.unit)
-  const engagementLength = options.engagementLength
-    ?? (row.nominal ? row.nominal * (row.unit === 'mm' ? 1.5 : 1.5) : null)
+  const rawEngagement = options.engagementLength
+    ?? (row.nominal != null ? row.nominal * 1.5 : null)
+  const engagementLength = rawEngagement != null
+    ? roundDrill(rawEngagement, row.unit)
+    : null
 
   const tipKeys = [
     'processTapDrill',
@@ -63,7 +66,7 @@ export function analyzeTapDrill(row, options = {}) {
     unit: row.unit,
     baseDrill,
     recommendedDrill,
-    drillDelta: recommendedDrill - baseDrill,
+    drillDelta: roundDrill(recommendedDrill - baseDrill, row.unit),
     engagementLength,
     chamferAngle: '90–120°',
     tipKeys: [...new Set(tipKeys)],

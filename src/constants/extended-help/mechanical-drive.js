@@ -338,7 +338,7 @@ const CHAIN = {
 const CLUTCH = {
   zh: {
     modesTitle: '摩擦离合器 — 计算模式',
-    modesSubtitle: '均匀压力模型有效半径；专业含离心减载与热衰退',
+    modesSubtitle: '均匀磨损模型有效半径；专业含离心减载与热衰退',
     modes: stdCalcModes('zh', {
       simpleModel: '$T=n\\mu F R$；可反算 requiredTorque 所需 F',
       completeModel: '内外径 → calcMeanFrictionRadius + **接触压强** pressurePass',
@@ -353,7 +353,7 @@ const CLUTCH = {
     formulasTitle: '主要公式',
     formulas: [
       { name: '摩擦扭矩', latex: 'T = \\frac{n \\mu F R}{1000}', note: 'T N·m；F N；R mm；n 摩擦面数' },
-      { name: '有效半径', latex: 'R_m = \\frac{2(R_o^3-R_i^3)}{3(R_o^2-R_i^2)}', note: 'complete/pro 均匀压力模型' },
+      { name: '有效半径', latex: 'R_m = \\frac{2(R_o^3-R_i^3)}{3(R_o^2-R_i^2)}', note: 'complete/pro 均匀磨损模型' },
       { name: '所需压紧力', latex: 'F = \\frac{1000T}{n\\mu R}', note: '反算 clampForce' },
       { name: '接触压强', latex: 'p = F / A_{annular}', note: 'complete 校核 maxPressure' },
       { name: '离心减载', latex: 'F_{eff} = \\max(0, F - F_{cf})', note: '专业；$F_{cf}\\propto\\omega^2$' },

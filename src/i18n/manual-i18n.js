@@ -250,7 +250,7 @@ export const manualEnById = {
   },
   'weld-throat': {
     name: 'Fillet weld effective throat',
-    desc: 's is leg size (mm), a is effective throat for shear/normal stress checks.',
+    desc: 'h_f is fillet leg size (mm), a is effective throat for shear/normal stress checks.',
     tags: ['Weld', 'Fillet'],
     category: 'Structures',
   },

@@ -19,16 +19,14 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <CalcFormItem :label="pf('legSize')">
+              <CalcFormItem :label="pf('legSize')" unit="mm">
                 <el-input-number v-model="form.legSize" :min="3" :step="1" />
-                <span class="ml-2 text-sm text-gray-500">mm</span>
               </CalcFormItem>
-              <CalcFormItem :label="pf('weldLength')">
+              <CalcFormItem :label="pf('weldLength')" unit="mm">
                 <el-input-number v-model="form.weldLength" :min="10" />
               </CalcFormItem>
-              <CalcFormItem :label="pf('force')">
+              <CalcFormItem :label="pf('force')" unit="N">
                 <el-input-number v-model="form.force" :min="0" :step="100" />
-                <span class="ml-2 text-sm text-gray-500">N</span>
               </CalcFormItem>
               <template v-if="form.calcMode === 'professional'">
                 <CalcFormItem :label="pf('eccentricity')">
@@ -55,6 +53,8 @@
               :leg-size="form.legSize"
               :weld-length="form.weldLength"
               :throat="filletResult.throat ?? form.legSize * 0.7"
+              :force="form.force"
+              :eccentricity="form.calcMode === 'professional' ? form.eccentricity : 0"
             />
           </section>
           <section class="card-panel">
@@ -70,13 +70,47 @@
                 <dd class="font-mono">{{ filletResult.shearStress?.toFixed(1) }} MPa</dd>
               </div>
               <template v-if="filletResult.combined">
-                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('combinedStress')" />
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="pr('bendingStressWeld')" />
+                  <dd class="font-mono">{{ filletResult.combined.bendingStress?.toFixed(1) }} MPa</dd>
+                </div>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="pr('combinedStress')" />
                   <dd class="font-mono" :class="reviewAwareCheckClass(filletResult.combinedPass, snapshot)">
                     {{ filletResult.combined.equivalentStress?.toFixed(1) }} MPa
+                    {{ reviewAwareCheckMark(filletResult.combinedPass, snapshot, reviewMarkText) }}
                   </dd>
                 </div>
-                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('hazAllowWeld')" />
-                  <dd class="font-mono">{{ filletResult.haz?.hazAllowShear }} / {{ filletResult.haz?.weldStress }} MPa</dd>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="pr('combinedAllow')" />
+                  <dd class="font-mono text-xs">
+                    {{ filletResult.combinedAllow?.toFixed(1) }} MPa
+                    <span v-if="filletResult.combinedAllowStandard" class="text-gray-500">
+                      （{{ filletResult.combinedAllowStandard }}）
+                    </span>
+                  </dd>
+                </div>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="pr('combinedUtilization')" />
+                  <dd class="font-mono" :class="reviewAwareCheckClass(filletResult.combinedPass, snapshot)">
+                    {{ ((filletResult.combinedUtilization ?? 0) * 100).toFixed(1) }}%
+                  </dd>
+                </div>
+                <p class="text-xs text-gray-500">{{ pr('combinedModelHint') }}</p>
+                <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <div class="flex justify-between gap-2">
+                    <ResultLabel :text="pr('hazShearScreen')" />
+                    <dd
+                      class="shrink-0 font-mono"
+                      :class="reviewAwareCheckClass(filletResult.haz?.pass, snapshot)"
+                    >
+                      {{ filletResult.haz?.weldStress?.toFixed?.(1) ?? filletResult.haz?.weldStress }}
+                      /
+                      {{ filletResult.haz?.hazAllowShear }} MPa
+                      {{ reviewAwareCheckMark(!!filletResult.haz?.pass, snapshot, reviewMarkText) }}
+                    </dd>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-500">{{ pr('hazShearScreenHint') }}</p>
                 </div>
               </template>
             </dl>
@@ -114,13 +148,13 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <CalcFormItem :label="pf('thickness')">
+              <CalcFormItem :label="pf('thickness')" unit="mm">
                 <el-input-number v-model="butt.thickness" :min="3" />
               </CalcFormItem>
-              <CalcFormItem :label="pf('weldLength')">
+              <CalcFormItem :label="pf('weldLength')" unit="mm">
                 <el-input-number v-model="butt.weldLength" :min="10" />
               </CalcFormItem>
-              <CalcFormItem :label="pf('tensionForce')">
+              <CalcFormItem :label="pf('tensionForce')" unit="N">
                 <el-input-number v-model="butt.force" :min="0" :step="500" />
               </CalcFormItem>
               <CalcFormItem v-if="butt.calcMode === 'professional'" :label="pf('penetrationEfficiency')">
@@ -130,15 +164,26 @@
                 <el-input-number v-model="butt.stressConcentration" :min="1" :max="3" :step="0.1" :precision="1" />
               </CalcFormItem>
             </el-form>
+
+            <ButtWeldDiagram
+              :thickness="butt.thickness"
+              :weld-length="butt.weldLength"
+              :force="butt.force"
+              :penetration-efficiency="butt.penetrationEfficiency"
+              :stress-concentration="butt.stressConcentration"
+              :show-penetration="butt.calcMode === 'professional'"
+            />
           </section>
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <el-tag class="mb-3" :type="buttOverallType">
-              {{ pr('overall') }}: {{ buttOverallLabel }}
+              <MathContent :text="buttOverallLabel" class="inline" />
             </el-tag>
+            <p class="mb-2 text-xs text-gray-500">
+              <MathContent :text="pr('buttAssumptionHint')" />
+            </p>
             <p class="mb-2 text-sm">
-              {{ pr('normalStress') }} = <span class="font-mono">{{ buttResult.normalStress?.toFixed(1) }}</span> MPa
-              <span v-if="buttResult.effectiveStress"> · {{ pr('effectiveStress') }} = <span class="font-mono">{{ buttResult.effectiveStress?.toFixed(1) }}</span> MPa</span>
+              <MathContent :text="buttStressLine" />
             </p>
             <el-table :data="buttRows" size="small" border>
               <el-table-column prop="standard" :label="pr('standard')" />
@@ -158,11 +203,13 @@
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
-            <el-form label-width="120px">
-              <CalcFormItem :label="pf('stressRangeDelta')">
+            <el-form label-width="130px">
+              <CalcFormItem :label="pf('stressRangeDelta')" unit="MPa">
                 <el-input-number v-model="fatigue.stressRange" :min="1" :precision="1" />
-                <span class="ml-2 text-xs text-gray-500">MPa</span>
               </CalcFormItem>
+              <p class="mb-3 text-xs leading-relaxed text-gray-500">
+                <MathContent :text="pf('stressRangeHint')" />
+              </p>
               <CalcFormItem :label="pf('cycles')">
                 <el-input-number v-model="fatigue.cycles" :min="1000" :step="10000" />
               </CalcFormItem>
@@ -177,27 +224,35 @@
             <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
             <el-alert v-if="fatigueResult?.errorKey" :title="resultError(fatigueResult)" type="warning" show-icon />
             <template v-else>
-              <el-tag class="mb-2" :type="fatigueOverallType">
-                {{ pr('overall') }}: {{ fatigueOverallLabel }}
+              <el-tag class="mb-3" :type="fatigueOverallType">
+                {{ fatigueVerdictLabel }}
               </el-tag>
-              <p v-if="fatigueStatusHint" class="mb-2 text-xs" :class="fatigueOverallStatus === 'fail' ? 'text-error' : 'text-warning'">
-                {{ fatigueStatusHint }}
-              </p>
+              <div
+                class="mb-3 rounded-lg bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-gray-600 dark:text-gray-400"
+              >
+                <MathContent :text="pr('fatigueAssumptionHint')" />
+              </div>
               <dl class="space-y-2 text-sm">
-              <div class="flex justify-between rounded bg-primary/5 p-3">
-                <ResultLabel :text="pr('estimatedLife')" />
-                <dd class="font-mono text-primary">{{ fatigueResult.estimatedLife?.toLocaleString() }} {{ pr('lifeUnit') }}</dd>
-              </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('allowableAtCycles')" />
-                <dd class="font-mono">{{ fatigueResult.allowableAtCycles }} MPa</dd>
-              </div>
-              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('enduranceLimit')" />
-                <dd class="font-mono">{{ fatigueResult.enduranceLimit }} MPa</dd>
-              </div>
-              <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-                <dt>{{ fc('check') }}</dt>
-                <dd :class="fatigueResult.pass ? 'text-success' : 'text-error'">{{ fatigueResult.pass ? fc('pass') : fc('fail') }}</dd>
-              </div>
+                <div class="flex justify-between rounded bg-primary/5 p-3">
+                  <ResultLabel :text="pr('estimatedLife')" />
+                  <dd class="font-mono text-primary">
+                    {{ fatigueResult.estimatedLife?.toLocaleString() }} {{ pr('lifeUnit') }}
+                  </dd>
+                </div>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="pr('allowableAtCycles')" />
+                  <dd class="font-mono">{{ fatigueResult.allowableAtCycles }} MPa</dd>
+                </div>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="pr('enduranceLimit')" />
+                  <dd class="font-mono">{{ fatigueResult.enduranceLimit }} MPa</dd>
+                </div>
+                <div class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
+                  <dt>{{ fc('check') }}</dt>
+                  <dd :class="fatigueResult.pass ? 'text-success' : 'text-error'">
+                    {{ fatigueResult.pass ? fc('pass') : fc('fail') }}
+                  </dd>
+                </div>
               </dl>
             </template>
           </section>
@@ -209,11 +264,10 @@
           <section class="card-panel">
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
-              <CalcFormItem :label="pf('heatInputQ')">
+              <CalcFormItem :label="pf('heatInputQ')" unit="kJ/mm">
                 <el-input-number v-model="haz.heatInput" :min="0.5" :max="5" :step="0.1" :precision="2" />
-                <span class="ml-2 text-xs text-gray-500">kJ/mm</span>
               </CalcFormItem>
-              <CalcFormItem :label="pf('plateThickness')">
+              <CalcFormItem :label="pf('plateThickness')" unit="mm">
                 <el-input-number v-model="haz.plateThickness" :min="3" />
               </CalcFormItem>
               <CalcFormItem :label="pf('steelGrade')">
@@ -288,6 +342,7 @@ import {
 } from '@/utils/weld-calc'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import FilletWeldDiagram from '@/components/weld/FilletWeldDiagram.vue'
+import ButtWeldDiagram from '@/components/weld/ButtWeldDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
@@ -306,7 +361,11 @@ const { rm, resultError } = useResultI18n()
 
 const weldSteelGrades = computed(() => optionMap(WELD_STEEL_GRADES, 'weldSteelGrades'))
 const weldDetailCategories = computed(() => optionMap(WELD_DETAIL_CATEGORIES, 'weldDetailCategories'))
-const weldStandards = computed(() => ol('weldStandards'))
+const weldStandards = computed(() => ({
+  gb: { label: ol('weldStandards', 'gb') },
+  en1993: { label: ol('weldStandards', 'en1993') },
+  aws: { label: ol('weldStandards', 'aws') },
+}))
 
 const tabLabels = computed(() => ({
   fillet: pf('tabFillet'),
@@ -379,34 +438,61 @@ function onApplyInverse({ variable, value }) {
   }
 }
 const buttResult = computed(() => analyzeButtWeld(butt))
-const buttOverallStatus = computed(() => getCalcReviewStatus(buttResult.value))
+const buttSnapshot = computed(() => adaptButtWeld(butt))
+const buttOverallStatus = computed(() => getCalcReviewStatus(buttSnapshot.value))
 const buttOverallType = computed(() => {
   if (buttOverallStatus.value === 'pass') return 'success'
   if (buttOverallStatus.value === 'review') return 'warning'
+  // GB 未通过但 EN/AWS 通过：警告而非绝对不合格
+  if (buttResult.value?.mixedVerdict) return 'warning'
   return 'danger'
 })
 const buttOverallLabel = computed(() => {
-  if (buttOverallStatus.value === 'pass') return fc('overallPass')
-  if (buttOverallStatus.value === 'review') return fc('overallWarn')
-  return fc('overallFail')
+  const mode = butt.calcMode
+  const r = buttResult.value
+  const ok = r?.pass
+  if (mode === 'simple' || buttOverallStatus.value === 'review') return pr('buttVerdictSimple')
+  if (r?.mixedVerdict) {
+    const allow = r.controlAllow ?? r.gb?.allow
+    if (mode === 'professional') {
+      return pr('buttVerdictMixedPro', { kf: butt.stressConcentration ?? 1.2, allow })
+    }
+    return pr('buttVerdictMixed', { allow })
+  }
+  if (mode === 'professional') {
+    const kf = butt.stressConcentration ?? 1.2
+    return ok ? pr('buttVerdictProOk', { kf }) : pr('buttVerdictProFail', { kf })
+  }
+  return ok ? pr('buttVerdictCompleteOk') : pr('buttVerdictCompleteFail')
 })
-const buttReviewOnly = computed(() => isReviewOnlyResult(buttResult.value))
+const buttStressLine = computed(() => {
+  const sigma = (buttResult.value?.normalStress ?? 0).toFixed(1)
+  if (buttResult.value?.effectiveStress != null) {
+    return pr('buttStressLine', {
+      sigma,
+      kf: butt.stressConcentration ?? 1.2,
+      sigmaEff: buttResult.value.effectiveStress.toFixed(1),
+    })
+  }
+  return pr('buttStressLineSimple', { sigma })
+})
+const buttReviewOnly = computed(() => isReviewOnlyResult(buttSnapshot.value))
 const fatigueResult = computed(() => analyzeWeldFatigue(fatigue))
 const hazResult = computed(() => analyzeHAZ(haz))
-const buttSnapshot = computed(() => adaptButtWeld(butt))
 const fatigueSnapshot = computed(() => adaptWeldFatigue(fatigue))
 const hazSnapshot = computed(() => adaptWeldHaz(haz))
 
 const buttRows = computed(() => {
   const r = buttResult.value
   const std = weldStandards.value
+  if (!r?.gb) return []
   if (butt.calcMode === 'simple') {
-    return [{ standard: std.gb?.label, allow: r.gb.allow, pass: r.gb.pass }]
+    return [{ standard: std.gb.label, allow: r.gb.allow, pass: r.gb.pass }]
   }
   return [
-    { standard: std.gb?.label, allow: r.gb.allow, pass: r.gb.pass },
-    { standard: std.en1993?.label, allow: r.eurocode.allow, pass: r.eurocode.pass },
-    { standard: std.aws?.label, allow: r.aws.allow, pass: r.aws.pass },
+    { standard: std.gb.label, allow: r.gb.allow, pass: r.gb.pass },
+    { standard: std.en1993.label, allow: r.eurocode?.allow, pass: r.eurocode?.pass },
+    { standard: std.aws.label, allow: r.aws?.allow, pass: r.aws?.pass },
   ]
 })
 
@@ -448,15 +534,13 @@ const currentSnapshot = computed(() => {
   return buttSnapshot.value
 })
 
-const fatigueOverallStatus = computed(() => getCalcReviewStatus(fatigueSnapshot.value))
 const fatigueOverallType = computed(() => {
-  if (fatigueOverallStatus.value === 'pass') return 'success'
-  if (fatigueOverallStatus.value === 'review') return 'warning'
+  if (fatigueResult.value?.errorKey) return 'warning'
+  if (fatigueResult.value?.pass) return 'success'
   return 'danger'
 })
-const fatigueOverallLabel = computed(() => historyCheckLabel(fatigueOverallStatus.value))
-const fatigueStatusHint = computed(
-  () => fatigueSnapshot.value?.warnings?.[0]?.message ?? fatigueSnapshot.value?.assumptions?.[0] ?? '',
+const fatigueVerdictLabel = computed(() =>
+  fatigueResult.value?.pass ? pr('fatigueVerdictOk') : pr('fatigueVerdictFail'),
 )
 
 const hazOverallStatus = computed(() => getCalcReviewStatus(hazSnapshot.value))

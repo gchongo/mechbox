@@ -150,6 +150,35 @@ describe('bolt-group-calc modes', () => {
     expect(r.polarInertia).toBeGreaterThan(0)
   })
 
+  it('default demo: torsion is M·R/Ip and max shear is vector max', () => {
+    const base = {
+      boltCount: 8,
+      boltCircleRadius: 60,
+      shearX: 5000,
+      shearY: 2000,
+      moment: 120000,
+      allowPerBolt: 8000,
+      frictionCoeff: 0.2,
+      clampForcePerBolt: 25000,
+      pryingArm: 40,
+      allowTensionPerBolt: 8000,
+    }
+    const complete = analyzeBoltGroup({ ...base, calcMode: 'complete' })
+    expect(complete.torsionPerBolt).toBeCloseTo(250, 5)
+    expect(complete.maxShearForce).toBeCloseTo(910, 0)
+    expect(complete.maxBoltForce).toBeCloseTo(910, 0)
+    expect(complete.hasTension).toBe(false)
+    expect(complete.friction).toBeNull()
+    expect(complete.prying.pryingTension).toBe(0)
+
+    const pro = analyzeBoltGroup({ ...base, calcMode: 'professional' })
+    expect(pro.torsionPerBolt).toBeCloseTo(250, 5)
+    expect(pro.maxShearForce).toBeCloseTo(910, 0)
+    expect(pro.prying.pryingTension).toBeCloseTo(375, 5)
+    expect(pro.maxBoltForce).toBeCloseTo(Math.hypot(910, 375), 0)
+    expect(pro.friction.slipCapacity).toBe(40000)
+  })
+
   it('circle positions are symmetric', () => {
     const pos = generateCircleBoltPositions(4, 50)
     expect(pos).toHaveLength(4)
@@ -231,6 +260,41 @@ describe('spring-calc modes', () => {
     expect(r.shearStress).toBeGreaterThan(0)
     expect(r.estimateOnly).toBe(true)
     expect(r.pass).toBe(false)
+  })
+
+  it('simple mode ignores residual height fields and uses load', () => {
+    const r = analyzeSpring({
+      calcMode: 'simple',
+      wireDiameter: 1.5,
+      meanDiameter: 10.5,
+      activeCoils: 10,
+      load: 55,
+      allowableShear: 700,
+      freeLength: 45,
+      installHeight: 38,
+      workingHeight: 32,
+    })
+    expect(r.usesHeightLoads).toBe(false)
+    expect(r.force ?? r.shearStress).toBeTruthy()
+    expect(r.shearStress).toBeCloseTo((8 * 55 * 10.5 * r.wahlFactor) / (Math.PI * 1.5 ** 3), 0)
+  })
+
+  it('default-like demo passes static checks in complete mode', () => {
+    const r = analyzeSpring({
+      calcMode: 'complete',
+      material: '65Mn',
+      wireDiameter: 1.5,
+      outerDiameter: 12,
+      activeCoils: 10,
+      totalCoils: 12,
+      freeLength: 45,
+      installHeight: 38,
+      workingHeight: 32,
+      endType: 'fixed',
+    })
+    expect(r.shearPass).toBe(true)
+    expect(r.solidPass).toBe(true)
+    expect(r.pass).toBe(true)
   })
 
   it('complete mode checks buckling and index', () => {
@@ -328,6 +392,11 @@ describe('spring-calc modes', () => {
     expect(r.tauInstall).toBeCloseTo(506.1, 1)
     expect(r.tauWorking).toBeCloseTo(759.2, 1)
     expect(r.unwindLength).toBeCloseTo(118.8, 1)
+    /** 几何间隙 H₂−Lₛ=4.3；预留 1d 后余量 = 4.3−1.1 = 3.2 */
+    expect(r.solidClearance).toBeCloseTo(4.3, 2)
+    expect(r.solidReserve).toBeCloseTo(1.1, 2)
+    expect(r.remainingDeflectionMargin).toBeCloseTo(3.2, 2)
+    expect(r.solidPass).toBe(true)
     expect(r.allowableShear).toBeCloseTo(529, 0)
     expect(r.shearPass).toBe(false)
     expect(r.pass).toBe(false)
@@ -1041,7 +1110,7 @@ describe('weld-calc modes', () => {
     expect(r.combined.equivalentStress).toBeGreaterThan(r.shearStress)
   })
 
-  it('combined bending uses N·mm without spurious ×1000', () => {
+  it('combined bending uses W = a·L²/6 for a single straight fillet', () => {
     const r = analyzeFilletWeld({
       ...input,
       calcMode: 'professional',
@@ -1049,11 +1118,13 @@ describe('weld-calc modes', () => {
     })
     const throat = 6 * 0.7
     const area = throat * 80
-    const W = (80 * throat ** 2) / 6
+    const W = (throat * 80 ** 2) / 6
     const expectedSigmaB = (12000 * 20) / W
+    expect(r.combined.bendingStress).toBeCloseTo(53.57, 1)
     expect(r.combined.bendingStress).toBeCloseTo(expectedSigmaB, 4)
-    expect(r.combined.bendingStress).toBeLessThan(2000)
+    expect(r.combined.equivalentStress).toBeCloseTo(81.83, 1)
     expect(r.combined.shearStress).toBeCloseTo(12000 / area, 4)
+    expect(r.combinedPass).toBe(true)
   })
 })
 
@@ -1105,6 +1176,29 @@ describe('beam-calc modes', () => {
       dynamicFactor: 1.5,
     })
     expect(dyn.stress).toBeGreaterThan(base.stress)
+  })
+
+  it('professional fatigue amplitude applies Kd to both load extremes', () => {
+    const r = analyzeBeam({
+      caseId: 'simply_center',
+      sectionType: 'solid_round',
+      diameter: 32,
+      spanLength: 500,
+      load: 2000,
+      elasticModulus: 206000,
+      allowableStress: 157,
+      allowableDeflection: 0.5,
+      calcMode: 'professional',
+      dynamicFactor: 1.2,
+      stressConcentration: 1.5,
+      loadMin: 500,
+      loadMax: 2000,
+    })
+    // σ_a = Kd·Kt·(Fmax-Fmin)·L / (8W) ≈ 52.5 MPa (not 55.4 from Kd on Fmax only)
+    expect(r.stressAmplitude).toBeCloseTo(52.46, 1)
+    expect(r.moment).toBeCloseTo(300000, 0)
+    expect(r.stress).toBeCloseTo(139.9, 1)
+    expect(r.deflection).toBeCloseTo(0.5894, 3)
   })
 })
 
@@ -1177,14 +1271,14 @@ describe('o-ring-calc modes', () => {
 describe('clutch-calc modes', () => {
   it('simple torque from force', () => {
     const r = analyzeClutch({ calcMode: 'simple', frictionCoeff: 0.15, force: 5000, radius: 80, surfaces: 2 })
-    expect(r.torque).toBeGreaterThan(0)
+    expect(r.torque).toBeCloseTo(120, 5)
     expect(r.estimateOnly).toBe(true)
     expect(r.pass).toBe(false)
     expect(r.torquePass).toBe(false)
     expect(r.allowableRequired).toBe(true)
   })
 
-  it('complete uses effective radius', () => {
+  it('complete uses uniform-wear effective radius', () => {
     const r = analyzeClutch({
       calcMode: 'complete',
       frictionCoeff: 0.15,
@@ -1194,7 +1288,8 @@ describe('clutch-calc modes', () => {
       surfaces: 2,
       allowableTorque: 200,
     })
-    expect(r.effectiveRadius).toBeGreaterThan(50)
+    expect(r.effectiveRadius).toBeCloseTo(66.15, 1)
+    expect(r.torque).toBeCloseTo(99.23, 1)
     expect(r.contactPressure).toBeGreaterThan(0)
     expect(r.torquePass).toBe(true)
   })
@@ -1227,6 +1322,45 @@ describe('clutch-calc modes', () => {
     })
     expect(r.torqueAtSpeed).toBeLessThanOrEqual(r.torque)
   })
+
+  it('professional with requiredTorque fails hard when derated is short', () => {
+    const r = analyzeClutch({
+      calcMode: 'professional',
+      frictionCoeff: 0.15,
+      force: 5000,
+      innerDiameter: 100,
+      outerDiameter: 160,
+      surfaces: 2,
+      rpm: 1500,
+      requiredTorque: 100,
+      thermalFade: 0.9,
+      safetyFactor: 1.2,
+    })
+    expect(r.deratedTorque).toBeLessThan(100)
+    expect(r.designPass).toBe(false)
+    expect(r.pass).toBe(false)
+    expect(r.estimateOnly).toBe(false)
+  })
+
+  it('aligned simple radius matches complete torque', () => {
+    const complete = analyzeClutch({
+      calcMode: 'complete',
+      frictionCoeff: 0.15,
+      force: 5000,
+      innerDiameter: 100,
+      outerDiameter: 160,
+      surfaces: 2,
+      allowableTorque: 200,
+    })
+    const simple = analyzeClutch({
+      calcMode: 'simple',
+      frictionCoeff: 0.15,
+      force: 5000,
+      radius: complete.effectiveRadius,
+      surfaces: 2,
+    })
+    expect(simple.torque).toBeCloseTo(complete.torque, 5)
+  })
 })
 
 describe('belt-calc modes', () => {
@@ -1234,20 +1368,34 @@ describe('belt-calc modes', () => {
 
   it('simple mode computes length and tension', () => {
     const r = analyzeBeltDrive({ ...base, calcMode: 'simple', wrapAngle: 180 })
-    expect(r.beltLength).toBeGreaterThan(0)
-    expect(r.F1).toBeGreaterThan(r.F2)
+    expect(r.ratio).toBeCloseTo(2.5, 5)
+    expect(r.beltLength).toBeCloseTo(1675.9, 0)
+    expect(r.beltSpeed).toBeCloseTo(9.11, 1)
+    expect(r.efficiency).toBe(0.95)
+    expect(r.friction).toBe(0.3)
+    expect(r.F1).toBeCloseTo(1041, 0)
+    expect(r.F2).toBeCloseTo(406, 0)
   })
 
   it('complete mode auto wrap angle', () => {
     const r = analyzeBeltDrive({ ...base, calcMode: 'complete', powerPerBelt: 2.5 })
-    expect(r.wrapAngle).toBeLessThan(180)
-    expect(r.beltCount).toBeGreaterThan(0)
+    expect(r.wrapAngle).toBeCloseTo(159.3, 0)
+    expect(r.F1).toBeCloseTo(1123, 0)
+    expect(r.beltCount).toBe(3)
   })
 
   it('professional applies service factor', () => {
     const baseP = analyzeBeltDrive({ ...base, calcMode: 'simple', wrapAngle: 180 })
-    const pro = analyzeBeltDrive({ ...base, calcMode: 'professional', serviceFactor: 1.5, powerPerBelt: 2.5 })
+    const pro = analyzeBeltDrive({
+      ...base,
+      calcMode: 'professional',
+      serviceFactor: 1.2,
+      powerPerBelt: 2.5,
+    })
     expect(pro.F1).toBeGreaterThan(baseP.F1)
+    expect(pro.F1).toBeCloseTo(1348, 0)
+    expect(pro.beltCount).toBe(3)
+    expect(pro.estimatedLifeHours).toBeCloseTo(882, 0)
   })
 })
 
@@ -1256,19 +1404,41 @@ describe('chain-calc modes', () => {
 
   it('simple mode basic output', () => {
     const r = analyzeChainDrive({ ...base, calcMode: 'simple' })
-    expect(r.chainLength).toBeGreaterThan(0)
-    expect(r.chainTension).toBeGreaterThan(0)
+    expect(r.ratio).toBeCloseTo(3, 5)
+    expect(r.chainSpeed).toBeCloseTo(3.62, 1)
+    expect(r.linksExact).toBeCloseTo(102.13, 1)
+    expect(r.links).toBe(104)
+    expect(r.oddRoundedUp).toBe(true)
+    expect(r.chainLength).toBeCloseTo(104 * 15.875, 5)
+    expect(r.chainTension).toBeCloseTo(2114, 0)
+    expect(r.serviceFactor).toBe(1)
   })
 
-  it('complete mode checks speed and tension', () => {
-    const r = analyzeChainDrive({ ...base, calcMode: 'complete', allowTension: 50000, maxChainSpeed: 20 })
+  it('complete mode checks speed and tension without service factor', () => {
+    const r = analyzeChainDrive({
+      ...base,
+      calcMode: 'complete',
+      allowTension: 50000,
+      maxChainSpeed: 20,
+      serviceFactor: 1.3,
+    })
+    expect(r.serviceFactor).toBe(1)
+    expect(r.chainTension).toBeCloseTo(2114, 0)
     expect(r.speedPass).toBe(true)
     expect(r.tensionPass).toBe(true)
   })
 
-  it('professional mode estimates life', () => {
-    const r = analyzeChainDrive({ ...base, calcMode: 'professional', strands: 2 })
-    expect(r.estimatedLifeHours).toBeGreaterThan(0)
+  it('professional mode applies Ka and caps life', () => {
+    const r = analyzeChainDrive({
+      ...base,
+      calcMode: 'professional',
+      serviceFactor: 1.3,
+      strands: 1,
+      allowTension: 20000,
+    })
+    expect(r.chainTension).toBeCloseTo(2749, 0)
+    expect(r.estimatedLifeHours).toBeLessThanOrEqual(30000)
+    expect(r.lifeCapped).toBe(true)
   })
 
   it('multi-strand tensionPass uses per-strand capacity', () => {
@@ -1309,6 +1479,26 @@ describe('hydraulic-calc modes', () => {
     })
     expect(r.loadPass).toBe(true)
     expect(r.bucklingLoad).toBeGreaterThan(0)
+    expect(r.cycleTimeExtend).toBeGreaterThan(0)
+  })
+
+  it('demo defaults: force velocity johnson buckling', () => {
+    const r = analyzeHydraulicCylinder({
+      ...base,
+      calcMode: 'complete',
+      externalLoad: 8000,
+      strokeLength: 300,
+      yieldStrength: 235,
+      endFixity: 'pinned_pinned',
+      compressOnRetract: true,
+    })
+    expect(r.extendForce).toBeCloseTo(Math.PI * 25 ** 2 * 16, 4)
+    expect(r.retractForce).toBeCloseTo(Math.PI * (25 ** 2 - 10 ** 2) * 16, 4)
+    expect(r.extendVelocity).toBeCloseTo(169.77, 1)
+    expect(r.buckling?.governingMode).toBe('johnson')
+    expect(r.bucklingLoad).toBeCloseTo(66293.7, 0)
+    expect(r.buckling?.safetyFactor).toBeCloseTo(66293.7 / 8000, 1)
+    expect(r.cycleTimeExtend).toBeCloseTo(300 / r.extendVelocity, 6)
   })
 
   it('professional mode dynamic load', () => {
@@ -1476,9 +1666,34 @@ describe('plate-buckling modes', () => {
     expect(real.criticalStress).toBeLessThan(ideal.criticalStress)
   })
 
-  it('professional adds post buckling reserve', () => {
-    const r = calcPlateBucklingStress({ ...base, calcMode: 'professional', appliedShear: 5 })
-    expect(r.postBucklingReserve).toBeGreaterThan(r.criticalStress)
+  it('professional adds post buckling capacity as φ·σ_cr', () => {
+    const r = calcPlateBucklingStress({
+      ...base,
+      calcMode: 'professional',
+      appliedShear: 5,
+      imperfectionFactor: 0.8,
+      postBucklingFactor: 1.5,
+    })
+    expect(r.postBucklingCapacity).toBeCloseTo(r.criticalStress * 1.5, 6)
+    expect(r.postBucklingReserve).toBeCloseTo(r.postBucklingCapacity, 6)
+  })
+
+  it('default demo fails because SF < minSafety 2', () => {
+    const simple = calcPlateBucklingStress({ ...base, calcMode: 'simple' })
+    expect(simple.criticalStress).toBeCloseTo(75.9, 0)
+    expect(simple.safetyFactor).toBeCloseTo(1.52, 1)
+    expect(simple.minSafety).toBe(2)
+    expect(simple.pass).toBe(false)
+
+    const pro = calcPlateBucklingStress({
+      ...base,
+      calcMode: 'professional',
+      imperfectionFactor: 0.8,
+    })
+    expect(pro.criticalStress).toBeCloseTo(60.7, 0)
+    expect(pro.safetyFactor).toBeCloseTo(1.21, 1)
+    expect(pro.postBucklingCapacity).toBeCloseTo(91.1, 0)
+    expect(pro.pass).toBe(false)
   })
 })
 
@@ -1627,23 +1842,17 @@ describe('sheet-metal modes', () => {
   })
 })
 
-describe('heat-treatment modes', () => {
-  it('simple CE only', () => {
-    const r = analyzeHeatTreatment({ calcMode: 'simple' })
+describe('heat-treatment', () => {
+  it('returns CE, jominy, hardenability, temper, and profile', () => {
+    const r = analyzeHeatTreatment({ partDiameter: 50 })
     expect(r.carbonEquivalent).toBeGreaterThan(0)
-    expect(r.jominyCurve).toEqual([])
-  })
-
-  it('complete hardenability', () => {
-    const r = analyzeHeatTreatment({ calcMode: 'complete', partDiameter: 50 })
     expect(r.jominyCurve.length).toBeGreaterThan(0)
+    expect(r.hardenability?.idealCriticalDiameter).toBeGreaterThan(0)
     expect(r.preheatRequired).toBeDefined()
-  })
-
-  it('professional hardness profile', () => {
-    const r = analyzeHeatTreatment({ calcMode: 'professional', partDiameter: 50 })
     expect(r.hardnessProfile?.length).toBeGreaterThan(0)
+    expect(r.temper?.temperedHRC).toBeGreaterThan(0)
     expect(r.finalHardnessPass).toBeDefined()
+    expect(typeof r.pass).toBe('boolean')
   })
 })
 
@@ -1666,10 +1875,81 @@ describe('manufacturing modes', () => {
     expect(r.estimatedMachiningMinutes).toBeGreaterThan(0)
   })
 
+  it('machining volume is stock minus finish cylinder', () => {
+    const r = calcMachiningAllowance({
+      calcMode: 'simple',
+      nominalDiameter: 50,
+      length: 120,
+      toleranceGrade: 'medium',
+    })
+    expect(r.totalRadialAllowance).toBeCloseTo(2.2, 5)
+    expect(r.recommendedStockDiameter).toBeCloseTo(54.4, 5)
+    expect(r.recommendedStockLength).toBe(122)
+    const expected =
+      (Math.PI / 4) * (54.4 ** 2 * 122 - 50 ** 2 * 120)
+    expect(r.materialRemovalVolume).toBeCloseTo(expected, 6)
+    expect(r.materialRemovalVolume / 1000).toBeCloseTo(47.9, 1)
+  })
+
+  it('machining complete demo stock and grind', () => {
+    const r = calcMachiningAllowance({
+      calcMode: 'complete',
+      nominalDiameter: 50,
+      length: 120,
+      toleranceGrade: 'medium',
+    })
+    expect(r.totalRadialAllowance).toBeCloseTo(2.8, 5)
+    expect(r.recommendedStockDiameter).toBeCloseTo(55.6, 5)
+    expect(r.recommendedStockLength).toBe(124)
+    expect(r.grindingAllowance).toBeCloseTo(0.2, 5)
+    expect(r.minStockDiameter).toBeCloseTo(50.4, 5)
+    const expected =
+      (Math.PI / 4) * (55.6 ** 2 * 124 - 50 ** 2 * 120)
+    expect(r.materialRemovalVolume).toBeCloseTo(expected, 6)
+  })
+
   it('casting complete imperfection factor', () => {
     const simple = calcDraftAngle({ calcMode: 'simple', depth: 80 })
     const complete = calcDraftAngle({ calcMode: 'complete', depth: 80 })
     expect(complete.draftAngleDeg).toBeGreaterThanOrEqual(simple.draftAngleDeg)
+  })
+
+  it('casting sand iron external demo numbers', () => {
+    const simple = calcDraftAngle({
+      calcMode: 'simple',
+      material: 'sand_iron',
+      surfaceType: 'external',
+      depth: 80,
+    })
+    // (1.5 + 0.02√80) ≈ 1.6789°
+    expect(simple.draftAngleDeg).toBeCloseTo(1.5 + 0.02 * Math.sqrt(80), 6)
+    expect(simple.linearIncreasePerSide).toBeCloseTo(
+      80 * Math.tan((simple.draftAngleDeg * Math.PI) / 180),
+      6,
+    )
+    expect(simple.totalWidthIncrease).toBeCloseTo(simple.linearIncreasePerSide * 2, 6)
+    expect(simple.noteKey).toBe('normal')
+
+    const complete = calcDraftAngle({
+      calcMode: 'complete',
+      material: 'sand_iron',
+      surfaceType: 'external',
+      depth: 80,
+    })
+    expect(complete.imperfectionFactor).toBe(1.05)
+    expect(complete.draftAngleDeg).toBeCloseTo(simple.draftAngleDeg * 1.05, 6)
+    expect(complete.baseAngleDeg).toBeCloseTo(simple.draftAngleDeg, 6)
+  })
+
+  it('casting professional editable phi', () => {
+    const r = calcDraftAngle({
+      calcMode: 'professional',
+      material: 'sand_iron',
+      surfaceType: 'external',
+      depth: 80,
+      imperfectionFactor: 1.1,
+    })
+    expect(r.draftAngleDeg).toBeCloseTo(r.baseAngleDeg * 1.1, 6)
   })
 })
 
@@ -1693,9 +1973,40 @@ describe('pipe-flow modes', () => {
     expect(r.pressureDropKPa).toBeGreaterThan(1)
   })
 
-  it('complete hazen williams compare', () => {
-    const r = analyzePipeFlow({ ...base, calcMode: 'complete', localLossK: 2 })
+  it('complete hazen williams compare uses friction-only Darcy', () => {
+    const r = analyzePipeFlow({
+      ...base,
+      roughness: 0.045,
+      density: 998,
+      viscosity: 1.002e-3,
+      calcMode: 'complete',
+      localLossK: 2,
+      hazenC: 130,
+    })
     expect(r.methodCompare).toBeTruthy()
+    expect(r.methodCompare.darcyKPa).toBeCloseTo(r.pressureDropKPa, 6)
+    expect(r.methodCompare.darcyKPa).toBeLessThan(r.totalPressureDropKPa)
+    expect(r.methodCompare.hazenKPa).toBeCloseTo(2.94, 1)
+    expect(r.methodCompare.deltaPercent).toBeLessThan(8)
+  })
+
+  it('default water demo matches hand calc', () => {
+    const r = analyzePipeFlow({
+      ...base,
+      roughness: 0.045,
+      density: 998,
+      viscosity: 1.002e-3,
+      calcMode: 'professional',
+      localLossK: 2,
+      maxVelocity: 3,
+      maxPressureDropKPa: 200,
+    })
+    expect(r.velocity).toBeCloseTo(0.679, 2)
+    expect(r.reynolds).toBeCloseTo(16909, 0)
+    expect(r.pressureDropKPa).toBeCloseTo(2.82, 1)
+    expect(r.totalPressureDropKPa).toBeCloseTo(3.28, 1)
+    expect(r.pass).toBe(true)
+    expect(r.erosionRiskKey).toBe('low')
   })
 
   it('professional pass flags', () => {
@@ -1732,6 +2043,23 @@ describe('modal modes', () => {
       dampingRatio: 0.02,
     })
     expect(r.amplificationFactor).toBeGreaterThan(1)
+  })
+
+  it('beam demo: fn, margin, transmissibility H(r)', () => {
+    const r = analyzeModal({
+      calcMode: 'professional',
+      caseId: 'beam_ss',
+      spanLength: 500,
+      diameter: 30,
+      excitationFreq: 45,
+      rpm: 2700,
+      dampingRatio: 0.02,
+    })
+    expect(r.modal.fn).toBeCloseTo(243.73, 1)
+    expect(r.resonance.marginPercent).toBeCloseTo(81.5, 0)
+    expect(r.criticalSpeed).toBeCloseTo(14624, 0)
+    expect(r.amplificationFactor).toBeCloseTo(1.04, 1)
+    expect(r.pass).toBe(true)
   })
 })
 
@@ -1808,15 +2136,14 @@ describe('fit modes', () => {
   })
 })
 
-describe('material-selection modes', () => {
-  it('simple top 5 limit', () => {
-    const r = scoreMaterials({ calcMode: 'simple', minSigmaAllow: 100, maxCostIndex: 10 })
-    expect(r.recommendations.length).toBeLessThanOrEqual(5)
-  })
-
-  it('professional tradeoff picks', () => {
-    const r = scoreMaterials({ calcMode: 'professional', minSigmaAllow: 100, maxCostIndex: 10 })
+describe('material-selection', () => {
+  it('returns full ranked list with tradeoff picks', () => {
+    const r = scoreMaterials({ minSigmaAllow: 100, maxCostIndex: 10 })
+    expect(r.recommendations.length).toBeGreaterThan(5)
     expect(r.bestStrength).toBeTruthy()
+    expect(r.bestWeight).toBeTruthy()
+    expect(r.bestCost).toBeTruthy()
     expect(r.tradeoffNoteKey).toBeTruthy()
+    expect(r.showScoreBreakdown).toBe(true)
   })
 })

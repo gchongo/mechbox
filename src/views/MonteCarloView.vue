@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="page-title">{{ pt('title') }}</h1>
-    <p class="mb-6 text-gray-600">{{ pt('subtitle') }}</p>
+    <p class="mb-6 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
 
     <el-alert
       v-if="sourceTypeName"
@@ -45,11 +45,11 @@
           </CalcFormItem>
           <CalcFormItem :label="pf('customK')">
             <el-input-number v-model="customK" :min="0" :precision="2" :step="0.1" />
-            <span class="ml-2 text-xs text-gray-400">{{ pf('customKHint') }}</span>
+            <span class="ml-2 text-xs text-gray-400 dark:text-gray-500">{{ pf('customKHint') }}</span>
           </CalcFormItem>
           <CalcFormItem :label="pf('truncatedNormal')">
             <el-switch v-model="truncatedNormal" />
-            <p class="mt-1 text-xs text-gray-500">{{ pf('truncatedNormalHint') }}</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ pf('truncatedNormalHint') }}</p>
           </CalcFormItem>
           <CalcFormItem :label="pf('iterations')">
             <el-input-number v-model="iterations" :min="1000" :max="100000" :step="1000" />
@@ -66,16 +66,16 @@
         <h2 class="mb-4 font-semibold">{{ pt('sectionResults') }}</h2>
 
         <div v-if="stackEval" class="mb-4 grid grid-cols-2 gap-2 text-xs">
-          <div class="rounded border border-gray-200 p-2 dark:border-gray-700">
-            <p class="text-gray-500">{{ pt('worstMethod') }}</p>
-            <p class="font-mono">{{ stackEval.worst.totalTolerance.toFixed(4) }}</p>
+          <div class="rounded border border-gray-200 bg-gray-50/80 p-2 dark:border-gray-700 dark:bg-gray-900/50">
+            <p class="text-gray-500 dark:text-gray-400">{{ pt('worstMethod') }}</p>
+            <p class="font-mono text-gray-900 dark:text-gray-100">{{ stackEval.worst.totalTolerance.toFixed(4) }}</p>
             <el-tag size="small" :type="stackEval.worstPass ? 'success' : 'danger'">
               {{ stackEval.worstPass ? pt('pass') : pt('fail') }}
             </el-tag>
           </div>
-          <div class="rounded border border-gray-200 p-2 dark:border-gray-700">
-            <p class="text-gray-500">{{ pt('rssMethod') }}</p>
-            <p class="font-mono">{{ stackEval.rss.totalTolerance.toFixed(4) }}</p>
+          <div class="rounded border border-gray-200 bg-gray-50/80 p-2 dark:border-gray-700 dark:bg-gray-900/50">
+            <p class="text-gray-500 dark:text-gray-400">{{ pt('rssMethod') }}</p>
+            <p class="font-mono text-gray-900 dark:text-gray-100">{{ stackEval.rss.totalTolerance.toFixed(4) }}</p>
             <el-tag size="small" :type="stackEval.rssPass ? 'success' : 'danger'">
               {{ stackEval.rssPass ? pt('pass') : pt('fail') }}
             </el-tag>
@@ -83,31 +83,31 @@
         </div>
 
         <div v-if="simResult" class="grid grid-cols-2 gap-3 text-sm">
-          <div class="rounded bg-gray-50 p-3">
-            <ResultLabel label-class="text-gray-500" :text="pr('mean')" />
-            <dd class="mt-1 font-mono text-lg">{{ simResult.mean.toFixed(4) }}</dd>
+          <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60">
+            <ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('mean')" />
+            <dd class="mt-1 font-mono text-lg text-gray-900 dark:text-gray-100">{{ simResult.mean.toFixed(4) }}</dd>
           </div>
-          <div class="rounded bg-gray-50 p-3">
-            <ResultLabel label-class="text-gray-500" :text="pr('std')" />
-            <dd class="mt-1 font-mono text-lg">{{ simResult.std.toFixed(4) }}</dd>
+          <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60">
+            <ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('std')" />
+            <dd class="mt-1 font-mono text-lg text-gray-900 dark:text-gray-100">{{ simResult.std.toFixed(4) }}</dd>
           </div>
-          <div class="rounded bg-gray-50 p-3">
-            <ResultLabel label-class="text-gray-500" :text="pr('min')" />
-            <dd class="mt-1 font-mono text-lg">{{ simResult.min.toFixed(4) }}</dd>
+          <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60">
+            <ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('min')" />
+            <dd class="mt-1 font-mono text-lg text-gray-900 dark:text-gray-100">{{ simResult.min.toFixed(4) }}</dd>
           </div>
-          <div class="rounded bg-gray-50 p-3">
-            <ResultLabel label-class="text-gray-500" :text="pr('max')" />
-            <dd class="mt-1 font-mono text-lg">{{ simResult.max.toFixed(4) }}</dd>
+          <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60">
+            <ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('max')" />
+            <dd class="mt-1 font-mono text-lg text-gray-900 dark:text-gray-100">{{ simResult.max.toFixed(4) }}</dd>
           </div>
-          <div class="rounded bg-gray-50 p-3">
-            <ResultLabel label-class="text-gray-500" :text="pr('percentiles')" />
-            <dd class="mt-1 font-mono text-sm">
+          <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60">
+            <ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('percentiles')" />
+            <dd class="mt-1 font-mono text-sm text-gray-900 dark:text-gray-100">
               {{ simResult.p05.toFixed(3) }} / {{ simResult.p50.toFixed(3) }} /
               {{ simResult.p95.toFixed(3) }}
             </dd>
           </div>
-          <div class="rounded bg-gray-50 p-3">
-            <ResultLabel label-class="text-gray-500" :text="pr('passRate')" />
+          <div class="rounded bg-gray-50 p-3 dark:bg-gray-900/60">
+            <ResultLabel label-class="text-gray-500 dark:text-gray-400" :text="pr('passRate')" />
             <dd class="mt-1 font-mono text-lg text-success">
               {{ (simResult.passRate * 100).toFixed(2) }}%
             </dd>
@@ -151,7 +151,7 @@
           {{ sensitivityResult ? pt('reanalyze') : pt('analyzeSensitivity') }}
         </el-button>
       </div>
-      <p class="mb-3 text-xs text-gray-500">
+      <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
         <MathContent :text="enrichedHint(pt('sensitivityHint'))" />
       </p>
       <template v-if="sensitivityResult">

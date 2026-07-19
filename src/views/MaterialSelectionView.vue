@@ -5,23 +5,18 @@
       {{ pt('subtitle') }}
     </p>
 
-    <CalcModePanel v-model="calcMode" page-key="material-selection" />
-
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ pf('requirementsTitle') }}</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="140px">
-          <CalcFormItem :label="pf('minAllowStress')">
+          <CalcFormItem :label="pf('minAllowStress')" unit="MPa">
             <el-input-number v-model="req.minSigmaAllow" :min="0" :step="50" />
-            <span class="ml-2 text-sm text-gray-500">MPa</span>
           </CalcFormItem>
-          <CalcFormItem :label="pf('maxDensity')">
+          <CalcFormItem :label="pf('maxDensity')" unit="g/cm³">
             <el-input-number v-model="req.maxDensity" :min="1" :max="20" :precision="2" :step="0.5" />
-            <span class="ml-2 text-sm text-gray-500">g/cm³</span>
           </CalcFormItem>
-          <CalcFormItem :label="pf('workingTemp')">
+          <CalcFormItem :label="pf('workingTemp')" unit="°C">
             <el-input-number v-model="req.tempC" :min="20" :max="500" :step="10" />
-            <span class="ml-2 text-sm text-gray-500">°C</span>
           </CalcFormItem>
           <CalcFormItem :label="pf('minWeldability')">
             <el-slider v-model="req.minWeldability" :min="1" :max="5" :step="1" show-stops />
@@ -49,7 +44,7 @@
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ pr('recommendationsTitle') }}</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <div v-if="result.topPick" class="mb-4 rounded-lg bg-primary/5 p-4">
           <p class="text-sm text-gray-500">{{ pr('topPick') }}</p>
           <p class="text-xl font-semibold text-primary">{{ result.topPick.name }}</p>
@@ -58,7 +53,7 @@
         <div v-if="result.tradeoffNoteKey" class="mb-3 rounded bg-gray-50 p-2 text-xs dark:bg-gray-900">
           {{ rm('materialSelection', `tradeoff_${result.tradeoffNoteKey}`) }}
         </div>
-        <div v-if="calcMode === 'professional' && result.bestStrength" class="mb-3 space-y-1 text-xs text-gray-500">
+        <div v-if="result.bestStrength" class="mb-3 space-y-1 text-xs text-gray-500">
           <p>{{ pr('bestStrength') }}: {{ result.bestStrength.name }} · {{ pr('bestWeight') }}: {{ result.bestWeight?.name }} · {{ pr('bestCost') }}: {{ result.bestCost?.name }}</p>
         </div>
         <p class="mb-2 text-xs text-gray-500">{{ pr('filteredCount') }} {{ result.filteredCount }} / {{ result.totalCount }} {{ pr('ofTotal') }}</p>
@@ -92,9 +87,8 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref } from 'vue'
+import { reactive, computed } from 'vue'
 import { scoreMaterials } from '@/utils/material-selection-calc'
-import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
@@ -102,10 +96,8 @@ import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useResultI18n } from '@/composables/useResultI18n'
 
-const { pt, pf, pr, fc } = useCalcPage('material-selection')
+const { pt, ct, pf, pr } = useCalcPage('material-selection')
 const { rm } = useResultI18n()
-
-const calcMode = ref('complete')
 
 const req = reactive({
   minSigmaAllow: 150,
@@ -123,7 +115,7 @@ const weights = reactive({
   machinability: 0.1,
 })
 
-const result = computed(() => scoreMaterials({ ...req, calcMode: calcMode.value }, weights))
+const result = computed(() => scoreMaterials({ ...req }, weights))
 
 const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form: req,
@@ -139,14 +131,14 @@ const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   },
 })
 const historyInput = computed(() =>
-  snapshotHistoryInput({ calcMode: calcMode.value, ...req, weights: { ...weights } }),
+  snapshotHistoryInput({ ...req, weights: { ...weights } }),
 )
 
 function applyMaterialSelectionReplay(input) {
   if (!input || typeof input !== 'object') return
-  if (input.calcMode != null) calcMode.value = input.calcMode
   if (input.weights && typeof input.weights === 'object') Object.assign(weights, input.weights)
-  Object.assign(req, input)
+  const { weights: _w, calcMode: _m, ...rest } = input
+  Object.assign(req, rest)
 }
 useHistoryReplay('material-selection', null, { applyFn: applyMaterialSelectionReplay })
 </script>

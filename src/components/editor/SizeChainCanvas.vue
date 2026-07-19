@@ -9,7 +9,7 @@
     </header>
 
     <div class="chain-canvas__body">
-      <canvas ref="canvasRef" :width="width" :height="canvasHeight" class="mx-auto block max-w-full" />
+      <canvas ref="canvasRef" class="mx-auto block max-w-full" />
     </div>
 
     <p v-if="showFormula && rings.length" class="chain-canvas__formula">
@@ -302,7 +302,9 @@ function draw() {
   const canvas = canvasRef.value
   if (!canvas) return
   const height = canvasHeight.value
-  canvas.height = height
+  // Avoid template :width/:height — Vue attr updates clear the bitmap after draw.
+  if (canvas.width !== width) canvas.width = width
+  if (canvas.height !== height) canvas.height = height
   const ctx = canvas.getContext('2d')
   ctx.clearRect(0, 0, width, height)
 
@@ -338,9 +340,17 @@ function draw() {
 }
 
 watch(
-  () => [props.closedRing, props.componentRings, props.rssTolerance, props.analysisTypeId, locale.value, isDark.value],
+  () => [
+    props.closedRing,
+    props.componentRings,
+    props.rssTolerance,
+    props.analysisTypeId,
+    canvasHeight.value,
+    locale.value,
+    isDark.value,
+  ],
   draw,
-  { deep: true },
+  { deep: true, flush: 'post' },
 )
 onMounted(draw)
 

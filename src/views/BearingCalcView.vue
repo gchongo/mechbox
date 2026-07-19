@@ -37,10 +37,17 @@
               <el-option :label="pf('rollerBearing')" value="roller" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem :label="pf('dynamicLoad')">
+          <CalcFormItem
+            :label="pf('dynamicLoad')"
+            :pending-confirm="isPending('dynamicLoad')"
+          >
             <el-input-number v-model="form.dynamicLoad" :min="100" :step="1000" @change="markConfirmed('dynamicLoad')" />
           </CalcFormItem>
-          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('staticLoad')">
+          <CalcFormItem
+            v-if="form.calcMode !== 'simple'"
+            :label="pf('staticLoad')"
+            :pending-confirm="isPending('staticLoad')"
+          >
             <el-input-number v-model="form.staticLoad" :min="0" :step="1000" @change="markConfirmed('staticLoad')" />
           </CalcFormItem>
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('lifeCondition')">
@@ -48,10 +55,16 @@
               <el-option v-for="(c, k) in lifeConditions" :key="k" :label="c.label" :value="k" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem :label="pf('radialLoad')">
+          <CalcFormItem
+            :label="pf('radialLoad')"
+            :pending-confirm="isPending('radialLoad')"
+          >
             <el-input-number v-model="form.radialLoad" :min="0" :step="100" @change="markConfirmed('radialLoad')" />
           </CalcFormItem>
-          <CalcFormItem :label="pf('axialLoad')">
+          <CalcFormItem
+            :label="pf('axialLoad')"
+            :pending-confirm="isPending('axialLoad')"
+          >
             <el-input-number v-model="form.axialLoad" :min="0" :step="50" @change="markConfirmed('axialLoad')" />
           </CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
@@ -75,7 +88,10 @@
           <CalcFormItem v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorY')">
             <el-input-number v-model="form.y" :min="0" :max="4" :precision="2" :step="0.1" @change="markConfirmed('y')" />
           </CalcFormItem>
-          <CalcFormItem :label="pf('rpm')">
+          <CalcFormItem
+            :label="pf('rpm')"
+            :pending-confirm="isPending('rpm')"
+          >
             <el-input-number v-model="form.rpm" :min="1" :step="100" @change="markConfirmed('rpm')" />
           </CalcFormItem>
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('reliability')">
@@ -88,14 +104,23 @@
               <el-option label="99% (a₁=0.25)" :value="99" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem :label="pf('targetHours')">
+          <CalcFormItem
+            :label="pf('targetHours')"
+            :pending-confirm="isPending('targetHours')"
+          >
             <el-input-number v-model="form.targetHours" :min="100" :step="1000" @change="markConfirmed('targetHours')" />
           </CalcFormItem>
           <template v-if="form.calcMode === 'professional'">
-            <CalcFormItem :label="pf('operatingTemp')">
+            <CalcFormItem
+              :label="pf('operatingTemp')"
+              :pending-confirm="isPending('operatingTemp')"
+            >
               <el-input-number v-model="form.operatingTemp" :min="80" :max="300" :step="10" @change="markConfirmed('operatingTemp')" />
             </CalcFormItem>
-            <CalcFormItem :label="pf('limitingSpeed')">
+            <CalcFormItem
+              :label="pf('limitingSpeed')"
+              :pending-confirm="isPending('limitingSpeed')"
+            >
               <el-input-number v-model="form.limitingSpeed" :min="0" :step="500" @change="markConfirmed('limitingSpeed')" />
             </CalcFormItem>
           </template>
@@ -110,14 +135,9 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-alert
-          v-if="result.releaseBlocked"
-          class="mb-4"
-          type="warning"
-          :closable="false"
-          show-icon
-          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
-        />
+        <el-tag class="mb-3" :type="overallStatusType">
+          {{ pr('overall') }}: {{ overallStatusLabel }}
+        </el-tag>
         <el-alert
           v-if="result.xyInfo"
           class="mb-4"
@@ -183,11 +203,11 @@
             </dd>
           </div>
         </dl>
-        <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-          <MathTex expr="P = X \cdot F_r + Y \cdot F_a" />
-          <MathTex :expr="l10Formula" />
-          <MathTex :expr="lnmFormula" />
-        </div>
+        <FormulaPanel :columns="1">
+          <MathTex expr="P = X \cdot F_r + Y \cdot F_a" block />
+          <MathTex :expr="l10Formula" block />
+          <MathTex :expr="lnmFormula" block />
+        </FormulaPanel>
       </section>
     </div>
 
@@ -219,6 +239,8 @@ import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import MathTex from '@/components/common/MathTex.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { adaptBearing } from '@/utils/calc-adapters'
 import { DECISION_PRESETS } from '@/utils/decision-presets'
 import { useChainHandoff } from '@/composables/useChainHandoff'
@@ -228,7 +250,6 @@ import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
-import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
 import { localizedBearingSeriesLabel } from '@/i18n/bearing-series-i18n'
 
@@ -298,7 +319,7 @@ const form = reactive({
   operatingTemp: 120,
   limitingSpeed: 8000,
 })
-const { markConfirmed, withConfirmed } = useCriticalInputConfirm(toRef(form, 'calcMode'))
+const { markConfirmed, withConfirmed, isPending } = useCriticalInputConfirm(toRef(form, 'calcMode'), 'bearing')
 const {
   chainSession,
   chainName,
@@ -310,11 +331,17 @@ const {
 
 const result = computed(() => analyzeBearingLife(withConfirmed(form)))
 const reviewOnly = computed(() => isReviewOnlyResult(result.value))
-const unconfirmedLabelText = computed(() =>
-  formatUnconfirmedLabels(result.value.unconfirmedCriticalInputs ?? [], locale.value).join(
-    locale.value === 'en' ? ', ' : '、',
-  ),
-)
+const overallStatus = computed(() => getCalcReviewStatus(result.value))
+const overallStatusType = computed(() => {
+  if (overallStatus.value === 'pass') return 'success'
+  if (overallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const overallStatusLabel = computed(() => {
+  if (overallStatus.value === 'pass') return fc('overallPass')
+  if (overallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
 const modifierProduct = computed(() => {
   const r = result.value
   const p = (r.reliabilityFactor ?? 1) * (r.lifeConditionFactor ?? 1) * (r.temperatureFactor ?? 1)
@@ -351,7 +378,7 @@ const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistor
     if (r?.errorKey) return []
     return [
       { label: pr('lifeHours'), value: formatHours(r.lifeHours) },
-      { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+      { label: fc('check'), value: overallStatusLabel.value },
     ]
   },
 })

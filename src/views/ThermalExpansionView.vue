@@ -9,25 +9,68 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ pf('linearExpansion') }}</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="148px">
           <CalcFormItem :label="pf('material1')">
             <el-select v-model="mat1" class="w-full" @change="onMat1">
               <el-option v-for="(m, k) in thermalMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem :label="pf('length1')">
+          <CalcFormItem :label="pf('length1')" unit="mm">
             <el-input-number v-model="form.length" :min="1" :max="10000" />
-            <span class="ml-2 text-sm text-gray-500">mm</span>
           </CalcFormItem>
-          <CalcFormItem :label="pf('deltaT')">
+          <CalcFormItem
+            :label="pf('deltaT')"
+            unit="°C"
+            :pending-confirm="isPending('deltaT')"
+          >
             <el-input-number v-model="form.deltaT" :min="-300" :max="800" :step="10" @change="markConfirmed('deltaT')" />
-            <span class="ml-2 text-sm text-gray-500">°C</span>
           </CalcFormItem>
           <CalcFormItem :label="pf('alpha1')">
-            <el-input-number v-model="form.alpha" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
+            <el-input-number v-model="form.alpha" :min="1" :max="30" :precision="2" :step="0.1" />
             <span class="ml-2 text-xs text-gray-500">{{ pf('alphaHint') }}</span>
           </CalcFormItem>
+
+          <template v-if="calcMode !== 'simple'">
+            <el-divider content-position="left">{{ pf('fitChange') }}</el-divider>
+            <CalcFormItem :label="pf('material2')">
+              <el-select v-model="mat2" class="w-full" @change="onMat2">
+                <el-option v-for="(m, k) in thermalMaterials" :key="k" :label="m.label" :value="k" />
+              </el-select>
+            </CalcFormItem>
+            <CalcFormItem
+              :label="pf('shaftDiameter')"
+              :pending-confirm="isPending('shaftDiameter')"
+            >
+              <el-input-number v-model="form.shaftDiameter" :min="1" :max="500" :precision="2" @change="markConfirmed('shaftDiameter')" />
+            </CalcFormItem>
+            <CalcFormItem
+              :label="pf('holeDiameter')"
+              :pending-confirm="isPending('holeDiameter')"
+            >
+              <el-input-number v-model="form.holeDiameter" :min="1" :max="500" :precision="2" @change="markConfirmed('holeDiameter')" />
+            </CalcFormItem>
+            <CalcFormItem :label="pf('alpha2')">
+              <el-input-number v-model="form.alpha2" :min="1" :max="30" :precision="2" :step="0.1" />
+              <span class="ml-2 text-xs text-gray-500">×10⁻⁶ /°C</span>
+            </CalcFormItem>
+            <template v-if="calcMode === 'professional'">
+              <CalcFormItem
+                :label="pf('assemblyDeltaT')"
+                unit="°C"
+                :pending-confirm="isPending('assemblyDeltaT')"
+              >
+                <el-input-number v-model="form.assemblyDeltaT" :min="-200" :max="400" :step="10" @change="markConfirmed('assemblyDeltaT')" />
+              </CalcFormItem>
+              <CalcFormItem
+                :label="pf('serviceDeltaT')"
+                unit="°C"
+                :pending-confirm="isPending('serviceDeltaT')"
+              >
+                <el-input-number v-model="form.serviceDeltaT" :min="-200" :max="800" :step="10" @change="markConfirmed('serviceDeltaT')" />
+              </CalcFormItem>
+            </template>
+          </template>
         </el-form>
 
         <ThermalExpansionDiagram
@@ -38,85 +81,91 @@
           :hole-diameter="form.holeDiameter"
           :show-fit="calcMode !== 'simple'"
         />
-
-        <div class="rounded bg-gray-50 p-3 text-sm dark:bg-gray-900">
-          <ResultLabel label-class="text-gray-500" :text="pf('deltaL1')" />
-          <dd class="mt-1 font-mono text-lg">{{ linearResult.linearExpansion?.toFixed(4) }} mm</dd>
-          <p v-if="calcMode === 'professional' && linearResult.alphaTemperatureUsed" class="mt-2 text-xs text-amber-700 dark:text-amber-300">
-            {{ pf('alphaTempNote') }}
-          </p>
-          <p v-else-if="calcMode !== 'professional'" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {{ pf('alphaTempNote') }}
-          </p>
-        </div>
       </section>
 
-      <section v-if="calcMode !== 'simple'" class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ pf('fitChange') }}</h2>
-        <el-alert
-          v-if="linearResult.releaseBlocked"
-          type="warning"
-          :closable="false"
-          show-icon
+      <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag
+          v-if="calcMode === 'professional' && linearResult.fit"
           class="mb-3"
-          :title="pf('criticalInputsBlocked', { fields: unconfirmedLabelText })"
-        />
-        <el-form label-width="148px">
-          <CalcFormItem :label="pf('material2')">
-            <el-select v-model="mat2" class="w-full" @change="onMat2">
-              <el-option v-for="(m, k) in thermalMaterials" :key="k" :label="m.label" :value="k" />
-            </el-select>
-          </CalcFormItem>
-          <CalcFormItem :label="pf('shaftDiameter')">
-            <el-input-number v-model="form.shaftDiameter" :min="1" :max="500" :precision="2" @change="markConfirmed('shaftDiameter')" />
-          </CalcFormItem>
-          <CalcFormItem :label="pf('holeDiameter')">
-            <el-input-number v-model="form.holeDiameter" :min="1" :max="500" :precision="2" @change="markConfirmed('holeDiameter')" />
-          </CalcFormItem>
-          <CalcFormItem :label="pf('alpha2')">
-            <el-input-number v-model="form.alpha2" :min="1e-6" :max="30e-6" :precision="2" :step="0.1" />
-            <span class="ml-2 text-xs text-gray-500">×10⁻⁶ /°C</span>
-          </CalcFormItem>
-          <template v-if="calcMode === 'professional'">
-            <CalcFormItem :label="pf('assemblyDeltaT')">
-              <el-input-number v-model="form.assemblyDeltaT" :min="-200" :max="400" :step="10" @change="markConfirmed('assemblyDeltaT')" />
-              <span class="ml-2 text-xs text-gray-500">°C</span>
-            </CalcFormItem>
-            <CalcFormItem :label="pf('serviceDeltaT')">
-              <el-input-number v-model="form.serviceDeltaT" :min="-200" :max="800" :step="10" @change="markConfirmed('serviceDeltaT')" />
-              <span class="ml-2 text-xs text-gray-500">°C</span>
-            </CalcFormItem>
-          </template>
-        </el-form>
-        <template v-if="linearResult.fit">
-          <dl class="space-y-3 text-sm">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('initialInterference')" />
+          :type="fitVerdictType"
+        >
+          {{ fitVerdictLabel }}
+        </el-tag>
+        <dl class="space-y-3 text-sm">
+          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel :text="pf('deltaL1')" />
+            <dd class="font-mono text-lg">{{ linearResult.linearExpansion?.toFixed(4) }} mm</dd>
+          </div>
+          <template v-if="linearResult.fit">
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('initialInterference')" />
               <dd class="font-mono">{{ linearResult.fit.initialInterference?.toFixed(4) }} mm</dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('interferenceChange')" />
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('interferenceChange')" />
               <dd class="font-mono">{{ linearResult.fit.interferenceChange?.toFixed(4) }} mm</dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('finalInterference')" />
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('finalInterference')" />
               <dd class="font-mono" :class="finalInterferenceClass">
                 {{ linearResult.fit.finalInterference?.toFixed(4) }} mm
               </dd>
             </div>
-            <div v-if="linearResult.fit.becomesClearance" class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-900/20">
+            <div
+              v-if="linearResult.fit.becomesClearance"
+              class="flex justify-between rounded bg-amber-50 p-3 dark:bg-amber-900/20"
+            >
               <ResultLabel :text="pr('becomesClearance')" />
               <dd class="font-mono">{{ linearResult.fit.finalClearance?.toFixed(4) }} mm</dd>
             </div>
-            <div v-if="linearResult.assemblyFit" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <div
+              v-if="linearResult.assemblyFit"
+              class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
+            >
               <ResultLabel :text="pr('assemblyInterference')" />
               <dd class="font-mono">{{ linearResult.assemblyFit.finalInterference?.toFixed(4) }} mm</dd>
             </div>
-          </dl>
-          <router-link to="/interference-fit" class="mt-3 inline-block text-xs text-primary hover:underline">
-            {{ pr('linkInterferenceFit') }}
-          </router-link>
-          <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="fitVerdictType">
-            {{ fitVerdictLabel }}
-          </el-tag>
-        </template>
+          </template>
+        </dl>
+
+        <router-link
+          v-if="calcMode !== 'simple'"
+          to="/interference-fit"
+          class="mt-3 inline-block text-xs text-primary hover:underline"
+        >
+          {{ pr('linkInterferenceFit') }}
+        </router-link>
+
+        <p
+          v-if="calcMode === 'professional' && linearResult.alphaTemperatureUsed"
+          class="mt-3 text-xs text-amber-700 dark:text-amber-300"
+        >
+          <MathContent :text="pf('alphaTempNote')" />
+        </p>
+        <p v-else class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          <MathContent :text="pf('alphaTempNote')" />
+        </p>
+
+        <FormulaPanel :columns="1">
+          <MathTex expr="\Delta L = \alpha \cdot L \cdot \Delta T" block />
+          <MathTex
+            v-if="calcMode !== 'simple'"
+            expr="\Delta i = d\,\alpha_1\Delta T - D\,\alpha_2\Delta T"
+            block
+          />
+          <MathTex
+            v-if="calcMode === 'professional'"
+            expr="\alpha(T)=\alpha_{\mathrm{ref}}\,(1+k\cdot\Delta T)"
+            block
+          />
+          <template #hints>
+            <ul>
+              <li><MathContent :text="pr('thermalHintLinear')" /></li>
+              <li v-if="calcMode !== 'simple'"><MathContent :text="pr('thermalHintFit')" /></li>
+            </ul>
+          </template>
+        </FormulaPanel>
       </section>
     </div>
 
@@ -139,15 +188,17 @@ import { analyzeThermalExpansion, THERMAL_MATERIALS } from '@/utils/thermal-expa
 import ThermalExpansionDiagram from '@/components/thermal/ThermalExpansionDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { snapshotHistoryInput, applyReplayToTarget } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
-import { formatUnconfirmedLabels } from '@/utils/critical-input-guard'
 
-const { pt, ct, pf, pr, fc, locale } = useCalcPage('thermal-expansion')
+const { pt, ct, pf, pr, fc } = useCalcPage('thermal-expansion')
 const { optionMap } = useOptionsI18n()
 
 const thermalMaterials = computed(() => optionMap(THERMAL_MATERIALS, 'thermalMaterials'))
@@ -167,7 +218,7 @@ const form = reactive({
   serviceDeltaT: 100,
 })
 
-const { markConfirmed, withConfirmed } = useCriticalInputConfirm(calcMode)
+const { markConfirmed, withConfirmed, isPending } = useCriticalInputConfirm(calcMode, 'thermal-expansion')
 
 function onMat1(k) {
   form.alpha = THERMAL_MATERIALS[k].alpha * 1e6
@@ -189,12 +240,6 @@ const linearResult = computed(() =>
       assemblyDeltaT: form.assemblyDeltaT,
       serviceDeltaT: form.serviceDeltaT,
     }),
-  ),
-)
-
-const unconfirmedLabelText = computed(() =>
-  formatUnconfirmedLabels(linearResult.value.unconfirmedCriticalInputs ?? [], locale.value).join(
-    locale.value === 'en' ? ', ' : '、',
   ),
 )
 

@@ -110,6 +110,20 @@
     background-color: rgb(31 41 55);
   }
 
+  /* 折叠面板：避免暗色下纯黑底与页面灰底脱节 */
+  .dark .el-collapse {
+    --el-collapse-header-bg-color: transparent;
+    --el-collapse-content-bg-color: transparent;
+    border-color: rgb(55 65 81);
+  }
+  .dark .el-collapse-item__wrap,
+  .dark .el-collapse-item__header {
+    background-color: transparent;
+  }
+  .dark .el-collapse-item__content {
+    color: rgb(209 213 219);
+  }
+
   /* Plotly 图表容器在暗色下不露白边 */
   .dark .js-plotly-plot,
   .dark .plotly,
@@ -127,7 +141,7 @@
   }
 
   .thread-shell__sidebar {
-    @apply flex flex-col border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-900/40
+    @apply flex flex-col border-b border-gray-200 bg-gray-50/90 dark:border-gray-700 dark:bg-gray-900/50
       lg:sticky lg:top-6 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-hidden lg:border-b-0 lg:border-r;
   }
 
@@ -146,17 +160,10 @@
     /* 纵向滚动在 el-table max-height 内；横向仍随表体同步 */
   }
 
-  /* 螺纹数据表：居中；fluid-height 时宽度 100% 由 EP 管横向滚动，避免 max-content 撑破滚动区 */
+  /* 螺纹数据表：居中对齐，宽度铺满容器避免右侧大块留白 */
   .thread-data-table.el-table {
-    max-width: 100%;
-  }
-
-  .thread-data-table.el-table:not(.el-table--fluid-height) {
-    width: max-content;
-  }
-
-  .thread-data-table.el-table.el-table--fluid-height {
     width: 100%;
+    max-width: 100%;
   }
 
   .thread-data-table.el-table th.el-table__cell,
@@ -174,8 +181,19 @@
     text-align: center;
   }
 
+  .thread-data-table.el-table th.el-table__cell .cell {
+    line-height: 1.45;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
   .thread-data-table.el-table th .thread-field-tip {
     justify-content: center;
+  }
+
+  .thread-data-table.el-table th .katex {
+    font-size: 0.92em;
+    color: inherit;
   }
 
   .thread-data-table.el-table .thread-col-action .cell {
@@ -222,7 +240,21 @@
   }
 
   .thread-nav {
-    @apply flex h-full flex-col p-3 sm:p-4;
+    @apply flex h-full flex-col gap-1 p-3 sm:p-3.5;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(209 213 219 / 0.9) transparent;
+  }
+
+  .thread-nav::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .thread-nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .thread-nav::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-gray-300/90 dark:bg-gray-600;
   }
 
   .thread-nav__hint {
@@ -230,62 +262,79 @@
   }
 
   .thread-nav-group + .thread-nav-group {
-    @apply mt-1 border-t border-gray-200/80 pt-2 dark:border-gray-700;
+    @apply mt-1.5 border-t border-gray-200/90 pt-2 dark:border-gray-700;
   }
 
   .thread-nav-group__head {
-    @apply flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm font-semibold text-gray-800 transition
-      hover:bg-white/80 dark:text-gray-100 dark:hover:bg-gray-800/80;
+    @apply flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 text-left text-sm font-semibold text-gray-800 transition
+      hover:bg-white dark:text-gray-100 dark:hover:bg-gray-800/80;
+  }
+
+  .thread-nav-group__head.is-expanded {
+    @apply text-primary;
   }
 
   .thread-nav-group__icon {
-    @apply text-base leading-none;
+    @apply shrink-0 text-primary;
   }
 
   .thread-nav-group__title {
-    @apply flex-1;
+    @apply flex-1 tracking-wide;
   }
 
   .thread-nav-group__chevron {
-    @apply text-xs text-gray-400;
+    @apply shrink-0 text-gray-400;
   }
 
   .thread-nav-group__body {
-    @apply pb-2 pl-1;
+    @apply space-y-0.5 pb-1.5 pl-0.5 pt-0.5;
+  }
+
+  .thread-nav-subgroup + .thread-nav-subgroup {
+    @apply mt-0.5;
   }
 
   .thread-nav-subgroup__head {
-    @apply flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs font-medium text-gray-600 transition
-      hover:bg-white/60 dark:text-gray-400 dark:hover:bg-gray-800/60;
+    @apply flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-gray-600 transition
+      hover:bg-white hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-200;
+  }
+
+  .thread-nav-subgroup__head.is-expanded {
+    @apply text-gray-800 dark:text-gray-200;
+  }
+
+  .thread-nav-subgroup__title {
+    @apply truncate;
   }
 
   .thread-nav-subgroup__chevron {
-    @apply text-[10px] text-gray-400;
+    @apply shrink-0 text-gray-400;
   }
 
   .thread-nav-list {
-    @apply m-0 list-none space-y-0.5 p-0 pl-2;
+    @apply m-0 list-none space-y-0.5 p-0 pl-1.5;
   }
 
   .thread-nav-list--flat {
-    @apply pl-1;
+    @apply pl-0.5;
   }
 
   .thread-nav-item {
-    @apply flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition
-      hover:bg-white dark:text-gray-300 dark:hover:bg-gray-800;
+    @apply flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm leading-snug text-gray-700 transition
+      hover:bg-white hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100;
   }
 
   .thread-nav-item.is-active {
-    @apply bg-primary text-white dark:bg-primary;
+    @apply bg-primary/10 font-medium text-primary dark:bg-primary/20;
+    box-shadow: inset 3px 0 0 #3498db;
   }
 
   .thread-nav-item__step {
-    @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary;
+    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary;
   }
 
   .thread-nav-item.is-active .thread-nav-item__step {
-    @apply bg-white/25 text-white;
+    @apply bg-primary text-white;
   }
 
   .thread-nav-item__label {
@@ -313,7 +362,8 @@
   }
 
   .thread-nav-footer__link {
-    @apply block rounded-md px-2 py-2 text-xs text-primary hover:bg-white/80 dark:hover:bg-gray-800/80;
+    @apply block rounded-md px-2.5 py-2 text-[13px] font-medium text-primary transition
+      hover:bg-white dark:hover:bg-gray-800/80;
   }
 
   .thread-catalog-intro {

@@ -558,14 +558,49 @@ export function pitchToTpi(pitch) {
   return Math.round((25.4 / pitch) * 100) / 100
 }
 
-export function formatPitchDisplay(row) {
+/** Normalize row.unit ('in'|'mm') and UI display unit to 'in' | 'mm'. */
+export function resolveThreadDisplayUnit(rowUnit, displayUnit) {
+  const native = rowUnit === 'in' ? 'in' : 'mm'
+  if (displayUnit === 'in' || displayUnit === 'mm') return displayUnit
+  return native
+}
+
+/**
+ * Format a linear thread dimension.
+ * @param {{ unit?: string }} row
+ * @param {number|null|undefined} value  native value in row.unit
+ * @param {'in'|'mm'} [displayUnit]  optional display override (inch series → mm for design)
+ */
+export function formatDim(row, value, displayUnit) {
+  if (value == null || Number.isNaN(value)) return '—'
+  const native = row?.unit === 'in' ? 'in' : 'mm'
+  const target = resolveThreadDisplayUnit(native, displayUnit)
+  let v = Number(value)
+  if (native === 'in' && target === 'mm') v *= 25.4
+  else if (native === 'mm' && target === 'in') v /= 25.4
+  const d = target === 'in' ? 4 : 3
+  return v.toFixed(d)
+}
+
+export function formatPitchDisplay(row, displayUnit) {
   if (row.tpi) return `${row.tpi} TPI`
   if (row.pitch != null) return String(row.pitch)
   return '—'
 }
 
-export function formatDim(row, value) {
-  if (value == null || Number.isNaN(value)) return '—'
-  const d = row.unit === 'in' ? 4 : 3
-  return value.toFixed(d)
+/** Pitch length in the requested display unit (from TPI or stored pitch mm). */
+export function formatPitchLength(row, displayUnit) {
+  const target = resolveThreadDisplayUnit(row?.unit, displayUnit)
+  let pitchMm = null
+  if (row?.tpi) pitchMm = tpiToPitch(row.tpi)
+  else if (row?.pitch != null && row.unit !== 'in') pitchMm = Number(row.pitch)
+  else if (row?.pitch != null && row.unit === 'in') pitchMm = Number(row.pitch) * 25.4
+
+  if (pitchMm == null || Number.isNaN(pitchMm)) return '—'
+  if (target === 'mm') return pitchMm.toFixed(3)
+  return (pitchMm / 25.4).toFixed(4)
+}
+
+export function formatDimUnitSuffix(row, displayUnit) {
+  return resolveThreadDisplayUnit(row?.unit, displayUnit)
 }

@@ -23,7 +23,9 @@
               <td class="border border-gray-200 px-2 py-2 dark:border-gray-700">
                 <MathContent :text="row.passRule" />
               </td>
-              <td class="border border-gray-200 px-2 py-2 dark:border-gray-700">{{ row.caveat }}</td>
+              <td class="border border-gray-200 px-2 py-2 dark:border-gray-700">
+                <MathContent :text="row.caveat" />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -298,5 +300,12 @@ defineProps({
   margin: 0;
   padding-left: 1.15rem;
   line-height: 1.7;
+}
+.help-section :deep(.katex) {
+  white-space: nowrap;
+  font-size: 1em;
+}
+.help-section :deep(td) {
+  line-height: 1.55;
 }
 </style>

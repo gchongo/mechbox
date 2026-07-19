@@ -9,7 +9,7 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ fc('parameters') }}</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="120px">
           <CalcFormItem :label="pf('method')">
             <el-radio-group v-model="form.method">
@@ -17,11 +17,13 @@
               <el-radio value="bend_deduction">{{ pf('methodBendDeduction') }}</el-radio>
             </el-radio-group>
           </CalcFormItem>
-          <CalcFormItem :label="pf('thickness')">
+          <p class="mb-3 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+            {{ form.method === 'k_factor' ? pf('basisTangentHint') : pf('basisOutsideHint') }}
+          </p>
+          <CalcFormItem :label="pf('thickness')" unit="mm">
             <el-input-number v-model="form.thickness" :min="0.3" :max="20" :precision="2" :step="0.1" />
-            <span class="ml-2 text-sm text-gray-500">mm</span>
           </CalcFormItem>
-          <CalcFormItem :label="pf('bendRadius')">
+          <CalcFormItem :label="pf('bendRadius')" unit="mm">
             <el-input-number v-model="form.bendRadius" :min="0.1" :max="50" :precision="2" />
           </CalcFormItem>
           <CalcFormItem :label="pf('kFactor')">
@@ -30,14 +32,33 @@
               <el-option v-for="(p, k) in kFactorPresets" :key="k" :label="p.label" :value="k" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem v-if="form.method === 'bend_deduction'" :label="pf('outerSum')">
-            <el-input-number v-model="form.outerSum" :min="1" :precision="2" />
-            <span class="ml-2 text-xs text-gray-500">{{ pf('outerSumHint') }}</span>
+          <CalcFormItem v-if="calcMode !== 'simple'" :label="pf('dieOpening')">
+            <el-input-number v-model="form.dieOpening" :min="0" :max="100" :precision="1" :step="1" />
+            <span class="ml-2 text-xs text-gray-500">{{ pf('dieOpeningHint') }}</span>
           </CalcFormItem>
-          <CalcFormItem v-if="calcMode === 'professional'" :label="pf('springbackFactor')">
-            <el-input-number v-model="form.springbackFactor" :min="0" :max="3" :precision="1" :step="0.1" />
-            <span class="ml-2 text-xs text-gray-500">{{ pf('springbackHint') }}</span>
-          </CalcFormItem>
+          <template v-if="calcMode === 'professional'">
+            <CalcFormItem :label="pf('springbackFactor')">
+              <el-input-number v-model="form.springbackFactor" :min="0" :max="3" :precision="1" :step="0.1" />
+              <span class="ml-2 text-xs text-gray-500">{{ pf('springbackHint') }}</span>
+            </CalcFormItem>
+            <CalcFormItem :label="pf('compensationSource')">
+              <el-radio-group v-model="form.compensationSource" size="small">
+                <el-radio-button value="empirical">{{ pf('sourceEmpirical') }}</el-radio-button>
+                <el-radio-button value="material_table">{{ pf('sourceMaterialTable') }}</el-radio-button>
+                <el-radio-button value="tryout">{{ pf('sourceTryout') }}</el-radio-button>
+              </el-radio-group>
+            </CalcFormItem>
+            <CalcFormItem :label="pf('bendProcess')">
+              <el-select v-model="form.bendProcess" class="w-48" size="small">
+                <el-option
+                  v-for="(p, k) in kFactorPresets"
+                  :key="k"
+                  :label="p.label"
+                  :value="k"
+                />
+              </el-select>
+            </CalcFormItem>
+          </template>
         </el-form>
 
         <h3 class="mb-2 text-sm font-medium">{{ pf('segmentList') }}</h3>
@@ -52,14 +73,16 @@
               <el-option value="bend" :label="pf('segBend')" />
             </el-select>
             <template v-if="seg.type === 'straight'">
-              <span class="text-xs text-gray-500">{{ pf('segLength') }}</span>
+              <span class="text-xs text-gray-500">{{ straightLengthLabel }}</span>
               <el-input-number v-model="seg.length" :min="0" :precision="1" size="small" />
             </template>
             <template v-else>
               <span class="text-xs text-gray-500">{{ fc('angle') }}°</span>
-              <el-input-number v-model="seg.angle" :min="1" :max="180" size="small" />
+              <el-input-number v-model="seg.angle" :min="1" :max="179" size="small" />
             </template>
-            <el-button v-if="segments.length > 1" type="danger" link size="small" @click="removeSeg(i)">{{ fc('delete') }}</el-button>
+            <el-button v-if="segments.length > 1" type="danger" link size="small" @click="removeSeg(i)">
+              {{ fc('delete') }}
+            </el-button>
           </div>
         </div>
         <el-button class="mt-2" size="small" @click="addSeg">{{ fc('addSegment') }}</el-button>
@@ -73,27 +96,63 @@
       </section>
 
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ pf('unfoldResults') }}</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
         <el-alert v-if="result.errorKey" :title="re(result.errorKey)" type="error" show-icon />
         <template v-else>
           <div class="mb-4 rounded-lg bg-primary/5 p-4 text-center">
             <ResultLabel label-class="text-sm text-gray-500" :text="pf('flatLength')" />
             <dd class="font-mono text-3xl text-primary">
-              {{ (calcMode === 'professional' && result.compensatedFlatLength ? result.compensatedFlatLength : result.flatLength)?.toFixed(2) }} mm
+              {{ result.flatLength?.toFixed(2) }} mm
             </dd>
             <p class="mt-1 text-xs text-gray-500">
-              {{ result.bendCount }} {{ pr('bendCount') }} · {{ form.method === 'k_factor' ? pf('methodKFactor') : pf('methodBendDeduction') }}
-              <span v-if="calcMode === 'professional' && result.compensatedFlatLength">{{ pf('withSpringback') }}</span>
+              {{ result.bendCount }} {{ pr('bendCount') }} ·
+              {{ form.method === 'k_factor' ? pf('methodKFactor') : pf('methodBendDeduction') }}
             </p>
+            <p class="mt-1 text-xs text-gray-400">{{ pf('estimateOnlyHint') }}</p>
           </div>
+
+          <div
+            v-if="calcMode === 'professional' && result.compensatedFlatLength != null"
+            class="mb-4 space-y-2 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700"
+          >
+            <div class="flex justify-between gap-2">
+              <ResultLabel :text="pf('tryoutBlankLength')" />
+              <dd class="shrink-0 font-mono">{{ result.compensatedFlatLength.toFixed(2) }} mm</dd>
+            </div>
+            <div class="flex justify-between gap-2 text-xs text-gray-500">
+              <span>{{ pf('springbackPerBend') }}</span>
+              <span class="font-mono">{{ result.springbackPerBend?.toFixed(3) }} mm</span>
+            </div>
+            <div class="flex justify-between gap-2 text-xs text-gray-500">
+              <span>{{ pf('springbackSourceLabel') }}</span>
+              <span>{{ compensationSourceLabel }}</span>
+            </div>
+            <div class="flex justify-between gap-2 text-xs text-gray-500">
+              <span>{{ pf('springbackProcessLabel') }}</span>
+              <span>{{ bendProcessLabel }}</span>
+            </div>
+          </div>
+
           <dl v-if="calcMode !== 'simple'" class="mb-4 space-y-2 text-sm">
-            <div v-if="result.minFlangeRule" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
-              <ResultLabel :text="pf('minFlange')" />
-              <dd class="font-mono">{{ result.minFlangeRule?.toFixed(1) }} mm</dd>
+            <div v-if="result.minFlangeRule != null" class="rounded bg-gray-50 p-2 dark:bg-gray-900">
+              <div class="flex justify-between gap-2">
+                <ResultLabel :text="minFlangeTitle" />
+                <dd class="shrink-0 font-mono">{{ result.minFlangeRule?.toFixed(1) }} mm</dd>
+              </div>
+              <p class="mt-1 text-xs text-gray-500">
+                {{ pf('minFlangeBasisLabel') }}：
+                <span class="font-mono">{{ result.minFlangeFormula }}</span>
+                = {{ result.minFlangeRule?.toFixed(1) }} mm
+              </p>
             </div>
             <div v-if="result.minStraightLength != null" class="flex justify-between rounded bg-gray-50 p-2 dark:bg-gray-900">
               <ResultLabel :text="pf('minStraight')" />
-              <dd class="font-mono" :class="result.flangePass ? 'text-success' : 'text-warning'">{{ result.minStraightLength?.toFixed(1) }} mm</dd>
+              <dd
+                class="font-mono"
+                :class="result.flangePass ? 'text-success' : 'text-warning'"
+              >
+                {{ result.minStraightLength?.toFixed(1) }} mm
+              </dd>
             </div>
           </dl>
           <el-table :data="result.details" size="small" border>
@@ -101,7 +160,9 @@
               <template #default="{ row }">{{ row.index + 1 }}</template>
             </el-table-column>
             <el-table-column prop="type" :label="fc('type')" width="70">
-              <template #default="{ row }">{{ row.type === 'straight' ? pf('segStraight') : pf('segBend') }}</template>
+              <template #default="{ row }">
+                {{ row.type === 'straight' ? pf('segStraight') : pf('segBend') }}
+              </template>
             </el-table-column>
             <el-table-column :label="`${fc('contribution')} (mm)`">
               <template #default="{ row }">
@@ -109,9 +170,28 @@
               </template>
             </el-table-column>
           </el-table>
-          <el-tag v-if="calcMode === 'professional'" class="mt-3" :type="result.pass ? 'success' : 'warning'">
+          <el-tag
+            v-if="calcMode === 'complete' || calcMode === 'professional'"
+            class="mt-3"
+            :type="result.pass ? 'warning' : 'danger'"
+          >
             {{ result.pass ? pf('processOk') : pf('processAdjust') }}
           </el-tag>
+
+          <FormulaPanel>
+            <MathTex :expr="formulaBa" block />
+            <MathTex v-if="form.method === 'bend_deduction'" :expr="formulaBd" block />
+            <MathTex :expr="formulaFlat" block />
+            <MathTex v-if="calcMode !== 'simple'" :expr="formulaMinFlange" block />
+            <MathTex v-if="calcMode === 'professional'" :expr="formulaSpringback" block />
+            <template #hints>
+              <ul>
+                <li><MathContent :text="pr(form.method === 'k_factor' ? 'sheetHintK' : 'sheetHintBd')" /></li>
+                <li v-if="calcMode !== 'simple'"><MathContent :text="pr('sheetHintFlange')" /></li>
+                <li v-if="calcMode === 'professional'"><MathContent :text="pr('sheetHintSpring')" /></li>
+              </ul>
+            </template>
+          </FormulaPanel>
         </template>
       </section>
     </div>
@@ -131,6 +211,9 @@
 
 <script setup>
 import { reactive, ref, computed } from 'vue'
+import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { analyzeSheetMetalUnfold, K_FACTOR_PRESETS } from '@/utils/sheet-metal-calc'
 import SheetMetalBendDiagram from '@/components/sheet-metal/SheetMetalBendDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
@@ -155,8 +238,10 @@ const form = reactive({
   thickness: 1.5,
   bendRadius: 1.5,
   kFactor: 0.33,
-  outerSum: 200,
+  dieOpening: null,
   springbackFactor: 0.5,
+  compensationSource: 'empirical',
+  bendProcess: 'air_bend',
 })
 
 const segments = ref([
@@ -169,8 +254,33 @@ const segments = ref([
 
 const kPreset = ref('')
 
+const straightLengthLabel = computed(() =>
+  form.method === 'bend_deduction' ? pf('segLengthOutside') : pf('segLengthTangent'),
+)
+
+const minFlangeTitle = computed(() =>
+  result.value?.minFlangeBasis === 'die_opening' ? pf('minFlangeByDie') : pf('minFlangeScreen'),
+)
+
+const compensationSourceLabel = computed(() => {
+  const map = {
+    empirical: pf('sourceEmpirical'),
+    material_table: pf('sourceMaterialTable'),
+    tryout: pf('sourceTryout'),
+  }
+  return map[result.value?.compensationSource] ?? pf('sourceEmpirical')
+})
+
+const bendProcessLabel = computed(() => {
+  const key = result.value?.bendProcess ?? form.bendProcess
+  return kFactorPresets.value[key]?.label ?? key
+})
+
 function applyK(key) {
-  if (K_FACTOR_PRESETS[key]) form.kFactor = K_FACTOR_PRESETS[key].k
+  if (K_FACTOR_PRESETS[key]) {
+    form.kFactor = K_FACTOR_PRESETS[key].k
+    form.bendProcess = key
+  }
 }
 
 function addSeg() {
@@ -194,6 +304,20 @@ const result = computed(() =>
     bendRadius: form.bendRadius || form.thickness,
   }),
 )
+
+const formulaBa = String.raw`BA = \dfrac{\pi}{180}\,\theta\,(R + K\,T)`
+const formulaBd = String.raw`BD = 2(R+T)\tan\dfrac{\theta}{2} - BA`
+const formulaFlat = computed(() =>
+  form.method === 'bend_deduction'
+    ? String.raw`L_{\mathrm{flat}} = \sum L_{\mathrm{out}} - \sum BD`
+    : String.raw`L_{\mathrm{flat}} = \sum L_{\mathrm{t}} + \sum BA`,
+)
+const formulaMinFlange = computed(() =>
+  form.dieOpening > 0
+    ? String.raw`L_{\min} \approx \dfrac{V}{2} + 2 + T`
+    : String.raw`L_{\min} \approx 4T`,
+)
+const formulaSpringback = String.raw`L_{\mathrm{try}} \approx L_{\mathrm{flat}}\left(1+\dfrac{s_b}{90\,n}\right)`
 
 const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form,

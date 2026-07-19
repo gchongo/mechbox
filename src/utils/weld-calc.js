@@ -71,11 +71,17 @@ export function analyzeFilletWeldAWS(input) {
   }
 }
 
-/** 对接焊缝正应力简化 */
+/**
+ * 对接焊缝正应力简化
+ * 假设：全熔透（或由熔透效率 η 折减）、纯轴向静拉伸；不含剪力/弯矩/疲劳与工艺缺陷
+ */
 export function analyzeButtWeld(input) {
   const calcMode = input.calcMode ?? 'complete'
   const grade = WELD_STEEL_GRADES[input.steelGrade ?? 'Q235'] ?? WELD_STEEL_GRADES['Q235']
-  const area = (input.thickness ?? 8) * (input.weldLength ?? 100)
+  const t = input.thickness ?? 8
+  const L = input.weldLength ?? 100
+  const eff = calcMode === 'professional' ? (input.penetrationEfficiency ?? 1) : 1
+  const area = t * L * eff
   const sigma = area ? input.force / area : 0
   const allowGB = grade.gbAllow * 1.1
   const betaW = input.correlationFactor ?? 0.85
@@ -83,9 +89,10 @@ export function analyzeButtWeld(input) {
   const allowEC = grade.fu / (betaW * gammaM2)
   const allowAWS = 0.6 * grade.fu
 
-  const gb = { allow: round(allowGB, 1), pass: sigma <= allowGB }
-  const eurocode = { allow: round(allowEC, 1), pass: sigma <= allowEC }
-  const aws = { allow: round(allowAWS, 1), pass: sigma <= allowAWS }
+  const controlStress = sigma
+  const gb = { allow: round(allowGB, 1), pass: controlStress <= allowGB }
+  const eurocode = { allow: round(allowEC, 1), pass: controlStress <= allowEC }
+  const aws = { allow: round(allowAWS, 1), pass: controlStress <= allowAWS }
 
   if (calcMode === 'simple') {
     return {
@@ -96,6 +103,8 @@ export function analyzeButtWeld(input) {
       stressPass: gb.pass,
       pass: false,
       estimateOnly: true,
+      axialStaticOnly: true,
+      fullPenetrationAssumed: eff >= 1,
     }
   }
 
@@ -107,19 +116,30 @@ export function analyzeButtWeld(input) {
     eurocode,
     aws,
     pass: gb.pass && eurocode.pass && aws.pass,
-    strictest: sigma <= allowGB ? 'GB' : sigma <= allowEC ? 'Eurocode' : sigma <= allowAWS ? 'AWS' : '—',
+    // GB 简化值通常最严，作为默认控制准则展示
+    controlStandard: 'gb',
+    controlAllow: gb.allow,
+    controlPass: gb.pass,
+    othersPass: eurocode.pass && aws.pass,
+    mixedVerdict: !gb.pass && eurocode.pass && aws.pass,
+    strictest: [gb, eurocode, aws].reduce((a, b) => (a.allow < b.allow ? a : b)),
+    axialStaticOnly: true,
+    fullPenetrationAssumed: eff >= 1,
+    penetrationEfficiency: eff,
   }
 
   if (calcMode === 'professional') {
-    const eff = input.penetrationEfficiency ?? 1
     const kf = input.stressConcentration ?? 1.2
-    result.effectiveStress = sigma * kf / eff
-    result.penetrationEfficiency = eff
+    // σ already uses A = t·L·η; apply Kf for local concentration
+    result.effectiveStress = sigma * kf
     result.stressConcentration = kf
     result.gb.pass = result.effectiveStress <= allowGB
     result.eurocode.pass = result.effectiveStress <= allowEC
     result.aws.pass = result.effectiveStress <= allowAWS
     result.pass = result.gb.pass && result.eurocode.pass && result.aws.pass
+    result.controlPass = result.gb.pass
+    result.othersPass = result.eurocode.pass && result.aws.pass
+    result.mixedVerdict = !result.gb.pass && result.eurocode.pass && result.aws.pass
   }
 
   return result
@@ -145,7 +165,10 @@ export function analyzeFilletWeld(input) {
   return analyzeFilletWeldProfessional(input)
 }
 
-/** 偏心/合成载荷角焊缝 (简化 directional method) */
+/**
+ * 偏心/合成载荷角焊缝（单条直线连续角焊缝、面内偏心）
+ * 喉部截面模量 W = a·L²/6（勿用 L·a²/6）
+ */
 export function analyzeFilletWeldCombined(input) {
   const throat = calcFilletThroat(input.legSize)
   const L = input.weldLength
@@ -156,7 +179,8 @@ export function analyzeFilletWeldCombined(input) {
   const Fy = input.forceY ?? 0
   const F = input.force ?? Math.sqrt(Fx ** 2 + Fy ** 2)
   const M = input.moment ?? F * (input.eccentricity ?? 0)
-  const W = (L * throat ** 2) / 6
+  // Single straight weld, throat thickness a, length L → section modulus about weld mid-length
+  const W = (throat * L ** 2) / 6
 
   const tau = F / area
   // M is N·mm (F·e with e in mm), W is mm³ → σ in MPa; do not scale by 1000
@@ -168,8 +192,11 @@ export function analyzeFilletWeldCombined(input) {
     shearStress: tau,
     bendingStress: sigmaB,
     equivalentStress: equiv,
+    sectionModulus: W,
     area,
     moment: M,
+    eccentricity: input.eccentricity ?? (F ? M / F : 0),
+    modelAssumption: 'single_fillet_inplane',
   }
 }
 
@@ -179,9 +206,10 @@ export function analyzeFilletWeldProfessional(input) {
   if (combined.errorKey) return { calcMode: 'professional', errorKey: combined.errorKey }
 
   const cmp = compareWeldStandards(input)
-  const ec = analyzeFilletWeldEurocode(input)
-  const combinedAllow = ec.allowableShear
+  // Compare σ_eq against the strictest simplified shear allowable among the three codes
+  const combinedAllow = cmp.strictest?.allowableShear ?? analyzeFilletWeldEurocode(input).allowableShear
   const combinedPass = combined.equivalentStress <= combinedAllow
+  const combinedUtilization = combinedAllow ? combined.equivalentStress / combinedAllow : 0
 
   const haz = analyzeHAZ({
     heatInput: input.heatInput ?? 1.5,
@@ -208,7 +236,9 @@ export function analyzeFilletWeldProfessional(input) {
     ...cmp,
     combined,
     combinedAllow,
+    combinedAllowStandard: cmp.strictest?.standard ?? null,
     combinedPass,
+    combinedUtilization,
     haz,
     fatigue,
     allPass: cmp.allPass && combinedPass && haz.pass && (fatigue ? fatigue.pass : true),
@@ -291,6 +321,7 @@ export function analyzeHAZ(input) {
     hazAllowNormal: round(hazAllowNormal, 1),
     weldStress: round(tau, 1),
     pass: !tau || tau <= hazAllowShear,
+    shearScreenOnly: true,
     noteKey: heatInput > 2.5 ? 'high' : 'normal',
   }
 }

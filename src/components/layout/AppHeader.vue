@@ -247,9 +247,10 @@ const TOOL_PATHS = {
   drive: [
     '/beam', '/sheet-metal', '/o-ring', '/shaft', '/key', '/weld',
     '/bolt-group', '/spring', '/clutch', '/belt', '/chain',
+    '/pipe-flow', '/plate-buckling', '/modal-freq',
   ],
   material: [
-    '/structural', '/analytics', '/cylinder', '/materials', '/material-selection',
+    '/analytics', '/cylinder', '/materials', '/material-selection',
     '/heat-treatment', '/manufacturing', '/quality',
   ],
 }

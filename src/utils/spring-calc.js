@@ -138,14 +138,22 @@ export const TAU_U0_RM_LEVELS = [
   { cycles: 1e8, factor: 0.3 },
 ]
 
+/**
+ * 中径 D 为设计主参数（刚度、应力、旋绕比均基于 D）。
+ * 仅当未给中径时，才由外径反推：D = D₂ − d。
+ */
 export function resolveMeanDiameter({ meanDiameter, outerDiameter, wireDiameter }) {
+  if (meanDiameter != null && Number.isFinite(meanDiameter)) return meanDiameter
   if (outerDiameter != null && wireDiameter) return outerDiameter - wireDiameter
   return meanDiameter
 }
 
+/** 外径由几何导出：D₂ = D + d；无中径时才回退到输入外径 */
 export function resolveOuterDiameter({ meanDiameter, outerDiameter, wireDiameter }) {
+  if (meanDiameter != null && Number.isFinite(meanDiameter) && wireDiameter) {
+    return meanDiameter + wireDiameter
+  }
   if (outerDiameter != null) return outerDiameter
-  if (meanDiameter != null && wireDiameter) return meanDiameter + wireDiameter
   return null
 }
 
@@ -847,16 +855,20 @@ export function analyzeSpring(input) {
     solidHeight,
   })
 
-  const hasHeightInputs = input.workingHeight != null || input.installHeight != null
+  const heightMode = calcMode === 'complete' || calcMode === 'professional'
+  const hasHeightInputs =
+    heightMode && (input.workingHeight != null || input.installHeight != null)
   const heightsValid = !hasHeightInputs || heightValidation.valid
 
-  const heightLoads = calcLoadsFromHeights({
-    springRate: k,
-    freeLength,
-    installHeight: input.installHeight,
-    workingHeight: input.workingHeight,
-    solidHeight,
-  })
+  const heightLoads = heightMode
+    ? calcLoadsFromHeights({
+        springRate: k,
+        freeLength,
+        installHeight: input.installHeight,
+        workingHeight: input.workingHeight,
+        solidHeight,
+      })
+    : {}
   const stressRatioGamma = resolveSpringStressRatio({
     loadMin: input.loadMin,
     loadMax: input.loadMax,
@@ -882,8 +894,9 @@ export function analyzeSpring(input) {
     manualOverride: input.allowableShearManual ?? false,
   })
   const allow = allowResolved.value > 0 ? allowResolved.value : (input.allowableShear ?? mat.allowableShear ?? 600)
-  const usesHeightLoads = heightLoads.working != null && heightsValid
-  const useDesignLoadPath = calcMode === 'complete' || calcMode === 'professional'
+  /** 高度→载荷仅完整/专业；简化始终用 load，避免表单残留 H₁/H₂ 污染 */
+  const usesHeightLoads = heightMode && heightLoads.working != null && heightsValid
+  const useDesignLoadPath = heightMode
   const hasLoadFallback = hasSpringLoadFallback(input, calcMode)
   const heightLoadBlocked = hasHeightInputs && !heightsValid && !hasLoadFallback
   const heightLoadsFallback = hasHeightInputs && !heightsValid && hasLoadFallback
@@ -939,12 +952,17 @@ export function analyzeSpring(input) {
   const checkTau = tauWorking ?? tau
   const shearPass = inputValidation.valid && !heightLoadBlocked && checkTau <= allow
 
+  /** 并圈前预留行程，默认 1d（GB/T 23935 常用经验）；校核：δ₂ ≤ H₀−Lₛ−margin */
   const marginD = input.solidMargin ?? d
   const coreGeometryValid = inputValidation.valid && freeLength >= solidHeight
   const geometryPass = coreGeometryValid && (!hasHeightInputs || heightValidation.valid)
   const maxDeflection = coreGeometryValid ? freeLength - solidHeight - marginD : 0
   const solidPass = coreGeometryValid && designDeflection <= maxDeflection
+  /** 预留后剩余行程：(H₀−Lₛ−margin)−δ₂；有 H₂ 时等价于 H₂−Lₛ−margin */
   const remainingDeflectionMargin = maxDeflection - designDeflection
+  /** 几何间隙（未扣预留）：H₂−Lₛ */
+  const solidClearance =
+    input.workingHeight != null && solidHeight != null ? input.workingHeight - solidHeight : null
 
   const indexPass = C >= 4
   const indexRecommend = C <= 16
@@ -1076,6 +1094,8 @@ export function analyzeSpring(input) {
     result.resonancePass = resonance.pass
     result.geometryPass = geometryPass
     result.maxDeflection = maxDeflection
+    result.solidReserve = marginD
+    result.solidClearance = solidClearance
     result.remainingDeflectionMargin = remainingDeflectionMargin
     result.solidPass = solidPass
     result.characteristicPass = heightsValid && characteristic.pass

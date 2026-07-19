@@ -18,9 +18,11 @@ function render() {
     if (container.value) container.value.textContent = ''
     return
   }
-  katex.render(props.expr, container.value, {
+  // 块级用 \\displaystyle 放大，不用 katex displayMode（避免多余滚动条）
+  const src = props.block ? `\\displaystyle ${props.expr}` : props.expr
+  katex.render(src, container.value, {
     throwOnError: false,
-    displayMode: props.block,
+    displayMode: false,
     strict: 'ignore',
   })
 }
@@ -32,9 +34,15 @@ onMounted(render)
 <style scoped>
 .math-block {
   display: block;
-  overflow-x: auto;
-  padding: 0.5rem 0;
-  text-align: center;
+  overflow: visible;
+  margin: 0.15em 0;
+  text-align: left;
+  line-height: 1.45;
+}
+
+.math-block :deep(.katex) {
+  font-size: 1.05em;
+  white-space: normal;
 }
 
 .math-inline {

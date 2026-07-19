@@ -9,40 +9,58 @@
 
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
-        <h2 class="mb-4 font-semibold">{{ pf('materialAndStress') }}</h2>
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="120px">
-          <CalcFormItem :label="pf('material')">
-            <el-select v-model="material" class="w-full">
+          <CalcFormItem :label="pf('material')" :pending-confirm="isPending('material')">
+            <el-select v-model="material" class="w-full" @change="markConfirmed('material')">
               <el-option v-for="(m, k) in snMaterials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem :label="pf('stressAmplitude')">
+          <CalcFormItem :label="pf('stressAmplitude')" unit="MPa" :pending-confirm="isPending('stressAmplitude')">
             <el-input-number
               v-model="stressAmplitude"
               :min="saBounds.saMin"
               :max="saBounds.saMax"
               :precision="1"
               class="fatigue-sa-input"
+              @change="markConfirmed('stressAmplitude')"
             />
-            <span class="ml-2 text-sm text-gray-500">MPa</span>
             <p class="mt-1 text-xs text-gray-400">
               {{ pf('stressAmplitudeRange', { min: saBounds.saMin, max: displaySaMax }) }}
             </p>
           </CalcFormItem>
-            <CalcFormItem v-if="calcMode !== 'simple'" :label="pf('targetLife')">
-            <el-input-number v-model="targetLife" :min="1e3" :max="1e10" :step="1e5" />
+          <CalcFormItem
+            v-if="calcMode !== 'simple'"
+            :label="pf('targetLife')"
+            :pending-confirm="isPending('targetLife')"
+          >
+            <el-input-number
+              v-model="targetLife"
+              :min="1e3"
+              :max="1e10"
+              :step="1e5"
+              @change="markConfirmed('targetLife')"
+            />
           </CalcFormItem>
           <template v-if="calcMode === 'professional'">
-            <CalcFormItem :label="pf('meanStress')">
-              <el-input-number v-model="meanStress" :min="0" :precision="1" />
+            <CalcFormItem :label="pf('meanStress')" :pending-confirm="isPending('meanStress')">
+              <el-input-number
+                v-model="meanStress"
+                :min="0"
+                :precision="1"
+                @change="markConfirmed('meanStress')"
+              />
             </CalcFormItem>
-            <CalcFormItem :label="pf('meanStressMethod')">
-              <el-select v-model="meanStressMethod" class="w-full">
+            <CalcFormItem :label="pf('meanStressMethod')" :pending-confirm="isPending('meanStressMethod')">
+              <el-select v-model="meanStressMethod" class="w-full" @change="markConfirmed('meanStressMethod')">
                 <el-option value="goodman" :label="pf('meanStressGoodman')" />
                 <el-option value="soderberg" :label="pf('meanStressSoderberg')" />
               </el-select>
             </CalcFormItem>
-            <CalcFormItem :label="pf('surfaceSizeFactor')">
+            <CalcFormItem
+              :label="pf('surfaceSizeFactor')"
+              :pending-confirm="isPending('surfaceFactor') || isPending('sizeFactor')"
+            >
               <el-input-number
                 v-model="surfaceFactor"
                 :min="0.5"
@@ -50,6 +68,7 @@
                 :step="0.05"
                 :precision="2"
                 class="w-28"
+                @change="markConfirmed('surfaceFactor')"
               />
               <el-input-number
                 v-model="sizeFactor"
@@ -58,6 +77,7 @@
                 :step="0.05"
                 :precision="2"
                 class="ml-2 w-28"
+                @change="markConfirmed('sizeFactor')"
               />
             </CalcFormItem>
           </template>
@@ -97,12 +117,10 @@
       </section>
 
       <section ref="resultRef" class="card-panel">
-        <div class="mb-4 flex flex-wrap items-center gap-2">
-          <h2 class="font-semibold">{{ calcMode === 'simple' ? pr('lifeTitle') : pr('overallVerdict') }}</h2>
-          <el-tag v-if="calcMode !== 'simple'" :type="overallStatusType">
-            {{ fc('check') }}: {{ overallStatusLabel }}
-          </el-tag>
-        </div>
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag v-if="calcMode !== 'simple'" class="mb-3" :type="overallStatusType">
+          {{ pr('overall') }}: {{ overallStatusLabel }}
+        </el-tag>
 
         <template v-if="calcMode === 'simple'">
           <div class="rounded bg-gray-50 p-4 text-sm dark:bg-gray-900">
@@ -226,17 +244,20 @@ import { useResultI18n } from '@/composables/useResultI18n'
 import { useChartI18n } from '@/composables/useChartI18n'
 import { exportToolReportPdf } from '@/utils/export'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { useCriticalInputConfirm } from '@/composables/useCriticalInputConfirm'
 import {
   getCalcReviewStatus,
   reviewAwareCheckClass,
   reviewAwareCheckMark,
 } from '@/utils/calc-result'
+import { useDarkMode, applyPlotlyTheme } from '@/composables/useDarkMode'
 
-const { pt, fc, pf, pr, locale } = useCalcPage('fatigue')
+const { pt, ct, fc, pf, pr, locale } = useCalcPage('fatigue')
 const { exportFilename } = useContentI18n()
 const { optionMap } = useOptionsI18n()
 const { rm } = useResultI18n()
 const { ch } = useChartI18n()
+const { isDark } = useDarkMode()
 
 const snMaterials = computed(() => optionMap(SN_MATERIALS, 'snMaterials'))
 
@@ -259,20 +280,24 @@ const chartRef = ref(null)
 const resultRef = ref(null)
 let plotly = null
 
+const { markConfirmed, withConfirmed, isPending } = useCriticalInputConfirm(calcMode, 'fatigue')
+
 const loads = computed(() => parseLoadSpectrum(loadText.value))
 
 const result = computed(() =>
-  analyzeFatigue({
-    calcMode: calcMode.value,
-    material: material.value,
-    stressAmplitude: stressAmplitude.value,
-    targetLife: targetLife.value,
-    meanStress: meanStress.value,
-    meanStressMethod: meanStressMethod.value,
-    surfaceFactor: surfaceFactor.value,
-    sizeFactor: sizeFactor.value,
-    loads: loads.value,
-  }),
+  analyzeFatigue(
+    withConfirmed({
+      calcMode: calcMode.value,
+      material: material.value,
+      stressAmplitude: stressAmplitude.value,
+      targetLife: targetLife.value,
+      meanStress: meanStress.value,
+      meanStressMethod: meanStressMethod.value,
+      surfaceFactor: surfaceFactor.value,
+      sizeFactor: sizeFactor.value,
+      loads: loads.value,
+    }),
+  ),
 )
 
 const overallStatus = computed(() => getCalcReviewStatus(result.value))
@@ -410,13 +435,17 @@ async function renderChart() {
   await plotly.react(
     chartRef.value,
     traces,
-    {
-      title: ch('snTitle'),
-      xaxis: { title: ch('snCycles'), type: 'log' },
-      yaxis: { title: ch('snStress'), type: 'log' },
-      margin: { t: 40, l: 60, r: 24, b: 48 },
-      height: 360,
-    },
+    applyPlotlyTheme(
+      {
+        title: ch('snTitle'),
+        xaxis: { title: ch('snCycles'), type: 'log' },
+        yaxis: { title: ch('snStress'), type: 'log' },
+        margin: { t: 40, l: 60, r: 24, b: 48 },
+        height: 360,
+        legend: { font: { color: isDark.value ? '#e5e7eb' : '#374151' } },
+      },
+      isDark.value,
+    ),
     { responsive: true, displayModeBar: false },
   )
 }
@@ -458,7 +487,7 @@ function applyFatigueReplay(input) {
 
 useHistoryReplay('fatigue', null, { applyFn: applyFatigueReplay })
 
-watch([result, material, stressAmplitude, diagramLife, locale, calcMode, meanStressMethod], renderChart)
+watch([result, material, stressAmplitude, diagramLife, locale, calcMode, meanStressMethod, isDark], renderChart)
 
 watch(material, (key) => {
   stressAmplitude.value = getStressAmplitudeBounds(key).suggest

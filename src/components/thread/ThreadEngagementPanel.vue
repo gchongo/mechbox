@@ -16,31 +16,28 @@
             />
           </el-form-item>
           <el-divider content-position="left">{{ pt('engOrManual') }}</el-divider>
-          <el-form-item :label="pt('engDiameter')">
+          <CalcFormItem :label="pt('engDiameter')" unit="mm">
             <el-input-number v-model="form.diameter" :min="1" :max="100" :step="1" :disabled="!!selectedRow" />
-            <span class="ml-2 text-xs text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pt('colPitch')">
+          </CalcFormItem>
+          <CalcFormItem :label="pt('colPitch')" unit="mm">
             <el-input-number v-model="form.pitch" :min="0.25" :max="6" :precision="2" :step="0.25" :disabled="!!selectedRow" />
-          </el-form-item>
-          <el-form-item :label="pt('engInputLength')">
+          </CalcFormItem>
+          <CalcFormItem :label="pt('engInputLength')" unit="mm">
             <el-input-number v-model="form.engagedLength" :min="0" :precision="1" :step="0.5" />
-            <span class="ml-2 text-xs text-gray-500">mm</span>
-          </el-form-item>
-          <el-form-item :label="pt('wiz_material_label')">
+          </CalcFormItem>
+          <CalcFormItem :label="pt('wiz_material_label')">
             <el-select v-model="form.jointMaterial" class="w-full">
               <el-option v-for="m in materials" :key="m" :label="pt(`engMat_${m}`)" :value="m" />
             </el-select>
-          </el-form-item>
-          <el-form-item :label="pt('engAxialForce')">
+          </CalcFormItem>
+          <CalcFormItem :label="pt('engAxialForce')" unit="N">
             <el-input-number v-model="form.axialForce" :min="0" :step="500" />
-            <span class="ml-2 text-xs text-gray-500">N</span>
-          </el-form-item>
-          <el-form-item :label="pt('engGrade')">
+          </CalcFormItem>
+          <CalcFormItem :label="pt('engGrade')">
             <el-select v-model="form.grade" class="w-full">
               <el-option v-for="g in grades" :key="g" :label="g" :value="g" />
             </el-select>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
         <router-link to="/thread" class="text-xs text-primary">{{ pt('engLinkStrength') }} →</router-link>
       </section>
@@ -93,6 +90,7 @@
 
 <script setup>
 import { reactive, ref, computed } from 'vue'
+import CalcFormItem from '@/components/calc/CalcFormItem.vue'
 import ThreadRowPicker from '@/components/thread/ThreadRowPicker.vue'
 import { analyzeThreadEngagement, findThreadRowById } from '@/utils/thread-engagement-calc'
 import { THREAD_GRADES } from '@/utils/thread-calc'

@@ -93,6 +93,10 @@ export const messagesZh = {
     verdict_full: '全截面可淬硬',
     verdict_core_partial: '心部可能未完全淬硬',
     verdict_surface_only: '仅表层可淬硬，心部偏软',
+    temper_high: '高硬度（未充分回火）',
+    temper_qt: '中硬度（调质范围）',
+    temper_medium: '中等硬度',
+    temper_soft: '低硬度（软态）',
   },
   modal: {
     mode_sdof: '单自由度',
@@ -103,17 +107,19 @@ export const messagesZh = {
     assessment_warn: '警告 — 裕度不足',
   },
   oRing: {
-    notes_static: '静密封建议压缩率 15–25%',
-    notes_dynamic: '动压密封建议压缩率 12–20%，并校核挤出间隙',
+    notes_static:
+      '静密封建议压缩率 15–25%。本页为快速估算（非完整 ISO 3601/AS568 槽表）；正式设计请按标准规格与结构型式校核。',
+    notes_dynamic:
+      '动压密封建议压缩率 12–20%，并以压力、硬度、温度、间隙与挡圈共同判定挤出风险。',
   },
   iso1328: {
-    note_grade: 'ISO 1328 等级 {grade}：单齿距 f_pt ≈ {fpt} μm',
-    note_profile: '齿形 f_fα ≈ {ff} μm，齿向 F_β ≈ {fbeta} μm',
-    note_kv: '建议 ISO 6336 动载系数 KV ≈ {kv}',
+    note_grade: 'ISO 1328 等级 {grade}：单齿距 $f_{pt}$ ≈ {fpt} $\\mathrm{\\mu m}$',
+    note_profile: '齿形 $f_{f\\alpha}$ ≈ {ff} $\\mathrm{\\mu m}$，齿向 $F_{\\beta}$ ≈ {fbeta} $\\mathrm{\\mu m}$',
+    note_kv: '建议 ISO 6336 动载系数 $K_V$ ≈ {kv}',
   },
   casting: {
-    note_high_draft: '拔模角偏大，建议优化分型或采用滑块',
-    note_normal: '拔模角在常规范围内',
+    note_high_draft: '拔模角偏大（经验屏 > 3°），建议优化分型或采用滑块',
+    note_normal: '拔模角在常规范围内（经验屏 ≤ 3°）',
   },
   weld: {
     haz_note_high: '热输入偏高，HAZ 软化与脆化风险增加',
@@ -186,19 +192,19 @@ export const messagesZh = {
         detail: '残余预紧 F_M={fm} N {cmp} F_Kerf',
         detail_pass: '≥',
         detail_fail: '<',
-        formula: 'F_Kerf = F_Ax·(1−Φ) 或用户指定',
+        formula: '$F_{\\mathrm{Kerf}} = F_{\\mathrm{Ax}}\\cdot(1-\\Phi)$ 或用户指定',
       },
       R3: {
         title: '载荷系数 Φ',
         summary: 'Φ={phi}%',
         detail: 'k_S={kS} N/mm, k_P={kP} N/mm',
-        formula: 'Φ = k_P / (k_S + k_P)',
+        formula: '$\\Phi = k_P / (k_S + k_P)$',
       },
       R4: {
         title: '预紧力变化',
         summary: 'F_Z={fz} N, ΔF_VT={dfvt} N',
         detail: '嵌入 f_Z={embed} μm',
-        formula: 'F_V = F_M + F_Z − ΔF_VT',
+        formula: '$F_V = F_M + F_Z - \\Delta F_{VT}$',
       },
       R5: {
         title: '装配预紧力范围',
@@ -209,7 +215,7 @@ export const messagesZh = {
         title: '螺栓应力校核',
         summary: 'σ={sigma} / {allow} MPa',
         detail: '利用率 {util}%',
-        formula: 'σ = F_V / A_s',
+        formula: '$\\sigma = F_V / A_s$',
       },
       R7: {
         title: '支承面比压',
@@ -352,6 +358,10 @@ export const messagesEn = {
     verdict_full: 'Full cross-section hardenable',
     verdict_core_partial: 'Core may not fully harden',
     verdict_surface_only: 'Surface hardening only; soft core',
+    temper_high: 'High hardness (under-tempered)',
+    temper_qt: 'Medium hardness (QT range)',
+    temper_medium: 'Medium hardness',
+    temper_soft: 'Low hardness (soft)',
   },
   modal: {
     mode_sdof: 'Single DOF',
@@ -362,17 +372,19 @@ export const messagesEn = {
     assessment_warn: 'Warning — insufficient margin',
   },
   oRing: {
-    notes_static: 'Static seal: target compression 15–25%',
-    notes_dynamic: 'Dynamic seal: 12–20% compression; check extrusion gap',
+    notes_static:
+      'Static seal: target compression 15–25%. Quick estimate only (not a full ISO 3601/AS568 gland table); use standards for production design.',
+    notes_dynamic:
+      'Dynamic seal: target compression 12–20%. Judge extrusion by pressure, hardness, temperature, gap, and backup rings together.',
   },
   iso1328: {
-    note_grade: 'ISO 1328 grade {grade}: single pitch f_pt ≈ {fpt} μm',
-    note_profile: 'Profile f_fα ≈ {ff} μm, helix F_β ≈ {fbeta} μm',
-    note_kv: 'Suggested ISO 6336 dynamic factor KV ≈ {kv}',
+    note_grade: 'ISO 1328 grade {grade}: single pitch $f_{pt}$ ≈ {fpt} $\\mathrm{\\mu m}$',
+    note_profile: 'Profile $f_{f\\alpha}$ ≈ {ff} $\\mathrm{\\mu m}$, helix $F_{\\beta}$ ≈ {fbeta} $\\mathrm{\\mu m}$',
+    note_kv: 'Suggested ISO 6336 dynamic factor $K_V$ ≈ {kv}',
   },
   casting: {
-    note_high_draft: 'Draft angle is high — consider parting line or slides',
-    note_normal: 'Draft angle within typical range',
+    note_high_draft: 'Draft angle is high (empirical screen > 3°) — consider parting line or slides',
+    note_normal: 'Draft angle within typical range (empirical screen ≤ 3°)',
   },
   weld: {
     haz_note_high: 'High heat input — increased HAZ softening / embrittlement risk',
@@ -445,19 +457,19 @@ export const messagesEn = {
         detail: 'Residual preload F_M={fm} N {cmp} F_Kerf',
         detail_pass: '≥',
         detail_fail: '<',
-        formula: 'F_Kerf = F_Ax·(1−Φ) or user specified',
+        formula: '$F_{\\mathrm{Kerf}} = F_{\\mathrm{Ax}}\\cdot(1-\\Phi)$ or user-specified',
       },
       R3: {
         title: 'Load factor Φ',
         summary: 'Φ={phi}%',
         detail: 'k_S={kS} N/mm, k_P={kP} N/mm',
-        formula: 'Φ = k_P / (k_S + k_P)',
+        formula: '$\\Phi = k_P / (k_S + k_P)$',
       },
       R4: {
         title: 'Preload changes',
         summary: 'F_Z={fz} N, ΔF_VT={dfvt} N',
         detail: 'Embedment f_Z={embed} μm',
-        formula: 'F_V = F_M + F_Z − ΔF_VT',
+        formula: '$F_V = F_M + F_Z - \\Delta F_{VT}$',
       },
       R5: {
         title: 'Assembly preload range',
@@ -468,7 +480,7 @@ export const messagesEn = {
         title: 'Bolt stress check',
         summary: 'σ={sigma} / {allow} MPa',
         detail: 'Utilization {util}%',
-        formula: 'σ = F_V / A_s',
+        formula: '$\\sigma = F_V / A_s$',
       },
       R7: {
         title: 'Bearing surface pressure',

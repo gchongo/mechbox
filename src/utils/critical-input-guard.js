@@ -36,11 +36,11 @@ export const CRITICAL_INPUT_SPECS = {
     ],
   },
   spring: {
-    complete: ['material', 'wireDiameter', 'outerDiameter', 'activeCoils', 'freeLength', 'installHeight', 'workingHeight', 'endType'],
+    complete: ['material', 'wireDiameter', 'meanDiameter', 'activeCoils', 'freeLength', 'installHeight', 'workingHeight', 'endType'],
     professional: [
       'material',
       'wireDiameter',
-      'outerDiameter',
+      'meanDiameter',
       'activeCoils',
       'freeLength',
       'installHeight',
@@ -111,6 +111,7 @@ export const CRITICAL_INPUT_LABELS = {
   targetLife: '目标循环次数 N_target',
   meanStressMethod: '平均应力修正方法',
   wireDiameter: '线径',
+  meanDiameter: '中径 D',
   outerDiameter: '外径 D₂',
   activeCoils: '有效圈数',
   freeLength: '自由高度 H₀',

@@ -12,6 +12,19 @@ describe('math-label enrichMathText', () => {
     expect(enrichMathText('弯曲应力 σ')).toContain('\\sigma')
   })
 
+  it('keeps crush stress sigma_c as subscript', () => {
+    const out = enrichMathText('挤压 σ_c')
+    expect(out).toContain('\\sigma_c')
+    expect(out).not.toMatch(/\$\\sigma\$\s*_c/)
+  })
+
+  it('converts o-ring symbols with subscripts', () => {
+    expect(enrichMathText('截面直径 d_cs')).toContain('d_{cs}')
+    expect(enrichMathText('压缩率 ε_c')).toContain('\\varepsilon_c')
+    expect(enrichMathText('安装拉伸 ε_s')).toContain('\\varepsilon_s')
+    expect(enrichMathText('压缩量 Δd')).toContain('\\Delta d')
+  })
+
   it('preserves pre-marked latex', () => {
     const s = 'RSS $T=\\sum T_i$'
     expect(enrichMathText(s)).toBe(s)

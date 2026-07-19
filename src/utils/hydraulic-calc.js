@@ -148,6 +148,13 @@ export function analyzeHydraulicCylinder(input) {
     result.retractMargin = retractForce - load
     result.loadPass = extendForce >= load && retractForce >= load
 
+    if (input.strokeLength && extendVel) {
+      result.cycleTimeExtend = input.strokeLength / extendVel
+    }
+    if (input.strokeLength && retractVel) {
+      result.cycleTimeRetract = input.strokeLength / retractVel
+    }
+
     if (input.rodDiameter && input.strokeLength) {
       const buckling = calcRodBucklingLoad(
         input.rodDiameter,
@@ -169,6 +176,10 @@ export function analyzeHydraulicCylinder(input) {
             ? null
             : compressiveLoad <= buckling.criticalLoad,
         checkSkipped: compressiveLoad <= 0,
+        safetyFactor:
+          compressiveLoad > 0 && buckling.criticalLoad > 0
+            ? buckling.criticalLoad / compressiveLoad
+            : null,
       }
       result.bucklingPass =
         result.buckling.bucklingPass === null ? true : result.buckling.bucklingPass
@@ -187,8 +198,6 @@ export function analyzeHydraulicCylinder(input) {
     const accel = input.acceleration ?? 0
     const dynamicLoad = mass * 9.81 + mass * accel
     result.dynamicLoad = dynamicLoad
-    result.cycleTimeExtend = input.strokeLength && extendVel ? input.strokeLength / extendVel : null
-    result.cycleTimeRetract = input.strokeLength && retractVel ? input.strokeLength / retractVel : null
     const cushion = input.cushionPressure ?? input.pressure * 0.3
     result.cushionPressure = cushion
     result.cushionForce = calcCylinderForce(cushion, areas.bore)

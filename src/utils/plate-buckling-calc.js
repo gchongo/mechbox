@@ -1,5 +1,8 @@
 /**
  * 薄板临界屈曲 — 矩形板弹性屈曲应力
+ *
+ * σ_cr = k · π²E / [12(1−ν²)] · (t/b)²
+ * k 取边界条件表值（SSSS 单向压缩经典下限 k=4），不随 a/b 细分半波数。
  */
 
 export const PLATE_EDGE_CONDITIONS = {
@@ -25,27 +28,28 @@ export function calcPlateBucklingStress(input) {
   const t = input.thickness ?? 2
   const b = input.width ?? 200
   const a = input.length ?? 400
-  const edge = PLATE_EDGE_CONDITIONS[input.edgeCondition ?? 'ssss'] ?? PLATE_EDGE_CONDITIONS.ssss
+  const edgeKey = input.edgeCondition ?? 'ssss'
+  const edge = PLATE_EDGE_CONDITIONS[edgeKey] ?? PLATE_EDGE_CONDITIONS.ssss
 
   const aspect = a / b
-  // Keep base plate factor k (e.g. SSSS uniaxial ≈ 4). Do not inflate k with aspect —
-  // longer plates do not gain critical stress that way for the classical formula.
-  let k = edge.k
-
-  if (calcMode !== 'simple') {
-    const imperfection = input.imperfectionFactor ?? 0.8
-    k *= imperfection
-  }
+  // 表值 k（SSSS≈4）。不按 a/b 半波数放大 k——长板临界应力不因此提高。
+  const kEdge = edge.k
+  const imperfection = calcMode !== 'simple' ? (input.imperfectionFactor ?? 0.8) : 1
+  const k = kEdge * imperfection
 
   const D = (E * t ** 3) / (12 * (1 - nu ** 2))
-  let sigmaCrSimple = calcCriticalStress({ ...input, elasticModulus: E, poisson: nu, thickness: t, width: b }, k)
+  const sigmaCr = calcCriticalStress(
+    { ...input, elasticModulus: E, poisson: nu, thickness: t, width: b },
+    k,
+  )
 
   const applied = input.appliedStress ?? 0
-  const appliedTransverse = calcMode !== 'simple' ? input.appliedStressTransverse ?? 0 : 0
+  const appliedTransverse = calcMode !== 'simple' ? (input.appliedStressTransverse ?? 0) : 0
   const combinedApplied = applied + 0.5 * appliedTransverse
 
-  let safetyFactor = sigmaCrSimple > 0 && combinedApplied > 0 ? sigmaCrSimple / combinedApplied : Infinity
   const minSafety = input.minSafety ?? 2
+  const safetyFactor =
+    sigmaCr > 0 && combinedApplied > 0 ? sigmaCr / combinedApplied : Infinity
 
   const result = {
     calcMode,
@@ -53,11 +57,16 @@ export function calcPlateBucklingStress(input) {
     width: b,
     length: a,
     aspectRatio: aspect,
+    edgeConditionKey: edge.id,
     edgeCondition: edge.label,
+    elasticModulus: E,
+    poisson: nu,
+    bucklingCoeffEdge: kEdge,
     bucklingCoeff: k,
-    criticalStress: sigmaCrSimple,
+    criticalStress: sigmaCr,
     appliedStress: applied,
     safetyFactor,
+    minSafety,
     pass: combinedApplied <= 0 || safetyFactor >= minSafety,
     flexuralRigidity: D,
   }
@@ -65,24 +74,24 @@ export function calcPlateBucklingStress(input) {
   if (calcMode === 'complete' || calcMode === 'professional') {
     result.appliedStressTransverse = appliedTransverse
     result.combinedAppliedStress = combinedApplied
-    result.imperfectionFactor = input.imperfectionFactor ?? 0.8
-    result.minSafety = minSafety
-    result.utilization = sigmaCrSimple ? combinedApplied / sigmaCrSimple : 0
+    result.imperfectionFactor = imperfection
+    result.utilization = sigmaCr > 0 ? combinedApplied / sigmaCr : 0
   }
 
   if (calcMode === 'professional') {
+    // 经验后屈曲承载估算：σ_pb ≈ φ · σ_cr（默认 φ=1.5），非 (σ_ult−σ_cr)
     const postBuckling = input.postBucklingFactor ?? 1.5
-    result.postBucklingReserve = sigmaCrSimple * postBuckling
     result.postBucklingFactor = postBuckling
+    result.postBucklingCapacity = sigmaCr * postBuckling
+    result.postBucklingReserve = result.postBucklingCapacity
     result.shearStress = input.appliedShear ?? 0
     if (result.shearStress > 0) {
-      const tauCr = 0.3 * sigmaCrSimple
+      const tauCr = 0.3 * sigmaCr
       result.criticalShear = tauCr
       result.shearPass = result.shearStress <= tauCr / minSafety
       result.pass = result.pass && result.shearPass
     }
-    const cylinder = input.checkCylinder ? calcCylinderExternalPressure(input) : null
-    result.cylinderBuckling = cylinder
+    result.cylinderBuckling = input.checkCylinder ? calcCylinderExternalPressure(input) : null
   }
 
   return result

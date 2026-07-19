@@ -58,6 +58,10 @@ export function calcMachiningAllowance(input) {
   const endFace = input.endFaceAllowance ?? (calcMode === 'simple' ? 1 : 2)
   const stockDiameter = d + totalDiameter
   const stockLength = L + endFace * 2
+  // 切除体积 = 毛坯圆柱 − 成品圆柱（含径向与端面）
+  const stockVolume = (Math.PI / 4) * stockDiameter ** 2 * stockLength
+  const finishVolume = (Math.PI / 4) * d ** 2 * L
+  const materialRemovalVolume = Math.max(0, stockVolume - finishVolume)
 
   const result = {
     calcMode,
@@ -71,7 +75,9 @@ export function calcMachiningAllowance(input) {
     endFaceAllowance: endFace,
     recommendedStockDiameter: stockDiameter,
     recommendedStockLength: stockLength,
-    materialRemovalVolume: (Math.PI / 4) * (stockDiameter ** 2 - d ** 2) * stockLength,
+    stockVolume,
+    finishVolume,
+    materialRemovalVolume,
   }
 
   if (calcMode === 'complete' || calcMode === 'professional') {

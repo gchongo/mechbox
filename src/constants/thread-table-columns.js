@@ -1,4 +1,4 @@
-/** 螺纹模块 el-table 列最小宽度（px），fit=false 时作为列宽 */
+/** 螺纹模块 el-table 列最小宽度（px）；表格 fit 铺满时作为下限 */
 export const THREAD_TABLE_MAX_HEIGHT = 'calc(100vh - 17rem)'
 
 export const THREAD_TABLE_COL = {
@@ -9,7 +9,7 @@ export const THREAD_TABLE_COL = {
   dim: 96,
   tolerancePair: 80,
   taper: 72,
-  sealing: 168,
+  sealing: 120,
   actionIcon: 52,
   actionCompare: 92,
   actionView: 136,

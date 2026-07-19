@@ -511,21 +511,21 @@ const BOLT_PRELOAD = {
     modes: [
       {
         mode: '简化',
-        model: 'T=μdF/1000；无 VDI 分项摩擦',
+        model: '$T=\\mu d F/1000$；无 VDI 分项摩擦',
         passRule: '**pass 恒 false**（estimateOnly）',
         caveat: '仅量级；右侧可对比 VDI 扭矩参考',
       },
       {
         mode: '完整',
-        model: 'calcMode=**vdi2230**；VDI 扭矩正/反算；σ=F_M/A_s',
-        passRule: '**pass = stressPass**（σ≤许用）；无外载分离链',
-        caveat: 'UI 称「完整」；代码无 professional _joint',
+        model: 'calcMode=**vdi2230**；VDI 扭矩正/反算；$\\sigma=F_M/A_s$',
+        passRule: '**pass = stressPass**（$\\sigma\\le$许用）；无外载分离链',
+        caveat: 'UI 称「完整」；代码无 professional_joint',
       },
       {
         mode: '专业',
-        model: 'VDI 扭矩 + **嵌入损失 F_Z**、**热变化 ΔF_VT**、刚度 **Φ**',
-        passRule: '有外载 F_A>0：**pass = stressPass ∧ separationPass ∧ stressUnderLoadPass**',
-        caveat: '目标预紧为 **残余** F_M；拧紧力 F_V 更高',
+        model: 'VDI 扭矩 + **嵌入损失** $F_Z$、**热变化** $\\Delta F_{VT}$、刚度 $\\Phi$',
+        passRule: '有外载 $F_A>0$：**pass = stressPass $\\wedge$ separationPass $\\wedge$ stressUnderLoadPass**',
+        caveat: '目标预紧为 **残余** $F_M$；拧紧力 $F_V$ 更高',
       },
     ],
     formulas: [
@@ -638,21 +638,21 @@ const BOLT_PRELOAD = {
     modes: [
       {
         mode: 'Simplified',
-        model: 'T=μdF/1000; no VDI friction split',
+        model: '$T=\\mu d F/1000$; no VDI friction split',
         passRule: '**pass always false** (estimateOnly)',
         caveat: 'Magnitude only; VDI torque shown for reference',
       },
       {
         mode: 'Full',
-        model: 'calcMode=**vdi2230**; VDI torque; σ=F_M/A_s',
-        passRule: '**pass = stressPass** (σ ≤ allowable)',
-        caveat: 'No professional joint / separation',
+        model: 'calcMode=**vdi2230**; VDI torque; $\\sigma=F_M/A_s$',
+        passRule: '**pass = stressPass** ($\\sigma \\le$ allowable)',
+        caveat: 'No professional_joint / separation',
       },
       {
         mode: 'Professional',
-        model: 'VDI torque + embedment F_Z, thermal ΔF_VT, load factor Φ',
-        passRule: 'With F_A>0: **pass = stressPass ∧ separationPass ∧ stressUnderLoadPass**',
-        caveat: 'Target is **residual** F_M; tightening F_V is higher',
+        model: 'VDI torque + embedment $F_Z$, thermal $\\Delta F_{VT}$, load factor $\\Phi$',
+        passRule: 'With $F_A>0$: **pass = stressPass $\\wedge$ separationPass $\\wedge$ stressUnderLoadPass**',
+        caveat: 'Target is **residual** $F_M$; tightening $F_V$ is higher',
       },
     ],
     formulas: [

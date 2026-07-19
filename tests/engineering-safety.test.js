@@ -397,6 +397,41 @@ describe('shaft combined strength', () => {
     expect(r.fatiguePass).toBe(false)
     expect(r.pass).toBe(false)
   })
+
+  it('combined fatigue amplitude uses von Mises of bending and torsion amps', () => {
+    const r = analyzeShaftCombined({
+      calcMode: 'professional',
+      materialId: '45',
+      diameter: 30,
+      torque: 200,
+      bendingMoment: 150,
+      yieldStrength: 355,
+      allowableStress: 157,
+      stressConcentrationBending: 1.5,
+      stressConcentrationTorsion: 1.3,
+      bendingAmplitude: 60,
+      torqueAmplitude: 80,
+      targetCycles: 1e6,
+    })
+    expect(r.fatigueBendingAmplitude).toBeCloseTo(33.95, 1)
+    expect(r.fatigueTorsionAmplitude).toBeCloseTo(19.62, 1)
+    expect(r.fatigueAmplitude).toBeCloseTo(48.03, 1)
+  })
+
+  it('does not auto-pass twist angle without an allowable limit', () => {
+    const r = analyzeShaftTorsion({
+      calcMode: 'complete',
+      diameter: 30,
+      torque: 200,
+      length: 500,
+      yieldStrength: 235,
+    })
+    expect(r.twistAngle).toBeCloseTo(0.912, 2)
+    expect(r.angleCriterionMissing).toBe(true)
+    expect(r.anglePass).toBeNull()
+    expect(r.torsionPass).toBe(true)
+    expect(r.pass).toBe(true)
+  })
 })
 
 describe('spring mean stress fatigue', () => {
@@ -532,9 +567,9 @@ describe('bolt group friction and prying', () => {
     expect(slip.slipCapacity).toBe(8000)
   })
 
-  it('complete mode fails slip when shear exceeds friction capacity', () => {
+  it('professional mode fails slip when shear exceeds friction capacity', () => {
     const r = analyzeBoltGroup({
-      calcMode: 'complete',
+      calcMode: 'professional',
       boltCount: 4,
       boltCircleRadius: 50,
       shearX: 20000,

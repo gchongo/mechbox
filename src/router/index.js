@@ -195,8 +195,22 @@ const routes = [
   },
   {
     path: '/structural',
-    name: 'structural',
-    component: () => import('@/views/StructuralView.vue'),
+    redirect: '/pipe-flow',
+  },
+  {
+    path: '/pipe-flow',
+    name: 'pipe-flow',
+    component: () => import('@/views/PipeFlowCalcView.vue'),
+  },
+  {
+    path: '/plate-buckling',
+    name: 'plate-buckling',
+    component: () => import('@/views/PlateBucklingCalcView.vue'),
+  },
+  {
+    path: '/modal-freq',
+    name: 'modal-freq',
+    component: () => import('@/views/ModalFreqCalcView.vue'),
   },
   {
     path: '/material-selection',
@@ -294,7 +308,9 @@ const ENGINEERING_ROUTE_NAMES = new Set([
   'o-ring',
   'fatigue',
   'analytics',
-  'structural',
+  'pipe-flow',
+  'plate-buckling',
+  'modal-freq',
   'material-selection',
   'manufacturing',
   'heat-treatment',

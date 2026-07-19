@@ -15,7 +15,7 @@ export const INTERFERENCE_CALC_MODES = {
       mode: '完整',
       model: '可填轴内径 $d_i$（空心轴柔度更大 → $p$ 更低）；许用切向应力校核',
       passRule: '$i>0$ 且 hoopPass 且 **关键输入已全部确认**',
-      caveat: '默认值未编辑时不确认 → releaseBlocked，右侧只显示警示',
+      caveat: '默认值未编辑时不确认 → releaseBlocked：待确认字段琥珀色边框 + *，右侧仍显示数值，总判为待复核',
     },
     {
       mode: '专业',
@@ -35,7 +35,7 @@ export const INTERFERENCE_CALC_MODES = {
       mode: 'Full',
       model: 'Optional $d_i$ (hollow lowers $p$); hoop stress vs allowables',
       passRule: '$i>0$, hoopPass, and **all critical inputs confirmed**',
-      caveat: 'Prefilled defaults unconfirmed → releaseBlocked; warning only on right',
+      caveat: 'Unconfirmed defaults → releaseBlocked: amber border + * on fields; results still shown, overall status = review',
     },
     {
       mode: 'Professional',
@@ -129,7 +129,7 @@ export const INTERFERENCE_PASS_CHECKS = {
     { check: '几何有效', rule: '$D_A > D$，$d_i < d$；轮毂外径须大于孔径' },
     { check: '切向应力 hoopPass', rule: '$\\sigma_{t,s} \\le$ 轴许用 且 $\\sigma_{t,h} \\le$ 孔许用（完整/专业）' },
     { check: '接触压力上限', rule: '$p < allowPressure$（默认无上限）' },
-    { check: '关键输入确认', rule: '完整/专业须 confirmedFields 覆盖门禁列表，否则 releaseBlocked' },
+    { check: '关键输入确认', rule: '完整/专业须 confirmedFields 覆盖门禁列表，否则 releaseBlocked（数值仍显示，总判待复核）' },
     { check: '温变后仍为过盈', rule: '专业模式 $i\' \\ge 0$；否则 clearance_after_thermal' },
     { check: '薄壁警告', rule: '$(D_A-D)/2 < 0.1d$ 时 thinWallWarning，结果仅供估算' },
   ],
@@ -138,7 +138,7 @@ export const INTERFERENCE_PASS_CHECKS = {
     { check: 'Valid geometry', rule: '$D_A>D$, $d_i<d$' },
     { check: 'hoopPass', rule: '$\\sigma_{t,s}\\le$ shaft allow. and $\\sigma_{t,h}\\le$ hub allow. (Full/Pro)' },
     { check: 'Pressure cap', rule: '$p < allowPressure$ (default unlimited)' },
-    { check: 'Critical confirm', rule: 'Full/Pro need confirmedFields or releaseBlocked' },
+    { check: 'Critical confirm', rule: 'Full/Pro need confirmedFields or releaseBlocked (values still shown; status=review)' },
     { check: 'After thermal', rule: 'Professional: $i\'\\ge0$ else clearance_after_thermal' },
     { check: 'Thin wall', rule: 'Wall $<0.1d$ → thinWallWarning' },
   ],
@@ -178,8 +178,8 @@ export function getCriticalInputRows(locale = 'zh') {
     professional: professional.map((k) => labels[k] ?? k),
     confirmNote:
       locale === 'en'
-        ? 'Each field must trigger @change (user edit) to mark confirmed; switching calc mode resets confirmations. Prefilled defaults are not auto-confirmed—by design.'
-        : '每项须在界面中编辑并触发 change 才会记入 confirmedFields；切换计算模式会清空确认。预填默认值不会自动确认——此为有意设计，防止未核对图纸即放行。',
+        ? 'Pending fields show amber border and a trailing *. Edit each field (@change) to clear the mark; switching calc mode resets confirmations. Results stay visible; overall status stays review until all critical fields are confirmed. Prefilled defaults are not auto-confirmed—by design. Simple mode has no gate and no highlight.'
+        : '待确认字段显示琥珀色边框与控件后 *；编辑该项（触发 change）后清除标记；切换计算模式会清空确认。右侧数值仍显示，总判为待复核直至关键字段全部确认。预填默认值不会自动确认——此为有意设计。简化模式不门禁、不高亮。',
   }
 }
 
@@ -204,7 +204,7 @@ export const INTERFERENCE_EXAMPLE_STEPS = {
     },
     {
       step: '完整模式',
-      detail: '须逐项确认轴径、孔径、$D_A$、$L$、许用应力后，releaseBlocked 解除，方可显示 pass',
+      detail: '须逐项确认轴径、孔径、$D_A$、$L$、许用应力后，releaseBlocked 解除，总判才可由待复核变为 pass/fail（数值此前已可见）',
     },
     {
       step: '反例',
@@ -220,7 +220,10 @@ export const INTERFERENCE_EXAMPLE_STEPS = {
     { step: 'Pressure', detail: '$\\Delta r=0.0125$ mm; Lame $p \\approx 39$ MPa' },
     { step: 'Hoop stress', detail: 'Hub $\\approx 66$ MPa, shaft $\\approx 39$ MPa; both $<350$ → hoopPass ✓' },
     { step: 'Force & torque', detail: '$F \\approx 3.4\\times10^5$ N; $T \\approx 180$ N·m' },
-    { step: 'Full mode', detail: 'Confirm critical fields to clear releaseBlocked before pass shows' },
+    {
+      step: 'Full mode',
+      detail: 'Confirm critical fields to clear releaseBlocked; overall status then becomes pass/fail (values were already visible)',
+    },
     { step: 'Bad input', detail: '$D=45.98$ → $i=4$ mm → GPa-scale $p$; likely bore typo (49.98?)' },
   ],
 }
@@ -232,7 +235,7 @@ export const INTERFERENCE_LIMITATIONS = {
     '许用切向应力需用户按材料屈服与安全系数选取，工具不查材料库。',
     '过盈量需手工输入或与 /fit 查表结果对照；不会自动取 ISO 286 最大过盈。',
     '专业模式文案含粗糙度修正，当前实现仅有 $\\Delta T$ 与 $\\alpha$ 修正。',
-    'releaseBlocked 时右侧不显示数值结果，仅为流程约束，不代表算式错误。',
+    'releaseBlocked 时右侧仍显示 $p$、$F$ 等数值，但总判为待复核；琥珀色边框与 * 标出未确认字段——仅为流程约束，不代表算式错误。',
   ],
   en: [
     'Plane-stress Lame thick cylinder—no 3D, plasticity, fretting, or fatigue.',
@@ -240,7 +243,7 @@ export const INTERFERENCE_LIMITATIONS = {
     'Hoop allowables are user-defined—not from material database.',
     'Interference entered manually—link to /fit for ISO 286 limits.',
     'Professional UI mentions roughness—code has thermal correction only.',
-    'releaseBlocked hides results as process gate—not a calculation failure.',
+    'releaseBlocked keeps numeric results visible but marks overall status as review; amber border + * flag unconfirmed fields—process gate, not a math failure.',
   ],
 }
 

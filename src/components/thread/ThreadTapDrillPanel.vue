@@ -28,10 +28,9 @@
               {{ holeType === 'through' ? pt('tapHole_through_hint') : pt('tapHole_blind_hint') }}
             </p>
           </el-form-item>
-          <el-form-item :label="pt('engInputLength')">
+          <CalcFormItem :label="pt('engInputLength')" unit="mm / in">
             <el-input-number v-model="engagementLength" :min="0" :precision="2" :step="0.5" />
-            <span class="ml-2 text-xs text-gray-500">mm / in</span>
-          </el-form-item>
+          </CalcFormItem>
         </el-form>
       </section>
 
@@ -78,6 +77,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import CalcFormItem from '@/components/calc/CalcFormItem.vue'
 import ThreadRowPicker from '@/components/thread/ThreadRowPicker.vue'
 import { findThreadRowById } from '@/utils/thread-engagement-calc'
 import { analyzeTapDrill, TAP_MATERIALS } from '@/utils/thread-tap-drill-calc'

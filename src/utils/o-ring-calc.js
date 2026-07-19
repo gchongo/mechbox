@@ -1,5 +1,8 @@
 /**
- * O 型圈密封设计（ Parker / ISO 3601 简化）
+ * O 型圈密封设计（快速估算，非完整 ISO 3601 / AS568 标准槽表）
+ *
+ * 填充率：拉伸后截面积 / 矩形沟槽名义容积
+ * 推荐槽宽（经验）：w ≈ d + Δd + d·ε_stretch（非标准设计值）
  */
 
 export const ORING_SECTIONS = [
@@ -14,6 +17,28 @@ export const ORING_MATERIALS = {
   nbr: { label: 'NBR (丁腈)', swell: 1.0, maxTemp: 100, hardness: 70 },
   fkm: { label: 'FKM (氟橡胶)', swell: 1.02, maxTemp: 200, hardness: 75 },
   epdm: { label: 'EPDM', swell: 1.05, maxTemp: 120, hardness: 70 },
+}
+
+/** 自由态圆截面面积 */
+export function oringFreeArea(cs) {
+  return (Math.PI / 4) * cs * cs
+}
+
+/**
+ * 安装拉伸后有效截面积（体积近似守恒：周长↑ → 截面↓）
+ * A' = A0 / (1 + ε)
+ */
+export function oringStretchedArea(cs, stretchRatio) {
+  const s = 1 + Math.max(0, stretchRatio)
+  return oringFreeArea(cs) / s
+}
+
+/**
+ * 经验推荐沟槽宽：截面 + 压缩量 + 拉伸余量
+ * w ≈ d + Δd + d·ε
+ */
+export function suggestGrooveWidth(cs, compressionRatio, stretchRatio) {
+  return cs + cs * compressionRatio + cs * stretchRatio
 }
 
 /**
@@ -37,11 +62,13 @@ export function analyzeORingSeal(input) {
   const targetCompression = (input.compressionPercent ?? 20) / 100
   const compression = cs * targetCompression
   const grooveDepth = cs - compression
-  const recommendedWidth = cs * 1.4
-  const widthOk = grooveW >= cs * 1.2 && grooveW <= cs * 1.6
+  const recommendedWidth = suggestGrooveWidth(cs, targetCompression, stretch)
+  // Empirical band around the stretch-aware suggestion (not a catalog table)
+  const widthOk = grooveW >= recommendedWidth * 0.9 && grooveW <= recommendedWidth * 1.25
+  const freeArea = oringFreeArea(cs)
+  const installedArea = oringStretchedArea(cs, stretch)
   const glandVolume = grooveW * grooveDepth
-  const ringArea = (Math.PI / 4) * cs * cs
-  const fillPercent = glandVolume > 0 ? (ringArea / glandVolume) * 100 : 0
+  const fillPercent = glandVolume > 0 ? (installedArea / glandVolume) * 100 : 0
   const contactStress = compression > 0 ? (0.5 + 0.5 * targetCompression) * 2 : 0
   const sealingPressure = contactStress * 10
 
@@ -62,6 +89,9 @@ export function analyzeORingSeal(input) {
     compressionOk,
     recommendedWidth,
     widthOk,
+    freeArea,
+    installedArea,
+    glandVolume,
     fillPercent,
     fillOk,
     freeID,
@@ -69,6 +99,8 @@ export function analyzeORingSeal(input) {
     stretchPercent: stretch * 100,
     sealingPressureEstimate: sealingPressure,
     contactStressEstimate: contactStress,
+    estimateOnly: true,
+    recommendedWidthEstimateOnly: true,
     pass: compressionOk && widthOk && fillOk,
     notesKey: pressure > 0 ? 'dynamic' : 'static',
   }
@@ -79,7 +111,11 @@ export function analyzeORingSeal(input) {
     result.extrusionGap = extrusionGap
     result.maxExtrusionGap = maxGap
     result.extrusionPass = extrusionGap <= maxGap
-    result.pass = result.pass && result.extrusionPass
+    result.extrusionScreenOnly = pressure <= 0
+    // Zero-pressure gap check is a preliminary screen — do not drive overall pass alone.
+    if (pressure > 0) {
+      result.pass = result.pass && result.extrusionPass
+    }
 
     const mat = ORING_MATERIALS[input.material ?? 'nbr'] ?? ORING_MATERIALS.nbr
     result.material = mat.label
@@ -110,13 +146,19 @@ export function analyzeORingSeal(input) {
   return result
 }
 
-/** 由轴径/孔径推荐沟槽尺寸（径向静密封简化） */
-export function recommendGroove(boreDiameter, crossSection) {
+/** 由轴径/孔径推荐沟槽尺寸（径向静密封快速估算） */
+export function recommendGroove(boreDiameter, crossSection, opts = {}) {
   const cs = crossSection ?? 3.53
+  const compressionPercent = opts.compressionPercent ?? 20
+  const stretchPercent = opts.stretchPercent ?? 2
+  const c = compressionPercent / 100
+  const s = stretchPercent / 100
   return {
     grooveDiameter: boreDiameter - 2 * cs * 0.75,
-    grooveWidth: cs * 1.4,
-    grooveDepth: cs * 0.8,
-    compressionPercent: 20,
+    grooveWidth: suggestGrooveWidth(cs, c, s),
+    grooveDepth: cs * (1 - c),
+    compressionPercent,
+    stretchPercent,
+    estimateOnly: true,
   }
 }

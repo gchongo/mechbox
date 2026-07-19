@@ -1,37 +1,65 @@
 <template>
   <div class="thread-compare-panel">
-    <div class="mb-4">
-      <span class="mr-2 text-sm">{{ pt('comparePresets') }}</span>
-      <el-button
-        v-for="preset in presets"
-        :key="preset.id"
-        size="small"
-        @click="applyPreset(preset)"
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <el-select
+        v-model="filterSystem"
+        class="w-44"
+        :placeholder="pt('compareFilterSystem')"
       >
-        {{ presetLabel(preset.id) }}
-      </el-button>
-    </div>
-
-    <div class="mb-4 flex flex-wrap items-end gap-3">
+        <el-option :label="pt('compareFilterAll')" value="all" />
+        <el-option
+          v-for="opt in systemOptions"
+          :key="opt.value"
+          :label="opt.label"
+          :value="opt.value"
+        />
+      </el-select>
+      <el-input
+        v-model="filterQuery"
+        clearable
+        class="min-w-[180px] flex-1"
+        :placeholder="pt('compareFilterKeyword')"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
       <el-select
         v-model="pickId"
         filterable
         clearable
-        class="min-w-[200px]"
-        :placeholder="pt('comparePickPlaceholder')"
+        class="min-w-[200px] flex-1"
+        :placeholder="filteredPickOptions.length ? pt('comparePickPlaceholder') : pt('compareFilterEmpty')"
+        :disabled="!filteredPickOptions.length"
       >
-        <el-option-group v-for="grp in optionGroups" :key="grp.label" :label="grp.label">
-          <el-option
-            v-for="row in grp.rows"
-            :key="row.id"
-            :label="row.designation"
-            :value="row.id"
-            :disabled="selectedIds.includes(row.id)"
-          />
-        </el-option-group>
+        <el-option
+          v-for="row in filteredPickOptions"
+          :key="row.id"
+          :label="row.designation"
+          :value="row.id"
+          :disabled="selectedIds.includes(row.id)"
+        />
       </el-select>
       <el-button type="primary" plain :disabled="!pickId" @click="addPick">{{ pt('compareAdd') }}</el-button>
       <el-button v-if="selectedIds.length" @click="clearAll">{{ pt('compareClear') }}</el-button>
+    </div>
+
+    <p v-if="filterActive" class="mb-3 text-xs text-gray-500">
+      {{ pt('compareFilterCount', { n: filteredPickOptions.length }) }}
+    </p>
+
+    <div class="mb-4">
+      <p class="mb-2 text-xs text-gray-500">{{ pt('comparePresets') }}</p>
+      <div class="flex flex-wrap gap-2">
+        <el-button
+          v-for="preset in presets"
+          :key="preset.id"
+          size="small"
+          @click="applyPreset(preset)"
+        >
+          {{ presetLabel(preset.id) }}
+        </el-button>
+      </div>
     </div>
 
     <div v-if="selectedRows.length" class="mb-4 flex flex-wrap gap-2">
@@ -64,7 +92,9 @@
           </thead>
           <tbody>
             <tr v-for="field in matrix.fields" :key="field.key" :class="{ 'compare-diff': field.isDiff }">
-              <td class="compare-td compare-label compare-td--field">{{ pt(`cmp_${field.key}`) }}</td>
+              <td class="compare-td compare-label compare-td--field">
+                <MathContent :text="pt(`cmp_${field.key}`)" />
+              </td>
               <td v-for="(val, i) in field.values" :key="i" class="compare-td">{{ formatCell(field.key, val) }}</td>
             </tr>
           </tbody>
@@ -101,6 +131,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { Search } from '@element-plus/icons-vue'
+import MathContent from '@/components/common/MathContent.vue'
 import { getAllThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
 import { getUnsReferenceRows } from '@/constants/thread-standards/uns-data'
 import { getWhitworthReferenceRows } from '@/constants/thread-standards/whitworth-data'
@@ -118,34 +150,75 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const pickId = ref('')
+const filterSystem = ref('all')
+const filterQuery = ref('')
+
 const selectedIds = computed({
   get: () => props.modelValue,
   set: (v) => emit('update:modelValue', v),
 })
 
-const allRows = getAllThreadRows()
+const allRows = computed(() => [
+  ...getAllThreadRows(),
+  ...getUnsReferenceRows(),
+  ...getWhitworthReferenceRows('all'),
+])
+
 const presets = getComparePresets()
 
-const optionGroups = computed(() => {
-  const catalog = THREAD_SYSTEMS.map((sys) => ({
-    label: props.pt(`system_${sys.id}`) !== `calc.pages.thread-table.system_${sys.id}`
-      ? props.pt(`system_${sys.id}`)
-      : sys.id,
-    rows: sys.subTabs.flatMap((t) => t.rows),
+const systemOptions = computed(() => {
+  const opts = THREAD_SYSTEMS.map((sys) => ({
+    value: sys.id,
+    label:
+      props.pt(`system_${sys.id}`) !== `calc.pages.thread-table.system_${sys.id}`
+        ? props.pt(`system_${sys.id}`)
+        : sys.id,
   }))
-  return [
-    ...catalog,
-    {
-      label: props.pt('system_uns') !== 'calc.pages.thread-table.system_uns'
+  opts.push({
+    value: 'uns',
+    label:
+      props.pt('system_uns') !== 'calc.pages.thread-table.system_uns'
         ? props.pt('system_uns')
         : 'UNS',
-      rows: getUnsReferenceRows(),
-    },
-    {
-      label: props.pt('whSeriesAll'),
-      rows: getWhitworthReferenceRows('all'),
-    },
-  ]
+  })
+  opts.push({
+    value: 'whitworth',
+    label: props.pt('whSeriesAll'),
+  })
+  return opts
+})
+
+const filterActive = computed(
+  () =>
+    (filterSystem.value && filterSystem.value !== 'all') ||
+    Boolean(filterQuery.value?.trim()),
+)
+
+const filteredPickOptions = computed(() => {
+  const q = filterQuery.value.trim().toLowerCase()
+  const sys = filterSystem.value || 'all'
+  // Avoid dumping the full catalog until the user filters
+  if (sys === 'all' && !q) return []
+
+  return allRows.value
+    .filter((row) => {
+      if (sys !== 'all') {
+        if (sys === 'whitworth') {
+          if (!['bsw', 'bsf'].includes(row.system)) return false
+        } else if (row.system !== sys) {
+          return false
+        }
+      }
+      if (!q) return true
+      return (
+        row.designation?.toLowerCase().includes(q) ||
+        row.id?.toLowerCase().includes(q) ||
+        String(row.nominal ?? '').toLowerCase().includes(q) ||
+        String(row.tpi ?? '').includes(q) ||
+        String(row.pitch ?? '').includes(q)
+      )
+    })
+    .slice(0, 200)
 })
 
 const selectedRows = computed(() =>
@@ -170,6 +243,12 @@ const hasUnifiedPitchMix = computed(() => {
   const nominals = new Set(unified.map((r) => r.nominal))
   const series = new Set(unified.map((r) => r.system))
   return nominals.size === 1 && series.size > 1
+})
+
+watch([filterSystem, filterQuery], () => {
+  if (pickId.value && !filteredPickOptions.value.some((r) => r.id === pickId.value)) {
+    pickId.value = ''
+  }
 })
 
 watch(
@@ -281,6 +360,9 @@ function formatCell(key, val) {
 .compare-label {
   color: var(--el-text-color-secondary);
   font-weight: 500;
+}
+.compare-label :deep(.katex) {
+  font-size: 0.95em;
 }
 
 .compare-diff {

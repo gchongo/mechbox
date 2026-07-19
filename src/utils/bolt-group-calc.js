@@ -89,8 +89,12 @@ export function analyzeBoltGroupSimple(input) {
   }
 }
 
-/** 完整：逐栓矢量叠加 F_i = F_direct + F_M */
+/** 完整/专业：逐栓矢量叠加 F_i = F/n + M×r/I_p
+ * - complete：矢量合成 + 剪力许用
+ * - professional：另含撬力附加拉力、摩擦抗滑、剪拉交互
+ */
 export function analyzeBoltGroupComplete(input) {
+  const isPro = input.calcMode === 'professional'
   const n = input.boltCount ?? 4
   const radius = input.boltCircleRadius ?? 50
   const Fx = input.shearX ?? 0
@@ -103,7 +107,16 @@ export function analyzeBoltGroupComplete(input) {
   const Ip = positions.reduce((s, p) => s + p.x ** 2 + p.y ** 2, 0)
   if (!Ip) return { errorKey: 'bolt_group_invalid_positions' }
 
-  const prying = calcPryingTension({ ...input, boltCount: n })
+  const rMax = Math.max(...positions.map((p) => Math.hypot(p.x, p.y)))
+  /** 最大半径处扭剪幅值 M·r_max/I_p（圆周均布时各栓相同） */
+  const torsionPerBolt = (M * rMax) / Ip
+
+  const prying = calcPryingTension({
+    ...input,
+    boltCount: n,
+    pryingArm: isPro ? input.pryingArm : 0,
+    axialTension: isPro ? input.axialTension : 0,
+  })
   const tensionPerBolt = prying.totalTension
 
   const bolts = positions.map((p, i) => {
@@ -128,11 +141,10 @@ export function analyzeBoltGroupComplete(input) {
 
   const maxBolt = bolts.reduce((a, b) => (b.combinedForce > a.combinedForce ? b : a), bolts[0])
   const directPerBolt = Math.sqrt(Fx ** 2 + Fy ** 2) / n
-  const torsionPerBolt = maxBolt.shearForce - directPerBolt
 
   const shearResultant = Math.sqrt(Fx ** 2 + Fy ** 2)
   let friction = null
-  if (input.frictionCoeff > 0 && input.clampForcePerBolt > 0) {
+  if (isPro && input.frictionCoeff > 0 && input.clampForcePerBolt > 0) {
     friction = calcSlipResistance(input.frictionCoeff, input.clampForcePerBolt, n)
     friction.shearResultant = shearResultant
     friction.slipPass = shearResultant <= friction.slipCapacity
@@ -144,18 +156,21 @@ export function analyzeBoltGroupComplete(input) {
   const shearPass = bolts.every((b) => b.shearForce <= allowShear)
   const interactionPass = bolts.every((b) => b.pass)
   const slipPass = friction ? friction.slipPass : true
+  const forcePass = interactionPass && shearPass
 
   return {
-    calcMode: input.calcMode === 'professional' ? 'professional' : 'complete',
+    calcMode: isPro ? 'professional' : 'complete',
     bolts,
     maxBoltForce: maxBolt.combinedForce,
     maxShearForce: maxBolt.shearForce,
+    hasTension: tensionPerBolt > 0,
     criticalBoltIndex: maxBolt.index,
     directPerBolt,
-    torsionPerBolt: Math.max(0, torsionPerBolt),
+    torsionPerBolt,
     prying,
     friction,
-    pass: shearPass && interactionPass && slipPass,
+    pass: forcePass && slipPass,
+    forcePass,
     shearPass,
     interactionPass,
     slipPass,

@@ -108,9 +108,13 @@ export function analyzeModal(input) {
 
   if (calcMode === 'professional') {
     const zeta = input.dampingRatio ?? 0.02
-    const r = resonance?.frequencyRatio ?? 1
     result.dampingRatio = zeta
-    result.amplificationFactor = 1 / Math.sqrt((1 - r ** 2) ** 2 + (2 * zeta * r) ** 2)
+    // 强迫振动位移传递率 H(r)，非共振品质因数 Q=1/(2ζ)
+    if (resonance && !resonance.errorKey) {
+      const r = resonance.frequencyRatio
+      result.frequencyRatio = r
+      result.amplificationFactor = 1 / Math.sqrt((1 - r ** 2) ** 2 + (2 * zeta * r) ** 2)
+    }
     result.pass = resonance ? resonance.pass : true
   }
 

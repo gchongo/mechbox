@@ -10,18 +10,13 @@
     </div>
 
     <div
-      v-if="modelValue === 'simple'"
       class="mt-3 rounded-lg bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-gray-600 dark:text-gray-400"
     >
-      <MathContent :text="hintSimpleRich" />
-      <div class="mt-2 border-t border-primary/10 pt-2 dark:border-primary/20">
-        💡
+      <MathContent :text="activeHintRich" />
+      <p v-if="modelValue === 'simple'" class="mt-1.5 text-gray-500 dark:text-gray-500">
         <span class="font-medium text-gray-700 dark:text-gray-300">{{ ct('simpleModeWarningTitle') }}</span>
         — <MathContent :text="simpleWarningRich" class="inline" />
-      </div>
-    </div>
-    <div v-else class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-      <MathContent :text="modeHintRich" />
+      </p>
     </div>
   </section>
 </template>
@@ -50,16 +45,20 @@ const hintSimple = computed(() => props.hintSimple || pt('hintSimple'))
 const hintComplete = computed(() => props.hintComplete || pt('hintComplete'))
 const hintProfessional = computed(() => props.hintProfessional || pt('hintProfessional'))
 
-const hintSimpleRich = computed(() => enrichMathText(hintSimple.value))
+const activeHintRich = computed(() => {
+  const text =
+    props.modelValue === 'simple'
+      ? hintSimple.value
+      : props.modelValue === 'complete'
+        ? hintComplete.value
+        : hintProfessional.value
+  return enrichMathText(text)
+})
 const simpleWarningRich = computed(() => enrichMathText(ct('simpleModeWarningBody')))
-const modeHintRich = computed(() =>
-  enrichMathText(
-    props.modelValue === 'complete' ? hintComplete.value : hintProfessional.value,
-  ),
-)
 
 async function onModeChange(next) {
-  if (next === 'professional') {
+  // Local Vite preview: skip CAX login so professional mode is testable without SSO.
+  if (next === 'professional' && !import.meta.env.DEV) {
     const user = await fetchCurrentUser()
     if (!user) {
       try {

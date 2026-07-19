@@ -255,8 +255,16 @@ export const SPRING_PRESET = {
       strategy: 'bisect',
       bounds: { lo: 0.3, hi: 20 },
       buildEvaluator: (baseInputs) => (d) => {
-        const r = adaptSpring({ ...baseInputs, wireDiameter: d })
-        return { pass: r.outputs.pass, metric: r.outputs.shearStress }
+        // 保持中径 D 不变，外径随线径几何更新：D₂ = D + d
+        const next = { ...baseInputs, wireDiameter: d }
+        if (next.meanDiameter != null && Number.isFinite(next.meanDiameter)) {
+          next.outerDiameter = next.meanDiameter + d
+        }
+        const r = adaptSpring(next)
+        return {
+          pass: r.outputs.shearPass ?? false,
+          metric: r.outputs.tauWorking ?? r.outputs.shearStress,
+        }
       },
     },
   ],

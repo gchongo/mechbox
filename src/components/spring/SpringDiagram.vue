@@ -2,16 +2,12 @@
   <div class="mech-diagram">
     <header class="mech-diagram__head">
       <h3 class="mech-diagram__title">{{ dt('title') }}</h3>
-      <p class="mech-diagram__hint"><MathContent :text="dm(freeLength ? dt('hintWithH0') : dt('hint'))" /></p>
+      <p class="mech-diagram__hint"><MathContent :text="dm(hintText)" /></p>
     </header>
 
-    <!--
-      固定示意：弹簧中心线 x∈[200,280] 对应 D₂，右端 x=280 贴线圈；
-      d 圆截面在右线圈上，H₀ 尺寸线在最右侧 x=350，避免与 d 标注重叠。
-    -->
     <svg
       class="mech-diagram__svg"
-      viewBox="0 0 480 260"
+      viewBox="0 0 480 280"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       :aria-label="dt('aria')"
@@ -23,50 +19,150 @@
         <marker id="spr-arr-blue" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#409EFF" />
         </marker>
+        <marker id="spr-arr-violet" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#8b5cf6" />
+        </marker>
       </defs>
 
-      <!-- 端板 -->
-      <rect x="90" y="32" width="300" height="8" rx="1" class="end-plate" />
-      <rect x="90" y="184" width="300" height="8" rx="1" class="end-plate" />
+      <!-- 上支承 -->
+      <g class="support">
+        <template v-if="topFixed">
+          <rect :x="plateX" :y="topY - 6" :width="plateW" height="8" rx="1" class="end-plate" />
+          <g class="fixed-hatch" stroke="#64748b" stroke-width="1">
+            <line
+              v-for="(h, i) in topHatches"
+              :key="'th-' + i"
+              :x1="h.x1"
+              :y1="h.y1"
+              :x2="h.x2"
+              :y2="h.y2"
+            />
+          </g>
+        </template>
+        <template v-else>
+          <rect :x="cx - seatW / 2" :y="topY - 2" :width="seatW" height="5" rx="1" class="end-plate" />
+          <circle :cx="cx" :cy="topY - 8" r="5" class="pivot-pin" />
+          <path :d="topPivotSeat" class="pivot-seat" />
+        </template>
+      </g>
 
-      <!-- 弹簧中心线（左右交替 200↔280） -->
+      <!-- 动态弹簧中心线 -->
       <path
-        d="M 200 48 Q 280 62 200 76 Q 280 90 200 104 Q 280 118 200 132 Q 280 146 200 160 Q 280 174 200 180"
+        :d="coilPath"
         fill="none"
         stroke="#409eff"
-        stroke-width="3"
+        :stroke-width="strokeW"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
 
+      <!-- 下支承 -->
+      <g class="support">
+        <template v-if="botFixed">
+          <rect :x="plateX" :y="botY - 2" :width="plateW" height="8" rx="1" class="end-plate" />
+          <g class="fixed-hatch" stroke="#64748b" stroke-width="1">
+            <line
+              v-for="(h, i) in botHatches"
+              :key="'bh-' + i"
+              :x1="h.x1"
+              :y1="h.y1"
+              :x2="h.x2"
+              :y2="h.y2"
+            />
+          </g>
+        </template>
+        <template v-else>
+          <rect :x="cx - seatW / 2" :y="botY - 3" :width="seatW" height="5" rx="1" class="end-plate" />
+          <circle :cx="cx" :cy="botY + 8" r="5" class="pivot-pin" />
+          <path :d="botPivotSeat" class="pivot-seat" />
+        </template>
+      </g>
+
       <!-- 载荷 F -->
-      <line x1="240" y1="10" x2="240" y2="30" stroke="#8b5cf6" stroke-width="2" marker-end="url(#spr-arr-blue)" />
-      <text x="248" y="20" class="lbl-force">F</text>
+      <line
+        :x1="cx"
+        :y1="forceY0"
+        :x2="cx"
+        :y2="forceY1"
+        stroke="#8b5cf6"
+        stroke-width="2"
+        marker-end="url(#spr-arr-violet)"
+      />
+      <SvgMathText :x="cx + 8" :y="forceLabelY" :text="labelF" color="#8b5cf6" :width="90" :font-size="12" />
 
-      <!-- 有效圈数 n（左侧，对应有效段 y=48~180） -->
-      <line x1="168" y1="48" x2="168" y2="180" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
-      <line x1="174" y1="48" x2="162" y2="48" class="ext-line" />
-      <line x1="174" y1="180" x2="162" y2="180" class="ext-line" />
-      <text x="155" y="118" class="lbl-muted" text-anchor="middle">n</text>
+      <!-- 支承说明 -->
+      <text :x="16" :y="268" class="txt-muted" font-size="11">{{ endSupportLabel }}</text>
 
-      <!-- 线径 d：圆心在右线圈 (280,118)，竖向尺寸线 -->
-      <circle cx="280" cy="118" r="7" class="wire-sample" />
-      <line x1="280" y1="108" x2="280" y2="128" class="dim" marker-start="url(#spr-arr)" marker-end="url(#spr-arr)" />
-      <line x1="274" y1="108" x2="286" y2="108" class="ext-line" />
-      <line x1="274" y1="128" x2="286" y2="128" class="ext-line" />
-      <text x="292" y="122" class="lbl-muted">d</text>
+      <!-- 有效圈数 n -->
+      <line
+        :x1="nLineX"
+        :y1="coilTop"
+        :x2="nLineX"
+        :y2="coilBot"
+        class="dim"
+        marker-start="url(#spr-arr)"
+        marker-end="url(#spr-arr)"
+      />
+      <line :x1="nLineX - 5" :y1="coilTop" :x2="nLineX + 5" :y2="coilTop" class="ext-line" />
+      <line :x1="nLineX - 5" :y1="coilBot" :x2="nLineX + 5" :y2="coilBot" class="ext-line" />
+      <SvgMathText :x="nLineX - 8" :y="(coilTop + coilBot) / 2" :text="labelN" anchor="end" color="#64748b" :width="56" :font-size="12" />
 
-      <!-- 中径 D₂：底部水平尺寸，端点对准线圈中心 x=200、280 -->
-      <line x1="200" y1="114" x2="200" y2="210" class="ext-line" />
-      <line x1="280" y1="114" x2="280" y2="210" class="ext-line" />
-      <line x1="200" y1="210" x2="280" y2="210" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
-      <text x="240" y="228" class="lbl-primary" text-anchor="middle">D</text>
+      <!-- 线径 d：右线圈截面 -->
+      <circle :cx="rightX" :cy="wireSampleY" :r="wireSampleR" class="wire-sample" />
+      <line
+        :x1="rightX"
+        :y1="wireSampleY - wireSampleR"
+        :x2="rightX"
+        :y2="wireSampleY + wireSampleR"
+        class="dim-primary"
+        marker-start="url(#spr-arr-blue)"
+        marker-end="url(#spr-arr-blue)"
+      />
+      <SvgMathText :x="rightX + wireSampleR + 6" :y="wireSampleY + 4" :text="labelD" color="#409eff" :width="72" :font-size="12" />
 
-      <!-- 自由高度 H₀：最右侧独立尺寸线，不与 d 重叠 -->
-      <line x1="350" y1="40" x2="350" y2="184" class="dim-primary" marker-start="url(#spr-arr-blue)" marker-end="url(#spr-arr-blue)" />
-      <line x1="356" y1="40" x2="344" y2="40" class="ext-line" />
-      <line x1="356" y1="184" x2="344" y2="184" class="ext-line" />
-      <text x="362" y="118" class="lbl-primary">H0</text>
+      <!-- 中径 D -->
+      <line :x1="leftX" :y1="wireSampleY" :x2="leftX" :y2="dDimY" class="ext-line" />
+      <line :x1="rightX" :y1="wireSampleY" :x2="rightX" :y2="dDimY" class="ext-line" />
+      <line
+        :x1="leftX"
+        :y1="dDimY"
+        :x2="rightX"
+        :y2="dDimY"
+        class="dim-primary"
+        marker-start="url(#spr-arr-blue)"
+        marker-end="url(#spr-arr-blue)"
+      />
+      <SvgMathText :x="cx" :y="dDimY + 16" :text="labelMeanD" anchor="middle" color="#409eff" :width="100" :font-size="12" />
+
+      <!-- 自由高度 H₀ -->
+      <template v-if="H0 != null">
+        <line
+          :x1="h0LineX"
+          :y1="topY"
+          :x2="h0LineX"
+          :y2="botY"
+          class="dim-primary"
+          marker-start="url(#spr-arr-blue)"
+          marker-end="url(#spr-arr-blue)"
+        />
+        <line :x1="h0LineX - 5" :y1="topY" :x2="h0LineX + 5" :y2="topY" class="ext-line" />
+        <line :x1="h0LineX - 5" :y1="botY" :x2="h0LineX + 5" :y2="botY" class="ext-line" />
+        <SvgMathText :x="h0LineX + 8" :y="(topY + botY) / 2" :text="labelH0" color="#409eff" :width="90" :font-size="12" />
+      </template>
+
+      <!-- 工作高度 H₂（完整模式）：自底向上按 H₂/H₀ 比例 -->
+      <template v-if="showWorkingHeight">
+        <line
+          :x1="plateX"
+          :y1="h2Y"
+          :x2="plateX + plateW"
+          :y2="h2Y"
+          stroke="#e6a23c"
+          stroke-width="1.2"
+          stroke-dasharray="4 3"
+        />
+        <SvgMathText :x="plateX + plateW + 4" :y="h2Y + 4" :text="labelH2" color="#e6a23c" :width="80" :font-size="11" />
+      </template>
     </svg>
 
     <dl class="mech-diagram__params">
@@ -102,17 +198,26 @@
         <dt><MathContent text="$H_2$" /></dt>
         <dd>{{ formatMm(workingHeight) }}</dd>
       </div>
+      <div v-if="load > 0" class="mech-diagram__param">
+        <dt><MathContent text="$F$" /></dt>
+        <dd>{{ formatN(load) }}</dd>
+      </div>
+      <div v-if="showEndType" class="mech-diagram__param">
+        <dt>{{ dt('endLabel') }}</dt>
+        <dd>{{ endSupportLabel }}</dd>
+      </div>
     </dl>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import MathContent from '@/components/common/MathContent.vue'
 import { useDiagramI18n } from '@/composables/useDiagramI18n'
 
-const { dt, dm } = useDiagramI18n('spring')
+const { dt, dm, dl } = useDiagramI18n('spring')
 
-defineProps({
+const props = defineProps({
   wireDiameter: { type: Number, default: 3 },
   meanDiameter: { type: Number, default: 24 },
   outerDiameter: { type: Number, default: 0 },
@@ -121,6 +226,167 @@ defineProps({
   freeLength: { type: Number, default: 0 },
   installHeight: { type: Number, default: 0 },
   workingHeight: { type: Number, default: 0 },
+  load: { type: Number, default: 0 },
+  /** fixed | free | rotating — 稳定性支承条件 */
+  endType: { type: String, default: 'fixed' },
+  showEndType: { type: Boolean, default: false },
+})
+
+const cx = 210
+const plotTop = 48
+const plotBot = 198
+const maxHalfW = 55
+const minHalfW = 22
+const seatW = 36
+
+const d = computed(() => Math.max(props.wireDiameter || 1, 0.2))
+const D = computed(() => Math.max(props.meanDiameter || 1, d.value * 2))
+const n = computed(() => Math.max(props.activeCoils || 1, 1))
+const H0 = computed(() => (props.freeLength > 0 ? props.freeLength : null))
+
+/** free = 一端固支一端铰支；rotating = 两端铰支；fixed = 两端固支 */
+const supportKind = computed(() => {
+  if (props.endType === 'rotating') return 'rotating'
+  if (props.endType === 'free' || props.endType === 'guided') return 'free'
+  return 'fixed'
+})
+const topFixed = computed(() => supportKind.value === 'fixed' || supportKind.value === 'free')
+const botFixed = computed(() => supportKind.value === 'fixed')
+const endSupportLabel = computed(() => {
+  if (supportKind.value === 'rotating') return dt('endRotating')
+  if (supportKind.value === 'free') return dt('endFree')
+  return dt('endFixed')
+})
+
+/** 旋绕比影响宽度：C = D/d，常见 4~12 */
+const halfW = computed(() => {
+  const C = D.value / d.value
+  const t = Math.min(Math.max((C - 3) / 10, 0), 1)
+  return minHalfW + t * (maxHalfW - minHalfW)
+})
+
+/** 高度随 H0 或按圈数估算 */
+const springH = computed(() => {
+  const avail = plotBot - plotTop
+  if (H0.value != null) {
+    // 相对参考 45 mm 自由高
+    const t = Math.min(Math.max(H0.value / 60, 0.45), 1.15)
+    return Math.min(avail, 110 * t)
+  }
+  const t = Math.min(Math.max(n.value / 12, 0.5), 1.2)
+  return Math.min(avail, 100 * t)
+})
+
+const topY = computed(() => plotTop + (plotBot - plotTop - springH.value) / 2)
+const botY = computed(() => topY.value + springH.value)
+const coilTop = computed(() => topY.value + 8)
+const coilBot = computed(() => botY.value - 8)
+
+const leftX = computed(() => cx - halfW.value)
+const rightX = computed(() => cx + halfW.value)
+const plateW = computed(() => halfW.value * 2 + 80)
+const plateX = computed(() => cx - plateW.value / 2)
+
+function hatchLines(yPlate, upward) {
+  const lines = []
+  const y0 = upward ? yPlate - 6 : yPlate + 8
+  const y1 = upward ? yPlate : yPlate + 14
+  const x0 = plateX.value + 4
+  const x1 = plateX.value + plateW.value - 4
+  const nH = Math.max(6, Math.round(plateW.value / 12))
+  for (let i = 0; i < nH; i++) {
+    const t = i / (nH - 1 || 1)
+    const x = x0 + t * (x1 - x0)
+    lines.push({
+      x1: x,
+      y1: upward ? y1 : y0,
+      x2: x - 5,
+      y2: upward ? y0 : y1,
+    })
+  }
+  return lines
+}
+
+const topHatches = computed(() => hatchLines(topY.value - 6, true))
+const botHatches = computed(() => hatchLines(botY.value - 2, false))
+
+const topPivotSeat = computed(() => {
+  const y = topY.value - 14
+  return `M ${cx - 12} ${y - 2} L ${cx} ${y + 8} L ${cx + 12} ${y - 2} Z`
+})
+const botPivotSeat = computed(() => {
+  const y = botY.value + 14
+  return `M ${cx - 12} ${y + 2} L ${cx} ${y - 8} L ${cx + 12} ${y + 2} Z`
+})
+
+const forceY0 = computed(() => (topFixed.value ? topY.value - 30 : topY.value - 38))
+const forceY1 = computed(() => (topFixed.value ? topY.value - 8 : topY.value - 16))
+const forceLabelY = computed(() => forceY0.value + 8)
+
+const strokeW = computed(() => {
+  // 线径相对中径的视觉粗细
+  const ratio = d.value / D.value
+  return Math.min(Math.max(2 + ratio * 18, 2.2), 7)
+})
+
+/** 显示圈数：实际 n 映射到 3.5~10 个可见半周期段 */
+const displayCoils = computed(() => Math.min(Math.max(n.value, 3.5), 10))
+
+const coilPath = computed(() => {
+  const y0 = coilTop.value
+  const y1 = coilBot.value
+  const coils = displayCoils.value
+  // 每圈两个拐点（左↔右），二次贝塞尔平滑
+  const steps = Math.max(Math.round(coils * 2), 4)
+  const L = leftX.value
+  const R = rightX.value
+  let dStr = `M ${L} ${y0}`
+  for (let i = 1; i <= steps; i++) {
+    const yPrev = y0 + ((i - 1) / steps) * (y1 - y0)
+    const y = y0 + (i / steps) * (y1 - y0)
+    const x = i % 2 === 0 ? L : R
+    const xPrev = (i - 1) % 2 === 0 ? L : R
+    const midY = (yPrev + y) / 2
+    dStr += ` Q ${xPrev} ${midY} ${x} ${y}`
+  }
+  return dStr
+})
+
+const wireSampleR = computed(() => Math.min(Math.max(strokeW.value * 1.15, 5), 12))
+const wireSampleY = computed(() => (coilTop.value + coilBot.value) / 2)
+const nLineX = computed(() => leftX.value - 28)
+const h0LineX = computed(() => rightX.value + 48)
+const dDimY = computed(() => botY.value + 22)
+
+const showWorkingHeight = computed(
+  () => props.freeLength > 0 && props.workingHeight > 0 && props.workingHeight < props.freeLength,
+)
+/** 工作高度线：自底板上沿向上按 H₂/H₀ 比例 */
+const h2Y = computed(() => {
+  if (!showWorkingHeight.value) return botY.value
+  return botY.value - (props.workingHeight / props.freeLength) * (botY.value - topY.value)
+})
+
+const labelF = computed(() => (props.load > 0 ? `$F = ${Number(props.load).toFixed(0)}\\,\\mathrm{N}$` : '$F$'))
+const labelN = computed(() => `$n = ${formatCoils(n.value)}$`)
+const labelD = computed(() => dl('d', Number(d.value.toFixed(d.value < 10 ? 2 : 1))))
+const labelMeanD = computed(() => dl('D', Number(D.value.toFixed(D.value < 10 ? 2 : 1))))
+const labelH0 = computed(() =>
+  H0.value != null ? dl('H_0', Number(H0.value.toFixed(1))) : '$H_0$',
+)
+const labelH2 = computed(() => dl('H_2', Number(props.workingHeight.toFixed(1))))
+
+const hintText = computed(() => {
+  const base = {
+    d: d.value.toFixed(d.value < 10 ? 2 : 1),
+    D: D.value.toFixed(D.value < 10 ? 2 : 1),
+    n: formatCoils(n.value),
+    end: endSupportLabel.value,
+  }
+  if (H0.value != null) {
+    return dt('hintWithH0', { ...base, H0: H0.value.toFixed(1) })
+  }
+  return dt('hint', base)
 })
 
 function formatMm(value) {
@@ -132,6 +398,11 @@ function formatMm(value) {
 function formatCoils(value) {
   if (value == null || !Number.isFinite(value)) return '—'
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function formatN(value) {
+  if (value == null || !Number.isFinite(value)) return '—'
+  return `${value.toFixed(value < 10 ? 1 : 0)} N`
 }
 </script>
 
@@ -156,10 +427,22 @@ function formatCoils(value) {
   @apply mx-auto block w-full max-w-lg;
 }
 
+.mech-diagram__svg .txt-muted { fill: #94a3b8; }
 .mech-diagram__svg .end-plate {
   fill: #94a3b8;
   fill-opacity: 0.55;
   stroke: #64748b;
+}
+.mech-diagram__svg .pivot-pin {
+  fill: #f8fafc;
+  stroke: #64748b;
+  stroke-width: 1.5;
+}
+.dark .mech-diagram__svg .pivot-pin { fill: #1e293b; }
+.mech-diagram__svg .pivot-seat {
+  fill: rgba(148, 163, 184, 0.45);
+  stroke: #64748b;
+  stroke-width: 1.2;
 }
 
 .mech-diagram__svg .wire-sample {
@@ -184,28 +467,6 @@ function formatCoils(value) {
   stroke: #94a3b8;
   stroke-width: 1;
   fill: none;
-}
-
-.mech-diagram__svg .lbl-muted {
-  font-family: system-ui, sans-serif;
-  font-size: 13px;
-  fill: #475569;
-}
-
-.mech-diagram__svg .lbl-primary {
-  font-family: system-ui, sans-serif;
-  font-size: 13px;
-  fill: #409eff;
-}
-
-.mech-diagram__svg .lbl-force {
-  font-family: system-ui, sans-serif;
-  font-size: 13px;
-  fill: #8b5cf6;
-}
-
-.dark .mech-diagram__svg .lbl-muted {
-  fill: #cbd5e1;
 }
 
 .mech-diagram__params {

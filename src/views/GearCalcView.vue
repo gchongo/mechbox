@@ -7,13 +7,6 @@
 
     <CalcModePanel v-model="calcMode" page-key="gear" />
 
-    <el-tabs v-model="mode" class="mb-6">
-      <el-tab-pane :label="pf('tabIso6336')" name="iso6336" />
-      <el-tab-pane :label="pf('tabAgma')" name="agma" />
-      <el-tab-pane :label="pf('tabCompare')" name="compare" />
-      <el-tab-pane :label="pf('tabLewis')" name="simple" />
-    </el-tabs>
-
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
@@ -24,7 +17,7 @@
           <CalcFormItem :label="pf('pinionTeeth')">
             <el-input-number v-model="form.pinionTeeth" :min="17" :step="1" />
           </CalcFormItem>
-          <CalcFormItem v-if="mode !== 'simple'" :label="pf('gearTeeth')">
+          <CalcFormItem v-if="calcMode !== 'simple'" :label="pf('gearTeeth')">
             <el-input-number v-model="form.gearTeeth" :min="17" :step="1" />
           </CalcFormItem>
           <CalcFormItem v-else :label="pf('teeth')">
@@ -42,7 +35,7 @@
           <CalcFormItem :label="pf('pressureAngle')">
             <el-input-number v-model="form.pressureAngle" :min="14.5" :max="25" :precision="1" />
           </CalcFormItem>
-          <template v-if="mode !== 'simple'">
+          <template v-if="calcMode !== 'simple'">
             <CalcFormItem :label="pf('helixAngle')">
               <el-input-number v-model="form.helixAngle" :min="0" :max="30" :precision="1" />
             </CalcFormItem>
@@ -104,44 +97,16 @@
 
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
-        <el-tag v-if="mode === 'simple'" class="mb-3" :type="simpleOverallType">
+        <el-tag v-if="calcMode === 'simple'" class="mb-3" :type="simpleOverallType">
           {{ pr('overall') }}: {{ simpleOverallLabel }}
         </el-tag>
-        <template v-if="mode === 'agma'">
-          <dl class="space-y-3 text-sm">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('contactStressC')" />
-              <dd class="font-mono">{{ agmaResult.contactStress.toFixed(1) }} MPa</dd>
-            </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('bendingStressT')" />
-              <dd class="font-mono">{{ agmaResult.bendingStress.toFixed(1) }} MPa</dd>
-            </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('safetyContactShort')" />
-              <dd class="font-mono text-lg" :class="agmaResult.contactPass ? 'text-success' : 'text-error'">
-                {{ agmaResult.safetyContact.toFixed(2) }} {{ agmaResult.contactPass ? '✓' : '✗' }}
-              </dd>
-            </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel label-class="text-gray-500" :text="pr('safetyBendingShort')" />
-              <dd class="font-mono text-lg" :class="agmaResult.bendingPass ? 'text-success' : 'text-error'">
-                {{ agmaResult.safetyBending.toFixed(2) }} {{ agmaResult.bendingPass ? '✓' : '✗' }}
-              </dd>
-            </div>
-          </dl>
-          <el-collapse class="mt-4">
-            <el-collapse-item :title="pr('agmaFactorsTitle')" name="agma-f">
-              <dl class="grid grid-cols-2 gap-2 text-xs">
-                <div v-for="(val, key) in agmaResult.factors" :key="key">
-                  <ResultLabel label-class="text-gray-500" :text="factorLabel(key)" />
-                  <dd class="font-mono">{{ typeof val === 'number' ? val.toFixed(3) : val }}</dd>
-                </div>
-              </dl>
-            </el-collapse-item>
-          </el-collapse>
-        </template>
-        <template v-else-if="mode === 'compare'">
+        <el-tag v-else-if="calcMode === 'complete'" class="mb-3" :type="completeOverallType">
+          {{ pr('overall') }}: {{ completeOverallLabel }}
+        </el-tag>
+        <template v-if="calcMode === 'professional'">
+          <el-tag class="mb-3" :type="compareResult.bothPass ? 'success' : 'warning'">
+            {{ compareResult.bothPass ? pr('compareBothPass') : pr('comparePartialFail') }}
+          </el-tag>
           <el-table :data="compareRows" border size="small" class="text-sm">
             <el-table-column prop="item" :label="pr('compareItem')" />
             <el-table-column label="ISO 6336">
@@ -154,11 +119,38 @@
               <template #default="{ row }">{{ row.diff }}</template>
             </el-table-column>
           </el-table>
-          <el-tag class="mt-4" :type="compareResult.bothPass ? 'success' : 'warning'">
-            {{ compareResult.bothPass ? pr('compareBothPass') : pr('comparePartialFail') }}
-          </el-tag>
+          <el-collapse class="mt-4">
+            <el-collapse-item :title="pr('iso6336FactorsTitle')" name="iso-f">
+              <el-table :data="isoFactorRows" border size="small" class="w-full text-sm">
+                <el-table-column :label="pr('factorNameCol')" min-width="180">
+                  <template #default="{ row }">
+                    <ResultLabel label-class="text-gray-600" :text="row.label" />
+                  </template>
+                </el-table-column>
+                <el-table-column :label="pr('factorValue')" width="110" align="right">
+                  <template #default="{ row }">
+                    <span class="font-mono">{{ row.value }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-collapse-item>
+            <el-collapse-item :title="pr('agmaFactorsTitle')" name="agma-f">
+              <el-table :data="agmaFactorRows" border size="small" class="w-full text-sm">
+                <el-table-column :label="pr('factorNameCol')" min-width="180">
+                  <template #default="{ row }">
+                    <ResultLabel label-class="text-gray-600" :text="row.label" />
+                  </template>
+                </el-table-column>
+                <el-table-column :label="pr('factorValue')" width="110" align="right">
+                  <template #default="{ row }">
+                    <span class="font-mono">{{ row.value }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-collapse-item>
+          </el-collapse>
         </template>
-        <template v-else-if="mode === 'iso6336'">
+        <template v-else-if="calcMode === 'complete'">
           <dl class="space-y-3 text-sm">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel label-class="text-gray-500" :text="pr('gearRatio')" />
@@ -191,30 +183,69 @@
           </dl>
           <el-collapse class="mt-4">
             <el-collapse-item v-if="isoResult.iso1328" :title="pr('iso1328Title')" name="iso1328">
-              <dl class="grid grid-cols-2 gap-2 text-xs">
-                <div><ResultLabel label-class="text-gray-500" text="f_pt" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_pt.toFixed(1) }} μm</dd></div>
-                <div><ResultLabel label-class="text-gray-500" text="F_pt" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_pt.toFixed(1) }} μm</dd></div>
-                <div><ResultLabel label-class="text-gray-500" text="f_falpha" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.f_falpha.toFixed(1) }} μm</dd></div>
-                <div><ResultLabel label-class="text-gray-500" text="F_beta" /><dd class="font-mono">{{ isoResult.iso1328.tolerances.F_beta.toFixed(1) }} μm</dd></div>
-              </dl>
+              <el-table :data="iso1328ToleranceRows" border size="small" class="w-full text-sm">
+                <el-table-column :label="pr('factorNameCol')" min-width="180">
+                  <template #default="{ row }">
+                    <ResultLabel label-class="text-gray-600" :text="row.label" />
+                  </template>
+                </el-table-column>
+                <el-table-column :label="pr('factorValue')" width="110" align="right">
+                  <template #default="{ row }">
+                    <span class="font-mono">{{ row.value }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
               <ul class="mt-2 list-inside list-disc text-xs text-gray-500">
-                <li v-for="(n, i) in iso1328Notes" :key="i">{{ n }}</li>
+                <li v-for="(n, i) in iso1328Notes" :key="i">
+                  <MathContent class="inline" :text="n" />
+                </li>
               </ul>
             </el-collapse-item>
             <el-collapse-item :title="pr('iso6336FactorsTitle')" name="factors">
-              <dl class="grid grid-cols-2 gap-2 text-xs">
-                <div v-for="(val, key) in isoResult.factors" :key="key">
-                  <ResultLabel label-class="text-gray-500" :text="factorLabel(key)" />
-                  <dd class="font-mono">{{ typeof val === 'number' ? val.toFixed(3) : val }}</dd>
-                </div>
-              </dl>
+              <el-table :data="isoFactorRows" border size="small" class="w-full text-sm">
+                <el-table-column :label="pr('factorNameCol')" min-width="180">
+                  <template #default="{ row }">
+                    <ResultLabel label-class="text-gray-600" :text="row.label" />
+                  </template>
+                </el-table-column>
+                <el-table-column :label="pr('factorValue')" width="110" align="right">
+                  <template #default="{ row }">
+                    <span class="font-mono">{{ row.value }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
             </el-collapse-item>
           </el-collapse>
-          <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-            <MathTex expr="\sigma_H = Z_B Z_H Z_E Z_\varepsilon \sqrt{\frac{F_t}{b d_1}\frac{u+1}{u} K_A K_V K_{H\beta} K_{H\alpha}}" />
-            <MathTex expr="\sigma_F = \frac{F_t}{b m_n} Y_F Y_S Y_\beta K_A K_V K_{F\beta} K_{F\alpha}" />
-            <MathTex expr="S_H = \sigma_{H\lim}/\sigma_H,\quad S_F = \sigma_{F\lim}/\sigma_F" />
-          </div>
+          <FormulaPanel :columns="1">
+            <div class="gear-formula-block">
+              <ResultLabel label-class="text-gray-500 text-xs" :text="pr('contactStress')" />
+              <MathTex
+                expr="\sigma_H = Z_B Z_H Z_E Z_\varepsilon \sqrt{\dfrac{F_t}{b d_1}\dfrac{u+1}{u} K_A K_V K_{H\beta} K_{H\alpha}}"
+                block
+              />
+            </div>
+            <div class="gear-formula-block">
+              <ResultLabel label-class="text-gray-500 text-xs" :text="pr('bendingStress')" />
+              <MathTex
+                expr="\sigma_F = \dfrac{F_t}{b m_n} Y_F Y_S Y_\beta K_A K_V K_{F\beta} K_{F\alpha}"
+                block
+              />
+            </div>
+            <div class="gear-formula-block">
+              <ResultLabel label-class="text-gray-500 text-xs" :text="pr('safetyContact')" />
+              <MathTex expr="S_H = \sigma_{H\lim} / \sigma_H" block />
+            </div>
+            <div class="gear-formula-block">
+              <ResultLabel label-class="text-gray-500 text-xs" :text="pr('safetyBending')" />
+              <MathTex expr="S_F = \sigma_{F\lim} / \sigma_F" block />
+            </div>
+            <template #hints>
+              <ul>
+                <li><MathContent :text="pr('gearHintStress')" /></li>
+                <li><MathContent :text="pr('gearHintSafety')" /></li>
+              </ul>
+            </template>
+          </FormulaPanel>
         </template>
         <template v-else>
           <dl class="space-y-3 text-sm">
@@ -236,6 +267,21 @@
             </div>
           </dl>
           <p v-if="simpleReviewOnly" class="mt-4 text-xs text-warning">{{ pt('hintSimple') }}</p>
+          <FormulaPanel :columns="1">
+            <div class="gear-formula-block">
+              <ResultLabel label-class="text-gray-500 text-xs" :text="pr('bendingStress')" />
+              <MathTex expr="\sigma_b = \dfrac{F_t}{b\,m\,Y}" block />
+            </div>
+            <div class="gear-formula-block">
+              <ResultLabel label-class="text-gray-500 text-xs" :text="pr('contactStress')" />
+              <MathTex expr="\sigma_H \approx C_p\sqrt{\dfrac{F_t}{b d}\dfrac{u+1}{u}}" block />
+            </div>
+            <template #hints>
+              <ul>
+                <li><MathContent :text="pr('gearHintLewis')" /></li>
+              </ul>
+            </template>
+          </FormulaPanel>
         </template>
       </section>
     </div>
@@ -254,8 +300,10 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, watch } from 'vue'
+import { reactive, computed, ref } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { analyzeGearStrength } from '@/utils/gear-calc'
 import { analyzeGearISO6336, GEAR_MATERIALS } from '@/utils/gear-iso6336'
 import { analyzeGearAGMA, compareGearStandards } from '@/utils/gear-agma'
@@ -270,30 +318,64 @@ import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { getCalcReviewStatus, isReviewOnlyResult, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'
-import { enrichMathText } from '@/utils/math-label'
 
 const { pt, ct, pf, pr, fc, locale } = useCalcPage('gear')
 const { optionEntries, gradeLabel } = useOptionsI18n()
 const { rm } = useResultI18n()
 
-function factorLabel(key) {
-  return enrichMathText(String(key))
+/** 系数 key → 符号片段（接在名称后，经 ResultLabel/enrichMathText） */
+const FACTOR_SYMBOLS = {
+  YF: 'YF',
+  YS: 'YS',
+  profileShiftPinion: 'x₁',
+  profileShiftGear: 'x₂',
+  ZH: 'ZH',
+  ZE: 'ZE',
+  Zepsilon: 'Zepsilon',
+  Zbeta: 'Zbeta',
+  ZB: 'ZB',
+  KA: 'KA',
+  KV: 'KV',
+  KHbeta: 'KHbeta',
+  KHalpha: 'KHalpha',
+  KFbeta: 'KFbeta',
+  KFalpha: 'KFalpha',
+  Cp: 'Cp',
+  Ko: 'K_o',
+  Kv: 'K_v',
+  Km: 'K_m',
+  Ks: 'K_s',
+  I: 'I',
+  J: 'J',
+  f_pt: 'f_pt',
+  F_pt: 'F_pt',
+  f_falpha: 'f_fα',
+  F_beta: 'F_β',
 }
 
+function factorSymbol(key) {
+  return FACTOR_SYMBOLS[key] ?? String(key)
+}
+
+function factorLabelText(key) {
+  const nameKey = `factor_${key}`
+  const name = pr(nameKey)
+  const symbol = factorSymbol(key)
+  if (!name || name === nameKey || name.endsWith(`.${nameKey}`)) return symbol
+  return `${name} ${symbol}`
+}
+
+function factorsToRows(factors, digits = 3) {
+  if (!factors || typeof factors !== 'object') return []
+  return Object.entries(factors).map(([key, val]) => ({
+    key,
+    label: factorLabelText(key),
+    value: typeof val === 'number' ? val.toFixed(digits) : String(val ?? '—'),
+  }))
+}
+
+/** 简化=Lewis · 完整=ISO 6336 · 专业=ISO/AGMA 对照 */
 const calcMode = ref('complete')
-const mode = ref('iso6336')
-
-watch(calcMode, (m) => {
-  if (m === 'simple') mode.value = 'simple'
-  else if (m === 'complete') mode.value = 'iso6336'
-  else mode.value = 'compare'
-})
-
-watch(mode, (m) => {
-  if (m === 'simple') calcMode.value = 'simple'
-  else if (m === 'compare') calcMode.value = 'professional'
-  else if (m !== 'agma') calcMode.value = 'complete'
-})
 const materials = computed(() => optionEntries(GEAR_MATERIALS, 'gearMaterials'))
 const iso1328Grades = ISO1328_GRADES
 const iso1328Notes = computed(() => {
@@ -343,6 +425,27 @@ const compareRows = computed(() => {
     { item: 'SF', iso: c.safetyBending.iso.toFixed(2), agma: c.safetyBending.agma.toFixed(2), diff: '—' },
   ]
 })
+const isoFactorRows = computed(() => {
+  locale.value
+  return factorsToRows(isoResult.value.factors)
+})
+const agmaFactorRows = computed(() => {
+  locale.value
+  return factorsToRows(agmaResult.value.factors)
+})
+const ISO1328_DISPLAY_KEYS = ['f_pt', 'F_pt', 'f_falpha', 'F_beta']
+
+const iso1328ToleranceRows = computed(() => {
+  locale.value
+  const t = isoResult.value.iso1328?.tolerances
+  if (!t) return []
+  return ISO1328_DISPLAY_KEYS.filter((key) => t[key] != null).map((key) => ({
+    key,
+    label: factorLabelText(key),
+    value: typeof t[key] === 'number' ? `${t[key].toFixed(1)} μm` : String(t[key] ?? '—'),
+  }))
+})
+
 const simpleResult = computed(() =>
   analyzeGearStrength({
     ...form,
@@ -361,13 +464,23 @@ const simpleOverallLabel = computed(() => {
   if (simpleOverallStatus.value === 'review') return fc('overallWarn')
   return fc('overallFail')
 })
+const completeOverallStatus = computed(() => getCalcReviewStatus(isoResult.value))
+const completeOverallType = computed(() => {
+  if (completeOverallStatus.value === 'pass') return 'success'
+  if (completeOverallStatus.value === 'review') return 'warning'
+  return 'danger'
+})
+const completeOverallLabel = computed(() => {
+  if (completeOverallStatus.value === 'pass') return fc('overallPass')
+  if (completeOverallStatus.value === 'review') return fc('overallWarn')
+  return fc('overallFail')
+})
 const simpleReviewOnly = computed(() => isReviewOnlyResult(simpleResult.value))
 const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 
 const activeResult = computed(() => {
-  if (mode.value === 'simple') return simpleResult.value
-  if (mode.value === 'agma') return agmaResult.value
-  if (mode.value === 'compare') return compareResult.value
+  if (calcMode.value === 'simple') return simpleResult.value
+  if (calcMode.value === 'professional') return compareResult.value
   return isoResult.value
 })
 
@@ -385,26 +498,43 @@ const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   buildSummary: () => {
     const r = activeResult.value
     if (r?.errorKey) return []
-    if (mode.value === 'simple') {
+    if (calcMode.value === 'simple') {
       return [
         { label: pr('contactStress'), value: `${r.contactStress?.toFixed(1) ?? '-'} MPa` },
         { label: fc('check'), value: activeOverallLabel.value },
       ]
     }
-    if (mode.value === 'compare') return [{ label: fc('check'), value: activeOverallLabel.value }]
+    if (calcMode.value === 'professional') return [{ label: fc('check'), value: activeOverallLabel.value }]
     return [
       { label: 'SH', value: r.safetyContact?.toFixed(2) ?? '-' },
       { label: fc('check'), value: activeOverallLabel.value },
     ]
   },
 })
-const historyInput = computed(() => snapshotHistoryInput({ calcMode: calcMode.value, mode: mode.value, ...form }))
+const historyInput = computed(() => snapshotHistoryInput({ calcMode: calcMode.value, ...form }))
 
 function applyGearReplay(input) {
   if (!input || typeof input !== 'object') return
-  if (input.calcMode != null) calcMode.value = input.calcMode
-  if (input.mode != null) mode.value = input.mode
+  if (input.calcMode != null) {
+    calcMode.value = input.calcMode
+  } else if (input.mode === 'simple') {
+    calcMode.value = 'simple'
+  } else if (input.mode === 'compare') {
+    calcMode.value = 'professional'
+  } else if (input.mode) {
+    calcMode.value = 'complete'
+  }
   Object.assign(form, input)
 }
 useHistoryReplay('gear', null, { applyFn: applyGearReplay })
 </script>
+
+<style scoped>
+.gear-formula-block {
+  @apply mb-3 last:mb-0;
+}
+
+.gear-formula-block :deep(.result-label) {
+  @apply mb-0.5 block;
+}
+</style>

@@ -16,6 +16,9 @@ import {
   getComparePresets,
   tpiToPitch,
   pitchToTpi,
+  formatDim,
+  formatPitchDisplay,
+  formatPitchLength,
 } from '@/utils/thread-standards'
 
 describe('ISO 68-1 formula verification', () => {
@@ -220,5 +223,20 @@ describe('TPI pitch conversion', () => {
   })
   it('1.5 mm pitch TPI', () => {
     expect(pitchToTpi(1.5)).toBeCloseTo(16.93, 1)
+  })
+})
+
+describe('imperial display unit override', () => {
+  const uncRow = { unit: 'in', tpi: 20, major: 0.25 }
+
+  it('formatDim converts inch diameters to mm', () => {
+    expect(formatDim(uncRow, 0.25, 'in')).toBe('0.2500')
+    expect(formatDim(uncRow, 0.25, 'mm')).toBe('6.350')
+  })
+
+  it('formatPitchLength splits TPI from pitch length', () => {
+    expect(formatPitchDisplay(uncRow)).toBe('20 TPI')
+    expect(formatPitchLength(uncRow, 'mm')).toBe('1.270')
+    expect(formatPitchLength(uncRow, 'in')).toBe('0.0500')
   })
 })

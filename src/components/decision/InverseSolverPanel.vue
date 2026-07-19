@@ -23,7 +23,7 @@
         :closable="false"
         show-icon
         :title="dt('noSolutionTitle')"
-        :description="dt('noSolutionDesc', { reason: result.reason ?? '-' })"
+        :description="dt('noSolutionDesc', { reason: reasonLabel(result.reason) })"
       />
 
       <div v-else-if="result.strategy === 'catalog'" class="rounded-lg border border-primary/30 bg-primary/5 p-4">
@@ -123,7 +123,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['apply'])
-const { dt, inverseLabel } = useDecisionI18n()
+const { dt, inverseLabel, reasonLabel } = useDecisionI18n()
 
 const selectedId = ref(props.preset.inverse[0]?.id ?? '')
 const result = ref(null)

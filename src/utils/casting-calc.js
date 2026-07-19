@@ -16,9 +16,15 @@ export const SURFACE_TYPES = {
   deep_core: { label: '深型芯', factor: 2.0 },
 }
 
+/** 经验“常规”上限（°）：超过则提示偏大，非国标硬性限值 */
+export const TYPICAL_DRAFT_MAX_DEG = 3
+
 /**
  * 推荐拔模角 (°)
  * depth: 拔模高度 mm
+ *
+ * α₀ = (a₀ + k√h) · f_surf · f_tex
+ * 完整/专业再乘不完美系数 φ（默认 1.05）
  */
 export function calcDraftAngle(input) {
   const calcMode = input.calcMode ?? 'simple'
@@ -27,30 +33,45 @@ export function calcDraftAngle(input) {
   const depth = input.depth ?? 50
   const texture = input.roughSurface ? 1.2 : 1.0
 
-  let angle = (mat.baseDraft + mat.deepFactor * Math.sqrt(depth)) * surf.factor * texture
-  if (calcMode !== 'simple') {
-    angle *= input.imperfectionFactor ?? 1.05
-  }
+  const baseAngle =
+    (mat.baseDraft + mat.deepFactor * Math.sqrt(depth)) * surf.factor * texture
+
+  const imperfectionFactor =
+    calcMode === 'simple' ? 1 : (input.imperfectionFactor ?? 1.05)
+
+  let angle = baseAngle * imperfectionFactor
   const minAngle = input.minDraft ?? 0.5
   const recommended = Math.max(minAngle, angle)
 
   const rad = (recommended * Math.PI) / 180
-  const linearIncrease = 2 * depth * Math.tan(rad)
+  const linearIncreasePerSide = depth * Math.tan(rad)
 
-  return {
+  const result = {
     calcMode,
     material: mat.label,
     surfaceType: surf.label,
     depth,
+    baseDraft: mat.baseDraft,
+    deepFactor: mat.deepFactor,
+    surfaceFactor: surf.factor,
+    textureFactor: texture,
+    baseAngleDeg: baseAngle,
+    imperfectionFactor,
     draftAngleDeg: recommended,
-    linearIncreasePerSide: depth * Math.tan(rad),
-    totalWidthIncrease: linearIncrease,
-    pass: recommended >= minAngle,
-    noteKey: recommended > 3 ? 'high_draft' : 'normal',
+    linearIncreasePerSide,
+    totalWidthIncrease: linearIncreasePerSide * 2,
+    minDraftDeg: minAngle,
+    noteKey: recommended > TYPICAL_DRAFT_MAX_DEG ? 'high_draft' : 'normal',
   }
+
+  if (calcMode === 'professional') {
+    result.typicalMaxDeg = TYPICAL_DRAFT_MAX_DEG
+  }
+
+  return result
 }
 
-/** 检查现有拔模角是否足够 */
+/** 检查现有拔模角是否足够（允许 0.1° 容差） */
 export function verifyDraftAngle(input) {
   const required = calcDraftAngle(input)
   const actual = input.actualDraftAngle ?? 0

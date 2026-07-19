@@ -580,13 +580,13 @@ export const FATIGUE_FAQ = {
 
 export const FATIGUE_PAGE_NOTES = {
   zh: [
-    '本页 **完整/专业模式不启用**「未确认关键输入」阻断；改参数后 pass 立即更新（简化模式仍为 estimateOnly）。',
+    '完整/专业启用关键输入确认：待确认字段琥珀色边框与 *；右侧数值仍显示，未确认时总判待复核（releaseBlocked）。简化模式不门禁、不高亮（仍为 estimateOnly）。',
     '右栏蓝色/info 条显示当前模式实际使用的修正链（Sm、ka·kb、Se′ 或 σ₋₁）。',
     'Miner 表「占 D 比例」= 该行 $n_i/N_{f,i}$ 占 **总 D** 的百分比，不是占 100% 损伤预算的绝对分额。',
     '专业 Miner 假定 **恒定 $S_m$** 作用于谱中各级；变均值谱需分段或外部工具。',
   ],
   en: [
-    'Full/Professional modes do not block on critical-input confirmation; pass updates immediately.',
+    'Full/Professional enable critical-input confirmation: amber border + * on pending fields; values stay visible while overall status is review (releaseBlocked). Simple mode has no gate (still estimateOnly).',
     'Info banner shows the active correction chain for the current mode.',
     'Miner column «share of D» is fraction of total D, not absolute damage budget.',
     'Professional Miner assumes **constant Sm** across spectrum blocks.',

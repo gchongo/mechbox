@@ -20,12 +20,13 @@
     </el-tabs>
     <div class="grid gap-6 lg:grid-cols-2">
       <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="130px">
-          <el-form-item v-if="form.calcMode === 'simple'" :label="fc('material')">
+          <CalcFormItem v-if="form.calcMode === 'simple'" :label="fc('material')">
             <el-select v-model="form.materialId" class="w-full" filterable>
               <el-option v-for="m in materialOptions" :key="m.id" :label="m.label" :value="m.id" />
             </el-select>
-          </el-form-item>
+          </CalcFormItem>
           <CalcFormItem :label="pf('diameter')"><el-input-number v-model="form.diameter" :min="1" /></CalcFormItem>
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('innerDiameter')">
             <el-input-number v-model="form.innerDiameter" :min="0" :max="form.diameter - 1" />
@@ -37,9 +38,13 @@
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('yieldStrength')">
             <el-input-number v-model="form.yieldStrength" :min="100" :step="50" />
           </CalcFormItem>
-          <el-form-item :label="mode === 'combined' ? pf('allowableCombined') : pf('allowableShear')">
+          <CalcFormItem :label="mode === 'combined' ? pf('allowableCombined') : pf('allowableShear')">
             <el-input-number v-model="form.allowable" :min="10" :disabled="form.calcMode === 'simple'" />
-          </el-form-item>
+          </CalcFormItem>
+          <CalcFormItem v-if="mode === 'torsion' && form.calcMode !== 'simple'" :label="pf('maxTwistAngle')">
+            <el-input-number v-model="form.maxTwistAngle" :min="0" :precision="3" :step="0.1" />
+            <span class="ml-2 text-xs text-gray-500">{{ pf('maxTwistAngleHint') }}</span>
+          </CalcFormItem>
           <template v-if="form.calcMode === 'professional' && mode === 'torsion'">
             <CalcFormItem :label="pf('ktTorsion')">
               <el-input-number v-model="form.stressConcentrationTorsion" :min="1" :max="5" :step="0.1" :precision="1" />
@@ -58,6 +63,9 @@
             <CalcFormItem :label="pf('bendingAmplitude')">
               <el-input-number v-model="form.bendingAmplitude" :min="0" :precision="2" />
             </CalcFormItem>
+            <CalcFormItem :label="pf('torqueAmplitude')">
+              <el-input-number v-model="form.torqueAmplitude" :min="0" :precision="2" />
+            </CalcFormItem>
           </template>
         </el-form>
 
@@ -66,35 +74,88 @@
           :inner-diameter="form.innerDiameter"
           :mode="mode"
           :length="form.length"
+          :torque="form.torque"
+          :bending-moment="form.bendingMoment"
         />
       </section>
       <section class="card-panel">
+        <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+        <el-tag
+          v-if="(mode === 'torsion' && !torsionResult.errorKey) || (mode === 'combined' && !combinedResult.errorKey)"
+          class="mb-3"
+          :type="overallStatusType"
+        >
+          {{ pr('overall') }}: {{ shaftVerdictLabel }}
+        </el-tag>
         <el-alert v-if="torsionResult.errorKey && mode === 'torsion'" :title="re(torsionResult.errorKey)" type="warning" show-icon class="mb-3" />
         <el-alert v-if="combinedResult.errorKey && mode === 'combined'" :title="re(combinedResult.errorKey)" type="warning" show-icon class="mb-3" />
         <dl v-if="mode === 'torsion' && !torsionResult.errorKey" class="space-y-3 text-sm">
-          <el-tag class="mb-3" :type="overallStatusType">
-            {{ pr('overall') }}: {{ overallStatusLabel }}
-          </el-tag>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearStress')" /><dd class="font-mono" :class="localCheckClass(torsionResult.torsionPass ?? torsionResult.pass)">{{ torsionResult.shearStress.toFixed(2) }} MPa {{ localCheckMark(torsionResult.torsionPass ?? torsionResult.pass) }}</dd></div>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('twistAngle')" /><dd class="font-mono" :class="localCheckClass(torsionResult.anglePass)">{{ torsionResult.twistAngle.toFixed(4) }}° {{ localCheckMark(torsionResult.anglePass) }}</dd></div>
-          <div v-if="form.calcMode !== 'simple'" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('minDiameter')" /><dd class="font-mono">{{ torsionResult.minDiameter?.toFixed(1) }} mm</dd></div>
+          <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <div class="flex justify-between">
+              <ResultLabel :text="pr('twistAngle')" />
+              <dd class="font-mono" :class="localCheckClass(torsionResult.anglePass)">
+                {{ torsionResult.twistAngle.toFixed(4) }}°
+                <template v-if="typeof torsionResult.anglePass === 'boolean'">
+                  {{ localCheckMark(torsionResult.anglePass) }}
+                </template>
+              </dd>
+            </div>
+            <p v-if="torsionResult.angleCriterionMissing" class="mt-1 text-xs text-gray-500">
+              {{ pr('twistAngleNoLimit') }}
+            </p>
+          </div>
+          <div v-if="form.calcMode !== 'simple'" class="rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <div class="flex justify-between gap-2">
+              <ResultLabel :text="pr('minDiameter')" />
+              <dd class="shrink-0 font-mono">{{ torsionResult.minDiameter?.toFixed(1) }} mm</dd>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">{{ pr('minDiameterHint') }}</p>
+          </div>
           <div v-if="form.calcMode === 'professional' && torsionResult.peakShearStress" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('peakShear')" /><dd class="font-mono" :class="localCheckClass(torsionResult.peakPass)">{{ torsionResult.peakShearStress.toFixed(2) }} MPa {{ localCheckMark(torsionResult.peakPass) }}</dd></div>
           <div v-if="torsionResult.fatigueAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueAmp')" /><dd class="font-mono" :class="localCheckClass(torsionResult.fatiguePass)">{{ torsionResult.fatigueAmplitude?.toFixed(1) }} / {{ torsionResult.fatigueEndurance?.toFixed(0) }} MPa {{ localCheckMark(torsionResult.fatiguePass) }}</dd></div>
         </dl>
         <dl v-else-if="!combinedResult.errorKey" class="space-y-3 text-sm">
-          <el-tag class="mb-3" :type="overallStatusType">
-            {{ pr('overall') }}: {{ overallStatusLabel }}
-          </el-tag>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('bendingStress')" /><dd class="font-mono">{{ combinedResult.bendingStress.toFixed(2) }} MPa</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('torsionStress')" /><dd class="font-mono">{{ combinedResult.torsionStress.toFixed(2) }} MPa</dd></div>
           <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('equivalentStress')" /><dd class="font-mono" :class="localCheckClass(combinedResult.combinedPass ?? combinedResult.pass)">{{ combinedResult.equivalentStress.toFixed(2) }} MPa {{ localCheckMark(combinedResult.combinedPass ?? combinedResult.pass) }}</dd></div>
           <div v-if="combinedResult.utilization" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('utilization')" /><dd class="font-mono">{{ (combinedResult.utilization * 100).toFixed(1) }}%</dd></div>
-          <div v-if="combinedResult.fatigueAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('fatigueAmp')" /><dd class="font-mono" :class="localCheckClass(combinedResult.fatiguePass)">{{ combinedResult.fatigueAmplitude?.toFixed(1) }} / {{ combinedResult.fatigueEndurance?.toFixed(0) }} MPa {{ localCheckMark(combinedResult.fatiguePass) }}</dd></div>
+          <template v-if="combinedResult.fatigueAmplitude != null">
+            <div class="rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <div class="flex justify-between">
+                <ResultLabel :text="pr('fatigueAmp')" />
+                <dd class="font-mono" :class="localCheckClass(combinedResult.fatiguePass)">
+                  {{ combinedResult.fatigueAmplitude?.toFixed(1) }} / {{ combinedResult.fatigueEndurance?.toFixed(0) }} MPa
+                  {{ localCheckMark(combinedResult.fatiguePass) }}
+                </dd>
+              </div>
+              <p class="mt-1 text-xs text-gray-500">{{ pr('fatigueAmpHint') }}</p>
+            </div>
+            <div
+              v-if="combinedResult.fatigueBendingAmplitude != null"
+              class="flex justify-between rounded bg-gray-50 p-3 text-xs dark:bg-gray-900"
+            >
+              <ResultLabel :text="pr('fatigueBendingAmp')" />
+              <dd class="font-mono">{{ combinedResult.fatigueBendingAmplitude.toFixed(2) }} MPa</dd>
+            </div>
+            <div
+              v-if="combinedResult.fatigueTorsionAmplitude != null"
+              class="flex justify-between rounded bg-gray-50 p-3 text-xs dark:bg-gray-900"
+            >
+              <ResultLabel :text="pr('fatigueTorsionAmp')" />
+              <dd class="font-mono">{{ combinedResult.fatigueTorsionAmplitude.toFixed(2) }} MPa</dd>
+            </div>
+          </template>
         </dl>
-        <div class="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+        <FormulaPanel :columns="1">
           <MathTex v-if="mode === 'combined'" expr="\sigma_{eq} = \sqrt{\sigma^2 + 3\tau^2}" block />
           <MathTex v-else expr="\tau = \frac{16T}{\pi d^3}" block />
-        </div>
+          <template #hints>
+            <ul>
+              <li><MathContent :text="pr('unitNote')" /></li>
+            </ul>
+          </template>
+        </FormulaPanel>
       </section>
     </div>
 
@@ -121,6 +182,8 @@
 <script setup>
 import { reactive, computed, ref, watch } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
+import MathContent from '@/components/common/MathContent.vue'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import { analyzeShaftTorsion } from '@/utils/shaft-calc'
 import { analyzeShaftCombined } from '@/utils/shaft-combined'
 import { MATERIALS, findMaterial } from '@/constants/materials'
@@ -159,6 +222,7 @@ const form = reactive({
   stressConcentrationTorsion: 1.3,
   torqueAmplitude: 80,
   bendingAmplitude: 60,
+  maxTwistAngle: null,
 })
 const {
   chainSession,
@@ -228,6 +292,17 @@ const overallStatusLabel = computed(() => {
   if (overallStatus.value === 'pass') return fc('overallPass')
   if (overallStatus.value === 'review') return fc('overallWarn')
   return fc('overallFail')
+})
+const shaftVerdictLabel = computed(() => {
+  const r = mode.value === 'combined' ? combinedResult.value : torsionResult.value
+  if (r?.errorKey) return overallStatusLabel.value
+  if (form.calcMode === 'professional' || form.calcMode === 'complete') {
+    if (r?.staticPass || r?.combinedPass || r?.torsionPass) {
+      if (overallStatus.value === 'fail') return pr('verdictNeedAdjust')
+      return pr('verdictStaticOk')
+    }
+  }
+  return overallStatusLabel.value
 })
 const reviewMarkText = computed(() => (locale.value === 'en' ? '(Review)' : '（待复核）'))
 

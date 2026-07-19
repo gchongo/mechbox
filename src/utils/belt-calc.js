@@ -59,12 +59,14 @@ export function analyzeBeltDrive(input) {
   const serviceFactor = calcMode === 'professional' ? input.serviceFactor ?? 1.2 : 1
   const power = (input.power ?? (input.torque * 2 * Math.PI * input.rpm) / 60000) * serviceFactor
 
+  const efficiency = input.efficiency ?? 0.95
+  const friction = input.friction ?? 0.3
   const tension = calcBeltTension({
     power,
     speed,
-    efficiency: input.efficiency ?? 0.95,
+    efficiency,
     wrapAngle,
-    friction: input.friction ?? 0.3,
+    friction,
   })
 
   const result = {
@@ -76,6 +78,8 @@ export function analyzeBeltDrive(input) {
     designPower: power,
     wrapAngle,
     drivenRpm: input.rpm / ratio,
+    efficiency,
+    friction,
     ...tension,
   }
 

@@ -474,7 +474,7 @@ export function adaptSpring(input) {
   }
   if (r.solidPass != null) {
     keyMetrics.push(
-      metric('solidMargin', '压并余量', r.remainingDeflectionMargin ?? 0, 'mm', {
+      metric('solidMargin', '压并余量（预留后）', r.remainingDeflectionMargin ?? 0, 'mm', {
         status: r.solidPass ? 'pass' : 'fail',
       }),
     )
@@ -495,7 +495,13 @@ export function adaptSpring(input) {
     )
   }
   const suggestions = []
-  if (!r.shearPass) suggestions.push('静强度不合格：τ₂ > [τ]，增大线径/中径或减小载荷')
+  if (!r.shearPass) {
+    suggestions.push(
+      r.usesHeightLoads
+        ? '静强度不合格：τ₂>[τ]。当前按高度算 F₂=k·δ，补全材料/疲劳无效；优先抬高 H₂、增加有效圈数或加大中径。固定行程时盲目加粗线径会提高刚度与 F₂，未必降应力'
+        : '静强度不合格：τ₂>[τ]。增大线径/中径或减小工作载荷 F（仅改完整/专业附加项无效）',
+    )
+  }
   if (!r.indexPass) suggestions.push('旋绕比 C < 4，调整线径/中径')
   else if (r.indexRecommend === false) suggestions.push('旋绕比 C > 16（建议范围），制造/稳定性风险')
   if (r.heightLoadBlocked) suggestions.push('高度顺序非法：需满足 H₀ ≥ H₁ ≥ H₂ ≥ Hb')
@@ -651,9 +657,10 @@ export function adaptButtWeld(input) {
       warnings: [{ key: r.errorKey, level: 'critical' }],
     })
   }
+  const stressOk = !!(r.stressPass ?? r.pass)
   const keyMetrics = [
     metric('normalStress', '正应力 σ', r.normalStress, 'MPa', {
-      status: r.stressPass ?? r.pass ? 'pass' : 'fail',
+      status: stressOk ? 'pass' : 'fail',
     }),
     metric('area', '承载面积 A', r.area, 'mm²'),
   ]
@@ -675,12 +682,15 @@ export function adaptButtWeld(input) {
     pass,
     estimateOnly: r.estimateOnly ?? false,
     standards: ['GB/T 985', 'EN 1993-1-8', 'AWS D1.1'],
-    assumptions:
-      r.calcMode === 'simple'
-        ? ['仅按 GB 简化正应力快速估算；simple 模式不作正式放行']
+    assumptions: [
+      '纯轴向静拉伸；默认全熔透对接（专业模式可用熔透效率 η 折减）',
+      '不含面内剪力、弯矩、偏心、面外剥离与疲劳细节类别',
+      ...(r.calcMode === 'simple'
+        ? ['简化模式仅作快速估算，不作正式放行']
         : r.calcMode === 'professional'
-          ? ['专业模式含熔深效率与应力集中修正']
-          : [],
+          ? ['专业模式含熔透效率 η 与应力集中 Kf 的静力初步修正']
+          : ['完整模式为多规范静力对照（全熔透假设）']),
+    ],
     suggestions: pass ? [] : ['应力超限：增大焊缝有效截面、降低载荷或提高材料等级'],
   })
 }
@@ -705,21 +715,28 @@ export function adaptWeldFatigue(input) {
     inputs: input,
     outputs: r,
     keyMetrics: [
-      metric('stressRange', '应力幅 Δτ', r.stressRange, 'MPa', {
+      metric('stressRange', '名义应力范围 Δσ', r.stressRange, 'MPa', {
         status: r.pass ? 'pass' : 'fail',
       }),
-      metric('allowableAtCycles', '目标循环许用应力幅', r.allowableAtCycles, 'MPa', {
+      metric('allowableAtCycles', '目标 N 下允许应力范围', r.allowableAtCycles, 'MPa', {
         direction: 'higher-better',
       }),
       metric('estimatedLife', '估算寿命', r.estimatedLife, 'cyc', {
         direction: 'higher-better',
       }),
-      metric('enduranceLimit', '疲劳极限', r.enduranceLimit, 'MPa'),
+      metric('enduranceLimit', '参考疲劳强度 Δσ_C', r.enduranceLimit, 'MPa'),
     ],
     pass: r.pass,
+    estimateOnly: true,
     standards: ['焊缝简化 S-N'],
-    assumptions: ['指数 m=3，参考循环数 Nref=2e6；用于疲劳早期筛查'],
-    suggestions: r.pass ? [] : ['疲劳不通过：降低应力幅、改善焊趾质量或提升细节等级'],
+    assumptions: [
+      '输入为名义应力范围 Δσ=σ_max−σ_min，不是振幅 σ_a',
+      '单斜率 m=3、N_C=2e6 早期筛查；拐点后斜率/截止寿命未建模',
+      '结论依赖细节类别与焊接质量，不作通用疲劳放行',
+    ],
+    suggestions: r.pass
+      ? []
+      : ['疲劳筛查未通过：降低名义应力范围、改善焊趾质量或提升细节等级'],
   })
 }
 
@@ -788,8 +805,8 @@ export function adaptBoltGroup(input) {
       }),
     )
   }
-  if (r.prying?.totalTension) {
-    keyMetrics.push(metric('pryingTension', '撬力附加拉力', r.prying.totalTension, 'N'))
+  if (r.prying?.pryingTension > 0) {
+    keyMetrics.push(metric('pryingTension', '撬力附加拉力', r.prying.pryingTension, 'N'))
   }
   const suggestions = []
   if (!maxBoltForcePass) {

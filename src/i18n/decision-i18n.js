@@ -28,6 +28,11 @@ export const decisionZh = {
   applied: '已应用',
   noSolutionTitle: '未在给定范围内找到解',
   noSolutionDesc: '原因：{reason}。请检查参数范围或目标合理性。',
+  reasons: {
+    no_solution_in_range: '给定范围内无可行解',
+    no_candidate_passes: '候选值均不满足约束',
+    no_catalog_item_passes: '标准型号库中无满足条件的型号',
+  },
   model: '型号',
   bore: '内径',
   lifeHoursShort: '寿命 (h)',
@@ -153,6 +158,11 @@ export const decisionEn = {
   applied: 'Applied',
   noSolutionTitle: 'No solution within the given range',
   noSolutionDesc: 'Reason: {reason}. Check bounds or target feasibility.',
+  reasons: {
+    no_solution_in_range: 'No feasible solution in the given range',
+    no_candidate_passes: 'No candidate satisfies the constraints',
+    no_catalog_item_passes: 'No catalog item meets the requirements',
+  },
   model: 'Model',
   bore: 'Bore',
   lifeHoursShort: 'Life (h)',

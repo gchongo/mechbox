@@ -19,6 +19,15 @@ describe('unit-conversion-calc', () => {
     expect(convertTemperature(100, '°C', 'K').value).toBeCloseTo(373.15, 1)
   })
 
+  it('converts Chinese and land area units', () => {
+    // 1 亩 = 2000/3 m²
+    expect(convertUnit(1, '亩', 'm²', 'area').value).toBeCloseTo(2000 / 3, 6)
+    expect(convertUnit(1, '公顷', 'm²', 'area').value).toBeCloseTo(10000, 6)
+    expect(convertUnit(1, 'km²', '公顷', 'area').value).toBeCloseTo(100, 6)
+    expect(convertUnit(15, '亩', '公顷', 'area').value).toBeCloseTo(1, 6)
+    expect(convertUnit(1, '亩', '分', 'area').value).toBeCloseTo(10, 6)
+  })
+
   it('batch converts stress units', () => {
     const r = convertToAll(100, 'MPa', 'stress')
     expect(r.rows.length).toBeGreaterThan(5)

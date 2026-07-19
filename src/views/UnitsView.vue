@@ -18,7 +18,9 @@
               </CalcFormItem>
               <CalcFormItem :label="pf('fromUnit')">
                 <el-select v-model="fromUnit" class="w-full">
-                  <el-option v-for="u in units" :key="u" :label="u" :value="u" />
+                  <el-option v-for="u in units" :key="u" :label="u" :value="u">
+                    <MathContent class="inline" :text="u" />
+                  </el-option>
                 </el-select>
               </CalcFormItem>
             </el-form>
@@ -29,7 +31,7 @@
             <template v-else-if="batchResult">
               <div class="unit-hero">
                 <span class="unit-hero__value">{{ formatValue(inputValue) }}</span>
-                <span class="unit-hero__unit">{{ fromUnit }}</span>
+                <span class="unit-hero__unit"><MathContent class="inline" :text="fromUnit" /></span>
               </div>
 
               <div v-if="primaryChips.length" class="mb-4 flex flex-wrap gap-2">
@@ -43,7 +45,7 @@
                   @click="copyText(`${formatValue(chip.value)} ${chip.unit}`)"
                 >
                   <span class="unit-chip__val">{{ formatValue(chip.value) }}</span>
-                  <span class="unit-chip__unit">{{ chip.unit }}</span>
+                  <span class="unit-chip__unit"><MathContent class="inline" :text="chip.unit" /></span>
                 </button>
               </div>
 
@@ -76,7 +78,11 @@
                   max-height="320"
                   :row-class-name="rowClassName"
                 >
-                  <el-table-column prop="unit" :label="pt('table.unit')" width="100" />
+                  <el-table-column :label="pt('table.unit')" width="120">
+                    <template #default="{ row }">
+                      <MathContent class="inline" :text="row.unit" />
+                    </template>
+                  </el-table-column>
                   <el-table-column :label="pt('table.value')">
                     <template #default="{ row }">
                       <span class="font-mono">{{ formatValue(row.value) }}</span>
@@ -157,6 +163,7 @@ import { exportToolReportPdf } from '@/utils/export'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useResultI18n } from '@/composables/useResultI18n'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
+import MathContent from '@/components/common/MathContent.vue'
 
 const { pt, pf, fc } = useCalcPage('units')
 const { resultError } = useResultI18n()

@@ -28,7 +28,7 @@
               <el-radio value="force2torque">{{ pf('modeForce2torque') }}</el-radio>
             </el-radio-group>
           </CalcFormItem>
-          <CalcFormItem :label="pf('nominalDiameter')">
+          <CalcFormItem :label="pf('nominalDiameter')" unit="">
             <el-input-number v-model="form.diameter" :min="3" :max="48" :step="1" @change="onDiameterChange" />
             <span class="ml-2 text-sm text-gray-500">M{{ form.diameter }}</span>
           </CalcFormItem>
@@ -88,27 +88,23 @@
                 />
               </el-select>
             </CalcFormItem>
-            <CalcFormItem v-if="form.embedmentPreset === 'custom'" :label="pf('embedmentFZ')">
+            <CalcFormItem v-if="form.embedmentPreset === 'custom'" :label="pf('embedmentFZ')" unit="μm">
               <el-input-number v-model="form.embedmentUm" :min="1" :max="50" :precision="1" />
-              <span class="ml-2 text-sm text-gray-500">μm</span>
             </CalcFormItem>
             <CalcFormItem :label="pf('deltaT')">
               <el-input-number v-model="form.deltaT" :min="-200" :max="500" :precision="1" :step="10" />
               <span class="ml-2 text-xs text-gray-500">{{ pf('deltaTHint') }}</span>
             </CalcFormItem>
-            <CalcFormItem :label="pf('externalAxial')">
+            <CalcFormItem :label="pf('externalAxial')" unit="N">
               <el-input-number v-model="form.externalAxialLoad" :min="0" :step="500" />
-              <span class="ml-2 text-xs text-gray-500">N</span>
             </CalcFormItem>
           </template>
 
-          <CalcFormItem v-if="form.mode === 'torque2force'" :label="pf('torque')">
+          <CalcFormItem v-if="form.mode === 'torque2force'" :label="pf('torque')" unit="N·m">
             <el-input-number v-model="form.torque" :min="0" :precision="2" :step="1" />
-            <span class="ml-2 text-sm text-gray-500">N·m</span>
           </CalcFormItem>
-          <CalcFormItem v-else :label="preloadLabel">
+          <CalcFormItem v-else :label="preloadLabel" unit="N">
             <el-input-number v-model="form.preload" :min="0" :step="500" />
-            <span class="ml-2 text-sm text-gray-500">N</span>
           </CalcFormItem>
         </el-form>
 
@@ -123,6 +119,11 @@
           :outer-diameter="form.outerDiameter"
           :d-km="form.dKm"
           :delta-t="form.deltaT"
+          :friction-coeff="form.frictionCoeff"
+          :mu-g="form.muG"
+          :mu-k="form.muK"
+          :torque="form.torque"
+          :preload="form.preload"
         />
       </section>
 
@@ -247,23 +248,31 @@
         </div>
 
         <p class="mt-3 text-xs text-gray-500">
-          {{ pr('compareTorque') }} {{ rm('boltPreload', `compare_${result.compareLabelKey}`) }} ≈ {{ result.compareTorque.toFixed(2) }} N·m
+          <MathContent
+            :text="`${pr('compareTorque')} ${rm('boltPreload', `compare_${result.compareLabelKey}`)} ≈ ${result.compareTorque.toFixed(2)} N·m`"
+          />
         </p>
 
-        <div class="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-          <template v-if="form.calcMode === 'simple'">
-            <MathTex expr="T = \dfrac{\mu d F}{1000}" block />
-          </template>
-          <template v-else-if="form.calcMode === 'vdi2230'">
-            <MathTex expr="M_A = F\left(0.16P + 0.58d_2\mu_G + \dfrac{D_{km}}{2}\mu_K\right)" block />
-          </template>
+        <FormulaPanel :columns="1">
+          <MathTex v-if="form.calcMode === 'simple'" expr="T = \dfrac{\mu d F}{1000}" block />
+          <MathTex
+            v-else-if="form.calcMode === 'vdi2230'"
+            expr="M_A = F\left(0.16P + 0.58d_2\mu_G + \dfrac{D_{km}}{2}\mu_K\right)"
+            block
+          />
           <template v-else>
             <MathTex expr="F_V = F_M + F_Z - \Delta F_{VT}" block />
             <MathTex expr="F_Z = \dfrac{f_Z}{\delta_S + \delta_P}" block />
             <MathTex expr="F_M = F_V - F_Z + \Delta F_{VT}" block />
           </template>
           <MathTex expr="\sigma = F / A_s" block />
-        </div>
+          <template #hints>
+            <ul>
+              <li><MathContent :text="pr('boltHintUnits')" /></li>
+              <li v-if="form.calcMode !== 'simple'"><MathContent :text="pr('boltHintVdi')" /></li>
+            </ul>
+          </template>
+        </FormulaPanel>
         <el-button class="mt-4" type="primary" plain @click="exportCalcPdf">{{ fc('exportPdf') }}</el-button>
       </section>
     </div>
@@ -299,9 +308,8 @@
                   <el-option v-for="(m, k) in tighteningMethods" :key="k" :label="m.label" :value="k" />
                 </el-select>
               </CalcFormItem>
-              <CalcFormItem :label="pf('externalAxial')">
+              <CalcFormItem :label="pf('externalAxial')" unit="N">
                 <el-input-number v-model="wizardForm.externalAxialLoad" :min="0" :step="500" />
-                <span class="ml-2 text-xs text-gray-500">N</span>
               </CalcFormItem>
               <CalcFormItem :label="pf('alternatingLoad')">
                 <el-input-number v-model="wizardForm.alternatingLoad" :min="0" :step="100" />
@@ -310,9 +318,8 @@
                 <el-input-number v-model="wizardForm.requiredClampLoad" :min="0" :step="500" />
                 <span class="ml-2 text-xs text-gray-500">{{ pf('requiredClampHint') }}</span>
               </CalcFormItem>
-              <CalcFormItem :label="pf('maxTorque')">
+              <CalcFormItem :label="pf('maxTorque')" unit="N·m">
                 <el-input-number v-model="wizardForm.maxTorque" :min="0" :precision="1" />
-                <span class="ml-2 text-xs text-gray-500">N·m</span>
               </CalcFormItem>
             </el-form>
             <p class="text-xs text-gray-500">{{ pf('wizardSharedHint') }}</p>
@@ -327,12 +334,12 @@
                 <el-collapse-item v-for="s in wizardDisplay.steps" :key="s.id" :name="s.id">
                   <template #title>
                     <span class="mr-2 font-mono text-xs">{{ s.id }}</span>
-                    <span>{{ s.title }}</span>
+                    <MathContent class="inline" :text="s.title" />
                     <el-tag class="ml-2" size="small" :type="stepTagType(s.status)">{{ stepStatusLabel(s.status) }}</el-tag>
                   </template>
-                  <p class="text-sm">{{ s.summary }}</p>
-                  <p v-if="s.detail" class="text-xs text-gray-500">{{ s.detail }}</p>
-                  <p v-if="s.formula" class="mt-1 text-xs text-primary"><MathContent :text="enrichMathText(s.formula)" /></p>
+                  <p class="text-sm"><MathContent :text="s.summary" /></p>
+                  <p v-if="s.detail" class="text-xs text-gray-500"><MathContent :text="s.detail" /></p>
+                  <p v-if="s.formula" class="mt-1 text-xs text-primary"><MathContent :text="s.formula" /></p>
                 </el-collapse-item>
               </el-collapse>
             </template>
@@ -348,7 +355,7 @@
 import { reactive, computed, ref } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
-import { enrichMathText } from '@/utils/math-label'
+import FormulaPanel from '@/components/common/FormulaPanel.vue'
 import BoltPreloadDiagram from '@/components/bolt/BoltPreloadDiagram.vue'
 import {
   analyzeBoltPreload,

@@ -44,23 +44,27 @@
         <dl class="detail-dl">
           <div v-if="row.nominal != null">
             <dt>{{ pt('detailNominal') }}</dt>
-            <dd>{{ formatDim(row, row.nominal) }} {{ row.unit }}</dd>
+            <dd>{{ formatDim(row, row.nominal, displayUnit) }} {{ dimUnit }}</dd>
           </div>
           <div>
             <dt><ThreadFieldTip :label="pt('colMajor')" :tip="pt('term_major')" /></dt>
-            <dd>{{ formatDim(row, row.major) }} {{ row.unit }}</dd>
+            <dd>{{ formatDim(row, row.major, displayUnit) }} {{ dimUnit }}</dd>
           </div>
           <div>
             <dt><ThreadFieldTip :label="pt('colPitchDia')" :tip="pt('term_pitchDia')" /></dt>
-            <dd>{{ formatDim(row, row.pitchDiameter) }} {{ row.unit }}</dd>
+            <dd>{{ formatDim(row, row.pitchDiameter, displayUnit) }} {{ dimUnit }}</dd>
           </div>
           <div>
             <dt><ThreadFieldTip :label="pt('colMinor')" :tip="pt('term_minor')" /></dt>
-            <dd>{{ formatDim(row, row.minor) }} {{ row.unit }}</dd>
+            <dd>{{ formatDim(row, row.minor, displayUnit) }} {{ dimUnit }}</dd>
+          </div>
+          <div v-if="row.tpi">
+            <dt><ThreadFieldTip :label="pt('colTpi')" :tip="pt('term_tpi')" /></dt>
+            <dd>{{ row.tpi }}</dd>
           </div>
           <div>
-            <dt><ThreadFieldTip :label="pitchLabel" :tip="row.tpi ? pt('term_tpi') : pt('term_pitch')" /></dt>
-            <dd>{{ formatPitchDisplay(row) }}</dd>
+            <dt><ThreadFieldTip :label="pitchLabel" :tip="pt('term_pitch')" /></dt>
+            <dd>{{ row.tpi ? `${formatPitchLength(row, displayUnit)} ${dimUnit}` : formatPitchDisplay(row) }}</dd>
           </div>
           <div>
             <dt>{{ pt('detailThreadAngle') }}</dt>
@@ -95,7 +99,7 @@
         <dl class="detail-dl">
           <div>
             <dt>{{ pt('colTapDrill') }}</dt>
-            <dd>{{ formatDim(row, row.tapDrill) }} {{ row.unit }}</dd>
+            <dd>{{ formatDim(row, row.tapDrill, displayUnit) }} {{ dimUnit }}</dd>
           </div>
         </dl>
         <ul class="mt-2 list-inside list-disc text-xs text-gray-600 dark:text-gray-400">
@@ -163,6 +167,8 @@ import { ElMessage } from 'element-plus'
 import {
   formatDim,
   formatPitchDisplay,
+  formatPitchLength,
+  formatDimUnitSuffix,
   parseThreadMark,
   getThreadNeighbors,
 } from '@/utils/thread-standards'
@@ -174,9 +180,21 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   row: { type: Object, default: null },
   pt: { type: Function, required: true },
+  /** When set, override display for imperial rows (in → mm). */
+  displayUnit: { type: String, default: '' },
 })
 
 const emit = defineEmits(['close', 'select-row', 'add-compare', 'favorite-changed'])
+
+const displayUnit = computed(() =>
+  props.row?.unit === 'in' && (props.displayUnit === 'in' || props.displayUnit === 'mm')
+    ? props.displayUnit
+    : undefined,
+)
+
+const dimUnit = computed(() =>
+  props.row ? formatDimUnitSuffix(props.row, displayUnit.value) : '',
+)
 
 const favorited = ref(false)
 
@@ -211,7 +229,9 @@ const hasNeighbors = computed(
 const processKeys = computed(() => (props.row ? getProcessNoteKeys(props.row) : []))
 
 const pitchLabel = computed(() =>
-  props.row?.unit === 'in' ? props.pt('colTpiPitch') : props.pt('colPitch'),
+  props.row?.unit === 'in'
+    ? (displayUnit.value === 'mm' ? props.pt('colPitchMm') : props.pt('colPitchIn'))
+    : props.pt('colPitch'),
 )
 
 function systemLabel(id) {

@@ -15,11 +15,12 @@
     <el-table
       :data="rows"
       :max-height="THREAD_TABLE_MAX_HEIGHT"
-      :fit="false"
       size="small"
       border
       stripe
-      class="thread-data-table mb-3"
+      highlight-current-row
+      class="thread-data-table mb-3 cursor-pointer"
+      @row-click="(row) => $emit('row-click', row)"
     >
       <el-table-column prop="designation" :min-width="THREAD_TABLE_COL.designation">
         <template #header>
@@ -55,16 +56,24 @@
         </template>
         <template #default="{ row }">{{ formatDim(row, row.tapDrill) }}</template>
       </el-table-column>
-      <el-table-column :label="pt('colActions')" :min-width="THREAD_TABLE_COL.actionView">
+      <el-table-column :min-width="THREAD_TABLE_COL.actionIcon" align="center" class-name="thread-col-action">
+        <template #header><span aria-hidden="true">+</span></template>
         <template #default="{ row }">
-          <el-button size="small" link type="primary" @click="$emit('row-click', row)">
-            {{ pt('clickRowHint') }}
+          <el-button
+            size="small"
+            circle
+            :type="compareIds.includes(row.id) ? 'success' : 'primary'"
+            plain
+            :aria-label="compareIds.includes(row.id) ? pt('inCompare') : pt('addToCompare')"
+            @click.stop="$emit('toggle-compare', row)"
+          >
+            <el-icon><component :is="compareIds.includes(row.id) ? Check : Plus" /></el-icon>
           </el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <div class="flex flex-wrap gap-2">
+    <div v-if="showSeriesToggle" class="flex flex-wrap gap-2">
       <el-button size="small" @click="$emit('open-compare', 'whitworth-quarter')">
         {{ pt('whComparePreset') }}
       </el-button>
@@ -75,6 +84,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { Plus, Check } from '@element-plus/icons-vue'
 import { THREAD_TABLE_COL, THREAD_TABLE_MAX_HEIGHT } from '@/constants/thread-table-columns'
 import { getWhitworthReferenceRows, getWhitworthRowsForTaxonomy } from '@/constants/thread-standards/whitworth-data'
 import { formatDim } from '@/utils/thread-standards'
@@ -83,9 +93,10 @@ import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
 const props = defineProps({
   taxonomyId: { type: String, default: 'whitworth' },
   pt: { type: Function, required: true },
+  compareIds: { type: Array, default: () => [] },
 })
 
-defineEmits(['row-click', 'open-compare'])
+defineEmits(['row-click', 'open-compare', 'toggle-compare'])
 
 const showSeriesToggle = computed(() => props.taxonomyId === 'whitworth')
 

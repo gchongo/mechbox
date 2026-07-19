@@ -11,9 +11,8 @@
         <section class="card-panel">
           <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
           <el-form label-width="100px">
-            <CalcFormItem :label="pf('nominalSize')">
+            <CalcFormItem :label="pf('nominalSize')" unit="mm">
               <el-input-number v-model="nominal" :min="1" :max="500" :precision="2" />
-              <span class="ml-2 text-sm text-gray-500">mm</span>
             </CalcFormItem>
             <CalcFormItem :label="pf('holeCode')">
               <el-input v-model="holeCode" placeholder="H7" class="w-32" />
@@ -21,9 +20,8 @@
             <CalcFormItem :label="pf('shaftCode')">
               <el-input v-model="shaftCode" placeholder="g6" class="w-32" />
             </CalcFormItem>
-            <CalcFormItem :label="pf('assemblyDeltaT')">
+            <CalcFormItem :label="pf('assemblyDeltaT')" unit="°C">
               <el-input-number v-model="deltaT" :min="-200" :max="400" :step="10" />
-              <span class="ml-2 text-xs text-gray-500">°C</span>
             </CalcFormItem>
           </el-form>
         </section>
@@ -115,9 +113,17 @@
     </div>
 
     <section class="card-panel mt-6">
-      <h2 class="mb-2 text-sm font-semibold">{{ pf('supportedCodes') }}</h2>
-      <p class="mb-2 text-xs text-gray-500">{{ pf('holeLetters') }}: {{ holeLetters.join(', ') }}</p>
-      <p class="text-xs text-gray-500">{{ pf('shaftLetters') }}: {{ shaftLetters.join(', ') }}</p>
+      <h2 class="mb-2 text-sm font-semibold">{{ pf('fundamentalDeviationTitle') }}</h2>
+      <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">{{ pf('fundamentalDeviationHint') }}</p>
+      <FitFundamentalDeviationChart
+        :hole-letter="currentHoleLetter"
+        :shaft-letter="currentShaftLetter"
+        @select-hole="onSelectHoleLetter"
+        @select-shaft="onSelectShaftLetter"
+      />
+      <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        {{ pf('holeLetters') }}: {{ holeLetters.join(', ') }} · {{ pf('shaftLetters') }}: {{ shaftLetters.join(', ') }}
+      </p>
     </section>
 
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
@@ -136,11 +142,18 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { analyzeFit, generateToleranceBandData, SUPPORTED_HOLE_LETTERS, SUPPORTED_SHAFT_LETTERS } from '@/utils/iso-286-calc'
+import {
+  analyzeFit,
+  generateToleranceBandData,
+  parseToleranceDesignation,
+  SUPPORTED_HOLE_LETTERS,
+  SUPPORTED_SHAFT_LETTERS,
+} from '@/utils/iso-286-calc'
 import { HOLE_BASIS_ROWS, SHAFT_BASIS_ROWS } from '@/constants/fit-recommendations'
 import FitRecommendationTable from '@/components/fit/FitRecommendationTable.vue'
 import FitDiagram from '@/components/fit/FitDiagram.vue'
 import FitToleranceBand from '@/components/fit/FitToleranceBand.vue'
+import FitFundamentalDeviationChart from '@/components/fit/FitFundamentalDeviationChart.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import { exportToolReportPdf } from '@/utils/export'
 import { buildEnhancedReport } from '@/utils/enhanced-report'
@@ -242,6 +255,30 @@ const fitTagType = computed(() => {
 function applyFitSelection({ hole, shaft }) {
   holeCode.value = hole
   shaftCode.value = shaft
+}
+
+const currentHoleLetter = computed(() => {
+  const p = parseToleranceDesignation(holeCode.value)
+  return p.errorKey ? 'H' : p.letter
+})
+
+const currentShaftLetter = computed(() => {
+  const p = parseToleranceDesignation(shaftCode.value)
+  return p.errorKey ? 'g' : p.letter
+})
+
+function replaceDesignationLetter(code, letter) {
+  const p = parseToleranceDesignation(code)
+  const grade = p.errorKey ? 7 : p.grade
+  return `${letter}${grade}`
+}
+
+function onSelectHoleLetter(letter) {
+  holeCode.value = replaceDesignationLetter(holeCode.value, letter)
+}
+
+function onSelectShaftLetter(letter) {
+  shaftCode.value = replaceDesignationLetter(shaftCode.value, letter)
 }
 
 async function exportPdf() {
