@@ -242,16 +242,18 @@ const toolsPopperOptions = {
 const TOOL_PATHS = {
   chain: [
     '/batch', '/allocation', '/fit', '/gdt-stack', '/units', '/fatigue',
-    '/interference-fit', '/thermal-expansion', '/gear', '/thread', '/bolt-preload', '/bearing',
+    '/interference-fit', '/thermal-expansion', '/gear', '/bevel-gear', '/thread', '/bolt-preload', '/bearing',
+    '/standards-ref',
   ],
   drive: [
-    '/beam', '/sheet-metal', '/o-ring', '/shaft', '/key', '/weld',
-    '/bolt-group', '/spring', '/clutch', '/belt', '/chain',
-    '/pipe-flow', '/plate-buckling', '/modal-freq',
+    '/beam', '/sheet-metal', '/o-ring', '/gasket-flange', '/shaft', '/key', '/weld',
+    '/bolt-group', '/spring', '/clutch', '/belt', '/chain', '/worm-gear', '/bevel-gear',
+    '/pipe-flow', '/plate-buckling', '/column-buckling', '/pin-retainer', '/modal-freq',
+    '/vibration-isolation', '/heat-transfer',
   ],
   material: [
     '/analytics', '/cylinder', '/materials', '/material-selection',
-    '/heat-treatment', '/manufacturing', '/quality',
+    '/heat-treatment', '/manufacturing', '/standards-ref', '/quality',
   ],
 }
 

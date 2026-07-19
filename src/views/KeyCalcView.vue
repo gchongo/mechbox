@@ -60,7 +60,7 @@
           <div v-if="result.recommendedLength" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('recommendedLength')" /><dd class="font-mono">{{ result.recommendedLength.toFixed(1) }} mm</dd></div>
           <div v-if="result.shearAmplitude" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
         </dl>
-        <p v-if="reviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
+        <p v-if="reviewOnly" class="mt-3 text-xs text-warning"><MathContent :text="pt('hintSimple')" /></p>
 
         <FormulaPanel>
           <MathTex :expr="formulaForce" block />

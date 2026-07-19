@@ -120,6 +120,8 @@ const activeProject = computed(() => projects.value.find((p) => p.id === activeI
 const allChains = computed(() => [
   ...listChains('powertrain'),
   ...listChains('bolt-joint'),
+  ...listChains('flange-seal'),
+  ...listChains('gearbox'),
 ])
 
 const availableChains = computed(() => {
@@ -239,6 +241,8 @@ function openChain(row) {
   const routes = {
     powertrain: '/design/powertrain',
     'bolt-joint': '/design/bolt-joint',
+    'flange-seal': '/design/flange-seal',
+    gearbox: '/design/gearbox',
   }
   const path = routes[row.chainType]
   if (path) router.push(path)

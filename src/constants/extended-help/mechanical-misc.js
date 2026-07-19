@@ -774,6 +774,150 @@ export function getPlateBucklingHelp(locale = 'zh') {
 }
 
 /** @param {'zh'|'en'} locale */
+export function getColumnBucklingHelp(locale = 'zh') {
+  const L = locale === 'en'
+  return {
+    blocks: [
+      modesBlock(L ? 'Calculation modes' : '计算模式', stdCalcModes(locale, pickLocale(locale, {
+        zh: {
+          simpleModel: '欧拉 $P_e$；细长杆估算',
+          completeModel: '按 λ 切换 Rankine；$f_y$ 必填',
+          proModel: '偏心放大 $\\sigma_{max}$',
+          simplePass: 'SF ≥ minSafety（默认 2）；estimateOnly',
+          completePass: '同左',
+          proPass: 'SF ∧ 偏心屈服',
+          simpleCaveat: '端部 μ 与缺陷需人工确认',
+          completeCaveat: '中长柱用 Rankine 经验式',
+          proCaveat: '偏心模型简化，非完整二阶分析',
+        },
+        en: {
+          simpleModel: 'Euler $P_e$; slender estimate',
+          completeModel: 'Rankine by λ; $f_y$ required',
+          proModel: 'Eccentric $\\sigma_{max}$ amplification',
+          simplePass: 'SF ≥ minSafety (default 2); estimateOnly',
+          completePass: 'Same',
+          proPass: 'SF ∧ eccentric yield',
+          simpleCaveat: 'Confirm μ and imperfections',
+          completeCaveat: 'Rankine is empirical',
+          proCaveat: 'Simplified eccentricity—not full 2nd-order analysis',
+        },
+      }))),
+      formulasBlock(L ? 'Column buckling' : '柱屈曲', [
+        { name: L ? 'Euler' : '欧拉', latex: 'P_e = \\frac{\\pi^2 E I}{(\\mu L)^2}', note: L ? 'Slender' : '细长柱' },
+        { name: L ? 'Slenderness' : '长细比', latex: '\\lambda = \\mu L / i', note: 'i=\\sqrt{I/A}' },
+        { name: 'Rankine', latex: '\\frac{1}{\\sigma_r}=\\frac{1}{f_y}+\\frac{1}{\\sigma_E}', note: L ? 'Intermediate' : '中长柱' },
+      ]),
+      passBlock(L ? 'Pass criteria' : '判定', pickLocale(locale, {
+        zh: [{ check: '柱', rule: '$P_{cr}/F \\ge$ minSafety（默认 2）' }],
+        en: [{ check: 'Column', rule: '$P_{cr}/F \\ge$ minSafety (default 2)' }],
+      })),
+      limitsBlock(L ? 'Limitations' : '适用边界', pickLocale(locale, {
+        zh: ['理想直杆；未含残余应力与局部屈曲。'],
+        en: ['Ideal straight member; no residual stress or local buckling.'],
+      })),
+    ],
+  }
+}
+
+/** @param {'zh'|'en'} locale */
+export function getPinRetainerHelp(locale = 'zh') {
+  const L = locale === 'en'
+  return {
+    blocks: [
+      modesBlock(L ? 'Calculation modes' : '计算模式', stdCalcModes(locale, pickLocale(locale, {
+        zh: {
+          simpleModel: '销剪/挤或挡圈环剪/沟槽',
+          completeModel: '可调许用 + 推荐销径/轴向许用',
+          proModel: '销 Kt；挡圈转速折减',
+          simplePass: '应力 ≤ 许用/SF；estimateOnly',
+          completePass: '同左',
+          proPass: '另计疲劳当量 / 转速',
+          simpleCaveat: '默认许用为工程常用值',
+          completeCaveat: '材料牌号请自行核对',
+          proCaveat: '挡圈转速折减为经验式',
+        },
+        en: {
+          simpleModel: 'Pin shear/bearing or ring/groove',
+          completeModel: 'Adjust allowables + recommended Ø / axial',
+          proModel: 'Pin Kt; ring speed derating',
+          simplePass: 'Stress ≤ allow/SF; estimateOnly',
+          completePass: 'Same',
+          proPass: 'Plus fatigue equiv. / speed',
+          simpleCaveat: 'Default allowables are typical values',
+          completeCaveat: 'Confirm material grades',
+          proCaveat: 'Speed derating is empirical',
+        },
+      }))),
+      formulasBlock(L ? 'Pin / ring' : '销 / 挡圈', [
+        { name: L ? 'Pin shear' : '销剪切', latex: '\\tau = \\frac{4F}{n\\pi d^2}', note: 'n=1|2' },
+        { name: L ? 'Pin bearing' : '销挤压', latex: '\\sigma_b = F/(d t)', note: '' },
+        { name: L ? 'Ring shear' : '挡圈环剪', latex: '\\tau \\approx F/(\\pi d s)', note: L ? 'Simplified' : '简化' },
+      ]),
+      passBlock(L ? 'Pass criteria' : '判定', pickLocale(locale, {
+        zh: [{ check: '销/挡圈', rule: '各应力 ≤ 许用 / SF' }],
+        en: [{ check: 'Pin/ring', rule: 'Each stress ≤ allowable / SF' }],
+      })),
+      limitsBlock(L ? 'Limitations' : '适用边界', pickLocale(locale, {
+        zh: ['挡圈正式选型以厂家样本为准。'],
+        en: ['Use manufacturer catalogs for retaining-ring release.'],
+      })),
+    ],
+  }
+}
+
+/** @param {'zh'|'en'} locale */
+export function getGasketFlangeHelp(locale = 'zh') {
+  const L = locale === 'en'
+  return {
+    blocks: [
+      modesBlock(L ? 'Calculation modes' : '计算模式', stdCalcModes(locale, pickLocale(locale, {
+        zh: {
+          simpleModel: '坐落/工况比压估算（estimateOnly）',
+          completeModel: 'σ_seat≥y、σ_op≥m·p、总预紧 ≥ 建议值',
+          proModel: '完整 + 安全系数 + 螺栓数均匀性提示',
+          simplePass: '**pass 恒 false**',
+          completePass: '坐落 ∧ 工况 ∧ 容量',
+          proPass: '同完整（含 SF）',
+          simpleCaveat: '方案级',
+          completeCaveat: 'm、y 简化表',
+          proCaveat: '非正式 ASME 放行',
+        },
+        en: {
+          simpleModel: 'Seating/operating stress estimate (estimateOnly)',
+          completeModel: 'σ_seat≥y, σ_op≥m·p, total preload ≥ required',
+          proModel: 'Full + SF + bolt-count uniformity hint',
+          simplePass: '**pass always false**',
+          completePass: 'seating ∧ operating ∧ capacity',
+          proPass: 'Same as full (with SF)',
+          simpleCaveat: 'Concept stage',
+          completeCaveat: 'Simplified m, y table',
+          proCaveat: 'Not formal ASME release',
+        },
+      }))),
+      formulasBlock(L ? 'Gasket seal' : '垫片密封', [
+        { name: L ? 'Area' : '面积', latex: 'A_g=\\pi/4(D_o^2-D_i^2)', note: '' },
+        { name: L ? 'Seating' : '坐落', latex: '\\sigma_{seat}=n F_0/A_g \\ge y', note: '' },
+        { name: L ? 'Operating' : '工况', latex: '\\sigma_{op}=(n F_0-p A_i)/A_g \\ge m p', note: '' },
+      ]),
+      passBlock(L ? 'Pass criteria' : '判定', pickLocale(locale, {
+        zh: [
+          { check: '简化', rule: 'estimateOnly，pass=false' },
+          { check: '完整/专业', rule: '坐落 ∧ 工况 ∧ 总预紧容量' },
+        ],
+        en: [
+          { check: 'Simple', rule: 'estimateOnly, pass=false' },
+          { check: 'Full/Pro', rule: 'seating ∧ operating ∧ capacity' },
+        ],
+      })),
+      limitsBlock(L ? 'Limitations' : '适用边界', pickLocale(locale, {
+        zh: ['环形垫片简化；未计法兰刚度、蠕变与热循环。正式设计按垫片样本与法兰标准。'],
+        en: ['Annular gasket simplification; no flange stiffness, creep, or thermal cycling. Use catalogs and flange codes for release.'],
+      })),
+    ],
+  }
+}
+
+/** @param {'zh'|'en'} locale */
 export function getModalFreqHelp(locale = 'zh') {
   const L = locale === 'en'
   return {

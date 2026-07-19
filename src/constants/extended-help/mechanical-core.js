@@ -782,20 +782,22 @@ const BEARING = {
       { name: '基本额定寿命', latex: 'L_{10} = \\left(\\frac{C}{P}\\right)^\\varepsilon', note: '百万转；球 ε=3，滚子 ε=10/3' },
       { name: '小时寿命', latex: 'L_{10h} = \\frac{10^6}{60n} L_{10}', note: 'lifePass ⇔ $L_{10h}\\ge$ targetHours（默认 10000 h）' },
       { name: '修正寿命', latex: 'L_{nm} = a_1 \\cdot a_{ISO} \\cdot a_2 \\cdot L_{10}', note: '专业模式含 a₂ 温度；完整 a₂=1' },
-      { name: '静载安全系数', latex: 'S_0 = \\frac{C_0}{P}', note: 'staticPass ⇔ $S_0\\ge$ minStaticSafety（默认 **1.5**）' },
+      { name: '静载安全系数', latex: 'S_0 = \\frac{C_0}{P_0}', note: 'ISO 76；$P_0=\\max(F_r,0.6F_r+0.5F_a)$（球）；staticPass ⇔ $S_0\\ge$ minStaticSafety（默认 **1.5**）' },
+      { name: 'dn 值', latex: 'dn = d \\cdot n', note: '内径 mm × 转速 rpm；脂润滑球轴承参考上限约 3.5×10⁵（提示，非硬限）' },
       { name: '安装修正', latex: 'C\' = f_C \\cdot C,\\quad C_0\' = f_{C0} \\cdot C_0', note: 'DT 串联 f_C=2；预紧增大 Fa′ 进而增大 P' },
     ],
     passChecks: [
       { check: '简化 · Fa 无 Y', rule: 'Fa>0 且未显式 Y → **bearing_simple_xy_required**，pass=false' },
       { check: '简化 · 一般', rule: '**pass 恒 false**（estimateOnly）；lifePass/staticPass 仍可看' },
       { check: 'lifePass', rule: '$L_{10h}\\ge$ targetHours（默认 10000 h）' },
-      { check: 'staticPass', rule: '$S_0=C_0/P\\ge$ minStaticSafety（默认 **1.5**）；无 C₀ 时 staticPass=true' },
+      { check: 'staticPass', rule: '$S_0=C_0/P_0\\ge$ minStaticSafety（默认 **1.5**）；无 C₀ 时 staticPass=true' },
       { check: '完整综合', rule: '**pass = lifePass ∧ staticPass**' },
       { check: '专业 · 转速', rule: '填 limitingSpeed 时 **speedPass = (n\\le limit)**；否则 speedPass 恒 true' },
+      { check: '专业 · dn', rule: '填 bore 且超脂润滑参考时 **dnWarningKey**（不单独否决 pass）' },
       { check: '专业综合', rule: '**pass = lifePass ∧ staticPass ∧ speedPass**' },
     ],
     guide: {
-      intro: '轴承页按 ISO 281 用额定动载 **C**、静载 **C₀** 与当量载荷 **P** 算 **L10** 寿命与 **S₀** 静载安全；完整模式从 **bearing-xy-tables** 按 Fr/Fa 查 **X/Y**；专业模式加温度与极限转速。',
+      intro: '轴承页按 ISO 281 用额定动载 **C**、静载 **C₀** 与当量动载荷 **P** 算 **L10**；静载安全按 ISO 76 用 **P₀** 算 **S₀**；完整模式查 **X/Y**；专业模式加温度、极限转速与 dn 提示。',
       sections: [
         {
           title: '1. X/Y 与当量载荷',
@@ -816,10 +818,13 @@ const BEARING = {
           ],
         },
         {
-          title: '3. 静载与转速',
+          title: '3. 静载、预紧与 dn',
           bullets: [
+            'S₀ = C₀/P₀（勿用动当量 P 代替 P₀）',
+            '建议预紧约 0.01·C（单列球）或 0.02·C（DB/DF）',
             '冲击/低速重载须看 S₀≥1.5（可调 minStaticSafety）',
             '专业 limitingSpeed：n>limit → speedWarningKey，pass ✗',
+            'dn=bore·rpm：超脂润滑参考仅警告',
             '径向刚度 k_r 仅专业显示，不参与 pass',
           ],
         },
@@ -902,20 +907,22 @@ const BEARING = {
       { name: 'Basic rating life', latex: 'L_{10} = \\left(\\frac{C}{P}\\right)^\\varepsilon', note: 'Mrev; ball ε=3, roller 10/3' },
       { name: 'Life hours', latex: 'L_{10h} = \\frac{10^6}{60n} L_{10}', note: 'lifePass ⇔ ≥ targetHours' },
       { name: 'Modified life', latex: 'L_{nm} = a_1 \\cdot a_{ISO} \\cdot a_2 \\cdot L_{10}', note: 'Pro includes a₂ temperature' },
-      { name: 'Static safety', latex: 'S_0 = \\frac{C_0}{P}', note: 'staticPass ⇔ ≥ **1.5** default' },
+      { name: 'Static safety', latex: 'S_0 = \\frac{C_0}{P_0}', note: 'ISO 76; ball $P_0=\\max(F_r,0.6F_r+0.5F_a)$; staticPass ⇔ ≥ **1.5** default' },
+      { name: 'dn value', latex: 'dn = d \\cdot n', note: 'bore mm × rpm; grease ball hint ≈ 3.5×10⁵ (advisory)' },
       { name: 'Mounting factors', latex: 'C\' = f_C \\cdot C', note: 'DT tandem f_C=2; preload raises Fa′ and P' },
     ],
     passChecks: [
       { check: 'Simple · Fa no Y', rule: 'Fa>0 without Y → **bearing_simple_xy_required**' },
       { check: 'Simple · general', rule: '**pass always false** (estimateOnly)' },
       { check: 'lifePass', rule: '$L_{10h}\\ge$ targetHours (default 10000 h)' },
-      { check: 'staticPass', rule: '$S_0\\ge$ minStaticSafety (**1.5** default); skip if no C₀' },
+      { check: 'staticPass', rule: '$S_0=C_0/P_0\\ge$ minStaticSafety (**1.5** default); skip if no C₀' },
       { check: 'Full overall', rule: '**pass = lifePass ∧ staticPass**' },
       { check: 'Pro · speed', rule: 'With limitingSpeed: **speedPass = n≤limit**' },
+      { check: 'Pro · dn', rule: 'With bore over grease hint → **dnWarningKey** (does not alone fail pass)' },
       { check: 'Pro overall', rule: '**pass = life ∧ static ∧ speed**' },
     ],
     guide: {
-      intro: 'ISO 281 rating life from **C**, **C₀**, and equivalent load **P**; Full mode looks up **X/Y** from **bearing-xy-tables**; Professional adds temperature and speed limit.',
+      intro: 'ISO 281 life from **C** and dynamic **P**; ISO 76 static safety from **C₀** and **P₀**; Full looks up **X/Y**; Professional adds temperature, speed limit, and dn hint.',
       sections: [
         {
           title: '1. X/Y and P',
@@ -936,10 +943,13 @@ const BEARING = {
           ],
         },
         {
-          title: '3. Static and speed',
+          title: '3. Static, preload, dn',
           bullets: [
+            'S₀ = C₀/P₀ (do not use dynamic P for static)',
+            'Suggested preload ≈ 0.01·C (single ball) or 0.02·C (DB/DF)',
             'Shock/low-speed: need S₀≥1.5',
             'Pro: n>limitingSpeed → speedPass ✗',
+            'dn=bore·rpm: grease over-limit is advisory only',
             'Radial stiffness k_r display only—not in pass',
           ],
         },

@@ -2,7 +2,7 @@
  * 设计链各步骤输入映射 + 实时 CalcResult 快照
  */
 
-import { adaptShaftTorsion, adaptBearing, adaptKeyConnection, adaptBoltPreload, adaptBoltGroup, adaptFilletWeld } from '@/utils/calc-adapters'
+import { adaptShaftTorsion, adaptBearing, adaptKeyConnection, adaptBoltPreload, adaptBoltGroup, adaptFilletWeld, adaptGasketFlange, adaptGear } from '@/utils/calc-adapters'
 import { updateSharedInputs } from '@/utils/design-context'
 
 /** 从共享输入构建某步骤的 analyze* 入参 */
@@ -12,6 +12,10 @@ export function buildStepInputs(chainType, stepKey, shared) {
       return buildPowertrainStepInputs(stepKey, shared)
     case 'bolt-joint':
       return buildBoltJointStepInputs(stepKey, shared)
+    case 'flange-seal':
+      return buildFlangeSealStepInputs(stepKey, shared)
+    case 'gearbox':
+      return buildGearboxStepInputs(stepKey, shared)
     default:
       return { ...shared }
   }
@@ -107,13 +111,84 @@ function buildBoltJointStepInputs(stepKey, s) {
   }
 }
 
+function buildFlangeSealStepInputs(stepKey, s) {
+  switch (stepKey) {
+    case 'bolt-preload':
+      return buildBoltJointStepInputs('bolt-preload', s)
+    case 'bolt-group':
+      return buildBoltJointStepInputs('bolt-group', s)
+    case 'gasket-flange':
+      return {
+        calcMode: 'complete',
+        boltCount: s.boltCount,
+        preloadPerBolt: s.preload,
+        gasketInner: s.gasketInner ?? 80,
+        gasketOuter: s.gasketOuter ?? 110,
+        pressure: s.pressure ?? 1.6,
+        gasketMaterial: s.gasketMaterial ?? 'compressed_fiber',
+        factorM: s.factorM,
+        seatingStressY: s.seatingStressY,
+        minSafety: s.minSafety ?? 1.2,
+      }
+    default:
+      return { ...s }
+  }
+}
+
+function buildGearboxStepInputs(stepKey, s) {
+  switch (stepKey) {
+    case 'gear':
+      return {
+        calcMode: 'complete',
+        module: s.module ?? 2,
+        pinionTeeth: s.pinionTeeth ?? 20,
+        gearTeeth: s.gearTeeth ?? 40,
+        faceWidth: s.faceWidth ?? 20,
+        torque: s.torque,
+        rpm: s.rpm,
+        pressureAngle: s.pressureAngle ?? 20,
+        helixAngle: s.helixAngle ?? 0,
+        pinionMaterial: s.pinionMaterial ?? 'st-soft',
+        gearMaterial: s.gearMaterial ?? 'st-soft',
+        applicationFactor: s.applicationFactor ?? 1.25,
+        iso1328Grade: s.iso1328Grade ?? 7,
+        accuracyGrade: s.accuracyGrade ?? 7,
+        minSafetyContact: s.minSafetyContact ?? 1.0,
+        minSafetyBending: s.minSafetyBending ?? 1.4,
+      }
+    case 'shaft':
+      return buildPowertrainStepInputs('shaft', s)
+    case 'bearing': {
+      const m = s.module ?? 2
+      const z1 = s.pinionTeeth ?? 20
+      const Ft = (2000 * (s.torque ?? 0)) / Math.max(m * z1, 1e-6)
+      const alpha = ((s.pressureAngle ?? 20) * Math.PI) / 180
+      const FrEst = Ft * Math.tan(alpha)
+      return {
+        ...buildPowertrainStepInputs('bearing', {
+          ...s,
+          radialLoad: s.radialLoad > 0 ? s.radialLoad : FrEst,
+          axialLoad: s.axialLoad ?? 0,
+        }),
+        bore: s.shaftDiameter,
+      }
+    }
+    case 'key':
+      return buildPowertrainStepInputs('key', s)
+    default:
+      return { ...s }
+  }
+}
+
 const ADAPTERS = {
   shaft: adaptShaftTorsion,
   bearing: adaptBearing,
   key: adaptKeyConnection,
+  gear: adaptGear,
   'bolt-preload': adaptBoltPreload,
   'bolt-group': adaptBoltGroup,
   weld: adaptFilletWeld,
+  'gasket-flange': adaptGasketFlange,
 }
 
 /** 构建链上所有步骤的实时快照 */
@@ -134,15 +209,19 @@ export function buildChainSnapshots(chainType, sharedInputs) {
 export const CHAIN_STEP_KEYS = {
   powertrain: ['shaft', 'bearing', 'key'],
   'bolt-joint': ['bolt-preload', 'bolt-group', 'weld'],
+  'flange-seal': ['bolt-preload', 'bolt-group', 'gasket-flange'],
+  gearbox: ['gear', 'shaft', 'bearing', 'key'],
 }
 
 const STEP_TOOL_MAP = {
   shaft: 'shaft',
   bearing: 'bearing',
   key: 'key',
+  gear: 'gear',
   'bolt-preload': 'bolt-preload',
   'bolt-group': 'bolt-group',
   weld: 'weld',
+  'gasket-flange': 'gasket-flange',
 }
 
 /**
@@ -163,6 +242,20 @@ export const CHAIN_INVERSE_APPLY = {
     'bolt-preload': { 'no-separation': 'preload' },
     'bolt-group': { 'min-bolt-count': 'boltCount' },
     weld: { 'min-leg-size': 'legSize', 'min-weld-length': 'weldLength' },
+  },
+  'flange-seal': {
+    'bolt-preload': { 'no-separation': 'preload' },
+    'bolt-group': { 'min-bolt-count': 'boltCount' },
+    'gasket-flange': {},
+  },
+  gearbox: {
+    gear: {},
+    shaft: { 'min-diameter-standard': 'shaftDiameter', 'min-diameter-continuous': 'shaftDiameter' },
+    bearing: {
+      'min-dynamic-load': 'dynamicLoad',
+      'pick-standard-model': { field: 'dynamicLoad', from: 'solutionRow.C' },
+    },
+    key: { 'min-key-length': 'keyLength' },
   },
 }
 
@@ -228,6 +321,60 @@ export const CHAIN_TOOL_TO_SHARED = {
       ['legSize', 'legSize'],
       ['weldLength', 'weldLength'],
       ['weldForce', 'force'],
+    ],
+  },
+  'flange-seal': {
+    'bolt-preload': [
+      ['diameter', 'diameter'],
+      ['pitch', 'pitch'],
+      ['preload', 'preload'],
+      ['externalAxialLoad', 'externalAxialLoad'],
+      ['gripLength', 'gripLength'],
+    ],
+    'bolt-group': [
+      ['boltCount', 'boltCount'],
+      ['boltCircleRadius', 'boltCircleRadius'],
+      ['shearX', 'shearX'],
+      ['shearY', 'shearY'],
+      ['moment', 'moment'],
+      ['allowPerBolt', 'allowPerBolt'],
+      ['preload', 'clampForcePerBolt'],
+    ],
+    'gasket-flange': [
+      ['boltCount', 'boltCount'],
+      ['preload', 'preloadPerBolt'],
+      ['gasketInner', 'gasketInner'],
+      ['gasketOuter', 'gasketOuter'],
+      ['pressure', 'pressure'],
+    ],
+  },
+  gearbox: {
+    gear: [
+      ['module', 'module'],
+      ['pinionTeeth', 'pinionTeeth'],
+      ['gearTeeth', 'gearTeeth'],
+      ['faceWidth', 'faceWidth'],
+      ['torque', 'torque'],
+      ['rpm', 'rpm'],
+    ],
+    shaft: [
+      ['shaftDiameter', 'diameter'],
+      ['torque', 'torque'],
+      ['yieldStrength', 'yieldStrength'],
+    ],
+    bearing: [
+      ['dynamicLoad', 'dynamicLoad'],
+      ['radialLoad', 'radialLoad'],
+      ['axialLoad', 'axialLoad'],
+      ['rpm', 'rpm'],
+      ['targetHours', 'targetHours'],
+      ['shaftDiameter', 'bore'],
+    ],
+    key: [
+      ['torque', 'torque'],
+      ['shaftDiameter', 'shaftDiameter'],
+      ['keyWidth', 'keyWidth'],
+      ['keyLength', 'keyLength'],
     ],
   },
 }

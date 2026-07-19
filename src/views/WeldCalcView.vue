@@ -20,7 +20,23 @@
             <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
             <el-form label-width="120px">
               <CalcFormItem :label="pf('legSize')" unit="mm">
-                <el-input-number v-model="form.legSize" :min="3" :step="1" />
+                <el-input-number v-model="form.legSize" :min="2" :step="1" />
+                <el-button
+                  v-if="filletLegRec"
+                  class="ml-2"
+                  size="small"
+                  link
+                  @click="form.legSize = filletLegRec.zRec"
+                >
+                  {{ fc('recommend') }} {{ filletLegRec.zRec }} mm
+                  ({{ filletLegRec.zMin }}–{{ filletLegRec.zMax }})
+                </el-button>
+              </CalcFormItem>
+              <CalcFormItem :label="pf('basePlateThickness')" unit="mm">
+                <el-input-number v-model="form.basePlateThickness" :min="1" :step="1" />
+                <p v-if="filletLegRec" class="mt-1 text-xs text-gray-500">
+                  {{ pf('legRecHint', { min: filletLegRec.zMin, rec: filletLegRec.zRec, max: filletLegRec.zMax }) }}
+                </p>
               </CalcFormItem>
               <CalcFormItem :label="pf('weldLength')" unit="mm">
                 <el-input-number v-model="form.weldLength" :min="10" />
@@ -29,16 +45,16 @@
                 <el-input-number v-model="form.force" :min="0" :step="100" />
               </CalcFormItem>
               <template v-if="form.calcMode === 'professional'">
-                <CalcFormItem :label="pf('eccentricity')">
+                <CalcFormItem :label="pf('eccentricity')" unit="mm">
                   <el-input-number v-model="form.eccentricity" :min="0" :precision="1" />
                 </CalcFormItem>
-                <CalcFormItem :label="pf('heatInput')">
+                <CalcFormItem :label="pf('heatInput')" unit="kJ/mm">
                   <el-input-number v-model="form.heatInput" :min="0.5" :max="5" :precision="2" :step="0.1" />
                 </CalcFormItem>
-                <CalcFormItem :label="pf('plateThickness')">
+                <CalcFormItem :label="pf('plateThickness')" unit="mm">
                   <el-input-number v-model="form.plateThickness" :min="3" />
                 </CalcFormItem>
-                <CalcFormItem :label="pf('stressRangeDelta')">
+                <CalcFormItem :label="pf('stressRangeDelta')" unit="MPa">
                   <el-input-number v-model="form.stressRange" :min="0" :precision="1" />
                 </CalcFormItem>
               </template>
@@ -127,7 +143,7 @@
                 </template>
               </el-table-column>
             </el-table>
-            <p v-if="filletReviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
+            <p v-if="filletReviewOnly" class="mt-3 text-xs text-warning"><MathContent :text="pt('hintSimple')" /></p>
             <p v-if="filletResult.strictest" class="mt-2 text-xs text-gray-500">
               {{ pr('strictestStandard') }}: {{ filletResult.strictest?.standard }} ({{ pr('allowable') }} {{ filletResult.strictest?.allowableShear?.toFixed(1) }} MPa)
             </p>
@@ -194,7 +210,7 @@
                 </template>
               </el-table-column>
             </el-table>
-            <p v-if="buttReviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
+            <p v-if="buttReviewOnly" class="mt-3 text-xs text-warning"><MathContent :text="pt('hintSimple')" /></p>
           </section>
         </div>
       </el-tab-pane>
@@ -275,13 +291,13 @@
                   <el-option v-for="(g, k) in weldSteelGrades" :key="k" :label="g.label" :value="k" />
                 </el-select>
               </CalcFormItem>
-              <CalcFormItem :label="pf('legSize')">
+              <CalcFormItem :label="pf('legSize')" unit="mm">
                 <el-input-number v-model="haz.legSize" :min="3" />
               </CalcFormItem>
-              <CalcFormItem :label="pf('force')">
+              <CalcFormItem :label="pf('force')" unit="N">
                 <el-input-number v-model="haz.force" :min="0" :step="100" />
               </CalcFormItem>
-              <CalcFormItem :label="pf('weldLength')">
+              <CalcFormItem :label="pf('weldLength')" unit="mm">
                 <el-input-number v-model="haz.weldLength" :min="10" />
               </CalcFormItem>
             </el-form>
@@ -339,6 +355,7 @@ import {
   analyzeHAZ,
   WELD_STEEL_GRADES,
   WELD_DETAIL_CATEGORIES,
+  recommendFilletLeg,
 } from '@/utils/weld-calc'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
 import FilletWeldDiagram from '@/components/weld/FilletWeldDiagram.vue'
@@ -378,6 +395,7 @@ const tab = ref('fillet')
 const form = reactive({
   calcMode: 'complete',
   legSize: 6,
+  basePlateThickness: 10,
   weldLength: 80,
   force: 12000,
   steelGrade: 'Q235',
@@ -414,6 +432,7 @@ const haz = reactive({
 })
 
 const filletResult = computed(() => analyzeFilletWeld(form))
+const filletLegRec = computed(() => recommendFilletLeg(form.basePlateThickness))
 
 const decisionPreset = DECISION_PRESETS.weld
 const baseInputs = computed(() => ({ ...form }))

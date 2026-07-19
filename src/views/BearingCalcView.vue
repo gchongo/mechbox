@@ -67,6 +67,9 @@
           >
             <el-input-number v-model="form.axialLoad" :min="0" :step="50" @change="markConfirmed('axialLoad')" />
           </CalcFormItem>
+          <CalcFormItem :label="pf('bore')">
+            <el-input-number v-model="form.bore" :min="0" :step="5" />
+          </CalcFormItem>
           <template v-if="form.calcMode !== 'simple'">
             <CalcFormItem :label="pf('mountingArrangement')">
               <el-select v-model="form.mountingArrangement" class="w-full">
@@ -79,7 +82,10 @@
               </el-select>
             </CalcFormItem>
             <CalcFormItem :label="pf('axialPreload')">
-              <el-input-number v-model="form.axialPreload" :min="0" :step="50" />
+              <div class="flex flex-wrap items-center gap-2">
+                <el-input-number v-model="form.axialPreload" :min="0" :step="50" />
+                <el-button size="small" @click="applySuggestedPreload">{{ pf('applySuggestedPreload') }}</el-button>
+              </div>
             </CalcFormItem>
           </template>
           <CalcFormItem v-if="form.calcMode === 'simple' || !form.autoLookup" :label="pf('factorX')">
@@ -165,6 +171,21 @@
             <ResultLabel label-class="text-gray-500" :text="pr('equivalentLoad')" />
             <dd class="font-mono">{{ result.equivalentLoad.toFixed(1) }} N</dd>
           </div>
+          <div v-if="result.equivalentStaticLoad != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel label-class="text-gray-500" :text="pr('equivalentStaticLoad')" />
+            <dd class="font-mono">{{ result.equivalentStaticLoad.toFixed(1) }} N</dd>
+          </div>
+          <div v-if="result.suggestedPreload != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel label-class="text-gray-500" :text="pr('suggestedPreload')" />
+            <dd class="font-mono">{{ result.suggestedPreload }} N</dd>
+          </div>
+          <div v-if="result.dn" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <ResultLabel label-class="text-gray-500" :text="pr('dnValue')" />
+            <dd class="font-mono" :class="result.dnPass ? '' : 'text-warning'">
+              {{ Math.round(result.dn).toLocaleString() }}
+              <span class="text-xs text-gray-500"> / {{ Math.round(result.dnLimit).toLocaleString() }}</span>
+            </dd>
+          </div>
           <div v-if="form.calcMode !== 'simple' && result.effectiveDynamicLoad !== form.dynamicLoad" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('effectiveDynamicLoad')" />
             <dd class="font-mono">{{ result.effectiveDynamicLoad.toFixed(0) }} N</dd>
@@ -189,6 +210,13 @@
             <dd class="font-mono">{{ result.radialStiffness.toFixed(2) }} N/μm</dd>
           </div>
           <el-alert v-if="result.speedWarningKey" type="warning" :title="rm('bearing', result.speedWarningKey, result.speedWarningParams)" show-icon class="mb-2" />
+          <el-alert
+            v-if="result.dnWarningKey"
+            type="warning"
+            :title="rm('bearing', result.dnWarningKey, { dn: Math.round(result.dn), limit: result.dnLimit })"
+            show-icon
+            class="mb-2"
+          />
           <div v-if="result.staticSafetyFactor != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
             <ResultLabel label-class="text-gray-500" :text="pr('staticSafety')" />
             <dd class="font-mono" :class="reviewAwareCheckClass(result.staticPass, result)">
@@ -205,6 +233,7 @@
         </dl>
         <FormulaPanel :columns="1">
           <MathTex expr="P = X \cdot F_r + Y \cdot F_a" block />
+          <MathTex expr="P_0 = \max(F_r,\ 0.6 F_r + 0.5 F_a),\quad S_0 = C_0 / P_0" block />
           <MathTex :expr="l10Formula" block />
           <MathTex :expr="lnmFormula" block />
         </FormulaPanel>
@@ -309,6 +338,7 @@ const form = reactive({
   lifeCondition: 'standard',
   radialLoad: 5000,
   axialLoad: 1000,
+  bore: 25,
   mountingArrangement: 'single',
   axialPreload: 0,
   x: 1,
@@ -389,12 +419,19 @@ function onApplyInverse({ variable, value, row, strategy }) {
     form.bearingModel = row.model
     form.dynamicLoad = row.C
     if (row.C0) form.staticLoad = row.C0
+    if (row.bore) form.bore = row.bore
     form.autoLookup = true
     if (row.model) form.seriesId = resolveSeriesFromModel(row.model)
     return
   }
   if (variable in form && Number.isFinite(value)) {
     form[variable] = Number(value.toFixed ? value.toFixed(3) : value)
+  }
+}
+
+function applySuggestedPreload() {
+  if (result.value?.suggestedPreload != null) {
+    form.axialPreload = result.value.suggestedPreload
   }
 }
 </script>

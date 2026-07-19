@@ -969,6 +969,7 @@ export function analyzeSpring(input) {
 
   const result = {
     calcMode,
+    springType: 'compression',
     wireDiameter: d,
     meanDiameter: D,
     outerDiameter,

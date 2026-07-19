@@ -84,6 +84,61 @@ export function calcStaticSafetyFactor(staticLoad, equivalentLoad) {
   return staticLoad / equivalentLoad
 }
 
+/**
+ * ISO 76 静当量载荷 P₀（简化）
+ * 球轴承：P₀ = max(Fr, 0.6 Fr + 0.5 Fa)
+ * 径向滚子：P₀ = Fr（忽略小轴向）；圆锥/角接触：P₀ = max(Fr, 0.5 Fr + 0.22 Fa·简化)
+ */
+export function calcEquivalentStaticLoad({
+  radialLoad = 0,
+  axialLoad = 0,
+  bearingType = 'ball',
+  axialPreload = 0,
+} = {}) {
+  const Fr = Math.abs(radialLoad)
+  const Fa = Math.abs(axialLoad) + Math.max(0, axialPreload)
+  if (bearingType === 'roller') {
+    // 圆柱滚子（径向为主）
+    if (Fa <= 0) return Fr
+    return Math.max(Fr, 0.5 * Fr + 0.4 * Fa)
+  }
+  // 球轴承 ISO 76 常用
+  return Math.max(Fr, 0.6 * Fr + 0.5 * Fa)
+}
+
+/**
+ * 轴向预紧建议 F₀（N）
+ * 轻预紧约 0.01·C（球）；角接触/配对可取 0.02·C
+ */
+export function suggestAxialPreload({
+  dynamicLoad = 0,
+  arrangement = 'single',
+  bearingType = 'ball',
+} = {}) {
+  const C = Math.max(0, dynamicLoad)
+  let factor = bearingType === 'roller' ? 0.015 : 0.01
+  if (arrangement === 'duplex-db' || arrangement === 'duplex-df') factor = 0.02
+  if (arrangement === 'duplex-dt') factor = 0.012
+  return {
+    suggestedPreload: Math.round(C * factor),
+    factor,
+    noteKey: arrangement.startsWith('duplex') ? 'duplex' : 'single',
+  }
+}
+
+/** dn 值 = 内径(mm) × 转速(rpm) */
+export function calcDn(boreMm, rpm) {
+  if (!boreMm || !rpm) return 0
+  return boreMm * rpm
+}
+
+/** 脂润滑球轴承常用 dn 参考上限（量级提示，非硬限） */
+export const DN_GREASE_HINT = {
+  ball: 350000,
+  roller: 250000,
+}
+
+
 /** 轴承安装方式（配对 / 串联） */
 export const MOUNTING_ARRANGEMENTS = {
   single: {
@@ -225,16 +280,29 @@ export function analyzeBearingLife(input) {
     const l10 = calcL10MillionRevolutions(dynamicLoad, p, bearingType)
     const hours = calcLifeHours(l10, input.rpm)
     const targetHours = input.targetHours ?? 10000
-    const staticSafety = staticLoad
-      ? calcStaticSafetyFactor(staticLoad, p)
-      : null
+    const p0 = calcEquivalentStaticLoad({
+      radialLoad: input.radialLoad,
+      axialLoad: input.axialLoad,
+      bearingType,
+      axialPreload,
+    })
+    const staticSafety = staticLoad ? calcStaticSafetyFactor(staticLoad, p0) : null
     const minStaticSafety = input.minStaticSafety ?? 1.5
     const lifePass = hours >= targetHours
     const staticPass = staticSafety == null ? true : staticSafety >= minStaticSafety
+    const bore = input.bore ?? null
+    const dn = bore != null ? calcDn(bore, input.rpm) : 0
+    const dnLimit = DN_GREASE_HINT[bearingType] ?? DN_GREASE_HINT.ball
+    const preloadSuggest = suggestAxialPreload({
+      dynamicLoad: input.dynamicLoad,
+      arrangement,
+      bearingType,
+    })
     return {
       calcMode,
       estimateOnly: true,
       equivalentLoad: p,
+      equivalentStaticLoad: p0,
       x: mounted.x,
       y: mounted.y,
       effectiveAxialLoad: mounted.effectiveAxialLoad,
@@ -253,6 +321,12 @@ export function analyzeBearingLife(input) {
       staticSafetyFactor: staticSafety,
       staticPass,
       lifePass,
+      bore,
+      dn,
+      dnLimit,
+      dnPass: !dn || dn <= dnLimit,
+      suggestedPreload: preloadSuggest.suggestedPreload,
+      preloadFactor: preloadSuggest.factor,
       pass: false,
       bearingType,
     }
@@ -284,9 +358,13 @@ export function analyzeBearingLife(input) {
   const lnm = calcModifiedLife(l10, a1 * aIso * temperatureLifeFactor)
   const hours = calcLifeHours(lnm, input.rpm)
   const targetHours = input.targetHours ?? 10000
-  const staticSafety = staticLoad
-    ? calcStaticSafetyFactor(staticLoad, p)
-    : null
+  const p0 = calcEquivalentStaticLoad({
+    radialLoad: input.radialLoad,
+    axialLoad: input.axialLoad,
+    bearingType,
+    axialPreload,
+  })
+  const staticSafety = staticLoad ? calcStaticSafetyFactor(staticLoad, p0) : null
   const minStaticSafety = input.minStaticSafety ?? 1.5
 
   let speedPass = true
@@ -304,9 +382,25 @@ export function analyzeBearingLife(input) {
     ? estimateRadialStiffness(dynamicLoad, arrangement)
     : null
 
+  const bore = input.bore ?? null
+  const dn = bore != null ? calcDn(bore, input.rpm) : 0
+  const dnLimit = DN_GREASE_HINT[bearingType] ?? DN_GREASE_HINT.ball
+  const dnPass = !dn || dn <= dnLimit
+  const preloadSuggest = suggestAxialPreload({
+    dynamicLoad: input.dynamicLoad,
+    arrangement,
+    bearingType,
+  })
+
+  let dnWarningKey = null
+  if (calcMode === 'professional' && dn && !dnPass) {
+    dnWarningKey = 'dn_exceeded'
+  }
+
   const result = {
     calcMode,
     equivalentLoad: p,
+    equivalentStaticLoad: p0,
     x: mounted.x,
     y: mounted.y,
     effectiveAxialLoad: mounted.effectiveAxialLoad,
@@ -330,6 +424,13 @@ export function analyzeBearingLife(input) {
     speedPass,
     speedWarningKey,
     speedWarningParams,
+    bore,
+    dn,
+    dnLimit,
+    dnPass,
+    dnWarningKey,
+    suggestedPreload: preloadSuggest.suggestedPreload,
+    preloadFactor: preloadSuggest.factor,
     pass:
       hours >= targetHours &&
       (staticSafety == null || staticSafety >= minStaticSafety) &&

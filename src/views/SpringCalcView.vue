@@ -9,6 +9,13 @@
       <section class="card-panel">
         <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
         <el-form label-width="130px">
+          <CalcFormItem :label="pf('springType')">
+            <el-radio-group v-model="form.springType">
+              <el-radio-button value="compression">{{ pf('typeCompression') }}</el-radio-button>
+              <el-radio-button value="tension">{{ pf('typeTension') }}</el-radio-button>
+              <el-radio-button value="torsion">{{ pf('typeTorsion') }}</el-radio-button>
+            </el-radio-group>
+          </CalcFormItem>
           <CalcFormItem
             v-if="form.calcMode !== 'simple'"
             :label="fc('material')"
@@ -18,13 +25,13 @@
               <el-option v-for="(m, k) in materials" :key="k" :label="m.label" :value="k" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('springProcess')">
+          <CalcFormItem v-if="form.calcMode !== 'simple' && form.springType === 'compression'" :label="pf('springProcess')">
             <el-select v-model="form.springProcess" class="w-full">
               <el-option :label="pf('processCold')" value="cold" />
               <el-option :label="pf('processHot')" value="hot" />
             </el-select>
           </CalcFormItem>
-          <CalcFormItem v-if="form.calcMode !== 'simple' && form.springProcess === 'hot'" :label="pf('hotCoilHardnessHrc')">
+          <CalcFormItem v-if="form.calcMode !== 'simple' && form.springType === 'compression' && form.springProcess === 'hot'" :label="pf('hotCoilHardnessHrc')">
             <el-input-number v-model="form.hotCoilHardnessHrc" :min="42" :max="52" :precision="1" :step="1" />
           </CalcFormItem>
           <CalcFormItem :label="pf('wireDiameter')" :pending-confirm="isPending('wireDiameter')">
@@ -48,22 +55,42 @@
           <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('totalCoils')">
             <el-input-number v-model="form.totalCoils" :min="form.activeCoils + 1" :step="1" :precision="0" />
           </CalcFormItem>
-          <CalcFormItem v-if="form.calcMode === 'simple'" :label="pf('load')">
+          <CalcFormItem v-if="form.calcMode === 'simple' && form.springType !== 'torsion'" :label="pf('load')">
             <el-input-number v-model="form.load" :min="0" :precision="1" />
           </CalcFormItem>
-          <CalcFormItem :label="pf('allowableShear')">
+          <CalcFormItem v-if="form.springType === 'torsion'" :label="pf('moment')" unit="N·mm">
+            <el-input-number v-model="form.moment" :min="0" :precision="1" />
+          </CalcFormItem>
+          <CalcFormItem v-if="form.springType === 'tension' && form.calcMode !== 'simple'" :label="pf('initialShearStress')" unit="MPa">
+            <el-input-number v-model="form.initialShearStress" :min="0" :max="400" :precision="0" />
+          </CalcFormItem>
+          <CalcFormItem v-if="form.springType === 'tension'" :label="pf('hookStressFactor')">
+            <el-input-number v-model="form.hookStressFactor" :min="1" :max="2" :step="0.05" :precision="2" />
+          </CalcFormItem>
+          <CalcFormItem v-if="form.springType !== 'torsion'" :label="pf('allowableShear')">
             <el-input-number v-model="form.allowableShear" :min="100" @change="form.allowableShearManual = true" />
             <p v-if="form.calcMode !== 'simple'" class="mt-1 text-xs text-gray-500">{{ pf('staticShearHint') }}</p>
           </CalcFormItem>
-          <CalcFormItem v-if="form.calcMode !== 'simple'" :label="pf('loadCategory')">
+          <CalcFormItem v-else :label="pf('allowableBending')" unit="MPa">
+            <el-input-number v-model="form.allowableBending" :min="100" />
+          </CalcFormItem>
+          <CalcFormItem v-if="form.calcMode !== 'simple' && form.springType !== 'torsion'" :label="pf('loadCategory')">
             <el-select v-model="form.loadCategory" class="w-full" @change="form.allowableShearManual = false">
-              <el-option :label="pf('loadCategoryAuto')" value="auto" />
-              <el-option :label="pf('loadCategoryStatic')" value="static" />
-              <el-option :label="pf('loadCategoryDynamicLimited')" value="dynamic_limited" />
-              <el-option :label="pf('loadCategoryDynamicFigure')" value="dynamic_figure" />
+              <el-option value="auto" :label="pf('loadCategoryAutoPlain')">
+                <MathContent :text="pf('loadCategoryAuto')" />
+              </el-option>
+              <el-option value="static" :label="pf('loadCategoryStaticPlain')">
+                <MathContent :text="pf('loadCategoryStatic')" />
+              </el-option>
+              <el-option value="dynamic_limited" :label="pf('loadCategoryDynamicLimitedPlain')">
+                <MathContent :text="pf('loadCategoryDynamicLimited')" />
+              </el-option>
+              <el-option value="dynamic_figure" :label="pf('loadCategoryDynamicFigurePlain')">
+                <MathContent :text="pf('loadCategoryDynamicFigure')" />
+              </el-option>
             </el-select>
           </CalcFormItem>
-          <template v-if="form.calcMode !== 'simple'">
+          <template v-if="form.calcMode !== 'simple' && form.springType === 'compression'">
             <CalcFormItem :label="pf('freeLength')" :pending-confirm="isPending('freeLength')">
               <el-input-number v-model="form.freeLength" :min="1" :precision="1" @change="markConfirmed('freeLength')" />
             </CalcFormItem>
@@ -81,11 +108,26 @@
               </el-select>
             </CalcFormItem>
           </template>
+          <template v-if="form.calcMode === 'simple' && form.springType === 'tension'">
+            <CalcFormItem :label="pf('deflection')" unit="mm">
+              <el-input-number v-model="form.deflection" :min="0" :precision="1" />
+            </CalcFormItem>
+          </template>
           <template v-if="form.calcMode === 'professional'">
             <el-divider content-position="left">{{ pf('dividerVarLoad') }}</el-divider>
-            <p v-if="form.installHeight != null && form.workingHeight != null" class="mb-3 text-xs text-gray-500 dark:text-gray-400">
-              {{ pf('fatigueFromHeights') }}
-            </p>
+            <template v-if="form.springType === 'compression' && form.installHeight != null && form.workingHeight != null">
+              <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                {{ pf('fatigueFromHeights') }}
+              </p>
+            </template>
+            <template v-else-if="form.springType === 'torsion'">
+              <CalcFormItem :label="pf('momentMin')" unit="N·mm">
+                <el-input-number v-model="form.momentMin" :min="0" :precision="1" />
+              </CalcFormItem>
+              <CalcFormItem :label="pf('momentMax')" unit="N·mm">
+                <el-input-number v-model="form.momentMax" :min="0" :precision="1" />
+              </CalcFormItem>
+            </template>
             <template v-else>
               <CalcFormItem :label="pf('loadMin')">
                 <el-input-number v-model="form.loadMin" :min="0" :precision="1" />
@@ -94,20 +136,21 @@
                 <el-input-number v-model="form.loadMax" :min="0" :precision="1" />
               </CalcFormItem>
             </template>
-            <CalcFormItem :label="pf('targetCycles')" :pending-confirm="isPending('targetCycles')">
+            <CalcFormItem v-if="form.springType !== 'torsion'" :label="pf('targetCycles')" :pending-confirm="isPending('targetCycles')">
               <el-input-number v-model="form.targetCycles" :min="1e4" :step="1e5" @change="markConfirmed('targetCycles')" />
             </CalcFormItem>
             <CalcFormItem :label="pf('tensileStrength')" :pending-confirm="isPending('tensileStrength')">
               <el-input-number v-model="form.tensileStrength" :min="500" :step="10" @change="onTensileStrengthChange" />
               <p class="mt-1 text-xs text-gray-500">{{ pf('tensileStrengthHint') }}</p>
             </CalcFormItem>
-            <CalcFormItem :label="pf('excitationFrequency')">
+            <CalcFormItem v-if="form.springType === 'compression'" :label="pf('excitationFrequency')">
               <el-input-number v-model="form.excitationFrequency" :min="0" :precision="1" />
             </CalcFormItem>
           </template>
         </el-form>
 
         <SpringDiagram
+          v-if="form.springType === 'compression'"
           :wire-diameter="form.wireDiameter"
           :mean-diameter="result.meanDiameter ?? form.meanDiameter"
           :outer-diameter="form.calcMode !== 'simple' ? form.outerDiameter : 0"
@@ -193,39 +236,69 @@
           :description="shearFailHint"
         />
         <dl class="space-y-3 text-sm">
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springRate')" /><dd class="font-mono">{{ result.springRate.toFixed(4) }} N/mm</dd></div>
-          <template v-if="result.usesHeightLoads">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('installLoad')" /><dd class="font-mono">{{ result.installLoad?.toFixed(2) }} N</dd></div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('workingLoad')" /><dd class="font-mono">{{ result.workingLoad?.toFixed(2) }} N</dd></div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('solidLoad')" /><dd class="font-mono">{{ result.solidLoad?.toFixed(2) }} N</dd></div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('tauInstall')" /><dd class="font-mono">{{ result.tauInstall?.toFixed(1) }} MPa</dd></div>
+          <template v-if="result.springType === 'torsion'">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel :text="pr('tauWorking')" />
-              <dd class="font-mono" :class="reviewAwareCheckClass(result.shearPass, result)">
-                {{ result.tauWorking?.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.shearPass, result) }}
+              <ResultLabel :text="pr('angularRate')" />
+              <dd class="font-mono">{{ result.angularRate?.toFixed(2) }} <MathContent text="$\mathrm{N\cdot mm/rad}$" /></dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('angleDeg')" />
+              <dd class="font-mono">{{ result.angleDeg?.toFixed(2) }} °</dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('bendingStress')" />
+              <dd class="font-mono" :class="reviewAwareCheckClass(result.bendPass, result)">
+                {{ result.bendingStress?.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.bendPass, result) }}
               </dd>
+            </div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('stressFactor')" />
+              <dd class="font-mono">{{ result.stressFactor?.toFixed(3) }}</dd>
             </div>
           </template>
           <template v-else>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" /><dd class="font-mono">{{ result.deflection.toFixed(2) }} mm</dd></div>
+            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('springRate')" /><dd class="font-mono">{{ result.springRate?.toFixed(4) }} N/mm</dd></div>
+            <div v-if="result.initialTension != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+              <ResultLabel :text="pr('initialTension')" />
+              <dd class="font-mono">{{ result.initialTension?.toFixed(2) }} N</dd>
+            </div>
+            <template v-if="result.usesHeightLoads">
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('installLoad')" /><dd class="font-mono">{{ result.installLoad?.toFixed(2) }} N</dd></div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('workingLoad')" /><dd class="font-mono">{{ result.workingLoad?.toFixed(2) }} N</dd></div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('solidLoad')" /><dd class="font-mono">{{ result.solidLoad?.toFixed(2) }} N</dd></div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('tauInstall')" /><dd class="font-mono">{{ result.tauInstall?.toFixed(1) }} MPa</dd></div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="pr('tauWorking')" />
+                <dd class="font-mono" :class="reviewAwareCheckClass(result.shearPass, result)">
+                  {{ result.tauWorking?.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.shearPass, result) }}
+                </dd>
+              </div>
+            </template>
+            <template v-else>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('deflection')" /><dd class="font-mono">{{ result.deflection?.toFixed(2) }} mm</dd></div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="pr('shearStress')" />
+                <dd class="font-mono" :class="reviewAwareCheckClass(result.shearPass, result)">
+                  {{ result.shearStress?.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.shearPass, result) }}
+                </dd>
+              </div>
+              <div v-if="result.hookShearStress != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="pr('hookShearStress')" />
+                <dd class="font-mono">{{ result.hookShearStress?.toFixed(1) }} MPa</dd>
+              </div>
+            </template>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-              <ResultLabel :text="pr('shearStress')" />
-              <dd class="font-mono" :class="reviewAwareCheckClass(result.shearPass, result)">
-                {{ result.shearStress.toFixed(1) }} MPa {{ reviewAwareCheckMark(result.shearPass, result) }}
+              <ResultLabel :text="pr('springIndex')" />
+              <dd class="font-mono" :class="form.calcMode === 'simple' ? '' : reviewAwareCheckClass(result.indexPass, result)">
+                {{ result.springIndex?.toFixed(2) }} / {{ result.wahlFactor?.toFixed(3) }}
+                <template v-if="form.calcMode !== 'simple' && result.indexPass != null">
+                  {{ reviewAwareCheckMark(result.indexPass, result) }}
+                  <span v-if="result.indexPass && !result.indexRecommend" class="text-warning text-xs">({{ result.indexWarning }})</span>
+                </template>
               </dd>
             </div>
           </template>
-          <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
-            <ResultLabel :text="pr('springIndex')" />
-            <dd class="font-mono" :class="form.calcMode === 'simple' ? '' : reviewAwareCheckClass(result.indexPass, result)">
-              {{ result.springIndex?.toFixed(2) }} / {{ result.wahlFactor.toFixed(3) }}
-              <template v-if="form.calcMode !== 'simple'">
-                {{ reviewAwareCheckMark(result.indexPass, result) }}
-                <span v-if="result.indexPass && !result.indexRecommend" class="text-warning text-xs">({{ result.indexWarning }})</span>
-              </template>
-            </dd>
-          </div>
-          <template v-if="form.calcMode !== 'simple'">
+          <template v-if="form.calcMode !== 'simple' && form.springType === 'compression'">
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('solidHeight')" />
               <dd class="font-mono">{{ result.solidHeight.toFixed(2) }} mm</dd>
@@ -293,8 +366,9 @@
               </p>
             </div>
           </template>
-          <template v-if="form.calcMode === 'professional' && result.fatigueLife != null">
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
+          <template v-if="form.calcMode === 'professional' && result.fatigueSafetyFactor != null">
+            <div v-if="result.shearAmplitude != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('shearAmplitude')" /><dd class="font-mono">{{ result.shearAmplitude?.toFixed(1) }} MPa</dd></div>
+            <div v-if="result.bendingAmplitude != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"><ResultLabel :text="pr('bendingAmplitude')" /><dd class="font-mono">{{ result.bendingAmplitude?.toFixed(1) }} MPa</dd></div>
             <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('fatigueSafety')" />
               <dd class="font-mono" :class="reviewAwareCheckClass(result.fatiguePass, result)">
@@ -302,7 +376,7 @@
                 {{ reviewAwareCheckMark(result.fatiguePass, result) }}
               </dd>
             </div>
-            <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+            <div v-if="result.fatigueLife != null" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
               <ResultLabel :text="pr('fatigueLife')" />
               <dd class="font-mono text-gray-700 dark:text-gray-300">
                 {{ formatFatigueLife(result.fatigueLife) }} {{ pr('cyclesUnit') }}
@@ -312,8 +386,10 @@
           </template>
         </dl>
         <FormulaPanel :columns="1">
-          <MathTex expr="k = \frac{G d^4}{8 D^3 n}" block />
-          <MathTex expr="\tau = \frac{8 F D}{\pi d^3} K" block />
+          <MathTex v-if="form.springType === 'torsion'" expr="k_\theta = \frac{E d^{4}}{64 D n}" block />
+          <MathTex v-if="form.springType === 'torsion'" expr="\sigma = \frac{32 M}{\pi d^{3}} K_i" block />
+          <MathTex v-else expr="k = \frac{G d^4}{8 D^3 n}" block />
+          <MathTex v-if="form.springType !== 'torsion'" expr="\tau = \frac{8 F D}{\pi d^3} K" block />
         </FormulaPanel>
       </section>
     </div>
@@ -342,7 +418,8 @@ import { reactive, computed, watch, toRef } from 'vue'
 import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
 import FormulaPanel from '@/components/common/FormulaPanel.vue'
-import { analyzeSpring, SPRING_MATERIALS, resolveSpringAllowableShear, resolveSpringLoadCategory, resolveSpringStressRatio } from '@/utils/spring-calc'
+import { SPRING_MATERIALS, resolveSpringAllowableShear, resolveSpringLoadCategory, resolveSpringStressRatio } from '@/utils/spring-calc'
+import { analyzeSpringByType } from '@/utils/spring-types-calc'
 import { resolveSpringTensileStrength } from '@/utils/spring-rm-lookup'
 import SpringDiagram from '@/components/spring/SpringDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
@@ -363,6 +440,7 @@ const { optionMap } = useOptionsI18n()
 const materials = computed(() => optionMap(SPRING_MATERIALS, 'springMaterials'))
 const form = reactive({
   calcMode: 'simple',
+  springType: 'compression',
   material: '65Mn',
   springProcess: 'cold',
   hotCoilHardnessHrc: 42,
@@ -373,7 +451,14 @@ const form = reactive({
   activeCoils: 10,
   totalCoils: 12,
   load: 55,
+  deflection: 10,
+  moment: 800,
+  momentMin: 200,
+  momentMax: 800,
+  initialShearStress: 150,
+  hookStressFactor: 1.25,
   allowableShear: 540,
+  allowableBending: 900,
   allowableShearManual: false,
   loadCategory: 'auto',
   freeLength: 45,
@@ -517,7 +602,7 @@ watch(
   },
 )
 
-const result = computed(() => analyzeSpring(withConfirmed(form)))
+const result = computed(() => analyzeSpringByType(withConfirmed(form)))
 const reviewOnly = computed(() => isReviewOnlyResult(result.value))
 const overallReviewText = computed(() => (locale.value === 'en' ? 'Review / Not released' : '需复核 / 未放行'))
 
@@ -549,6 +634,12 @@ const { historyInput, saveStatus, historyTitle, historySummary } = useCalcHistor
   buildSummary: () => {
     const r = result.value
     if (r?.errorKey) return []
+    if (r.springType === 'torsion') {
+      return [
+        { label: pr('angularRate'), value: `${r.angularRate?.toFixed(2) ?? '-'} N·mm/rad` },
+        { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },
+      ]
+    }
     return [
       { label: pr('springRate'), value: `${r.springRate?.toFixed(4) ?? '-'} N/mm` },
       { label: fc('check'), value: r.pass ? fc('pass') : fc('fail') },

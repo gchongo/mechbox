@@ -48,7 +48,7 @@
     </div>
 
     <div v-if="inverseHint" class="mt-2 rounded bg-primary/5 px-2 py-1 text-xs text-primary">
-      {{ inverseHint }}
+      <MathContent :text="inverseHint" />
     </div>
 
     <div class="mt-3">
@@ -69,6 +69,7 @@ import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DECISION_PRESETS, runPresetInverse } from '@/utils/decision-presets'
 import { buildStepInputs, CHAIN_INVERSE_APPLY, resolveInverseApply } from '@/utils/chain-snapshots'
+import { CHAIN_TYPES } from '@/utils/design-context'
 import { getCalcReviewStatus } from '@/utils/calc-result'
 import { useDecisionI18n } from '@/composables/useDecisionI18n'
 import FormMathLabel from '@/components/common/FormMathLabel.vue'
@@ -82,9 +83,19 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['open-tool', 'update-notes', 'apply-shared'])
-const { dt } = useDecisionI18n()
+const { dt, paramLabel } = useDecisionI18n()
 const solving = ref(false)
 const inverseHint = ref('')
+
+/** 共享输入 / 工具字段名 → 可读标签（勿直接显示 camelCase） */
+function sharedFieldLabel(field) {
+  if (!field) return ''
+  const fromPage = paramLabel(props.meta?.toolId, field, null)
+  if (fromPage && fromPage !== field) return fromPage
+  const schemaLabel = CHAIN_TYPES[props.chainType]?.sharedInputSchema?.[field]?.label
+  if (schemaLabel) return schemaLabel
+  return field
+}
 
 const topMetrics = computed(() => (props.snapshot?.keyMetrics ?? []).slice(0, 4))
 const reviewStatus = computed(() => getCalcReviewStatus(props.snapshot))
@@ -128,7 +139,7 @@ async function runQuickInverse() {
 
     if (applied) {
       emit('apply-shared', applied)
-      inverseHint.value = `${dt('applied')}: ${applied.field} = ${formatValue(applied.value)}`
+      inverseHint.value = `${dt('applied')}: ${sharedFieldLabel(applied.field)} = ${formatValue(applied.value)}`
       if (result.strategy === 'catalog') {
         inverseHint.value += ` · ${shown}`
       }

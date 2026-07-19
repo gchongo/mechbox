@@ -230,7 +230,7 @@
         </dl>
 
         <p v-if="reviewOnly" class="mt-3 text-xs text-warning">
-          {{ pt('hintSimple') }}
+          <MathContent :text="pt('hintSimple')" />
         </p>
 
         <div v-if="result.breakdown" class="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">

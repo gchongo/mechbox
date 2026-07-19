@@ -11,15 +11,18 @@
         </marker>
       </defs>
 
-      <!-- 大齿轮 -->
+      <!-- 分度圆外啮合：圆心距 = (d1+d2)/2，两圆相切 -->
       <circle :cx="x2" :cy="cy" :r="r2" class="gear-circle" />
-      <circle :cx="x2" :cy="cy" :r="r2 - 8" fill="none" stroke="#409eff" stroke-width="1" stroke-dasharray="3 3" opacity="0.5" />
-      <!-- 小齿轮 -->
       <circle :cx="x1" :cy="cy" :r="r1" class="gear-circle gear-circle--pinion" />
-      <circle :cx="x1" :cy="cy" :r="r1 - 6" fill="none" stroke="#409eff" stroke-width="1" stroke-dasharray="3 3" opacity="0.5" />
 
-      <!-- 啮合线 -->
-      <line :x1="x1 + r1 * 0.7" :y1="cy - r1 * 0.7" :x2="x2 - r2 * 0.7" :y2="cy - r2 * 0.7" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" />
+      <!-- 节点（啮合点） -->
+      <circle :cx="pitchX" :cy="cy" r="3.5" fill="#409eff" />
+      <line :x1="pitchX" :y1="cy - 14" :x2="pitchX" :y2="cy + 14" stroke="#409eff" stroke-width="1" opacity="0.45" />
+
+      <!-- 中心连线 -->
+      <line :x1="x1" :y1="cy" :x2="x2" :y2="cy" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.55" />
+      <circle :cx="x1" :cy="cy" r="2" fill="#64748b" />
+      <circle :cx="x2" :cy="cy" r="2" fill="#64748b" />
 
       <!-- 齿宽 b（侧视示意） -->
       <rect :x="360" :y="cy - 18" :width="48" :height="36" rx="2" class="face-width" />
@@ -62,13 +65,15 @@ const props = defineProps({
 const d1 = computed(() => props.module * props.pinionTeeth)
 const d2 = computed(() => props.module * props.gearTeeth)
 
-const scale = computed(() => 48 / Math.max(d2.value / 2, 1))
+/** 大轮半径固定约 52px，小轮按分度圆比例；两轮相切 */
+const scale = computed(() => 52 / Math.max(d2.value / 2, 1))
 const r1 = computed(() => (d1.value / 2) * scale.value)
 const r2 = computed(() => (d2.value / 2) * scale.value)
 
-const cxMid = 230
-const x1 = computed(() => cxMid - r1.value - 4)
-const x2 = computed(() => cxMid + r2.value + 4)
+const cxMid = 200
+const x1 = computed(() => cxMid - (r1.value + r2.value) / 2)
+const x2 = computed(() => x1.value + r1.value + r2.value)
+const pitchX = computed(() => x1.value + r1.value)
 const cy = 130
 
 const labelD1 = computed(() => `d₁ = ${d1.value.toFixed(1)} mm`)

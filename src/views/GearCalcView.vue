@@ -5,6 +5,15 @@
       {{ pt('subtitle') }}
     </p>
 
+    <ChainSyncBanner
+      :session="chainSession"
+      :chain-name="chainName"
+      :dirty="dirty"
+      @sync="syncToChain"
+      @back="backToChain"
+      @dismiss="dismissSession"
+    />
+
     <CalcModePanel v-model="calcMode" page-key="gear" />
 
     <div class="grid gap-6 lg:grid-cols-2">
@@ -266,7 +275,7 @@
               </dd>
             </div>
           </dl>
-          <p v-if="simpleReviewOnly" class="mt-4 text-xs text-warning">{{ pt('hintSimple') }}</p>
+          <p v-if="simpleReviewOnly" class="mt-4 text-xs text-warning"><MathContent :text="pt('hintSimple')" /></p>
           <FormulaPanel :columns="1">
             <div class="gear-formula-block">
               <ResultLabel label-class="text-gray-500 text-xs" :text="pr('bendingStress')" />
@@ -286,6 +295,7 @@
       </section>
     </div>
 
+    <RelatedToolsPanel tool-id="gear" class="mt-4" />
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
       <SaveHistoryButton
         tool="gear"
@@ -310,10 +320,13 @@ import { analyzeGearAGMA, compareGearStandards } from '@/utils/gear-agma'
 import { ISO1328_GRADES } from '@/utils/iso-1328'
 import GearPairDiagram from '@/components/gear/GearPairDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
+import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import RelatedToolsPanel from '@/components/calc/RelatedToolsPanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
+import { useChainHandoff } from '@/composables/useChainHandoff'
 import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
@@ -406,6 +419,19 @@ const form = reactive({
   allowBending: 300,
   allowContact: 900,
   gearRatio: 3,
+})
+
+const {
+  chainSession,
+  chainName,
+  dirty,
+  syncToChain,
+  backToChain,
+  dismissSession,
+} = useChainHandoff('gear', form, {
+  afterApply: (handoff) => {
+    if (handoff?.inputs?.calcMode) calcMode.value = handoff.inputs.calcMode
+  },
 })
 
 const isoResult = computed(() =>

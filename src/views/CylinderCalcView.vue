@@ -171,7 +171,7 @@
                   {{ pr('bucklingSf', { sf: result.buckling.safetyFactor.toFixed(1) }) }}
                 </p>
               </div>
-              <div v-if="result.cycleTimeExtend" class="flex justify-between rounded bg-gray-50 p-3">
+              <div v-if="result.cycleTimeExtend" class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
                 <ResultLabel :text="pr('cycleTime')" />
                 <dd class="font-mono">
                   {{ result.cycleTimeExtend?.toFixed(2) }} / {{ result.cycleTimeRetract?.toFixed(2) }} s
@@ -210,6 +210,7 @@
       </el-tab-pane>
     </el-tabs>
 
+    <RelatedToolsPanel tool-id="cylinder" class="mt-4" />
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
       <SaveHistoryButton
         tool="cylinder"
@@ -224,7 +225,8 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, toRef, watch } from 'vue'
+import { reactive, computed, ref, toRef, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import MathTex from '@/components/common/MathTex.vue'
 import MathContent from '@/components/common/MathContent.vue'
 import FormulaPanel from '@/components/common/FormulaPanel.vue'
@@ -232,6 +234,7 @@ import { analyzeHydraulicCylinder, analyzePneumaticCylinder, END_FIXITY_PRESETS 
 import CylinderDiagram from '@/components/cylinder/CylinderDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import RelatedToolsPanel from '@/components/calc/RelatedToolsPanel.vue'
 import { useCalcPage } from '@/composables/useCalcPage'
 import { useCalcHistorySave } from '@/composables/useCalcHistorySave'
 import { useHistoryReplay } from '@/composables/useHistoryReplay'
@@ -242,9 +245,15 @@ import { getCalcReviewStatus, reviewAwareCheckMark } from '@/utils/calc-result'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('cylinder')
 const { ol } = useOptionsI18n()
+const route = useRoute()
 
 const tabModes = ['hydraulic', 'pneumatic']
 const mode = ref('hydraulic')
+
+onMounted(() => {
+  const q = String(route.query.tab || '').toLowerCase()
+  if (q === 'pneumatic' || q === 'air') mode.value = 'pneumatic'
+})
 
 const form = reactive({
   calcMode: 'simple',

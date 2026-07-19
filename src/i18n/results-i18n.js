@@ -84,6 +84,7 @@ export const messagesZh = {
   },
   bearing: {
     speed_exceeded: '转速 {rpm} 超过极限 {limit} rpm',
+    dn_exceeded: 'dn={dn} 超过脂润滑参考上限 {limit}',
   },
   heatTreatment: {
     weldability_excellent: '良好',
@@ -349,6 +350,7 @@ export const messagesEn = {
   },
   bearing: {
     speed_exceeded: 'Speed {rpm} exceeds limit {limit} rpm',
+    dn_exceeded: 'dn={dn} exceeds grease reference limit {limit}',
   },
   heatTreatment: {
     weldability_excellent: 'Good',

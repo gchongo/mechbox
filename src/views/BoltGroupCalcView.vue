@@ -124,7 +124,7 @@
           {{ pr('simpleScalarHint') }}
         </p>
         <p v-if="reviewOnly" class="mt-3 text-xs text-warning">
-          {{ pt('hintSimple') }}
+          <MathContent :text="pt('hintSimple')" />
         </p>
 
         <template v-if="result.bolts?.length">

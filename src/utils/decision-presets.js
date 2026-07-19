@@ -132,8 +132,8 @@ export const BOLT_PRELOAD_PRESET = {
   sensitivity: {
     parameters: [
       { key: 'diameter', label: '公称直径 d', delta: 0.1, min: 3 },
-      { key: 'muG', label: '螺纹摩擦 μG', delta: 0.2, min: 0.05, max: 0.4 },
-      { key: 'muK', label: '头部摩擦 μK', delta: 0.2, min: 0.05, max: 0.4 },
+      { key: 'muG', label: '螺纹摩擦 μ_G', delta: 0.2, min: 0.05, max: 0.4 },
+      { key: 'muK', label: '头部摩擦 μ_K', delta: 0.2, min: 0.05, max: 0.4 },
       { key: 'preload', label: '预紧力 F', delta: 0.1, min: 0 },
       { key: 'externalAxialLoad', label: '外部轴向载荷 F_A', delta: 0.2, min: 0 },
     ],

@@ -267,9 +267,52 @@ export function compareWeldStandards(input) {
 }
 
 export const WELD_DETAIL_CATEGORIES = {
-  high: { label: '精细加工对接 (高)', enduranceMPa: 90 },
-  medium: { label: '角焊/横向载荷 (中)', enduranceMPa: 71 },
-  low: { label: '粗焊/附件 (低)', enduranceMPa: 50 },
+  // 兼容旧三档
+  high: { label: '精细加工对接 (高)', enduranceMPa: 90, fat: 90, group: 'legacy' },
+  medium: { label: '角焊/横向载荷 (中)', enduranceMPa: 71, fat: 71, group: 'legacy' },
+  low: { label: '粗焊/附件 (低)', enduranceMPa: 50, fat: 50, group: 'legacy' },
+  // EN 1993-1-9 / IIW 简化 FAT 档（Δσ @ 2×10⁶，m=3）
+  fat100: { label: 'FAT 100 · 机加工对接', enduranceMPa: 100, fat: 100, group: 'butt' },
+  fat90: { label: 'FAT 90 · 对接磨平', enduranceMPa: 90, fat: 90, group: 'butt' },
+  fat80: { label: 'FAT 80 · 对接未磨平', enduranceMPa: 80, fat: 80, group: 'butt' },
+  fat71: { label: 'FAT 71 · 横向角焊', enduranceMPa: 71, fat: 71, group: 'fillet' },
+  fat63: { label: 'FAT 63 · 纵向角焊', enduranceMPa: 63, fat: 63, group: 'fillet' },
+  fat56: { label: 'FAT 56 · 十字接头角焊', enduranceMPa: 56, fat: 56, group: 'fillet' },
+  fat50: { label: 'FAT 50 · 短附件', enduranceMPa: 50, fat: 50, group: 'attachment' },
+  fat45: { label: 'FAT 45 · 长附件', enduranceMPa: 45, fat: 45, group: 'attachment' },
+  fat40: { label: 'FAT 40 · 焊接盖板端', enduranceMPa: 40, fat: 40, group: 'attachment' },
+  fat36: { label: 'FAT 36 · 不连续/粗糙', enduranceMPa: 36, fat: 36, group: 'attachment' },
+}
+
+/**
+ * 角焊缝焊脚选型（GB/T 985.1 常用经验简化）
+ * 按较薄板厚推荐最小/常用/最大焊脚
+ */
+export const FILLET_LEG_BY_THICKNESS = [
+  { tMin: 0, tMax: 3, zMin: 2, zRec: 3, zMax: 3 },
+  { tMin: 3, tMax: 6, zMin: 3, zRec: 4, zMax: 5 },
+  { tMin: 6, tMax: 12, zMin: 4, zRec: 6, zMax: 8 },
+  { tMin: 12, tMax: 20, zMin: 6, zRec: 8, zMax: 10 },
+  { tMin: 20, tMax: 40, zMin: 8, zRec: 10, zMax: 14 },
+  { tMin: 40, tMax: 60, zMin: 10, zRec: 12, zMax: 16 },
+  { tMin: 60, tMax: Infinity, zMin: 12, zRec: 16, zMax: 20 },
+]
+
+/**
+ * @param {number} plateThickness 较薄件板厚 mm
+ * @returns {{ plateThickness: number, zMin: number, zRec: number, zMax: number } | null}
+ */
+export function recommendFilletLeg(plateThickness) {
+  const t = Number(plateThickness)
+  if (!(t > 0)) return null
+  const row = FILLET_LEG_BY_THICKNESS.find((r) => t > r.tMin && t <= r.tMax)
+    ?? FILLET_LEG_BY_THICKNESS[FILLET_LEG_BY_THICKNESS.length - 1]
+  return {
+    plateThickness: t,
+    zMin: row.zMin,
+    zRec: row.zRec,
+    zMax: row.zMax,
+  }
 }
 
 /** 焊缝疲劳 — 简化 S-N */
@@ -288,6 +331,8 @@ export function analyzeWeldFatigue(input) {
   return {
     stressRange: deltaTau,
     detailCategory: detail.label,
+    detailKey: input.detailCategory ?? 'medium',
+    fatClass: detail.fat ?? detail.enduranceMPa,
     enduranceLimit: endurance,
     allowableAtCycles: round(allowableAtCycles, 1),
     estimatedLife: round(Math.max(lifeEstimate, 1), 0),

@@ -17,4 +17,9 @@ describe('splitFormLabelUnit', () => {
     expect(splitFormLabelUnit('内径说明 (可选)')).toEqual({ text: '内径说明 (可选)', unit: '' })
     expect(splitFormLabelUnit('材料')).toEqual({ text: '材料', unit: '' })
   })
+
+  it('keeps latex symbols when stripping trailing units', () => {
+    expect(splitFormLabelUnit('装配间隙 $c$ (mm)')).toEqual({ text: '装配间隙 $c$', unit: 'mm' })
+    expect(splitFormLabelUnit('焊脚 $h_f$ (mm)')).toEqual({ text: '焊脚 $h_f$', unit: 'mm' })
+  })
 })

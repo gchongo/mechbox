@@ -14,6 +14,8 @@ import { useDecisionI18n } from '@/composables/useDecisionI18n'
 const CHAIN_ROUTES = {
   powertrain: '/design/powertrain',
   'bolt-joint': '/design/bolt-joint',
+  'flange-seal': '/design/flange-seal',
+  gearbox: '/design/gearbox',
 }
 
 /**

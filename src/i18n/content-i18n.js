@@ -261,7 +261,7 @@ export const contentZh = {
     title: '材料强度查询',
     subtitle: '常用工程材料力学性能参考值（GB/T）',
     workTemp: '工作温度 (°C)',
-    searchPlaceholder: '搜索材料名称、牌号、类别…',
+    searchPlaceholder: '搜索名称、标准号（如 GB/T 699）、热处理态…',
     empty: '未找到匹配材料',
     categories: {
       碳素钢: '碳素钢',
@@ -583,7 +583,7 @@ export const contentEn = {
     title: 'Material properties',
     subtitle: 'Reference mechanical properties (GB/T)',
     workTemp: 'Working temperature (°C)',
-    searchPlaceholder: 'Search name, grade, or category…',
+    searchPlaceholder: 'Search name, standard (e.g. GB/T 699), heat-treat state…',
     empty: 'No matching materials',
     categories: {
       碳素钢: 'Carbon steel',

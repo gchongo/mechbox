@@ -234,6 +234,7 @@ export function analyzeGearISO6336(input) {
     safetyBending: SF,
     contactPass: SH >= SHmin,
     bendingPass: SF >= SFmin,
+    pass: SH >= SHmin && SF >= SFmin,
     minSafetyContact: SHmin,
     minSafetyBending: SFmin,
     materials: { pinion: matPinion.label, gear: matGear.label },

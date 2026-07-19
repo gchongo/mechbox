@@ -731,23 +731,193 @@ export const MATERIALS = [
   },
 ]
 
+/** 按类别的默认线胀 α (1/K) 与导热 k (W/(m·K)) — 室温量级 */
+export const CATEGORY_THERMAL_DEFAULTS = {
+  碳素钢: { alpha: 11.5e-6, kThermal: 48 },
+  低合金钢: { alpha: 12.0e-6, kThermal: 42 },
+  合金钢: { alpha: 12.0e-6, kThermal: 40 },
+  不锈钢: { alpha: 17.3e-6, kThermal: 15 },
+  铝合金: { alpha: 23.6e-6, kThermal: 160 },
+  铜合金: { alpha: 17.0e-6, kThermal: 120 },
+  钛合金: { alpha: 8.6e-6, kThermal: 7 },
+  铸铁: { alpha: 10.5e-6, kThermal: 45 },
+  塑料: { alpha: 80e-6, kThermal: 0.25 },
+  非金属: { alpha: 80e-6, kThermal: 0.25 },
+  模具钢: { alpha: 12.0e-6, kThermal: 28 },
+  高温合金: { alpha: 13.5e-6, kThermal: 12 },
+}
+
+/** 标准号 / 热处理态补丁（覆盖或追加到 MATERIALS） */
+const MATERIAL_ENRICHMENT = {
+  q235: { standard: 'GB/T 700', standards: ['GB/T 700', 'Q235'] },
+  q195: { standard: 'GB/T 700', standards: ['GB/T 700', 'Q195'] },
+  q460: { standard: 'GB/T 1591', standards: ['GB/T 1591', 'Q460'] },
+  '16mn': { standard: 'GB/T 1591', standards: ['GB/T 1591', '16Mn'] },
+  '20': { standard: 'GB/T 699', standards: ['GB/T 699', '20#'] },
+  '45': {
+    standard: 'GB/T 699',
+    standards: ['GB/T 699', '45#', 'C45'],
+    defaultState: 'qt',
+    states: [
+      { id: 'normalized', label: '正火', sigmaB: 600, sigmaS: 355, sigmaAllow: 237, tauAllow: 142 },
+      { id: 'qt', label: '调质', sigmaB: 700, sigmaS: 450, sigmaAllow: 300, tauAllow: 180 },
+      { id: 'annealed', label: '退火', sigmaB: 540, sigmaS: 280, sigmaAllow: 187, tauAllow: 112 },
+    ],
+  },
+  '40cr': {
+    standard: 'GB/T 3077',
+    standards: ['GB/T 3077', '40Cr', '5140'],
+    defaultState: 'qt',
+    states: [
+      { id: 'qt', label: '调质', sigmaB: 980, sigmaS: 785, sigmaAllow: 523, tauAllow: 314 },
+      { id: 'normalized', label: '正火', sigmaB: 735, sigmaS: 540, sigmaAllow: 360, tauAllow: 216 },
+    ],
+  },
+  '35crmo': {
+    standard: 'GB/T 3077',
+    standards: ['GB/T 3077', '35CrMo'],
+    defaultState: 'qt',
+    states: [
+      { id: 'qt', label: '调质', sigmaB: 980, sigmaS: 835, sigmaAllow: 557, tauAllow: 334 },
+      { id: 'normalized', label: '正火', sigmaB: 800, sigmaS: 600, sigmaAllow: 400, tauAllow: 240 },
+    ],
+  },
+  '42crmo': {
+    standard: 'GB/T 3077',
+    standards: ['GB/T 3077', '42CrMo', '4140'],
+    defaultState: 'qt',
+    states: [
+      { id: 'qt', label: '调质', sigmaB: 1080, sigmaS: 930, sigmaAllow: 620, tauAllow: 372 },
+      { id: 'qt_high', label: '调质高强度', sigmaB: 1200, sigmaS: 1000, sigmaAllow: 667, tauAllow: 400 },
+    ],
+  },
+  '20crmnti': {
+    standard: 'GB/T 3077',
+    standards: ['GB/T 3077', '20CrMnTi'],
+    defaultState: 'carburized',
+    states: [
+      { id: 'normalized', label: '正火', sigmaB: 850, sigmaS: 600, sigmaAllow: 400, tauAllow: 240 },
+      { id: 'carburized', label: '渗碳淬火', sigmaB: 1080, sigmaS: 835, sigmaAllow: 557, tauAllow: 334 },
+    ],
+  },
+  '20cr': {
+    standard: 'GB/T 3077',
+    standards: ['GB/T 3077', '20Cr'],
+    defaultState: 'carburized',
+    states: [
+      { id: 'normalized', label: '正火', sigmaB: 700, sigmaS: 450, sigmaAllow: 300, tauAllow: 180 },
+      { id: 'carburized', label: '渗碳淬火', sigmaB: 835, sigmaS: 540, sigmaAllow: 360, tauAllow: 216 },
+    ],
+  },
+  '35': {
+    standard: 'GB/T 699',
+    standards: ['GB/T 699', '35#'],
+    defaultState: 'normalized',
+    states: [
+      { id: 'normalized', label: '正火', sigmaB: 530, sigmaS: 315, sigmaAllow: 210, tauAllow: 126 },
+      { id: 'qt', label: '调质', sigmaB: 650, sigmaS: 400, sigmaAllow: 267, tauAllow: 160 },
+    ],
+  },
+  q345: {
+    standard: 'GB/T 1591',
+    standards: ['GB/T 1591', 'Q345'],
+    defaultState: 'as_rolled',
+    states: [
+      { id: 'as_rolled', label: '热轧', sigmaB: 470, sigmaS: 345, sigmaAllow: 230, tauAllow: 138 },
+      { id: 'normalized', label: '正火', sigmaB: 500, sigmaS: 355, sigmaAllow: 237, tauAllow: 142 },
+    ],
+  },
+  '304': {
+    standard: 'GB/T 20878',
+    standards: ['GB/T 20878', '06Cr19Ni10', 'SUS304'],
+    defaultState: 'annealed',
+    states: [
+      { id: 'annealed', label: '固溶', sigmaB: 520, sigmaS: 205, sigmaAllow: 137, tauAllow: 82 },
+      { id: 'cold_worked', label: '冷作硬化', sigmaB: 700, sigmaS: 450, sigmaAllow: 300, tauAllow: 180 },
+    ],
+  },
+  '316l': { standard: 'GB/T 20878', standards: ['GB/T 20878', '022Cr17Ni12Mo2', 'SUS316L'] },
+  '6061-t6': { standard: 'GB/T 3190', standards: ['GB/T 3190', '6061-T6'], alpha: 23.6e-6, kThermal: 167 },
+  '7075-t6': { standard: 'GB/T 3190', standards: ['GB/T 3190', '7075-T6'], alpha: 23.4e-6, kThermal: 130 },
+}
+
+function enrichMaterial(raw) {
+  const thermal = CATEGORY_THERMAL_DEFAULTS[raw.category] ?? { alpha: 12e-6, kThermal: 40 }
+  const patch = MATERIAL_ENRICHMENT[raw.id] ?? {}
+  const base = {
+    ...raw,
+    alpha: patch.alpha ?? raw.alpha ?? thermal.alpha,
+    kThermal: patch.kThermal ?? raw.kThermal ?? thermal.kThermal,
+    standard: patch.standard ?? raw.standard ?? '',
+    standards: patch.standards ?? raw.standards ?? (patch.standard ? [patch.standard] : []),
+    states: patch.states ?? raw.states ?? null,
+    defaultState: patch.defaultState ?? raw.defaultState ?? null,
+  }
+  if (base.states?.length && base.defaultState) {
+    const st = base.states.find((s) => s.id === base.defaultState) ?? base.states[0]
+    return applyMaterialState(base, st.id)
+  }
+  return base
+}
+
+/** 应用热处理态强度；保留 α / 导热 / 标准号 */
+export function applyMaterialState(material, stateId) {
+  if (!material?.states?.length) return material
+  const st = material.states.find((s) => s.id === stateId) ?? material.states[0]
+  return {
+    ...material,
+    activeState: st.id,
+    activeStateLabel: st.label,
+    sigmaB: st.sigmaB ?? material.sigmaB,
+    sigmaS: st.sigmaS ?? material.sigmaS,
+    sigmaAllow: st.sigmaAllow ?? material.sigmaAllow,
+    tauAllow: st.tauAllow ?? material.tauAllow,
+  }
+}
+
+export const MATERIALS_ENRICHED = MATERIALS.map(enrichMaterial)
+
 export function findMaterial(id) {
-  return MATERIALS.find((m) => m.id === id) ?? null
+  return MATERIALS_ENRICHED.find((m) => m.id === id) ?? MATERIALS.find((m) => m.id === id) ?? null
 }
 
 export function searchMaterials(query) {
   const q = (query ?? '').trim().toLowerCase()
-  if (!q) return MATERIALS
-  return MATERIALS.filter(
-    (m) =>
-      m.name.toLowerCase().includes(q) ||
-      m.category.toLowerCase().includes(q) ||
-      m.id.includes(q),
-  )
+  const list = MATERIALS_ENRICHED
+  if (!q) return list
+  return list.filter((m) => {
+    const hay = [
+      m.name,
+      m.category,
+      m.id,
+      m.standard,
+      m.note,
+      ...(m.standards ?? []),
+      ...(m.states ?? []).flatMap((s) => [s.id, s.label]),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    return hay.includes(q)
+  })
 }
 
 export function getCategories() {
   return [...new Set(MATERIALS.map((m) => m.category))]
+}
+
+/** 线胀系数 (1/K)；无则按类别默认 */
+export function getMaterialAlpha(materialOrId) {
+  const m = typeof materialOrId === 'string' ? findMaterial(materialOrId) : materialOrId
+  if (!m) return CATEGORY_THERMAL_DEFAULTS['碳素钢'].alpha
+  return m.alpha ?? CATEGORY_THERMAL_DEFAULTS[m.category]?.alpha ?? 11.5e-6
+}
+
+/** 导热系数 W/(m·K) */
+export function getMaterialConductivity(materialOrId) {
+  const m = typeof materialOrId === 'string' ? findMaterial(materialOrId) : materialOrId
+  if (!m) return CATEGORY_THERMAL_DEFAULTS['碳素钢'].kThermal
+  return m.kThermal ?? CATEGORY_THERMAL_DEFAULTS[m.category]?.kThermal ?? 40
 }
 
 /** 温度折减许用应力 (简化线性, 参考温度 20°C) */

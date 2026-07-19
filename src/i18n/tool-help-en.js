@@ -1617,6 +1617,49 @@ export const toolHelpEnById = {
     keywords: ['chain drive', 'pitch'],
   },
 
+  'worm-gear': {
+    title: 'Worm Gear',
+    summary: 'Textbook-level ratio, sliding efficiency, and output torque with Simple/Full/Pro modes—not ISO 14521.',
+    steps: [
+      'Enter module, starts, teeth, diameter factor q, friction, and load.',
+      'Review i, γ, η, T₂; in Full/Pro compare rough strength flags.',
+    ],
+    principle: 'Crossed-axis sliding mesh; efficiency is dominated by lead angle and friction.',
+    formulas: [
+      { latex: 'i = z_2/z_1', note: 'Ratio' },
+      { latex: '\\tan\\gamma = z_1/q', note: 'Lead angle' },
+      { latex: '\\eta = \\dfrac{\\tan\\gamma}{\\tan(\\gamma+\\rho)}', note: 'Worm driving' },
+      { latex: 'T_2 = T_1 i \\eta', note: 'Output torque' },
+    ],
+    notes: ['γ≤ρ may self-lock (advisory). Bronze wheels: see tin bronze in materials.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['worm', 'worm gear', 'efficiency'],
+  },
+
+  'bevel-gear': {
+    title: 'Bevel Gear',
+    summary: 'Σ=90° straight bevel pitch angles, force split, and rough strength — not ISO 10300.',
+    steps: [
+      'Enter module, teeth, and torque/speed.',
+      'Review δ, R, Ft/Fr/Fa; Full/Pro check bending and contact.',
+    ],
+    principle: 'Orthogonal bevel gears; forces at mean pitch diameter; strength via virtual spur approximation.',
+    formulas: [
+      { latex: '\\tan\\delta_1=z_1/z_2', note: 'Pinion pitch angle' },
+      { latex: 'R=\\dfrac{m}{2}\\sqrt{z_1^2+z_2^2}', note: 'Outer cone distance' },
+      { latex: 'F_r=F_t\\tan\\alpha\\cos\\delta,\\ F_a=F_t\\tan\\alpha\\sin\\delta', note: 'Force split' },
+    ],
+    notes: ['Shaft angle 90° only; use ISO 10300 / vendor software for release.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['bevel', 'bevel gear'],
+  },
+
   'pipe-flow': {
     title: 'Pipe Pressure Drop',
     summary: 'Darcy-Weisbach friction loss, local losses, and velocity/Δp limit checks.',
@@ -1654,6 +1697,46 @@ export const toolHelpEnById = {
     outputs: COMMON_OUTPUTS,
     reliability: COMMON_RELIABILITY,
     keywords: ['buckling', 'plate'],
+  },
+  'column-buckling': {
+    title: 'Column Buckling',
+    summary: 'Euler critical load, slenderness, and Rankine correction for intermediate columns.',
+    steps: [
+      'Choose end restraints and section; enter length and axial force.',
+      'Full mode uses yield strength and Rankine when λ is below the limit.',
+      'Professional mode can include eccentric amplification.',
+    ],
+    principle: 'P_e = π²EI/(μL)²; λ=μL/i; Rankine for intermediate columns.',
+    formulas: [
+      { latex: 'P_e = \\frac{\\pi^2 E I}{(\\mu L)^2}', note: 'Euler critical load' },
+      { latex: '\\lambda = \\mu L / i', note: 'Slenderness' },
+    ],
+    notes: ['Simple mode is Euler estimate only; verify end restraints and imperfections for release.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['column', 'buckling', 'Euler'],
+  },
+  'pin-retainer': {
+    title: 'Pin / Retaining Ring',
+    summary: 'Pin shear/bearing and shaft circlip axial capacity (simplified).',
+    steps: [
+      'Select pin or ring tab and enter load/geometry.',
+      'Full mode adjusts allowables and safety factor.',
+      'Pro: pin-hole Kt; ring speed derating.',
+    ],
+    principle: 'Pin: τ=4F/(nπd²), σ_b=F/(d t); ring: simplified hoop shear and groove bearing.',
+    formulas: [
+      { latex: '\\tau = \\frac{4F}{n\\pi d^2}', note: 'Pin shear' },
+      { latex: '\\tau \\approx F/(\\pi d s)', note: 'Ring shear (simplified)' },
+    ],
+    notes: ['Ring formulas are engineering simplifications—use manufacturer catalogs for release.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['pin', 'circlip', 'retaining ring'],
   },
   'modal-freq': {
     title: 'Natural Frequency',
@@ -1711,19 +1794,76 @@ export const toolHelpEnById = {
 
   manufacturing: {
     title: 'Manufacturing Process',
-    summary: 'Estimate machining allowance, casting draft angle, and related process parameters.',
+    summary: 'Machining allowance, casting draft, cutting params, Ra–fit lookup, and injection DFM.',
     steps: [
-      'Select process type (machining / casting, etc.).',
-      'Enter part size and accuracy requirements.',
-      'Obtain suggested allowance or draft angle.',
+      'Pick process type (allowance / draft / cutting / roughness / injection).',
+      'Enter size, material, and process inputs.',
+      'Review allowances, power, lookup tables, or DFM checklist.',
     ],
-    principle: 'Stock needs machining allowance for final size and surface quality; castings need draft for mold release.',
-    notes: ['Excess allowance wastes material and time; too little may not remove casting skin.'],
+    principle: 'Stock needs machining allowance; castings need draft; cutting force≈kc·ap·f; injection geometry follows wall/draft rules of thumb.',
+    notes: ['Excess allowance wastes time; cutting and DFM are textbook estimates, not formal process specs.'],
     useCases: COMMON_USE_CASES,
     inputs: COMMON_INPUTS,
     outputs: COMMON_OUTPUTS,
     reliability: COMMON_RELIABILITY,
-    keywords: ['allowance', 'draft angle'],
+    keywords: ['allowance', 'draft', 'cutting', 'roughness', 'injection'],
+  },
+
+  'standards-ref': {
+    title: 'Standard Parts Lookup',
+    summary: 'Key sections, pin diameters/fits, O-ring CS series, and shaft retaining-ring grooves.',
+    steps: [
+      'Pick key / pin-ring / O-ring tab.',
+      'Look up by shaft or pin diameter, then jump to the matching strength/seal calc.',
+    ],
+    principle: 'Common-size lookup to bridge selection and dedicated checks.',
+    notes: ['Not a full standards text; groove tolerances and AS568 dash numbers follow official catalogs.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['key', 'pin', 'O-ring', 'retaining ring'],
+  },
+
+  'vibration-isolation': {
+    title: 'Vibration Isolation',
+    summary: 'SDOF isolation: natural frequency, ratio, transmissibility TR, and isolation-region checks.',
+    steps: [
+      'Enter mass, stiffness, damping ratio, and excitation frequency.',
+      'Full mode checks r>√2 and target TR; Pro also checks isolation dB.',
+    ],
+    principle: 'Force/displacement transmissibility depends on r=f/fn and ζ; isolation usually needs r>√2.',
+    formulas: [
+      { latex: 'f_n=\\dfrac{1}{2\\pi}\\sqrt{k/m}', note: 'Natural frequency' },
+      { latex: 'TR=\\dfrac{\\sqrt{1+(2\\zeta r)^2}}{\\sqrt{(1-r^2)^2+(2\\zeta r)^2}}', note: 'Transmissibility' },
+    ],
+    notes: ['Ideal SDOF; no multi-support coupling or nonlinear mounts.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['isolation', 'transmissibility', 'vibration'],
+  },
+
+  'heat-transfer': {
+    title: 'Simple Heat Transfer',
+    summary: 'Conduction, convection, and series-resistance heat rate and temperature-rise estimates.',
+    steps: [
+      'Pick conduction / convection / series and enter geometry plus ΔT.',
+      'Full mode checks cooling capacity; Pro also checks equivalent surface rise.',
+    ],
+    principle: 'Steady 1-D: conduction Q=kAΔT/L, convection Q=hAΔT, resistances add in series.',
+    formulas: [
+      { latex: 'Q=k A \\Delta T / L', note: 'Conduction' },
+      { latex: 'Q=h A \\Delta T', note: 'Convection' },
+      { latex: 'R_{\\mathrm{th}}=L/(kA)\\ \\mathrm{or}\\ 1/(hA)', note: 'Thermal resistance' },
+    ],
+    notes: ['Radiation and transients ignored; use simulation/test for release.'],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['heat transfer', 'conduction', 'convection'],
   },
 
   cylinder: {

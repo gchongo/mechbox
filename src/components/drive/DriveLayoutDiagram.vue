@@ -29,8 +29,8 @@
       <circle :cx="x1" :cy="cy" :r="r1" class="wheel wheel--driver" />
       <circle :cx="x1" :cy="cy" :r="Math.max(r1 - hubInset * 0.7, 3)" class="wheel-hub-driver" />
 
-      <!-- 链轮齿尖示意 -->
-      <g v-if="isChain" class="teeth" stroke="#64748b" stroke-width="1.2">
+      <!-- 链轮 / 同步带轮齿尖示意 -->
+      <g v-if="showTeeth" class="teeth" stroke="#64748b" stroke-width="1.2">
         <line
           v-for="(t, i) in toothTicks(x1, cy, r1, Math.min(driverTeeth, 16))"
           :key="'t1-' + i"
@@ -50,7 +50,7 @@
       </g>
 
       <!-- 皮带 / 链条外廓 -->
-      <path :d="drivePath" fill="none" :stroke="isChain ? '#475569' : '#64748b'" :stroke-width="isChain ? 2.5 : 3" stroke-linecap="round" />
+      <path :d="drivePath" fill="none" :stroke="beltStroke" :stroke-width="beltStrokeWidth" stroke-linecap="round" />
       <!-- 链条第二道线（滚子链厚度感） -->
       <path
         v-if="isChain"
@@ -61,8 +61,19 @@
         stroke-linecap="round"
         opacity="0.85"
       />
+      <!-- 同步带内侧齿槽感 -->
+      <path
+        v-if="isTiming"
+        :d="drivePathInner"
+        fill="none"
+        stroke="#64748b"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-dasharray="3 4"
+        opacity="0.7"
+      />
 
-      <!-- 紧边标注（上边） -->
+      <!-- 紧边标注（上边，链） -->
       <SvgMathText
         v-if="isChain"
         :x="(x1 + x2) / 2"
@@ -141,15 +152,15 @@
         <SvgMathText :x="x1 + 4" :y="cy - r1 - 18" :text="labelN" color="#8b5cf6" :width="72" :font-size="11" />
       </template>
 
-      <!-- 节距 p（链） -->
+      <!-- 节距 p（链 / 同步带） -->
       <SvgMathText
-        v-if="isChain"
+        v-if="showPitchFooter"
         :x="240"
         :y="268"
         :text="labelPitch"
         anchor="middle"
         color="#94a3b8"
-        :width="200"
+        :width="240"
         :font-size="11"
       />
     </svg>
@@ -166,25 +177,33 @@ import { useDiagramI18n } from '@/composables/useDiagramI18n'
 const { dt, dm, dl } = useDiagramI18n('drive')
 
 const props = defineProps({
-  variant: { type: String, default: 'belt' },
+  variant: { type: String, default: 'belt' }, // belt | chain | timing
   driverDiameter: { type: Number, default: 120 },
   drivenDiameter: { type: Number, default: 300 },
   centerDistance: { type: Number, default: 500 },
   driverTeeth: { type: Number, default: 19 },
   drivenTeeth: { type: Number, default: 57 },
   pitch: { type: Number, default: 15.875 },
+  beltWidth: { type: Number, default: 0 },
   wrapAngle: { type: Number, default: 0 },
   rpm: { type: Number, default: 0 },
 })
 
 const isChain = computed(() => props.variant === 'chain')
+const isTiming = computed(() => props.variant === 'timing')
+const usePitchGeometry = computed(() => isChain.value || isTiming.value)
+const showTeeth = computed(() => usePitchGeometry.value)
+const showPitchFooter = computed(() => usePitchGeometry.value)
 
 const d1 = computed(() =>
-  isChain.value ? (props.pitch * props.driverTeeth) / Math.PI : props.driverDiameter,
+  usePitchGeometry.value ? (props.pitch * props.driverTeeth) / Math.PI : props.driverDiameter,
 )
 const d2 = computed(() =>
-  isChain.value ? (props.pitch * props.drivenTeeth) / Math.PI : props.drivenDiameter,
+  usePitchGeometry.value ? (props.pitch * props.drivenTeeth) / Math.PI : props.drivenDiameter,
 )
+
+const beltStroke = computed(() => (isChain.value ? '#475569' : isTiming.value ? '#409eff' : '#64748b'))
+const beltStrokeWidth = computed(() => (isChain.value ? 2.5 : isTiming.value ? 3.5 : 3))
 
 const cy = 118
 const plotW = 400
@@ -231,8 +250,6 @@ const tangents = computed(() => {
 /** 外廓路径：上切线 → 大轮外包弧 → 下切线 → 小轮外包弧 */
 const drivePath = computed(() => {
   const { u1, u2, l1, l2 } = tangents.value
-  // 大轮：从 u2 顺时针到 l2（右侧外包）
-  // 小轮：从 l1 顺时针到 u1（左侧外包）→ SVG A 大弧
   return [
     `M ${u1.x} ${u1.y}`,
     `L ${u2.x} ${u2.y}`,
@@ -243,7 +260,7 @@ const drivePath = computed(() => {
 })
 
 const drivePathInner = computed(() => {
-  const shrink = 3
+  const shrink = isTiming.value ? 4 : 3
   const rr1 = Math.max(r1.value - shrink, 6)
   const rr2 = Math.max(r2.value - shrink, 8)
   const C = x2.value - x1.value
@@ -269,11 +286,10 @@ const wrapAngleDeg = computed(() => {
   return calcWrapAngle(d1.value, d2.value, props.centerDistance)
 })
 
-/** 小轮包角弧：外侧（背向大轮），圆心角 = π − 2γ（与计算结果一致） */
+/** 小轮包角弧：外侧（背向大轮），圆心角 = π − 2γ */
 const wrapArc = computed(() => {
   const r = r1.value + 12
   const g = gamma.value
-  // 以 π（左侧）为中心：从 π/2+γ 到 3π/2−γ，跨度 π−2γ
   const a0 = Math.PI / 2 + g
   const a1 = (3 * Math.PI) / 2 - g
   const xStart = x1.value + r * Math.cos(a0)
@@ -310,12 +326,12 @@ function toothTicks(cx, cy0, r, count) {
 }
 
 const labelSmall = computed(() =>
-  isChain.value
+  usePitchGeometry.value
     ? `$z_1 = ${props.driverTeeth}$`
     : `$D_1 = ${props.driverDiameter}\\,\\mathrm{mm}$`,
 )
 const labelLarge = computed(() =>
-  isChain.value
+  usePitchGeometry.value
     ? `$z_2 = ${props.drivenTeeth}$`
     : `$D_2 = ${props.drivenDiameter}\\,\\mathrm{mm}$`,
 )
@@ -324,19 +340,45 @@ const labelC = computed(() => dl('C', props.centerDistance))
 const labelN = computed(() => `$n = ${props.rpm}\\,\\mathrm{rpm}$`)
 const labelPitch = computed(() => {
   const i = (props.drivenTeeth / Math.max(props.driverTeeth, 1)).toFixed(2)
+  if (isTiming.value && props.beltWidth > 0) {
+    return `$p = ${props.pitch}\\,\\mathrm{mm}\\ ·\\ i = ${i}\\ ·\\ b = ${props.beltWidth}\\,\\mathrm{mm}$`
+  }
   return `$p = ${props.pitch}\\,\\mathrm{mm}\\ ·\\ i = ${i}$`
 })
 const labelTight = computed(() => (isChain.value ? dt('tightSide') : ''))
 
-const diagramTitle = computed(() => dt(isChain.value ? 'titleChain' : 'titleBelt'))
-const diagramAria = computed(() => dt(isChain.value ? 'ariaChain' : 'ariaBelt'))
-const hintText = computed(() =>
-  dt(isChain.value ? 'hintChain' : 'hintBelt', {
+const diagramTitle = computed(() => {
+  if (isTiming.value) return dt('titleTiming')
+  if (isChain.value) return dt('titleChain')
+  return dt('titleBelt')
+})
+const diagramAria = computed(() => {
+  if (isTiming.value) return dt('ariaTiming')
+  if (isChain.value) return dt('ariaChain')
+  return dt('ariaBelt')
+})
+const hintText = computed(() => {
+  if (isTiming.value) {
+    return dt('hintTiming', {
+      z1: props.driverTeeth,
+      z2: props.drivenTeeth,
+      p: props.pitch,
+      theta: wrapAngleDeg.value.toFixed(0),
+    })
+  }
+  if (isChain.value) {
+    return dt('hintChain', {
+      z1: props.driverTeeth,
+      z2: props.drivenTeeth,
+      theta: wrapAngleDeg.value.toFixed(0),
+    })
+  }
+  return dt('hintBelt', {
     z1: props.driverTeeth,
     z2: props.drivenTeeth,
     theta: wrapAngleDeg.value.toFixed(0),
-  }),
-)
+  })
+})
 </script>
 
 <style scoped>

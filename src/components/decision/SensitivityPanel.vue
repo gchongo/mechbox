@@ -3,12 +3,17 @@
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <span class="text-sm">{{ dt('trackMetric') }}:</span>
       <el-select v-model="selectedMetric" size="small" class="!w-56">
+        <template #label="{ value }">
+          <MathContent :text="metricLabel(toolId, value)" />
+        </template>
         <el-option
           v-for="m in metricOptions"
           :key="m"
           :label="metricLabel(toolId, m)"
           :value="m"
-        />
+        >
+          <MathContent :text="metricLabel(toolId, m)" />
+        </el-option>
       </el-select>
       <el-slider
         v-model="deltaPct"
@@ -34,7 +39,11 @@
         <span class="font-mono">{{ formatValue(analysis.baseMetrics[selectedMetric]) }}</span>
       </div>
       <el-table :data="tornadoRows" size="small" border>
-        <el-table-column prop="label" :label="dt('parameter')" min-width="140" />
+        <el-table-column :label="dt('parameter')" min-width="140">
+          <template #default="{ row }">
+            <MathContent :text="row.label" />
+          </template>
+        </el-table-column>
         <el-table-column :label="dt('swingPercent')" min-width="220">
           <template #default="{ row }">
             <div class="flex items-center gap-2">

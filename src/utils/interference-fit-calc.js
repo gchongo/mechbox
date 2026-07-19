@@ -68,9 +68,69 @@ export function calcContactPressure({
   }
 }
 
-/** 压装力 (N) */
+/** 压装力 (N) — DIN 7190 常用：π p d L (μ + 0.02)，0.02 计变形附加 */
 export function calcPressForce(pressure, diameter, fitLength, friction = 0.12) {
   return pressure * Math.PI * diameter * fitLength * (friction + 0.02)
+}
+
+/**
+ * 压入力曲线 F(z) — 接触长度从 0→L，接触压 p 取满配合值（常温过盈）
+ * @returns {{ z: number, force: number }[]}
+ */
+export function calcPressForceCurve(pressure, diameter, fitLength, friction = 0.12, steps = 11) {
+  const L = Math.max(0, fitLength ?? 0)
+  const n = Math.max(2, Math.min(51, Math.round(steps) || 11))
+  const points = []
+  for (let i = 0; i < n; i++) {
+    const z = L * (i / (n - 1))
+    points.push({ z, force: calcPressForce(pressure, diameter, z, friction) })
+  }
+  return points
+}
+
+/**
+ * 拆卸力 (N) — 干摩擦，无 0.02 变形附加；μ_ext 默认 ≥ 压装 μ
+ */
+export function calcExtractionForce(pressure, diameter, fitLength, frictionExtract) {
+  const mu = frictionExtract ?? 0.15
+  return pressure * Math.PI * diameter * fitLength * mu
+}
+
+/**
+ * 热装/冷装所需温差（达到装配间隙）
+ * 孔热胀：ΔT_heat = (i + c) / (α_h · D)
+ * 轴冷缩：ΔT_cool = −(i + c) / (α_s · d)（负值表示降温）
+ *
+ * @param {{
+ *   interference: number,
+ *   shaftDiameter: number,
+ *   holeDiameter: number,
+ *   shaftAlpha?: number,
+ *   holeAlpha?: number,
+ *   assemblyClearance?: number,
+ * }} input
+ */
+export function calcRequiredAssemblyDeltaT(input) {
+  const i = Math.max(0, input.interference ?? 0)
+  const c = Math.max(0, input.assemblyClearance ?? 0.02)
+  const d = input.shaftDiameter ?? input.holeDiameter ?? 0
+  const D = input.holeDiameter ?? d
+  const alphaS = input.shaftAlpha ?? 11.5e-6
+  const alphaH = input.holeAlpha ?? 11.5e-6
+  const need = i + c
+
+  const deltaTHubHeat = alphaH > 0 && D > 0 ? need / (alphaH * D) : Infinity
+  const deltaTShaftCool = alphaS > 0 && d > 0 ? -need / (alphaS * d) : -Infinity
+
+  return {
+    interference: i,
+    assemblyClearance: c,
+    diametralNeed: need,
+    deltaTHubHeat,
+    deltaTShaftCool,
+    shaftAlpha: alphaS,
+    holeAlpha: alphaH,
+  }
 }
 
 /** 传递扭矩 (N·mm) */
@@ -119,8 +179,22 @@ export function analyzeInterferenceFit(input) {
 
   const L = input.fitLength ?? 30
   const mu = input.friction ?? 0.12
+  const muExtract = input.frictionExtract ?? Math.max(mu, 0.15)
   const pressForce = calcPressForce(contact.pressure, shaftDiameter, L, mu)
+  const extractionForce = calcExtractionForce(contact.pressure, shaftDiameter, L, muExtract)
+  const pressForceCurve = calcPressForceCurve(contact.pressure, shaftDiameter, L, mu, input.curveSteps ?? 11)
   const torqueCapacity = calcTorqueCapacity(contact.pressure, shaftDiameter, L, mu)
+
+  const nominalI =
+    input.interference ?? shaftDiameter - (input.holeDiameter ?? shaftDiameter)
+  const assembly = calcRequiredAssemblyDeltaT({
+    interference: Math.max(0, nominalI),
+    shaftDiameter,
+    holeDiameter,
+    shaftAlpha: input.shaftAlpha ?? 11.5e-6,
+    holeAlpha: input.holeAlpha ?? 11.5e-6,
+    assemblyClearance: input.assemblyClearance ?? 0.02,
+  })
 
   const minHubWall = (input.hubOuterDiameter - holeDiameter) / 2
   const thinWallWarning = minHubWall < shaftDiameter * 0.1
@@ -133,15 +207,19 @@ export function analyzeInterferenceFit(input) {
     calcMode,
     estimateOnly,
     interference,
-    nominalInterference: input.interference ?? shaftDiameter - (input.holeDiameter ?? shaftDiameter),
+    nominalInterference: nominalI,
     shaftDiameter,
     holeDiameter,
     hubOuterDiameter: input.hubOuterDiameter,
     fitLength: L,
     friction: mu,
+    frictionExtract: muExtract,
     thermal,
+    assembly,
     ...contact,
     pressForce,
+    extractionForce,
+    pressForceCurve,
     torqueCapacity,
     torqueCapacityNm: torqueCapacity / 1000,
     minHubWall,

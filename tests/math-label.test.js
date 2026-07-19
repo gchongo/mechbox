@@ -18,11 +18,31 @@ describe('math-label enrichMathText', () => {
     expect(out).not.toMatch(/\$\\sigma\$\s*_c/)
   })
 
-  it('converts o-ring symbols with subscripts', () => {
-    expect(enrichMathText('截面直径 d_cs')).toContain('d_{cs}')
-    expect(enrichMathText('压缩率 ε_c')).toContain('\\varepsilon_c')
-    expect(enrichMathText('安装拉伸 ε_s')).toContain('\\varepsilon_s')
-    expect(enrichMathText('压缩量 Δd')).toContain('\\Delta d')
+  it('keeps F_a1 as one subscript (not F_a + 1)', () => {
+    const out = enrichMathText('蜗杆轴向力 F_a1')
+    expect(out).toContain('F_{a1}')
+    expect(out).not.toMatch(/\$F_a\$\s*1/)
+    expect(enrichMathText('蜗轮圆周力 F_t2')).toContain('F_{t2}')
+  })
+
+  it('keeps gasket sigma_op / sigma_seat as subscripts', () => {
+    const op = enrichMathText('工况比压 σ_op')
+    expect(op).toContain('\\sigma_{op}')
+    expect(op).not.toMatch(/\$\\sigma\$\s*_op/)
+    const seat = enrichMathText('坐落比压 σ_seat')
+    expect(seat).toContain('\\sigma_{seat}')
+    expect(seat).not.toMatch(/\$\\sigma\$\s*_seat/)
+    expect(enrichMathText('沟槽承压 σ_g')).toContain('\\sigma_g')
+    expect(enrichMathText('沟槽承压 σ_g')).not.toMatch(/\$\\sigma\$\s*_g/)
+  })
+
+  it('converts spring / weld / fit symbols', () => {
+    expect(enrichMathText('角刚度 k_θ')).toContain('k_{\\theta}')
+    expect(enrichMathText('拆卸摩擦系数 μ_e')).toContain('\\mu_e')
+    expect(enrichMathText('参考疲劳强度 Δσ_C')).toContain('\\Delta\\sigma_C')
+    expect(enrichMathText('应力集中 K_i')).toContain('K_i')
+    expect(enrichMathText('Fmin/Fmax')).toContain('F_{\\mathrm{min}}')
+    expect(enrichMathText('10⁴')).toContain('10^{4}')
   })
 
   it('preserves pre-marked latex', () => {

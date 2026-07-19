@@ -28,6 +28,8 @@ describe('gear-agma', () => {
 
   it('compares ISO and AGMA', () => {
     const iso = analyzeGearISO6336(gearInput)
+    expect(iso.pass).toBe(iso.contactPass && iso.bendingPass)
+    expect(typeof iso.pass).toBe('boolean')
     const agma = analyzeGearAGMA(gearInput)
     const c = compareGearStandards(iso, agma)
     expect(c.contactStress.iso).toBeGreaterThan(0)

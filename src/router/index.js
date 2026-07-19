@@ -139,6 +139,16 @@ const routes = [
     component: () => import('@/views/ChainCalcView.vue'),
   },
   {
+    path: '/worm-gear',
+    name: 'worm-gear',
+    component: () => import('@/views/WormGearCalcView.vue'),
+  },
+  {
+    path: '/bevel-gear',
+    name: 'bevel-gear',
+    component: () => import('@/views/BevelGearCalcView.vue'),
+  },
+  {
     path: '/cylinder',
     name: 'cylinder',
     component: () => import('@/views/CylinderCalcView.vue'),
@@ -208,6 +218,21 @@ const routes = [
     component: () => import('@/views/PlateBucklingCalcView.vue'),
   },
   {
+    path: '/column-buckling',
+    name: 'column-buckling',
+    component: () => import('@/views/ColumnBucklingCalcView.vue'),
+  },
+  {
+    path: '/pin-retainer',
+    name: 'pin-retainer',
+    component: () => import('@/views/PinRetainerCalcView.vue'),
+  },
+  {
+    path: '/gasket-flange',
+    name: 'gasket-flange',
+    component: () => import('@/views/GasketFlangeCalcView.vue'),
+  },
+  {
     path: '/modal-freq',
     name: 'modal-freq',
     component: () => import('@/views/ModalFreqCalcView.vue'),
@@ -221,6 +246,21 @@ const routes = [
     path: '/manufacturing',
     name: 'manufacturing',
     component: () => import('@/views/ManufacturingView.vue'),
+  },
+  {
+    path: '/vibration-isolation',
+    name: 'vibration-isolation',
+    component: () => import('@/views/VibrationIsolationView.vue'),
+  },
+  {
+    path: '/heat-transfer',
+    name: 'heat-transfer',
+    component: () => import('@/views/HeatTransferView.vue'),
+  },
+  {
+    path: '/standards-ref',
+    name: 'standards-ref',
+    component: () => import('@/views/StandardsRefView.vue'),
   },
   {
     path: '/heat-treatment',
@@ -273,6 +313,16 @@ const routes = [
     component: () => import('@/views/design/BoltJointChainView.vue'),
   },
   {
+    path: '/design/flange-seal',
+    name: 'design-flange-seal',
+    component: () => import('@/views/design/FlangeSealChainView.vue'),
+  },
+  {
+    path: '/design/gearbox',
+    name: 'design-gearbox',
+    component: () => import('@/views/design/GearboxChainView.vue'),
+  },
+  {
     path: '/design/projects',
     name: 'design-projects',
     component: () => import('@/views/design/DesignProjectsView.vue'),
@@ -299,6 +349,8 @@ const ENGINEERING_ROUTE_NAMES = new Set([
   'clutch',
   'belt',
   'chain',
+  'worm-gear',
+  'bevel-gear',
   'cylinder',
   'interference-fit',
   'beam',
@@ -310,15 +362,23 @@ const ENGINEERING_ROUTE_NAMES = new Set([
   'analytics',
   'pipe-flow',
   'plate-buckling',
+  'column-buckling',
+  'pin-retainer',
+  'gasket-flange',
   'modal-freq',
   'material-selection',
   'manufacturing',
+  'vibration-isolation',
+  'heat-transfer',
+  'standards-ref',
   'heat-treatment',
   'units',
   'fit',
   'gdt-stack',
   'design-powertrain',
   'design-bolt-joint',
+  'design-flange-seal',
+  'design-gearbox',
   'design-projects',
 ])
 

@@ -20,6 +20,7 @@ import {
   getChainHelp,
   getClutchHelp,
   getBoltGroupHelp,
+  getWormGearHelp,
 } from './mechanical-drive.js'
 import {
   getSheetMetalHelp,
@@ -28,6 +29,9 @@ import {
   getThermalExpansionHelp,
   getPipeFlowHelp,
   getPlateBucklingHelp,
+  getColumnBucklingHelp,
+  getPinRetainerHelp,
+  getGasketFlangeHelp,
   getModalFreqHelp,
 } from './mechanical-misc.js'
 import {
@@ -186,6 +190,7 @@ const REGISTRY = {
   spring: getSpringHelp,
   belt: getBeltHelp,
   chain: getChainHelp,
+  'worm-gear': getWormGearHelp,
   clutch: getClutchHelp,
   'bolt-group': getBoltGroupHelp,
   'sheet-metal': getSheetMetalHelp,
@@ -194,6 +199,9 @@ const REGISTRY = {
   'thermal-expansion': getThermalExpansionHelp,
   'pipe-flow': getPipeFlowHelp,
   'plate-buckling': getPlateBucklingHelp,
+  'column-buckling': getColumnBucklingHelp,
+  'pin-retainer': getPinRetainerHelp,
+  'gasket-flange': getGasketFlangeHelp,
   'modal-freq': getModalFreqHelp,
   editor: getEditorHelp,
   batch: getBatchHelp,

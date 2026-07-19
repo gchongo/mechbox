@@ -167,6 +167,7 @@
       @apply="onApplyInverse"
     />
 
+    <RelatedToolsPanel tool-id="shaft" class="mt-4" />
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
       <SaveHistoryButton
         tool="shaft"
@@ -192,6 +193,7 @@ import ShaftDiagram from '@/components/shaft/ShaftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
 import DecisionToolsPanel from '@/components/decision/DecisionToolsPanel.vue'
 import SaveHistoryButton from '@/components/common/SaveHistoryButton.vue'
+import RelatedToolsPanel from '@/components/calc/RelatedToolsPanel.vue'
 import ChainSyncBanner from '@/components/design/ChainSyncBanner.vue'
 import { adaptShaftCombined, adaptShaftTorsion } from '@/utils/calc-adapters'
 import { getCalcReviewStatus, reviewAwareCheckClass, reviewAwareCheckMark } from '@/utils/calc-result'

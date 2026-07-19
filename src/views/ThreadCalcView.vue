@@ -153,7 +153,7 @@
             </div>
           </template>
         </dl>
-        <p v-if="reviewOnly" class="mt-3 text-xs text-warning">{{ pt('hintSimple') }}</p>
+        <p v-if="reviewOnly" class="mt-3 text-xs text-warning"><MathContent :text="pt('hintSimple')" /></p>
         <FormulaPanel :columns="1">
           <MathTex expr="A_s = \frac{\pi}{4}(d - 0.9382P)^2" block />
           <MathTex v-if="form.calcMode === 'simple'" expr="\sigma = F / A_s,\quad T = \mu d F / 1000" block />

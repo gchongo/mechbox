@@ -113,9 +113,12 @@ const chains = ref([])
 const activeId = ref(null)
 const activeChain = computed(() => chains.value.find((c) => c.id === activeId.value) ?? null)
 const sharedSchema = computed(() => CHAIN_TYPES[props.chainType]?.sharedInputSchema ?? {})
-const gridClass = computed(() =>
-  (CHAIN_TYPES[props.chainType]?.steps?.length ?? 3) >= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2',
-)
+const gridClass = computed(() => {
+  const n = CHAIN_TYPES[props.chainType]?.steps?.length ?? 3
+  if (n >= 4) return 'lg:grid-cols-4'
+  if (n >= 3) return 'lg:grid-cols-3'
+  return 'lg:grid-cols-2'
+})
 
 function refresh() {
   chains.value = listChains(props.chainType)
@@ -257,9 +260,11 @@ function openTool(stepKey, toolId) {
     shaft: '/shaft',
     bearing: '/bearing',
     key: '/key',
+    gear: '/gear',
     'bolt-preload': '/bolt-preload',
     'bolt-group': '/bolt-group',
     weld: '/weld',
+    'gasket-flange': '/gasket-flange',
   }
   const target = routeMap[toolId]
   if (!target || !activeChain.value) return

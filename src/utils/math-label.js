@@ -78,6 +78,8 @@ const REPLACEMENTS = [
   // 复合符号（长匹配优先）
   ['σ_eq', '$\\sigma_{eq}$'],
   ['σ_cr', '$\\sigma_{cr}$'],
+  ['σ_op', '$\\sigma_{op}$'],
+  ['σ_seat', '$\\sigma_{seat}$'],
   ['σ_c', '$\\sigma_c$'],
   ['σc', '$\\sigma_c$'],
   ['σt', '$\\sigma_t$'],
@@ -94,6 +96,9 @@ const REPLACEMENTS = [
   ['f_exc', '$f_{\\mathrm{exc}}$'],
   ['F_r', '$F_r$'],
   ['F_a', '$F_a$'],
+  ['F_a1', '$F_{a1}$'],
+  ['F_t1', '$F_{t1}$'],
+  ['F_t2', '$F_{t2}$'],
   ['F_x', '$F_x$'],
   ['F_y', '$F_y$'],
   ['F^+', '$F^+$'],
@@ -151,6 +156,12 @@ const REPLACEMENTS = [
   ['L₁₀', '$L_{10}$'],
   ['C₀', '$C_0$'],
   ['S₀', '$S_0$'],
+  ['P₀', '$P_0$'],
+  ['F₀', '$F_0$'],
+  ['dn', '$dn$'],
+  ['F_e', '$F_e$'],
+  ['F_inst', '$F_{\\mathrm{inst}}$'],
+  ['L_p', '$L_p$'],
   ['a₁', '$a_1$'],
   ['a₂', '$a_2$'],
   ['α₁', '$\\alpha_1$'],
@@ -166,6 +177,18 @@ const REPLACEMENTS = [
   ['ΔL', '$\\Delta L$'],
   ['Δi', '$\\Delta i$'],
   ['Δτ', '$\\Delta \\tau$'],
+  ['Δσ_C', '$\\Delta\\sigma_C$'],
+  ['ΔσC', '$\\Delta\\sigma_C$'],
+  ['k_θ', '$k_{\\theta}$'],
+  ['μ_e', '$\\mu_e$'],
+  ['K_i', '$K_i$'],
+  ['Fmin/Fmax', '$F_{\\mathrm{min}}/F_{\\mathrm{max}}$'],
+  ['F_min/F_max', '$F_{\\mathrm{min}}/F_{\\mathrm{max}}$'],
+  ['Fmin', '$F_{\\mathrm{min}}$'],
+  ['Fmax', '$F_{\\mathrm{max}}$'],
+  ['10⁴', '$10^{4}$'],
+  ['10⁷', '$10^{7}$'],
+  ['N·mm/rad', '$\\mathrm{N\\cdot mm/rad}$'],
   ['A_s', '$A_s$'],
   ['6σ', '$6\\sigma$'],
   ['6σ RSS', '$6\\sigma$ RSS'],
@@ -182,6 +205,7 @@ const REPLACEMENTS = [
   ['σ', '$\\sigma$'],
   ['τ', '$\\tau$'],
   ['θ', '$\\theta$'],
+  ['γ', '$\\gamma$'],
   ['δ', '$\\delta$'],
   ['Δ', '$\\Delta$'],
   ['ε', '$\\varepsilon$'],
@@ -311,12 +335,38 @@ function applySymbolReplacements(plain) {
   return out
 }
 
+/** 希腊字母 + 下标（σ_op 等）须先于裸 σ → $\\sigma$，否则会留下明文 _op */
+const GREEK_LETTER_LATEX = {
+  μ: '\\mu',
+  σ: '\\sigma',
+  τ: '\\tau',
+  θ: '\\theta',
+  δ: '\\delta',
+  Δ: '\\Delta',
+  ε: '\\varepsilon',
+  α: '\\alpha',
+  β: '\\beta',
+  ν: '\\nu',
+  π: '\\pi',
+  ρ: '\\rho',
+  Φ: '\\Phi',
+}
+
+function enrichGreekUnderscoreIdents(text) {
+  // 勿拆 Δσ_C 一类「希腊+希腊_下标」；负向后顾跳过紧邻前导希腊字母
+  return text.replace(/(?<![μστθδΔεαβνπρΦ])([μστθδΔεαβνπρΦ])_([A-Za-z0-9]+)/g, (_, g, sub) => {
+    return `$${GREEK_LETTER_LATEX[g]}_${formatSubscriptPart(sub)}$`
+  })
+}
+
 function enrichPlainSegment(text) {
   const normalized = bindCjkToSymbol(normalizeEngineeringText(text))
   return splitMathSegments(normalized)
     .map((seg) => {
       if (seg.math) return seg.content
-      const replaced = applySymbolReplacements(seg.content)
+      // 希腊下标须先于裸 σ→$\sigma$，否则 σ_op 会变成 $\sigma$_op；负向后顾保护 Δσ_C
+      const withGreekSubs = enrichGreekUnderscoreIdents(seg.content)
+      const replaced = applySymbolReplacements(withGreekSubs)
       return bindCjkToSymbol(
         splitMathSegments(replaced)
           .map((s) => (s.math ? s.content : autoEnrichSymbols(s.content)))

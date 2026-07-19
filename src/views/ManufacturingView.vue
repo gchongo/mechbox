@@ -171,6 +171,225 @@
           </section>
         </div>
       </el-tab-pane>
+
+      <el-tab-pane :label="pfCut('tabCutting')" name="cutting">
+        <CalcModePanel v-model="cut.calcMode" page-key="manufacturing-cutting" />
+        <div class="grid gap-6 lg:grid-cols-2">
+          <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
+            <el-form label-width="130px">
+              <CalcFormItem :label="pfCut('materialId')">
+                <el-select v-model="cut.materialId" class="w-full">
+                  <el-option
+                    v-for="(m, k) in CUTTING_MATERIALS"
+                    :key="k"
+                    :label="m.label"
+                    :value="k"
+                  />
+                </el-select>
+              </CalcFormItem>
+              <CalcFormItem :label="pfCut('cuttingSpeed')" unit="m/min">
+                <el-input-number v-model="cut.cuttingSpeed" :min="1" :step="10" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfCut('feed')" unit="mm/r">
+                <el-input-number v-model="cut.feed" :min="0.01" :step="0.05" :precision="3" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfCut('depthOfCut')" unit="mm">
+                <el-input-number v-model="cut.depthOfCut" :min="0.05" :step="0.1" :precision="2" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfCut('diameter')" unit="mm">
+                <el-input-number v-model="cut.diameter" :min="1" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfCut('length')" unit="mm">
+                <el-input-number v-model="cut.length" :min="1" />
+              </CalcFormItem>
+              <template v-if="cut.calcMode !== 'simple'">
+                <CalcFormItem :label="pfCut('efficiency')">
+                  <el-input-number v-model="cut.efficiency" :min="0.3" :max="1" :step="0.05" :precision="2" />
+                </CalcFormItem>
+                <CalcFormItem :label="pfCut('allowPower')" unit="kW">
+                  <el-input-number v-model="cut.allowPower" :min="0.1" :step="0.5" :precision="1" />
+                </CalcFormItem>
+              </template>
+              <template v-if="cut.calcMode === 'professional'">
+                <CalcFormItem :label="pfCut('minToolLife')" unit="min">
+                  <el-input-number v-model="cut.minToolLife" :min="1" :step="5" />
+                </CalcFormItem>
+              </template>
+            </el-form>
+          </section>
+          <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+            <el-tag
+              v-if="cut.calcMode !== 'simple'"
+              class="mb-3"
+              :type="cutResult.pass ? 'success' : 'danger'"
+            >
+              {{ cutResult.pass ? fc('overallPass') : fc('overallFail') }}
+            </el-tag>
+            <dl class="space-y-3 text-sm">
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCut('cuttingForce')" />
+                <dd class="font-mono">{{ cutResult.cuttingForce?.toFixed(0) }} N</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCut('cuttingPower')" />
+                <dd class="font-mono">{{ cutResult.cuttingPower?.toFixed(2) }} kW</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCut('motorPower')" />
+                <dd class="font-mono text-lg text-primary">{{ cutResult.motorPower?.toFixed(2) }} kW</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCut('rpm')" />
+                <dd class="font-mono">{{ cutResult.rpm?.toFixed(0) }} rpm</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCut('materialRemovalRate')" />
+                <dd class="font-mono">{{ cutResult.materialRemovalRate?.toFixed(2) }} cm³/min</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prCut('machiningTimeMin')" />
+                <dd class="font-mono">{{ cutResult.machiningTimeMin?.toFixed(2) }} min</dd>
+              </div>
+              <div
+                v-if="cut.calcMode === 'professional' && cutResult.toolLifeMin != null"
+                class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
+              >
+                <ResultLabel :text="prCut('toolLifeMin')" />
+                <dd class="font-mono" :class="cutResult.lifePass ? 'text-success' : 'text-error'">
+                  {{ cutResult.toolLifeMin.toFixed(1) }} min
+                  {{ cutResult.lifePass ? '✓' : '✗' }}
+                </dd>
+              </div>
+            </dl>
+            <FormulaPanel :columns="1">
+              <MathTex expr="F_c = k_c a_p f" block />
+              <MathTex expr="P_c = F_c v_c / (60\times 10^3),\quad P_{\mathrm{m}}=P_c/\eta" block />
+              <MathTex expr="n = 1000 v_c /(\pi d)" block />
+            </FormulaPanel>
+          </section>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane :label="pfRa('tabRoughness')" name="roughness">
+        <div class="grid gap-6 lg:grid-cols-2">
+          <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
+            <el-form label-width="120px">
+              <CalcFormItem :label="pfRa('ra')" unit="μm">
+                <el-input-number v-model="rough.ra" :min="0.05" :step="0.1" :precision="2" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfRa('fit')">
+                <el-select v-model="rough.fit" class="w-full" filterable allow-create>
+                  <el-option v-for="row in FIT_RA_TABLE" :key="row.fit" :label="row.fit" :value="row.fit" />
+                </el-select>
+              </CalcFormItem>
+            </el-form>
+            <p class="mt-3 text-xs text-gray-500">{{ prRa('lookupHint') }}</p>
+          </section>
+          <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+            <dl class="space-y-3 text-sm">
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prRa('itRange')" />
+                <dd class="font-mono">IT{{ roughResult.byRa?.itMin }}–IT{{ roughResult.byRa?.itMax }}</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prRa('process')" />
+                <dd>{{ roughResult.byRa?.process }}</dd>
+              </div>
+              <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                <ResultLabel :text="prRa('fitHint')" />
+                <dd class="text-right">{{ roughResult.byRa?.fitHint }}</dd>
+              </div>
+              <template v-if="roughResult.byFit">
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="prRa('raHole')" />
+                  <dd class="font-mono">≤ {{ roughResult.byFit.raHole }} μm</dd>
+                </div>
+                <div class="flex justify-between rounded bg-gray-50 p-3 dark:bg-gray-900">
+                  <ResultLabel :text="prRa('raShaft')" />
+                  <dd class="font-mono">≤ {{ roughResult.byFit.raShaft }} μm</dd>
+                </div>
+              </template>
+            </dl>
+            <el-table :data="roughResult.tableRaIt" size="small" border class="mt-4" max-height="220">
+              <el-table-column prop="raMax" :label="prRa('colRaMax')" width="80" />
+              <el-table-column :label="prRa('colIt')">
+                <template #default="{ row }">IT{{ row.itMin }}–{{ row.itMax }}</template>
+              </el-table-column>
+              <el-table-column prop="process" :label="prRa('colProcess')" />
+            </el-table>
+          </section>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane :label="pfInj('tabInjection')" name="injection">
+        <CalcModePanel v-model="inj.calcMode" page-key="manufacturing-injection" />
+        <div class="grid gap-6 lg:grid-cols-2">
+          <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('input') }}</h2>
+            <el-form label-width="130px">
+              <CalcFormItem :label="pfInj('materialId')">
+                <el-select v-model="inj.materialId" class="w-full">
+                  <el-option
+                    v-for="(m, k) in INJECTION_MATERIALS"
+                    :key="k"
+                    :label="m.label"
+                    :value="k"
+                  />
+                </el-select>
+              </CalcFormItem>
+              <CalcFormItem :label="pfInj('wallThickness')" unit="mm">
+                <el-input-number v-model="inj.wallThickness" :min="0.1" :step="0.1" :precision="2" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfInj('wallVariationPct')" unit="%">
+                <el-input-number v-model="inj.wallVariationPct" :min="0" :max="100" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfInj('draftAngle')" unit="°">
+                <el-input-number v-model="inj.draftAngle" :min="0" :step="0.5" :precision="1" />
+              </CalcFormItem>
+              <CalcFormItem :label="pfInj('filletRadius')" unit="mm">
+                <el-input-number v-model="inj.filletRadius" :min="0" :step="0.1" :precision="2" />
+              </CalcFormItem>
+              <el-form-item :label="pfInj('hasRibs')">
+                <el-switch v-model="inj.hasRibs" />
+              </el-form-item>
+              <CalcFormItem v-if="inj.hasRibs" :label="pfInj('ribThickness')" unit="mm">
+                <el-input-number v-model="inj.ribThickness" :min="0.1" :step="0.1" :precision="2" />
+              </CalcFormItem>
+            </el-form>
+            <p class="mt-2 text-xs text-gray-500">
+              {{ pfInj('wallRangeHint') }}:
+              {{ injResult.material?.minWall }}–{{ injResult.material?.maxWall }} mm,
+              {{ pfInj('minDraft') }} ≥ {{ injResult.material?.minDraft }}°
+            </p>
+          </section>
+          <section class="card-panel">
+            <h2 class="mb-4 font-semibold">{{ ct('results') }}</h2>
+            <el-tag
+              v-if="inj.calcMode !== 'simple'"
+              class="mb-3"
+              :type="injResult.pass ? 'success' : 'danger'"
+            >
+              {{ injResult.pass ? fc('overallPass') : fc('overallFail') }}
+              ({{ injResult.failCount }} {{ prInj('failCount') }})
+            </el-tag>
+            <ul class="space-y-2 text-sm">
+              <li
+                v-for="c in injResult.checks"
+                :key="c.id"
+                class="flex items-center justify-between rounded bg-gray-50 p-3 dark:bg-gray-900"
+              >
+                <span>{{ locale === 'en' ? c.labelEn : c.labelZh }}</span>
+                <span :class="c.pass ? 'text-success' : 'text-error'">{{ c.pass ? '✓' : '✗' }}</span>
+              </li>
+            </ul>
+            <p class="mt-3 text-xs text-gray-500">{{ injResult.tip }}</p>
+          </section>
+        </div>
+      </el-tab-pane>
     </el-tabs>
 
     <div class="mt-4 flex flex-wrap gap-2 tool-action-bar">
@@ -190,6 +409,9 @@
 import { reactive, ref, computed, watch } from 'vue'
 import { calcMachiningAllowance, TOLERANCE_GRADES, MACHINING_MODE_OPS } from '@/utils/machining-calc'
 import { calcDraftAngle, verifyDraftAngle, CAST_MATERIALS, SURFACE_TYPES } from '@/utils/casting-calc'
+import { analyzeCutting, CUTTING_MATERIALS } from '@/utils/cutting-calc'
+import { analyzeRoughnessFit, FIT_RA_TABLE } from '@/utils/roughness-fit-ref'
+import { analyzeInjectionDfm, INJECTION_MATERIALS } from '@/utils/injection-dfm'
 import MachiningAllowanceDiagram from '@/components/manufacturing/MachiningAllowanceDiagram.vue'
 import CastingDraftDiagram from '@/components/manufacturing/CastingDraftDiagram.vue'
 import CalcModePanel from '@/components/calc/CalcModePanel.vue'
@@ -203,11 +425,16 @@ import { useHistoryReplay } from '@/composables/useHistoryReplay'
 import { snapshotHistoryInput } from '@/utils/history-replay'
 import { useOptionsI18n } from '@/composables/useOptionsI18n'
 import { useResultI18n } from '@/composables/useResultI18n'
+import { useLocale } from '@/composables/useLocale'
 
 const { pt, ct, pf, pr, fc } = useCalcPage('manufacturing')
 const { pf: pfCast, pr: prCast } = useCalcPage('manufacturing-cast')
+const { pf: pfCut, pr: prCut } = useCalcPage('manufacturing-cutting')
+const { pf: pfRa, pr: prRa } = useCalcPage('manufacturing-roughness')
+const { pf: pfInj, pr: prInj } = useCalcPage('manufacturing-injection')
 const { optionMap, ol } = useOptionsI18n()
 const { rm } = useResultI18n()
+const { locale } = useLocale()
 
 const toleranceGrades = computed(() => optionMap(TOLERANCE_GRADES, 'toleranceGrades'))
 const castMaterials = computed(() => optionMap(CAST_MATERIALS, 'castMaterials'))
@@ -234,6 +461,35 @@ const cast = reactive({
   actualDraftAngle: 0,
 })
 
+const cut = reactive({
+  calcMode: 'complete',
+  materialId: 'steel_soft',
+  cuttingSpeed: 100,
+  feed: 0.2,
+  depthOfCut: 1.5,
+  diameter: 40,
+  length: 100,
+  efficiency: 0.8,
+  allowPower: 5,
+  minToolLife: 15,
+})
+
+const rough = reactive({
+  ra: 1.6,
+  fit: 'H7/g6',
+})
+
+const inj = reactive({
+  calcMode: 'complete',
+  materialId: 'abs',
+  wallThickness: 2,
+  wallVariationPct: 10,
+  draftAngle: 1,
+  filletRadius: 1,
+  hasRibs: true,
+  ribThickness: 1,
+})
+
 watch(
   () => mach.calcMode,
   (mode) => {
@@ -247,6 +503,9 @@ const castResult = computed(() => calcDraftAngle(cast))
 const verifyResult = computed(() =>
   cast.actualDraftAngle > 0 ? verifyDraftAngle(cast) : { pass: true },
 )
+const cutResult = computed(() => analyzeCutting(cut))
+const roughResult = computed(() => analyzeRoughnessFit(rough))
+const injResult = computed(() => analyzeInjectionDfm(inj))
 
 const machModeTag = computed(() =>
   (machResult.value.operations ?? []).map((op) => ol('machiningOps', op)).join(' + '),
@@ -260,7 +519,13 @@ const formulaTime = String.raw`t \approx V_{\mathrm{rem}} / \mathrm{MRR}`
 const formulaDraft = String.raw`\alpha = (a_0 + k\sqrt{h})\,f_{\mathrm{surf}}\,f_{\mathrm{tex}}\,\varphi`
 const formulaDelta = String.raw`\Delta = h\tan\alpha,\quad \Delta_{\mathrm{total}} = 2\Delta`
 
-const activeResult = computed(() => (tab.value === 'casting' ? castResult.value : machResult.value))
+const activeResult = computed(() => {
+  if (tab.value === 'casting') return castResult.value
+  if (tab.value === 'cutting') return cutResult.value
+  if (tab.value === 'roughness') return roughResult.value
+  if (tab.value === 'injection') return injResult.value
+  return machResult.value
+})
 
 const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   form: mach,
@@ -274,6 +539,27 @@ const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
         { label: fc('check'), value: verifyResult.value.pass ? fc('satisfy') : fc('insufficient') },
       ]
     }
+    if (tab.value === 'cutting') {
+      const r = cutResult.value
+      return [
+        { label: prCut('motorPower'), value: `${r.motorPower?.toFixed(2) ?? '-'} kW` },
+        { label: prCut('rpm'), value: `${r.rpm?.toFixed(0) ?? '-'} rpm` },
+      ]
+    }
+    if (tab.value === 'roughness') {
+      const r = roughResult.value
+      return [
+        { label: prRa('itRange'), value: `IT${r.byRa?.itMin}–IT${r.byRa?.itMax}` },
+        { label: prRa('process'), value: r.byRa?.process ?? '-' },
+      ]
+    }
+    if (tab.value === 'injection') {
+      const r = injResult.value
+      return [
+        { label: prInj('failCount'), value: String(r.failCount ?? 0) },
+        { label: fc('check'), value: r.pass ? fc('overallPass') : fc('overallFail') },
+      ]
+    }
     const r = machResult.value
     return [
       { label: pr('totalRadialAllowance'), value: `${r.totalRadialAllowance?.toFixed(2) ?? '-'} mm` },
@@ -282,7 +568,14 @@ const { saveStatus, historyTitle, historySummary } = useCalcHistorySave({
   },
 })
 const historyInput = computed(() =>
-  snapshotHistoryInput({ tab: tab.value, mach: { ...mach }, cast: { ...cast } }),
+  snapshotHistoryInput({
+    tab: tab.value,
+    mach: { ...mach },
+    cast: { ...cast },
+    cut: { ...cut },
+    rough: { ...rough },
+    inj: { ...inj },
+  }),
 )
 
 function applyManufacturingReplay(input) {
@@ -290,6 +583,9 @@ function applyManufacturingReplay(input) {
   if (input.tab != null) tab.value = input.tab
   if (input.mach && typeof input.mach === 'object') Object.assign(mach, input.mach)
   if (input.cast && typeof input.cast === 'object') Object.assign(cast, input.cast)
+  if (input.cut && typeof input.cut === 'object') Object.assign(cut, input.cut)
+  if (input.rough && typeof input.rough === 'object') Object.assign(rough, input.rough)
+  if (input.inj && typeof input.inj === 'object') Object.assign(inj, input.inj)
 }
 useHistoryReplay('manufacturing', null, { applyFn: applyManufacturingReplay })
 </script>

@@ -12,12 +12,18 @@ import { analyzeShaftCombined } from '@/utils/shaft-combined'
 import { analyzeBoltPreload } from '@/utils/bolt-preload-calc'
 import { analyzeKeyConnection } from '@/utils/key-calc'
 import { analyzeBeam } from '@/utils/beam-calc'
-import { analyzeSpring } from '@/utils/spring-calc'
+import { analyzeSpringByType } from '@/utils/spring-types-calc'
 import { analyzeButtWeld, analyzeFilletWeld, analyzeHAZ, analyzeWeldFatigue } from '@/utils/weld-calc'
 import { analyzeBoltGroup } from '@/utils/bolt-group-calc'
 import { analyzeFit } from '@/utils/iso-286-calc'
 import { analyzeGdtStack } from '@/utils/gdt-stack-calc'
 import { calculateChainResult } from '@/utils/gdt-chain'
+import { analyzeGear } from '@/utils/gear-calc'
+import { analyzeGasketFlange } from '@/utils/gasket-flange-calc'
+import { analyzeWormGear } from '@/utils/worm-gear-calc'
+import { analyzeVibrationIsolation } from '@/utils/vibration-isolation-calc'
+import { analyzeHeatTransfer } from '@/utils/heat-transfer-calc'
+import { analyzeBevelGear } from '@/utils/bevel-gear-calc'
 
 /** ---------------- Bearing ---------------- */
 export function adaptBearing(input) {
@@ -67,6 +73,17 @@ export function adaptBearing(input) {
       }),
     )
   }
+  if (r.equivalentStaticLoad != null && Number.isFinite(r.equivalentStaticLoad)) {
+    keyMetrics.push(metric('equivalentStaticLoad', '静当量 P₀', r.equivalentStaticLoad, 'N'))
+  }
+  if (r.dn) {
+    keyMetrics.push(
+      metric('dn', 'dn 值', r.dn, '', {
+        status: r.dnPass ? 'pass' : 'warn',
+        direction: 'lower-better',
+      }),
+    )
+  }
   if (r.temperatureFactor != null && r.temperatureFactor !== 1) {
     keyMetrics.push(metric('a2', '温度系数 a₂', r.temperatureFactor, '', { direction: 'higher-better' }))
   }
@@ -88,8 +105,11 @@ export function adaptBearing(input) {
       ...(r.speedWarningKey
         ? [{ key: r.speedWarningKey, level: 'warn', message: '转速超出限制' }]
         : []),
+      ...(r.dnWarningKey
+        ? [{ key: r.dnWarningKey, level: 'warn', message: 'dn 超过脂润滑参考上限' }]
+        : []),
     ],
-    standards: ['ISO 281:2007'],
+    standards: ['ISO 281:2007', 'ISO 76'],
     assumptions: buildBearingAssumptions(r),
     suggestions: buildBearingSuggestions(r, targetHours),
   })
@@ -110,6 +130,12 @@ function buildBearingAssumptions(r) {
   if (r.radialStiffness != null) {
     list.push(`径向刚度粗估 k_r≈${r.radialStiffness.toFixed(2)} N/μm（经验公式）`)
   }
+  if (r.equivalentStaticLoad != null) {
+    list.push('静载安全按 ISO 76：S₀ = C₀/P₀（球轴承 P₀=max(Fr, 0.6Fr+0.5Fa)）')
+  }
+  if (r.suggestedPreload != null) {
+    list.push(`轴向预紧建议约 ${r.suggestedPreload} N（≈${((r.preloadFactor ?? 0) * 100).toFixed(1)}%·C）`)
+  }
   return list
 }
 
@@ -121,6 +147,9 @@ function buildBearingSuggestions(r, targetHours) {
   }
   if (r.staticSafetyFactor != null && !r.staticPass) {
     list.push('静载安全不足，检查峰值载荷或选用更大 C₀')
+  }
+  if (r.dn && !r.dnPass) {
+    list.push(`dn=${Math.round(r.dn)} 超过脂润滑参考 ${r.dnLimit}，考虑油润滑或更小内径/转速`)
   }
   return list
 }
@@ -300,6 +329,235 @@ export function adaptBoltPreload(input) {
 }
 
 /** ---------------- shared helper ---------------- */
+/** ---------------- Gear ---------------- */
+export function adaptGear(input) {
+  const r = analyzeGear(input)
+  const keyMetrics = []
+  if (r.safetyContact != null) {
+    keyMetrics.push(
+      metric('safetyContact', '接触安全 S_H', r.safetyContact, '', {
+        status: r.contactPass ? 'pass' : 'fail',
+        direction: 'higher-better',
+      }),
+    )
+  }
+  if (r.safetyBending != null) {
+    keyMetrics.push(
+      metric('safetyBending', '弯曲安全 S_F', r.safetyBending, '', {
+        status: r.bendingPass ? 'pass' : 'fail',
+        direction: 'higher-better',
+      }),
+    )
+  }
+  if (r.contactStress != null) {
+    keyMetrics.push(
+      metric('contactStress', '接触应力 σ_H', r.contactStress, 'MPa', {
+        status: r.contactPass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  if (r.bendingStress != null) {
+    keyMetrics.push(
+      metric('bendingStress', '弯曲应力 σ_F', r.bendingStress, 'MPa', {
+        status: r.bendingPass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  if (r.tangentialForce != null) {
+    keyMetrics.push(metric('tangentialForce', '圆周力 F_t', r.tangentialForce, 'N'))
+  }
+  return buildCalcResult({
+    toolId: 'gear',
+    toolLabel: '齿轮强度',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    estimateOnly: r.estimateOnly ?? r.calcMode === 'simple',
+    standards: r.calcMode === 'professional' ? ['ISO 6336', 'AGMA 2101'] : r.calcMode === 'simple' ? ['Lewis'] : ['ISO 6336'],
+    assumptions: [
+      r.calcMode === 'simple' ? '简化 Lewis 估算，不作正式放行' : 'ISO 6336 系数表简化实现',
+    ],
+    suggestions: !r.pass
+      ? ['加大模数/齿宽，或选用更高强度材料，或降低扭矩']
+      : [],
+  })
+}
+
+/** ---------------- Gasket / flange seal ---------------- */
+export function adaptGasketFlange(input) {
+  const r = analyzeGasketFlange(input)
+  const keyMetrics = [
+    metric('seatingStress', '坐落比压 σ_seat', r.seatingStress, 'MPa', {
+      status: r.seatingPass ? 'pass' : 'fail',
+      direction: 'higher-better',
+      utilization: r.seatingStressY > 0 ? r.seatingStressY / Math.max(r.seatingStress, 1e-6) : null,
+    }),
+    metric('operatingStress', '工况比压 σ_op', r.operatingStress, 'MPa', {
+      status: r.operatingPass ? 'pass' : 'fail',
+      direction: 'higher-better',
+    }),
+    metric('requiredPerBolt', '建议单栓预紧', r.requiredPerBolt, 'N', { direction: 'lower-better' }),
+  ]
+  const suggestions = []
+  if (!r.seatingPass) suggestions.push('坐落比压不足：提高预紧力或减小垫片面积 / 换更软垫片（更低 y）')
+  if (!r.operatingPass) suggestions.push('工况比压不足：提高预紧或增加螺栓数，或降低工作压力')
+  return buildCalcResult({
+    toolId: 'gasket-flange',
+    toolLabel: '垫片法兰密封',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
+    standards: ['ASME BPVC VIII App.2 (m,y 简化)', '机械设计手册·法兰密封'],
+    assumptions: [
+      '环形垫片面积 Ag=π/4(Do²−Di²)；内压卸荷 Ai=π/4 Di²',
+      'm、y 取材料表默认值，正式设计按垫片厂家与法兰标准',
+    ],
+    suggestions,
+  })
+}
+
+/** ---------------- Bevel gear ---------------- */
+export function adaptBevelGear(input) {
+  const r = analyzeBevelGear(input)
+  const keyMetrics = [
+    metric('ratio', '传动比 i', r.ratio, ''),
+    metric('tangentialForce', '圆周力 F_t', r.tangentialForce, 'N'),
+    metric('coneDistance', '外锥距 R', r.coneDistance, 'mm'),
+  ]
+  if (r.bendingStress != null) {
+    keyMetrics.push(
+      metric('bendingStress', '弯曲 σ_F', r.bendingStress, 'MPa', {
+        status: r.bendingPass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  if (r.contactStress != null) {
+    keyMetrics.push(
+      metric('contactStress', '接触 σ_H', r.contactStress, 'MPa', {
+        status: r.contactPass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  return buildCalcResult({
+    toolId: 'bevel-gear',
+    toolLabel: '锥齿轮',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
+    standards: ['机械设计手册·锥齿轮（教材级，非 ISO 10300）'],
+    assumptions: ['仅 Σ=90°；Lewis/接触为当量直齿粗估'],
+    suggestions: r.pass ? [] : ['增大模数/齿宽或降低载荷，检查许用应力'],
+  })
+}
+
+/** ---------------- Worm gear ---------------- */
+export function adaptWormGear(input) {
+  const r = analyzeWormGear(input)
+  const keyMetrics = [
+    metric('ratio', '传动比 i', r.ratio, ''),
+    metric('efficiency', '效率 η', r.efficiency, '', { direction: 'higher-better' }),
+    metric('torqueWheel', '蜗轮扭矩 T₂', r.torqueWheel, 'N·m'),
+  ]
+  if (r.bendingStress != null) {
+    keyMetrics.push(
+      metric('bendingStress', '弯曲 σ_F', r.bendingStress, 'MPa', {
+        status: r.bendingPass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  if (r.contactStress != null) {
+    keyMetrics.push(
+      metric('contactStress', '接触 σ_H', r.contactStress, 'MPa', {
+        status: r.contactPass ? 'pass' : 'fail',
+      }),
+    )
+  }
+  return buildCalcResult({
+    toolId: 'worm-gear',
+    toolLabel: '蜗轮蜗杆',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
+    standards: ['机械设计手册·蜗杆传动（教材级）'],
+    assumptions: ['非 ISO 14521 全系数；η=tanγ/tan(γ+ρ)'],
+    suggestions: r.pass ? [] : ['提高导程角 / 降低摩擦，或增大模数与齿宽'],
+  })
+}
+
+/** ---------------- Vibration isolation ---------------- */
+export function adaptVibrationIsolation(input) {
+  const r = analyzeVibrationIsolation(input)
+  const keyMetrics = [
+    metric('naturalFreq', '固有频率 fn', r.naturalFreq, 'Hz'),
+    metric('frequencyRatio', '频率比 r', r.frequencyRatio, ''),
+    metric('transmissibility', '传递率 TR', r.transmissibility, '', {
+      status: r.trPass ? 'pass' : r.calcMode === 'simple' ? 'warn' : 'fail',
+      direction: 'lower-better',
+    }),
+    metric('isolationDb', '隔振量', r.isolationDb, 'dB', { direction: 'higher-better' }),
+  ]
+  return buildCalcResult({
+    toolId: 'vibration-isolation',
+    toolLabel: '隔振传递率',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
+    standards: ['SDOF 力/位移传递率'],
+    assumptions: ['单自由度；隔振区 r>√2'],
+    suggestions: r.aboveIsolationRegion === false ? ['降低刚度或提高激励频率使 r>√2'] : [],
+  })
+}
+
+/** ---------------- Heat transfer ---------------- */
+export function adaptHeatTransfer(input) {
+  const r = analyzeHeatTransfer(input)
+  const keyMetrics = [
+    metric('power', '传热量 Q', r.power, 'W', {
+      status: r.capacityPass ? 'pass' : r.calcMode === 'simple' ? 'warn' : 'fail',
+      direction: 'higher-better',
+    }),
+    metric('thermalResistance', '热阻 Rth', r.thermalResistance, 'K/W', {
+      direction: 'lower-better',
+    }),
+    metric('heatFlux', '热流密度', r.heatFlux, 'W/m²'),
+  ]
+  if (r.equivDeltaT != null) {
+    keyMetrics.push(
+      metric('equivDeltaT', '等效温升', r.equivDeltaT, 'K', {
+        status: r.tempPass ? 'pass' : 'fail',
+        direction: 'lower-better',
+      }),
+    )
+  }
+  return buildCalcResult({
+    toolId: 'heat-transfer',
+    toolLabel: '简单换热',
+    calcMode: r.calcMode,
+    inputs: input,
+    outputs: r,
+    keyMetrics,
+    pass: r.pass,
+    estimateOnly: r.estimateOnly ?? false,
+    standards: ['一维稳态导热/对流'],
+    assumptions: ['忽略辐射与瞬态'],
+    suggestions: r.pass ? [] : ['增大面积/h/k 或降低需散热负荷'],
+  })
+}
+
 function metric(key, label, value, unit, extra = {}) {
   return { key, label, value, unit, ...extra }
 }
@@ -420,20 +678,45 @@ export function adaptBeam(input) {
   })
 }
 
-/** ---------------- Spring (helical compression) ---------------- */
+/** ---------------- Spring (helical compression / tension / torsion) ---------------- */
 export function adaptSpring(input) {
-  const r = analyzeSpring(input)
-  const stressVal = r.tauWorking ?? r.shearStress
+  const r = analyzeSpringByType(input)
+  const isTorsion = r.springType === 'torsion'
+  const stressVal = r.tauWorking ?? r.shearStress ?? r.bendingStress
   const keyMetrics = [
-    metric('shearStress', '剪切应力 τ', stressVal, 'MPa', {
-      status: r.shearPass ? 'pass' : 'fail',
-      utilization: r.allowableShear ? stressVal / r.allowableShear : null,
-    }),
-    metric('springRate', '刚度 k', r.springRate, 'N/mm'),
-    metric('deflection', '压缩量 δ', r.deflection, 'mm'),
+    metric(
+      isTorsion ? 'bendingStress' : 'shearStress',
+      isTorsion ? '弯曲应力 σ' : '剪切应力 τ',
+      stressVal,
+      'MPa',
+      {
+        status: (r.shearPass ?? r.bendPass) ? 'pass' : 'fail',
+        utilization: isTorsion
+          ? r.allowableBending
+            ? stressVal / r.allowableBending
+            : null
+          : r.allowableShear
+            ? stressVal / r.allowableShear
+            : null,
+      },
+    ),
+    metric(
+      isTorsion ? 'angularRate' : 'springRate',
+      isTorsion ? '角刚度 kθ' : '刚度 k',
+      isTorsion ? r.angularRate : r.springRate,
+      isTorsion ? 'N·mm/rad' : 'N/mm',
+    ),
+    metric(
+      'deflection',
+      isTorsion ? '转角 θ' : '变形 δ',
+      isTorsion ? r.angleDeg : r.deflection,
+      isTorsion ? '°' : 'mm',
+    ),
     metric('springIndex', '旋绕比 C', r.springIndex, ''),
-    metric('wahlFactor', 'Wahl 系数 K', r.wahlFactor, ''),
   ]
+  if (!isTorsion) {
+    keyMetrics.push(metric('wahlFactor', 'Wahl 系数 K', r.wahlFactor, ''))
+  }
   if (r.workingLoad != null) {
     keyMetrics.push(metric('workingLoad', '工作负荷 F₂', r.workingLoad, 'N'))
   }
@@ -1151,6 +1434,12 @@ export const CALC_ADAPTERS = {
   beam: adaptBeam,
   spring: adaptSpring,
   weld: adaptFilletWeld,
+  gear: adaptGear,
+  'gasket-flange': adaptGasketFlange,
+  'bevel-gear': adaptBevelGear,
+  'worm-gear': adaptWormGear,
+  'vibration-isolation': adaptVibrationIsolation,
+  'heat-transfer': adaptHeatTransfer,
   fit: adaptFit,
   'gdt-stack': adaptGdtStack,
   editor: adaptSizeChain,
