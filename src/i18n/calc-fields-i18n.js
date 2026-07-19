@@ -298,6 +298,26 @@ export const fieldsZh = {
         oringNote: 'AS568 截面系列速查；完整件号与沟槽尺寸请对照密封件样本。',
       },
     },
+    'standards-catalog': {
+      fields: {
+        searchPh: '搜索标准号、主题或用途… 如 ISO 1101、MMC、CMM',
+        matchCount: '显示 {n} / {total} 条',
+        sections: '分类',
+        secAll: '全部',
+        priAll: '全部优先级',
+        priVerify: '待核验',
+        priorityLegend: '优先级说明',
+        rulesTitle: '使用硬规则',
+        colTopic: '主题',
+        colLegacy: '旧版/历史',
+        colCurrent: '现行/推荐',
+        colNote: '说明',
+        empty: '无匹配标准，试试其他关键词或清空筛选',
+      },
+      results: {
+        disclaimer: '导航索引，非正式标准全文。',
+      },
+    },
     'gdt-symbols': {
       fields: {
         tabSymbols: '公差符号',
@@ -1974,6 +1994,26 @@ export const fieldsEn = {
         colDynamic: 'Dynamic compression',
         colGrooveHint: 'Groove hint',
         oringNote: 'AS568 CS series lookup; use vendor catalogs for dash numbers and grooves.',
+      },
+    },
+    'standards-catalog': {
+      fields: {
+        searchPh: 'Search code, topic, or use… e.g. ISO 1101, MMC, CMM',
+        matchCount: 'Showing {n} / {total}',
+        sections: 'Sections',
+        secAll: 'All',
+        priAll: 'All priorities',
+        priVerify: 'To verify',
+        priorityLegend: 'Priority legend',
+        rulesTitle: 'Hard rules',
+        colTopic: 'Topic',
+        colLegacy: 'Legacy',
+        colCurrent: 'Current',
+        colNote: 'Note',
+        empty: 'No matches — try another keyword or clear filters',
+      },
+      results: {
+        disclaimer: 'Navigation index only — not a full standards text.',
       },
     },
     'gdt-symbols': {

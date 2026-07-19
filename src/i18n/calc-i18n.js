@@ -97,6 +97,13 @@ const pagesZh = {
       hintComplete: '同简化。',
       hintProfessional: '同简化。',
     },
+    'standards-catalog': {
+      title: '标准目录',
+      subtitle: 'ISO GPS · ASME Y14 · 计量与质量标准导航',
+      hintSimple: '导航索引，不替代标准全文。',
+      hintComplete: '同简化。',
+      hintProfessional: '同简化。',
+    },
     'gdt-symbols': {
       title: '形位公差符号工作台',
       subtitle: '公差带 · 点选 · 对比 · MMC/VC · 控制框解读 · 基准自由度 · 预算',
@@ -1013,6 +1020,13 @@ const pagesEn = {
       title: 'Standard parts lookup',
       subtitle: 'Key sections, pin sizes/fits, O-ring CS and retaining-ring grooves',
       hintSimple: 'Lookup reference — not a full standards text.',
+      hintComplete: 'Same as simple.',
+      hintProfessional: 'Same as simple.',
+    },
+    'standards-catalog': {
+      title: 'Standards catalog',
+      subtitle: 'ISO GPS · ASME Y14 · metrology & quality navigation (searchable)',
+      hintSimple: 'Index only — not a substitute for the standards text.',
       hintComplete: 'Same as simple.',
       hintProfessional: 'Same as simple.',
     },

@@ -226,6 +226,7 @@ const navItems = computed(() => [
   { path: '/editor', label: t('nav.editor', locale.value) },
   { path: '/statistics', label: t('nav.stats', locale.value) },
   { path: '/monte-carlo', label: t('nav.mc', locale.value) },
+  { path: '/standards-catalog', label: t('nav.standardsCatalog', locale.value) },
   { path: '/help', label: t('nav.help', locale.value) },
   { path: FORUM_URL, label: t('nav.forum', locale.value), external: true },
 ])

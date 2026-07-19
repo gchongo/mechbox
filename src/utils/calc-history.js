@@ -47,6 +47,7 @@ export const TOOL_META = {
   'material-selection': { label: '选材决策', route: '/material-selection' },
   manufacturing: { label: '制造工艺', route: '/manufacturing' },
   'standards-ref': { label: '标准件速查', route: '/standards-ref' },
+  'standards-catalog': { label: '标准目录', route: '/standards-catalog' },
   'gdt-symbols': { label: '形位公差符号', route: '/gdt-symbols' },
   'heat-treatment': { label: '热处理', route: '/heat-treatment' },
   units: { label: '单位换算', route: '/units' },

@@ -91,6 +91,7 @@ export const TOOL_GROUPS = [
       { path: '/help', label: '工具帮助', desc: '步骤 · 原理 · 公式 · 注意点', icon: 'Reading', keywords: ['帮助', '文档', '入门', '学生', '教程'] },
       { path: '/manual', label: '公式手册', desc: '常用公式速查', icon: 'Notebook', keywords: ['公式', '手册'] },
       { path: '/glossary', label: '术语表', desc: '机械术语解释', icon: 'Collection', keywords: ['术语', 'glossary'] },
+      { path: '/standards-catalog', label: '标准目录', desc: 'ISO GPS / ASME / 计量导航', icon: 'Notebook', keywords: ['标准', 'ISO', 'ASME', 'GPS', 'GD&T', '目录'] },
       { path: '/cases', label: '案例库', desc: '尺寸链示例', icon: 'FolderOpened', keywords: ['案例'] },
       { path: '/tutorial', label: '教程', desc: '使用指南', icon: 'Guide', keywords: ['教程'] },
       { path: '/faq', label: '常见问题', desc: 'FAQ', icon: 'QuestionFilled', keywords: ['FAQ'] },

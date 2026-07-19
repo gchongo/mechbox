@@ -1825,6 +1825,26 @@ export const toolHelpEnById = {
     keywords: ['key', 'pin', 'O-ring', 'retaining ring'],
   },
 
+  'standards-catalog': {
+    title: 'Standards Catalog',
+    summary: 'Searchable navigation index for ISO GPS, ASME Y14, metrology, and quality standards.',
+    steps: [
+      'Search by standard number or topic keywords.',
+      'Filter by P0/P1/P2/to-verify, or browse sections on the left.',
+      'Jump to GD&T symbols, fits, or stack tools when you need calculations.',
+    ],
+    principle: 'Index and topic map only — does not reproduce standards text; verify official editions before citing.',
+    notes: [
+      'Treat ISO GPS and ASME Y14.5 as separate systems.',
+      'GB/T adoption rows need secondary verification before formal use.',
+    ],
+    useCases: COMMON_USE_CASES,
+    inputs: COMMON_INPUTS,
+    outputs: COMMON_OUTPUTS,
+    reliability: COMMON_RELIABILITY,
+    keywords: ['standards', 'ISO', 'ASME', 'GPS', 'GD&T', 'catalog'],
+  },
+
   'gdt-symbols': {
     title: 'GD&T Symbol Legend',
     summary: 'ASME Y14.5 / ISO 1101 geometric tolerance symbols, material modifiers, and feature-control-frame sketch.',

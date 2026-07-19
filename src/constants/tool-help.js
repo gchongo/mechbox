@@ -1187,7 +1187,27 @@ export const TOOL_HELP_ARTICLES = [
     principle: '常用规格速查，便于选型后进入专项校核。',
     notes: ['非正式完整国标全文；键槽公差、AS568 件号以正式标准与样本为准。'],
     keywords: ['键槽', '销', 'O型圈', '挡圈', '标准件'],
-    related: ['key', 'pin-retainer', 'o-ring'],
+    related: ['key', 'pin-retainer', 'o-ring', 'standards-catalog'],
+  },
+  {
+    id: 'standards-catalog',
+    path: '/standards-catalog',
+    groupId: 'reference',
+    level: 'beginner',
+    title: '标准目录',
+    summary: 'ISO GPS、ASME Y14、计量与质量相关标准导航母表；可按优先级与分类检索。',
+    steps: [
+      '在搜索框输入标准号或主题关键词。',
+      '用 P0/P1/P2/待核验筛选，或左侧切换分类。',
+      '需要计算时跳转形位公差符号、配合或公差栈工具。',
+    ],
+    principle: '只做体系导航与主题索引，不复制标准正文；版本以官方页为准。',
+    notes: [
+      'ISO GPS 与 ASME Y14.5 分体系理解，勿混写。',
+      'GB/T 采用关系条目需二次核验后再作正式依据。',
+    ],
+    keywords: ['标准', 'ISO', 'ASME', 'GPS', 'GD&T', '目录', '计量'],
+    related: ['gdt-symbols', 'gdt-stack', 'fit', 'glossary'],
   },
   {
     id: 'gdt-symbols',
