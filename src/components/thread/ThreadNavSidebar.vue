@@ -143,6 +143,7 @@ const designItems = [
 ]
 
 const toolItems = [
+  { id: 'overview', labelKey: 'tabOverview' },
   { id: 'parse', labelKey: 'tabParse' },
   { id: 'compare', labelKey: 'tabCompare' },
   { id: 'misconfig', labelKey: 'devTabMisconfig' },

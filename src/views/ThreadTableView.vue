@@ -73,6 +73,7 @@
           @update:compare-ids="compareIds = $event"
           @locate="onLocateRow"
           @open-compare="onMisconfigCompare"
+          @navigate="onOverviewNavigate"
         />
       </main>
     </div>
@@ -181,6 +182,7 @@ const breadcrumbs = computed(() => {
   }
   if (mode === 'tools') {
     const labels = {
+      overview: 'tabOverview',
       parse: 'tabParse',
       compare: 'tabCompare',
       misconfig: 'devTabMisconfig',
@@ -250,6 +252,12 @@ async function copyShareLink() {
   } catch {
     ElMessage.error(pt('shareFailed'))
   }
+}
+
+function onOverviewNavigate({ purpose, systemId }) {
+  setCatalogNav(purpose, systemId)
+  highlightRowId.value = ''
+  mobileNavOpen.value = false
 }
 
 function onMisconfigCompare(presetId) {

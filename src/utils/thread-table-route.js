@@ -3,7 +3,7 @@ import { THREAD_PURPOSE_ORDER, getThreadSystemDef } from '@/constants/thread-sta
 export const DEFAULT_NAV_KEY = 'catalog|fastener|metric_coarse'
 
 const DESIGN_STEPS = new Set(['wizard', 'tolerance', 'engagement', 'tapDrill', 'mfg'])
-const TOOL_STEPS = new Set(['parse', 'compare', 'misconfig', 'glossary'])
+const TOOL_STEPS = new Set(['overview', 'parse', 'compare', 'misconfig', 'glossary'])
 
 /**
  * @param {string|undefined|null} raw

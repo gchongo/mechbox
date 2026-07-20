@@ -447,8 +447,6 @@ export const fieldsZh = {
         quizDone: '本轮结束',
       },
       results: {
-        disclaimer:
-          '含公差带拖动、零件点选、对比、MMC/VC、控制框拼装与框格解读、基准自由度与位置预算；练习请到练习页。非正式标准全文。',
         colGlyph: '符号',
         colName: '名称',
         frameHint: '从左到右：几何特性 → 公差值（可含 Ø）→ 材料状态 → 基准。可跳转公差栈做数值叠加。',
@@ -2145,8 +2143,6 @@ export const fieldsEn = {
         quizDone: 'Round complete',
       },
       results: {
-        disclaimer:
-          'Zone drag, part click, compare, MMC/VC, FCF decode, DRF DOF, and position budget — practice is on the Quiz page. Not a full standards text.',
         colGlyph: 'Symbol',
         colName: 'Name',
         frameHint: 'L→R: characteristic → tolerance (Ø) → material condition → datums. Jump to GD&T stack for numbers.',

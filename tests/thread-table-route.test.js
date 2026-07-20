@@ -18,6 +18,7 @@ describe('thread-table-route', () => {
     expect(normalizeNavKey('catalog|pipe|npt')).toBe('catalog|pipe|npt')
     expect(normalizeNavKey('design|engagement')).toBe('design|engagement')
     expect(normalizeNavKey('tools|compare')).toBe('tools|compare')
+    expect(normalizeNavKey('tools|overview')).toBe('tools|overview')
     expect(normalizeNavKey('tools|glossary')).toBe('tools|glossary')
   })
 

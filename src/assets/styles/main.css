@@ -153,6 +153,15 @@
   .thread-mobile-drawer .thread-nav {
     @apply min-h-0 flex-1 overflow-y-auto overscroll-contain;
     max-height: calc(100vh - 10rem);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .thread-shell__sidebar .thread-nav::-webkit-scrollbar,
+  .thread-mobile-drawer .thread-nav::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 
   .thread-table-scroll {
@@ -241,20 +250,6 @@
 
   .thread-nav {
     @apply flex h-full flex-col gap-1 p-3 sm:p-3.5;
-    scrollbar-width: thin;
-    scrollbar-color: rgb(209 213 219 / 0.9) transparent;
-  }
-
-  .thread-nav::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .thread-nav::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .thread-nav::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-gray-300/90 dark:bg-gray-600;
   }
 
   .thread-nav__hint {

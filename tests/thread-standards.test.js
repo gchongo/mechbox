@@ -228,10 +228,17 @@ describe('TPI pitch conversion', () => {
 
 describe('imperial display unit override', () => {
   const uncRow = { unit: 'in', tpi: 20, major: 0.25 }
+  const metricRow = { unit: 'mm', pitch: 1.5, major: 10 }
 
   it('formatDim converts inch diameters to mm', () => {
     expect(formatDim(uncRow, 0.25, 'in')).toBe('0.2500')
     expect(formatDim(uncRow, 0.25, 'mm')).toBe('6.350')
+  })
+
+  it('does not convert metric diameters to inch', () => {
+    expect(formatDim(metricRow, 10, 'in')).toBe('10.000')
+    expect(formatDim(metricRow, 10, 'mm')).toBe('10.000')
+    expect(formatPitchLength(metricRow, 'in')).toBe('1.500')
   })
 
   it('formatPitchLength splits TPI from pitch length', () => {

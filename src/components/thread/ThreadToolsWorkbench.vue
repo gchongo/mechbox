@@ -1,7 +1,12 @@
 <template>
   <section class="thread-workbench-body card-panel">
+    <ThreadSystemsOverview
+      v-if="modelValue === 'overview'"
+      :pt="pt"
+      @navigate="$emit('navigate', $event)"
+    />
     <ThreadParsePanel
-      v-if="modelValue === 'parse'"
+      v-else-if="modelValue === 'parse'"
       :pt="pt"
       @locate="$emit('locate', $event)"
     />
@@ -21,6 +26,7 @@
 </template>
 
 <script setup>
+import ThreadSystemsOverview from '@/components/thread/ThreadSystemsOverview.vue'
 import ThreadParsePanel from '@/components/thread/ThreadParsePanel.vue'
 import ThreadComparePanel from '@/components/thread/ThreadComparePanel.vue'
 import ThreadMisconfigPanel from '@/components/thread/ThreadMisconfigPanel.vue'
@@ -32,5 +38,5 @@ defineProps({
   pt: { type: Function, required: true },
 })
 
-defineEmits(['update:compareIds', 'locate', 'open-compare'])
+defineEmits(['update:compareIds', 'locate', 'open-compare', 'navigate'])
 </script>

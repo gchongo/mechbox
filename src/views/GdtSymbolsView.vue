@@ -2,7 +2,6 @@
   <div>
     <h1 class="page-title">{{ pt('title') }}</h1>
     <p class="mb-4 text-gray-600 dark:text-gray-400">{{ pt('subtitle') }}</p>
-    <el-alert class="mb-4" type="info" show-icon :closable="false" :title="pr('disclaimer')" />
 
     <el-tabs v-model="tab">
       <!-- 符号 + 公差带拖动 -->

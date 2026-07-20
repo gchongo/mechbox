@@ -55,6 +55,42 @@ function ts(field) {
   return v !== `calc.pages.thread-table.${key}` ? v : '—'
 }
 
+function formatGb(s) {
+  return s.gbStandard || props.pt('metaGb_none')
+}
+
+function formatIntlStandards(s) {
+  if (!s.standards?.length) return props.pt('metaStandards_none')
+  return s.standards.join(' · ')
+}
+
+function formatAngle(s) {
+  if (s.angleLabel) return s.angleLabel
+  if (s.angle != null) return `${s.angle}°`
+  return props.pt('metaStandards_none')
+}
+
+function formatTaperRatio(s) {
+  if (s.taperRatio) return s.taperRatio
+  return props.pt('enum_taperRatio_none')
+}
+
+function formatUnit(s) {
+  if (s.unit === 'mm') return props.pt('enum_unit_mm')
+  if (s.unit === 'in') return props.pt('enum_unit_in')
+  if (s.unit === 'mm_in') return props.pt('enum_unit_mm_in')
+  return props.pt('enum_unit_none')
+}
+
+function formatPitchNotation(s) {
+  if (!s.pitchNotation) return props.pt('metaStandards_none')
+  return props.pt(`enum_pitch_${s.pitchNotation}`)
+}
+
+function formatMarkingExample(s) {
+  return s.markingExample || props.pt('metaMarking_none')
+}
+
 const metaRows = computed(() => {
   const s = system.value
   if (!s) return []
@@ -66,21 +102,39 @@ const metaRows = computed(() => {
       value: props.pt(`enum_purpose_${s.purpose}`),
     },
     {
+      key: 'family',
+      label: props.pt('metaField_family'),
+      value: (() => {
+        const key = `family_${s.family}`
+        const v = props.pt(key)
+        return v !== `calc.pages.thread-table.${key}` ? v : s.family || '—'
+      })(),
+    },
+    { key: 'gb', label: props.pt('metaField_gb'), value: formatGb(s) },
+    {
+      key: 'standards',
+      label: props.pt('metaField_intlStandards'),
+      tip: props.pt('term_standard'),
+      value: formatIntlStandards(s),
+    },
+    {
+      key: 'angle',
+      label: props.pt('metaField_angle'),
+      tip: props.pt('term_threadAngle'),
+      value: formatAngle(s),
+    },
+    { key: 'taperRatio', label: props.pt('metaField_taperRatio'), value: formatTaperRatio(s) },
+    { key: 'unit', label: props.pt('metaField_unit'), value: formatUnit(s) },
+    { key: 'pitchNotation', label: props.pt('metaField_pitchNotation'), value: formatPitchNotation(s) },
+    { key: 'use', label: props.pt('metaField_use'), value: ts('use') },
+    { key: 'markingExample', label: props.pt('metaField_markingExample'), value: formatMarkingExample(s) },
+    { key: 'marking', label: props.pt('metaField_marking'), value: ts('marking') },
+    {
       key: 'profile',
       label: props.pt('metaField_profile'),
       tip: props.pt('term_profile'),
       value: props.pt(`enum_profile_${s.profile}`),
     },
-  ]
-  if (s.angle != null) {
-    rows.push({
-      key: 'angle',
-      label: props.pt('metaField_angle'),
-      tip: props.pt('term_threadAngle'),
-      value: `${s.angle}°`,
-    })
-  }
-  rows.push(
     {
       key: 'parentShape',
       label: props.pt('metaField_parentShape'),
@@ -111,11 +165,9 @@ const metaRows = computed(() => {
       tip: props.pt('term_starts'),
       value: s.starts.map((st) => props.pt(`enum_starts_${st}`)).join(' · '),
     },
-    { key: 'marking', label: props.pt('metaField_marking'), value: ts('marking') },
     { key: 'nominal', label: props.pt('metaField_nominal'), value: ts('nominal') },
     { key: 'pitch', label: props.pt('metaField_pitch'), value: ts('pitch') },
     { key: 'tolerance', label: props.pt('metaField_tolerance'), value: ts('tolerance') },
-    { key: 'use', label: props.pt('metaField_use'), value: ts('use') },
     { key: 'interchange', label: props.pt('metaField_interchange'), value: ts('interchange') },
     {
       key: 'misconfig',
@@ -123,13 +175,7 @@ const metaRows = computed(() => {
       value: ts('misconfig'),
       warn: true,
     },
-    {
-      key: 'standards',
-      label: props.pt('metaField_standards'),
-      tip: props.pt('term_standard'),
-      value: s.standards.join(' · '),
-    },
-  )
+  ]
   return rows
 })
 </script>

@@ -558,10 +558,14 @@ export function pitchToTpi(pitch) {
   return Math.round((25.4 / pitch) * 100) / 100
 }
 
-/** Normalize row.unit ('in'|'mm') and UI display unit to 'in' | 'mm'. */
+/**
+ * Resolve display unit for a thread row.
+ * Only inch-native series may switch to mm (design convenience).
+ * Metric / mm-native rows always stay mm — never convert to in.
+ */
 export function resolveThreadDisplayUnit(rowUnit, displayUnit) {
   const native = rowUnit === 'in' ? 'in' : 'mm'
-  if (displayUnit === 'in' || displayUnit === 'mm') return displayUnit
+  if (native === 'in' && (displayUnit === 'in' || displayUnit === 'mm')) return displayUnit
   return native
 }
 
@@ -569,7 +573,7 @@ export function resolveThreadDisplayUnit(rowUnit, displayUnit) {
  * Format a linear thread dimension.
  * @param {{ unit?: string }} row
  * @param {number|null|undefined} value  native value in row.unit
- * @param {'in'|'mm'} [displayUnit]  optional display override (inch series → mm for design)
+ * @param {'in'|'mm'} [displayUnit]  optional override for inch series only (in → mm)
  */
 export function formatDim(row, value, displayUnit) {
   if (value == null || Number.isNaN(value)) return '—'
@@ -577,7 +581,6 @@ export function formatDim(row, value, displayUnit) {
   const target = resolveThreadDisplayUnit(native, displayUnit)
   let v = Number(value)
   if (native === 'in' && target === 'mm') v *= 25.4
-  else if (native === 'mm' && target === 'in') v /= 25.4
   const d = target === 'in' ? 4 : 3
   return v.toFixed(d)
 }
