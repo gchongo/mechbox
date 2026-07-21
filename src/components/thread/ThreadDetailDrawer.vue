@@ -1,5 +1,6 @@
 <template>
   <el-drawer
+    :key="row?.id"
     :model-value="visible"
     :title="row?.designation ?? pt('detailTitle')"
     direction="rtl"
@@ -47,16 +48,24 @@
             <dd>{{ formatDim(row, row.nominal, displayUnit) }} {{ dimUnit }}</dd>
           </div>
           <div>
-            <dt><ThreadFieldTip :label="pt('colMajor')" :tip="pt('term_major')" /></dt>
+            <dt><ThreadFieldTip :label="dimensionLabel('major')" :tip="dimensionTip('major')" /></dt>
             <dd>{{ formatDim(row, row.major, displayUnit) }} {{ dimUnit }}</dd>
           </div>
           <div>
-            <dt><ThreadFieldTip :label="pt('colPitchDia')" :tip="pt('term_pitchDia')" /></dt>
+            <dt><ThreadFieldTip :label="dimensionLabel('pitchDiameter')" :tip="dimensionTip('pitchDiameter')" /></dt>
             <dd>{{ formatDim(row, row.pitchDiameter, displayUnit) }} {{ dimUnit }}</dd>
           </div>
           <div>
-            <dt><ThreadFieldTip :label="pt('colMinor')" :tip="pt('term_minor')" /></dt>
+            <dt><ThreadFieldTip :label="dimensionLabel('minor')" :tip="dimensionTip('minor')" /></dt>
             <dd>{{ formatDim(row, row.minor, displayUnit) }} {{ dimUnit }}</dd>
+          </div>
+          <div v-if="row.rootDiameter != null">
+            <dt><ThreadFieldTip :label="pt('colRoot_d3')" :tip="pt('term_root_metric')" /></dt>
+            <dd>{{ formatDim(row, row.rootDiameter, displayUnit) }} {{ dimUnit }}</dd>
+          </div>
+          <div v-if="row.rMinUm != null">
+            <dt><MathContent :text="pt('colRmin')" /></dt>
+            <dd>{{ row.rMinUm }} μm</dd>
           </div>
           <div v-if="row.tpi">
             <dt><ThreadFieldTip :label="pt('colTpi')" :tip="pt('term_tpi')" /></dt>
@@ -91,6 +100,78 @@
           </div>
         </dl>
         <p class="mt-2 text-xs text-gray-500">{{ pt(getToleranceNoteKey(row)) }}</p>
+
+        <template v-if="row.hasMetricCatalog">
+          <h4 class="detail-subheading">{{ pt('detailLimits6') }}</h4>
+          <dl class="detail-dl">
+            <div>
+              <dt><MathContent :text="pt('col6g_d')" /></dt>
+              <dd>{{ formatDimRange(row, row.extDmax, row.extDmin, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col6g_d2')" /></dt>
+              <dd>{{ formatDimRange(row, row.extD2max, row.extD2min, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col6g_d3max')" /></dt>
+              <dd>{{ formatDim(row, row.extD3max, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col6h_D2')" /></dt>
+              <dd>{{ formatDimRange(row, row.intD2max, row.intD2min, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col6h_D1')" /></dt>
+              <dd>{{ formatDimRange(row, row.intD1max, row.intD1min, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+          </dl>
+
+          <h4 class="detail-subheading">{{ pt('detailLimits4') }}</h4>
+          <dl class="detail-dl">
+            <div>
+              <dt><MathContent :text="pt('col4h_d')" /></dt>
+              <dd>{{ formatDimRange(row, row.ext4hDmax, row.ext4hDmin, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col4h_d2')" /></dt>
+              <dd>{{ formatDimRange(row, row.ext4hD2max, row.ext4hD2min, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col4h_d3max')" /></dt>
+              <dd>{{ formatDim(row, row.ext4hD3max, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col4H_D2')" /></dt>
+              <dd>{{ formatDimRange(row, row.int4hD2max, row.int4hD2min, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('col4H_D1')" /></dt>
+              <dd>{{ formatDimRange(row, row.int4hD1max, row.int4hD1min, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+          </dl>
+
+          <h4 class="detail-subheading">{{ pt('detailDeviations') }}</h4>
+          <dl class="detail-dl">
+            <div><dt><MathContent :text="pt('colEsG')" /></dt><dd>{{ formatUm(row.esG) }}</dd></div>
+            <div><dt><MathContent :text="pt('colEsH')" /></dt><dd>{{ formatUm(row.esH) }}</dd></div>
+            <div><dt><MathContent :text="pt('colEiG')" /></dt><dd>{{ formatUm(row.eiG) }}</dd></div>
+            <div><dt><MathContent :text="pt('colEiH')" /></dt><dd>{{ formatUm(row.eiH) }}</dd></div>
+            <div><dt><MathContent :text="pt('colTd2_6')" /></dt><dd>{{ formatUm(row.td2?.g6) }}</dd></div>
+            <div><dt><MathContent :text="pt('colTd2Ext_6')" /></dt><dd>{{ formatUm(row.td2Ext?.g6) }}</dd></div>
+          </dl>
+
+          <h4 class="detail-subheading">{{ pt('detailEngagement') }}</h4>
+          <dl class="detail-dl">
+            <div>
+              <dt><MathContent :text="pt('colEngSN')" /></dt>
+              <dd>{{ formatDim(row, row.engSN, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+            <div>
+              <dt><MathContent :text="pt('colEngNL')" /></dt>
+              <dd>{{ formatDim(row, row.engNL, displayUnit) }} {{ dimUnit }}</dd>
+            </div>
+          </dl>
+        </template>
       </section>
 
       <!-- 5. 工艺参考 -->
@@ -98,7 +179,7 @@
         <h3 class="detail-heading">{{ pt('detailProcess') }}</h3>
         <dl class="detail-dl">
           <div>
-            <dt>{{ pt('colTapDrill') }}</dt>
+            <dt><MathContent :text="pt('colTapDrill')" /></dt>
             <dd>{{ formatDim(row, row.tapDrill, displayUnit) }} {{ dimUnit }}</dd>
           </div>
         </dl>
@@ -156,7 +237,7 @@
         </el-button>
       </div>
 
-      <p class="mt-6 text-[10px] text-gray-400">{{ pt('dataDisclaimer') }}</p>
+      <p class="mt-6 text-[10px] text-gray-400">{{ detailDisclaimer }}</p>
     </template>
   </el-drawer>
 </template>
@@ -166,6 +247,7 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   formatDim,
+  formatDimRange,
   formatPitchDisplay,
   formatPitchLength,
   formatDimUnitSuffix,
@@ -175,6 +257,7 @@ import {
 import { getUsageNoteKey, getProcessNoteKeys, getToleranceNoteKey } from '@/constants/thread-standards/notes'
 import { isThreadFavorite, toggleThreadFavorite } from '@/utils/thread-favorites'
 import ThreadFieldTip from '@/components/thread/ThreadFieldTip.vue'
+import MathContent from '@/components/common/MathContent.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -234,6 +317,15 @@ const pitchLabel = computed(() =>
     : props.pt('colPitch'),
 )
 
+const detailDisclaimer = computed(() =>
+  props.row?.hasMetricCatalog ? props.pt('dataDisclaimer_metric') : props.pt('dataDisclaimer'),
+)
+
+function formatUm(v) {
+  if (v == null || Number.isNaN(v)) return '—'
+  return `${v} μm`
+}
+
 function systemLabel(id) {
   const v = props.pt(`system_${id}`)
   return v !== `calc.pages.thread-table.system_${id}` ? v : id
@@ -246,6 +338,36 @@ function subSeriesLabel(row) {
   return systemLabel(row.system)
 }
 
+function dimensionLabel(kind) {
+  if (props.row?.system !== 'metric') {
+    return props.pt({
+      major: 'colMajor',
+      pitchDiameter: 'colPitchDia',
+      minor: 'colMinor',
+    }[kind])
+  }
+  return props.pt({
+    major: 'colMajor_metric',
+    pitchDiameter: 'colPitchDia_metric',
+    minor: 'colMinor_metric',
+  }[kind])
+}
+
+function dimensionTip(kind) {
+  if (props.row?.system !== 'metric') {
+    return props.pt({
+      major: 'term_major',
+      pitchDiameter: 'term_pitchDia',
+      minor: 'term_minor',
+    }[kind])
+  }
+  return props.pt({
+    major: 'term_major_metric',
+    pitchDiameter: 'term_pitchDia_metric',
+    minor: 'term_minor_metric',
+  }[kind])
+}
+
 function compatText(key) {
   const v = props.pt(`compat_${key}`)
   return v !== `calc.pages.thread-table.compat_${key}` ? v : key
@@ -253,6 +375,18 @@ function compatText(key) {
 </script>
 
 <style scoped>
+:deep(.el-drawer__header) {
+  margin-bottom: 0.35rem;
+  padding: 1rem 1.25rem 0.25rem;
+}
+:deep(.el-drawer__title) {
+  font-size: 1.375rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+:deep(.el-drawer__body) {
+  padding-top: 0.5rem;
+}
 .detail-section {
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
@@ -262,6 +396,12 @@ function compatText(key) {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
+}
+.detail-subheading {
+  margin: 0.85rem 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
 }
 .detail-dl {
   display: grid;

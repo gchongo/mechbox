@@ -102,9 +102,6 @@ function sys(partial) {
 export const PURPOSE_SYSTEM_IDS = {
   fastener: [
     'metric_coarse',
-    'metric_fine',
-    'metric_extra_fine',
-    'metric_small_s',
     'mj',
     'unc',
     'unf',
@@ -203,21 +200,23 @@ export const THREAD_SYSTEM_REGISTRY = {
     purpose: 'fastener',
     family: 'metric_fastener',
     implemented: true,
-    catalog: { system: 'metric', subTab: 'coarse' },
+    catalog: { system: 'metric', subTab: 'all' },
     gbStandard: 'GB/T 196-2003',
     markingExample: 'M16',
     standards: ['ISO 68-1', 'ISO 724', 'ISO 965'],
   }),
+  /** @deprecated 已并入 metric_coarse 统一表；保留定义供旧路由/对照，不出现在左侧导航 */
   metric_fine: sys({
     id: 'metric_fine',
     purpose: 'fastener',
     family: 'metric_fastener',
     implemented: true,
-    catalog: { system: 'metric', subTab: 'fine' },
+    catalog: { system: 'metric', subTab: 'all' },
     gbStandard: 'GB/T 197-2003',
     markingExample: 'M16×1.5',
     standards: ['ISO 68-1', 'ISO 724', 'ISO 965'],
   }),
+  /** @deprecated 无独立主表；不出现在左侧导航 */
   metric_extra_fine: sys({
     id: 'metric_extra_fine',
     purpose: 'fastener',
@@ -226,6 +225,7 @@ export const THREAD_SYSTEM_REGISTRY = {
     markingExample: 'M8×0.75',
     standards: ['ISO 1502'],
   }),
+  /** @deprecated 无独立主表；不出现在左侧导航 */
   metric_small_s: sys({
     id: 'metric_small_s',
     purpose: 'fastener',
@@ -1197,7 +1197,7 @@ export function listThreadSystemOverviewRows() {
 /** @param {string} catalogSystem @param {string} [subSeries] */
 export function resolveTaxonomyFromCatalog(catalogSystem, subSeries) {
   if (catalogSystem === 'metric') {
-    return subSeries === 'fine' ? 'metric_fine' : 'metric_coarse'
+    return 'metric_coarse'
   }
   const map = {
     unc: 'unc',

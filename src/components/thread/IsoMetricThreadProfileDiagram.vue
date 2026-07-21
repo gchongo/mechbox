@@ -26,9 +26,10 @@
         <div class="iso-diagram__formulas">
           <p class="iso-diagram__formulas-title">{{ dt('formulasTitle') }}</p>
           <div class="iso-diagram__formula"><MathContent :text="formulaH" /></div>
-          <div class="iso-diagram__formula"><MathContent :text="formulaP" /></div>
-          <div class="iso-diagram__formula"><MathContent :text="formulaDmin" /></div>
-          <div class="iso-diagram__formula"><MathContent :text="formulaDp" /></div>
+          <div class="iso-diagram__formula"><MathContent :text="formulaH1" /></div>
+          <div class="iso-diagram__formula"><MathContent :text="formulaD2" /></div>
+          <div class="iso-diagram__formula"><MathContent :text="formulaD1" /></div>
+          <div class="iso-diagram__formula"><MathContent :text="formulaD3" /></div>
         </div>
       </div>
     </div>
@@ -43,22 +44,27 @@ import profileImg from '@/assets/diagrams/iso-metric-thread-profile.png'
 const { dt, dm } = useDiagramI18n('isoMetricProfile')
 
 const symbols = computed(() => [
-  { sym: '$D_{\\mathrm{maj}}$', desc: dt('symDmaj') },
-  { sym: '$D_p$', desc: dt('symDp') },
-  { sym: '$D_{\\mathrm{min}}$', desc: dt('symDmin') },
+  { sym: '$D, d$', desc: dt('symDd') },
+  { sym: '$D_2, d_2$', desc: dt('symD2') },
+  { sym: '$D_1$', desc: dt('symD1') },
+  { sym: '$d_3$', desc: dt('symD3') },
   { sym: '$P$', desc: dt('symP') },
   { sym: '$H$', desc: dt('symH') },
-  { sym: '$\\theta$', desc: dt('symTheta') },
+  { sym: '$H_1$', desc: dt('symH1') },
+  { sym: '$h_3$', desc: dt('symH3') },
+  { sym: '$R_{\\mathrm{min}}$', desc: dt('symRmin') },
 ])
 
 const formulaH =
-  '$H=\\frac{1}{2\\tan\\theta}\\,P=\\frac{\\sqrt{3}}{2}\\,P\\approx 0.866\\,P$'
-const formulaP =
-  '$P=2\\tan\\theta\\,H=\\frac{2}{\\sqrt{3}}\\,H\\approx 1.155\\,H$'
-const formulaDmin =
-  '$D_{\\mathrm{min}}=D_{\\mathrm{maj}}-2\\cdot\\frac{5}{8}H=D_{\\mathrm{maj}}-\\frac{5\\sqrt{3}}{8}P\\approx D_{\\mathrm{maj}}-1.082532\\,P$'
-const formulaDp =
-  '$D_p=D_{\\mathrm{maj}}-2\\cdot\\frac{3}{8}H=D_{\\mathrm{maj}}-\\frac{3\\sqrt{3}}{8}P\\approx D_{\\mathrm{maj}}-0.649519\\,P$'
+  '$H=\\frac{\\sqrt{3}}{2}\\,P\\approx 0.866025\\,P$'
+const formulaH1 =
+  '$H_1=\\frac{5}{8}H=\\frac{5\\sqrt{3}}{8}\\,P\\approx 0.541266\\,P$'
+const formulaD2 =
+  '$D_2=d_2=D-\\frac{3}{4}H=d-\\frac{3\\sqrt{3}}{8}\\,P\\approx D-0.649519\\,P$'
+const formulaD1 =
+  '$D_1=D-\\frac{5}{4}H=D-\\frac{5\\sqrt{3}}{8}\\,P\\approx D-1.082532\\,P$'
+const formulaD3 =
+  '$h_3=\\frac{17}{24}H\\approx 0.613435\\,P,\\qquad d_3=d-2h_3=d-\\frac{17}{12}H\\approx d-1.226870\\,P$'
 </script>
 
 <style scoped>
@@ -129,7 +135,7 @@ const formulaDp =
 
 .iso-diagram__symbols > div {
   display: grid;
-  grid-template-columns: 3rem 1fr;
+  grid-template-columns: 4.25rem 1fr;
   gap: 0.5rem;
   align-items: baseline;
   padding: 0.28rem 0;

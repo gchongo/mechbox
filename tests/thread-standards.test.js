@@ -17,6 +17,7 @@ import {
   tpiToPitch,
   pitchToTpi,
   formatDim,
+  formatDimRange,
   formatPitchDisplay,
   formatPitchLength,
 } from '@/utils/thread-standards'
@@ -49,18 +50,47 @@ describe('ISO 68-1 formula verification', () => {
 })
 
 describe('catalog completeness', () => {
-  it('metric coarse M1–M100 coverage', () => {
+  it('metric unified catalog includes coarse + fine through M300', () => {
+    const all = getThreadRows('metric', 'all')
+    expect(all.length).toBe(350)
+    expect(all.some((r) => r.designation === 'M1')).toBe(true)
+    expect(all.some((r) => r.designation === 'M68')).toBe(true)
+    expect(all.some((r) => r.designation === 'M100×6')).toBe(true)
+    expect(all.some((r) => r.designation === 'M300×8')).toBe(true)
+  })
+
+  it('metric coarse M1–M68 coverage from Excel master', () => {
     const coarse = getThreadRows('metric', 'coarse')
-    expect(coarse.length).toBeGreaterThanOrEqual(47)
+    expect(coarse.length).toBe(40)
     expect(coarse.some((r) => r.designation === 'M1')).toBe(true)
-    expect(coarse.some((r) => r.designation === 'M100')).toBe(true)
+    expect(coarse.some((r) => r.designation === 'M68')).toBe(true)
   })
 
   it('metric fine includes M3×0.35 and M68×4', () => {
     const fine = getThreadRows('metric', 'fine')
-    expect(fine.length).toBeGreaterThanOrEqual(100)
+    expect(fine.length).toBeGreaterThanOrEqual(300)
     expect(fine.some((r) => r.designation === 'M3×0.35')).toBe(true)
     expect(fine.some((r) => r.designation === 'M68×4')).toBe(true)
+  })
+
+  it('metric M6 / M10 carry 6g/6H limits from Excel', () => {
+    const coarse = getThreadRows('metric', 'coarse')
+    const m6 = coarse.find((r) => r.designation === 'M6')
+    const m10 = coarse.find((r) => r.designation === 'M10')
+    expect(m6.pitchDiameter).toBeCloseTo(5.35, 3)
+    expect(m6.minor).toBeCloseTo(4.917, 3)
+    expect(m6.rootDiameter).toBeCloseTo(4.773, 3)
+    expect(m6.extDmax).toBeCloseTo(5.974, 3)
+    expect(m6.extDmin).toBeCloseTo(5.794, 3)
+    expect(m6.intD2max).toBeCloseTo(5.5, 3)
+    expect(m6.intD1min).toBeCloseTo(4.917, 3)
+    expect(m10.pitchDiameter).toBeCloseTo(9.026, 3)
+    expect(m10.extDmax).toBeCloseTo(9.968, 3)
+    expect(m10.extD2max).toBeCloseTo(8.994, 3)
+    expect(m10.extD3max).toBeCloseTo(8.128, 3)
+    expect(m10.intD2max).toBeCloseTo(9.206, 3)
+    expect(m10.intD1min).toBeCloseTo(8.376, 3)
+    expect(m10.hasMetricCatalog).toBe(true)
   })
 
   it('UNC standard series through 4 inch', () => {
@@ -245,5 +275,10 @@ describe('imperial display unit override', () => {
     expect(formatPitchDisplay(uncRow)).toBe('20 TPI')
     expect(formatPitchLength(uncRow, 'mm')).toBe('1.270')
     expect(formatPitchLength(uncRow, 'in')).toBe('0.0500')
+  })
+
+  it('formatDimRange joins max/min', () => {
+    expect(formatDimRange(metricRow, 9.968, 9.732, 'mm')).toBe('9.968 / 9.732')
+    expect(formatDimRange(metricRow, null, null, 'mm')).toBe('—')
   })
 })

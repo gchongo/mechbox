@@ -19,7 +19,9 @@ export function calcMetricBasicDims(nominal, pitch) {
     minor: round(nominal - MINOR_COEF * pitch, 3),
     pitch: round(pitch, 3),
     threadAngle: 60,
-    tapDrill: round(nominal - MINOR_COEF * pitch, 2),
+    // Cutting-tap drill reference. It is distinct from the ISO basic
+    // internal minor diameter above.
+    tapDrill: round(nominal - pitch, 2),
   }
 }
 

@@ -165,8 +165,8 @@
   }
 
   .thread-table-scroll {
-    @apply min-w-0;
-    /* 纵向滚动在 el-table max-height 内；横向仍随表体同步 */
+    @apply min-w-0 w-full max-w-full;
+    overflow-x: auto;
   }
 
   /* 螺纹数据表：居中对齐，宽度铺满容器避免右侧大块留白 */
@@ -182,7 +182,7 @@
   }
 
   .thread-data-table.el-table .cell {
-    overflow: visible;
+    overflow: hidden;
     text-overflow: clip;
     white-space: nowrap;
     padding-left: 10px;
@@ -208,6 +208,40 @@
   .thread-data-table.el-table .thread-col-action .cell {
     padding-left: 6px;
     padding-right: 6px;
+  }
+
+  /* 公制查阅表：窄列 + 容器内横向滚动，勿撑破页面 */
+  .thread-data-table.thread-metric-sheet.el-table {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .thread-data-table.thread-metric-sheet.el-table .cell {
+    padding-left: 3px;
+    padding-right: 3px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .thread-data-table.thread-metric-sheet.el-table th.el-table__cell .cell {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    line-height: 1.15;
+  }
+
+  .thread-data-table.thread-metric-sheet.el-table th.el-table__cell,
+  .thread-data-table.thread-metric-sheet.el-table td.el-table__cell {
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+
+  .thread-data-table.thread-metric-sheet.el-table th .katex {
+    font-size: 0.82em;
+  }
+
+  .thread-data-table.thread-metric-sheet.el-table .thread-col-action .cell {
+    padding-left: 2px;
+    padding-right: 2px;
   }
 
   .thread-panel-form :deep(.el-form-item__label) {
@@ -370,7 +404,7 @@
   }
 
   .thread-catalog-table-wrap {
-    @apply min-w-0;
+    @apply min-w-0 max-w-full overflow-x-hidden;
   }
 
   .thread-ref-guide {

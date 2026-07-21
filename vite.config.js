@@ -62,8 +62,13 @@ export default defineConfig({
     strictPort: true,
     open: true,
     watch: {
-      // Windows 上短时探测脚本易触发 EBUSY 使 watcher 崩溃
-      ignored: ['**/tmp-*-probe.mjs', '**/tmp-*.mjs'],
+      // Windows 上临时脚本 / 资源与源数据目录易触发 EBUSY 使 watcher 崩溃
+      ignored: [
+        '**/tmp-*-probe.mjs',
+        '**/tmp-*.mjs',
+        '**/images/**',
+        '**/_source/**',
+      ],
     },
     proxy: {
       '/api': {

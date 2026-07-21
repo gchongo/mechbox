@@ -1,4 +1,4 @@
-import { METRIC_COARSE_ROWS, METRIC_FINE_ROWS } from './metric-data'
+import { METRIC_ALL_ROWS, METRIC_COARSE_ROWS, METRIC_FINE_ROWS } from './metric-data'
 import { UNC_ROWS, UNF_ROWS, UNEF_ROWS } from './unified-data'
 import { TR_ROWS } from './tr-data'
 import { ACME_ROWS } from './acme-data'
@@ -20,7 +20,9 @@ export const THREAD_SYSTEMS = [
     standardRef: 'ISO 724',
     angle: 60,
     unit: 'mm',
+    /** Single catalog: coarse + fine (Excel 牙型 is a column, not a tab) */
     subTabs: [
+      { id: 'all', rows: METRIC_ALL_ROWS },
       { id: 'coarse', rows: METRIC_COARSE_ROWS },
       { id: 'fine', rows: METRIC_FINE_ROWS },
     ],
@@ -91,7 +93,14 @@ export const THREAD_SYSTEMS = [
 ]
 
 export function getAllThreadRows() {
-  const catalog = THREAD_SYSTEMS.flatMap((sys) => sys.subTabs.flatMap((t) => t.rows))
+  const catalog = THREAD_SYSTEMS.flatMap((sys) => {
+    // metric exposes all/coarse/fine — only count `all` once
+    if (sys.id === 'metric') {
+      const all = sys.subTabs.find((t) => t.id === 'all')
+      return all ? all.rows : sys.subTabs[0]?.rows ?? []
+    }
+    return sys.subTabs.flatMap((t) => t.rows)
+  })
   return [...catalog, ...WHITWORTH_REF_ROWS, ...UNS_REF_ROWS]
 }
 
@@ -99,7 +108,8 @@ export function getThreadRows(systemId, subTabId) {
   const sys = THREAD_SYSTEMS.find((s) => s.id === systemId)
   if (!sys) return []
   if (systemId === 'metric') {
-    const tab = sys.subTabs.find((t) => t.id === subTabId) ?? sys.subTabs[0]
+    const id = subTabId === 'coarse' || subTabId === 'fine' ? subTabId : 'all'
+    const tab = sys.subTabs.find((t) => t.id === id) ?? sys.subTabs[0]
     return tab.rows
   }
   return sys.subTabs[0]?.rows ?? []

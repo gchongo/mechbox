@@ -585,6 +585,15 @@ export function formatDim(row, value, displayUnit) {
   return v.toFixed(d)
 }
 
+/** Format max/min diameter pair for limit columns. */
+export function formatDimRange(row, max, min, displayUnit) {
+  if (max == null && min == null) return '—'
+  if (max != null && min != null) {
+    return `${formatDim(row, max, displayUnit)} / ${formatDim(row, min, displayUnit)}`
+  }
+  return formatDim(row, max ?? min, displayUnit)
+}
+
 export function formatPitchDisplay(row, displayUnit) {
   if (row.tpi) return `${row.tpi} TPI`
   if (row.pitch != null) return String(row.pitch)

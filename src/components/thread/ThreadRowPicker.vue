@@ -39,12 +39,15 @@ defineEmits(['update:modelValue'])
 const groups = computed(() => {
   const all = getAllThreadRows()
   return THREAD_SYSTEMS.filter((s) => props.systems.includes(s.id)).map((sys) => {
-    let rows = sys.subTabs.flatMap((t) => t.rows)
+    let rows
+    if (sys.id === 'metric') {
+      rows = sys.subTabs.find((t) => t.id === 'all')?.rows ?? []
+      rows = rows.filter((r) => r.priority === 1 || r.priority === 2).slice(0, 80)
+    } else {
+      rows = sys.subTabs.flatMap((t) => t.rows)
+    }
     if (props.fastenerOnly) {
       rows = rows.filter((r) => ['metric', 'unc', 'unf', 'unef', 'tr', 'acme'].includes(r.system))
-    }
-    if (sys.id === 'metric') {
-      rows = rows.filter((r) => r.priority === 1 || r.priority === 2).slice(0, 80)
     }
     return {
       id: sys.id,

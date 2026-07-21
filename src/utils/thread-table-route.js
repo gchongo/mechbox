@@ -2,6 +2,9 @@ import { THREAD_PURPOSE_ORDER, getThreadSystemDef } from '@/constants/thread-sta
 
 export const DEFAULT_NAV_KEY = 'catalog|fastener|metric_coarse'
 
+/** 已从左侧导航移除的公制入口，统一落到 metric_coarse */
+const MERGED_METRIC_NAV_IDS = new Set(['metric_fine', 'metric_extra_fine', 'metric_small_s'])
+
 const DESIGN_STEPS = new Set(['wizard', 'tolerance', 'engagement', 'tapDrill', 'mfg'])
 const TOOL_STEPS = new Set(['overview', 'parse', 'compare', 'misconfig', 'glossary'])
 
@@ -18,6 +21,7 @@ export function normalizeNavKey(raw) {
   const [mode, a, b] = parts
   if (mode === 'catalog') {
     if (!THREAD_PURPOSE_ORDER.includes(a)) return DEFAULT_NAV_KEY
+    if (MERGED_METRIC_NAV_IDS.has(b)) return DEFAULT_NAV_KEY
     const def = getThreadSystemDef(b)
     if (!def || def.purpose !== a) {
       const fallback = getThreadSystemDef('metric_coarse')
