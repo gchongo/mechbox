@@ -37,6 +37,36 @@
           <el-option :label="pt('tabCoarse')" value="coarse" />
           <el-option :label="pt('tabFine')" value="fine" />
         </el-select>
+        <el-popover placement="bottom-start" :width="220" trigger="click">
+          <template #reference>
+            <el-button class="metric-param-group-trigger">
+              {{ pt('paramGroups') }}
+              <span class="metric-param-group-count">
+                {{ metricParamGroups.length }}/{{ METRIC_PARAM_GROUPS.length }}
+              </span>
+              <el-icon class="ml-1"><ArrowDown /></el-icon>
+            </el-button>
+          </template>
+          <div class="metric-param-group-menu">
+            <el-checkbox
+              :model-value="allParamGroupsSelected"
+              :indeterminate="someParamGroupsSelected"
+              @change="toggleAllParamGroups"
+            >
+              {{ pt('paramGroupsAll') }}
+            </el-checkbox>
+            <div class="metric-param-group-divider" />
+            <el-checkbox-group v-model="metricParamGroups">
+              <el-checkbox
+                v-for="group in METRIC_PARAM_GROUPS"
+                :key="group.value"
+                :value="group.value"
+              >
+                {{ pt(group.labelKey) }}
+              </el-checkbox>
+            </el-checkbox-group>
+          </div>
+        </el-popover>
       </template>
       <template v-if="showTpiFilter">
         <span class="text-xs text-gray-500 dark:text-gray-400">{{ pt('filterTpi') }}</span>
@@ -50,14 +80,14 @@
     <div ref="tableHostRef" class="thread-table-scroll">
       <el-table
         ref="tableRef"
-        :data="filteredRows"
+        :data="renderedRows"
         :max-height="tableMaxHeight"
         border
         stripe
         size="small"
         class="thread-data-table cursor-pointer"
         :class="{ 'thread-metric-sheet': isMetricCatalog }"
-        :fit="!isMetricCatalog"
+        :fit="!isMetricCatalog || !hasMetricParamGroups"
         highlight-current-row
         :row-class-name="rowClassName"
         @row-click="(row) => $emit('row-click', row)"
@@ -120,7 +150,7 @@
             </el-table-column>
           </el-table-column>
 
-          <el-table-column align="center">
+          <el-table-column v-if="showMetricLimits" align="center">
             <template #header>{{ pt('xlsx_group_limits') }}</template>
             <el-table-column align="center">
               <template #header>{{ pt('xlsx_int4H_D2') }}</template>
@@ -226,7 +256,7 @@
             </el-table-column>
           </el-table-column>
 
-          <el-table-column align="center">
+          <el-table-column v-if="showMetricDeviations" align="center">
             <template #header>{{ pt('xlsx_group_dev') }}</template>
             <el-table-column align="center">
               <template #header>{{ pt('xlsx_devInt') }}</template>
@@ -260,7 +290,7 @@
             </el-table-column>
           </el-table-column>
 
-          <el-table-column align="center">
+          <el-table-column v-if="showMetricTolerances" align="center">
             <template #header>{{ pt('xlsx_group_tol') }}</template>
             <el-table-column align="center">
               <template #header><MathContent :text="pt('xlsx_td1')" /></template>
@@ -292,7 +322,7 @@
             </el-table-column>
           </el-table-column>
 
-          <el-table-column align="center">
+          <el-table-column v-if="showMetricEngagement" align="center">
             <template #header>{{ pt('xlsx_group_eng') }}</template>
             <el-table-column align="center">
               <template #header><MathContent :text="SYM.S" /></template>
@@ -421,8 +451,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { Search, Plus, Check } from '@element-plus/icons-vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { Search, Plus, Check, ArrowDown } from '@element-plus/icons-vue'
 import { getThreadRows, THREAD_SYSTEMS } from '@/constants/thread-standards'
 import {
   filterThreadRows,
@@ -439,6 +469,12 @@ const TD1_GRADES = [4, 5, 6, 7, 8]
 const TD2_GRADES = [4, 5, 6, 7, 8]
 const TD_MAJOR_GRADES = [4, 6, 8]
 const TD2_EXT_GRADES = [3, 4, 5, 6, 7, 8, 9]
+const METRIC_PARAM_GROUPS = [
+  { value: 'limits', labelKey: 'paramGroupLimits' },
+  { value: 'deviations', labelKey: 'paramGroupDeviations' },
+  { value: 'tolerances', labelKey: 'paramGroupTolerances' },
+  { value: 'engagement', labelKey: 'paramGroupEngagement' },
+]
 
 /** 公制表头第三行符号（KaTeX 下标） */
 const SYM = {
@@ -481,6 +517,7 @@ const emit = defineEmits(['row-click', 'toggle-compare', 'display-unit-change'])
 const searchQuery = ref('')
 const priorityFilter = ref('all')
 const seriesFilter = ref('all')
+const metricParamGroups = ref(METRIC_PARAM_GROUPS.map((group) => group.value))
 const tpiMin = ref(null)
 const tpiMax = ref(null)
 const displayUnit = ref('in')
@@ -489,6 +526,9 @@ const tableHostRef = ref(null)
 const { maxHeight: tableMaxHeight, updateMaxHeight } = useThreadTableMaxHeight(tableHostRef, { min: 480, gap: 8 })
 
 const DISPLAY_UNIT_KEY = 'mechbox-thread-imperial-display-unit'
+const LAZY_INITIAL_ROWS = 48
+const LAZY_BATCH_ROWS = 48
+const visibleRowCount = ref(LAZY_INITIAL_ROWS)
 
 function loadDisplayUnit() {
   try {
@@ -521,6 +561,23 @@ const activeMeta = computed(() => THREAD_SYSTEMS.find((s) => s.id === props.cata
 
 const isImperialSeries = computed(() => activeMeta.value?.unit === 'in')
 const isMetricCatalog = computed(() => props.catalogSystem === 'metric')
+const hasMetricParamGroups = computed(() => metricParamGroups.value.length > 0)
+const allParamGroupsSelected = computed(
+  () => metricParamGroups.value.length === METRIC_PARAM_GROUPS.length,
+)
+const someParamGroupsSelected = computed(
+  () => metricParamGroups.value.length > 0 && !allParamGroupsSelected.value,
+)
+const showMetricLimits = computed(() => metricParamGroups.value.includes('limits'))
+const showMetricDeviations = computed(() => metricParamGroups.value.includes('deviations'))
+const showMetricTolerances = computed(() => metricParamGroups.value.includes('tolerances'))
+const showMetricEngagement = computed(() => metricParamGroups.value.includes('engagement'))
+
+function toggleAllParamGroups(checked) {
+  metricParamGroups.value = checked
+    ? METRIC_PARAM_GROUPS.map((group) => group.value)
+    : []
+}
 
 const tableTitle = computed(() => {
   const key = `tableTitle_${props.catalogSystem}`
@@ -562,6 +619,46 @@ const filteredRows = computed(() => {
   return rows
 })
 
+/**
+ * 公制宽表分批挂载 DOM。数据仍可立即搜索和筛选，仅可见行按滚动逐批渲染，
+ * 因此不会改变原表的列、排序或交互。
+ */
+const renderedRows = computed(() => {
+  if (!isMetricCatalog.value) return filteredRows.value
+  return filteredRows.value.slice(0, visibleRowCount.value)
+})
+
+const hasMoreRows = computed(() =>
+  isMetricCatalog.value && renderedRows.value.length < filteredRows.value.length,
+)
+
+function loadMoreRows() {
+  if (!hasMoreRows.value) return
+  visibleRowCount.value = Math.min(
+    visibleRowCount.value + LAZY_BATCH_ROWS,
+    filteredRows.value.length,
+  )
+}
+
+function handleTableScroll(event) {
+  if (!hasMoreRows.value) return
+  const wrap = event?.currentTarget ?? tableRef.value?.$el?.querySelector('.el-scrollbar__wrap')
+  if (!wrap) return
+  if (wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 240) {
+    loadMoreRows()
+  }
+}
+
+let tableScrollElement = null
+
+function bindTableScroll() {
+  const nextElement = tableRef.value?.$el?.querySelector('.el-scrollbar__wrap')
+  if (nextElement === tableScrollElement) return
+  tableScrollElement?.removeEventListener('scroll', handleTableScroll)
+  tableScrollElement = nextElement
+  tableScrollElement?.addEventListener('scroll', handleTableScroll, { passive: true })
+}
+
 function formatUm(v) {
   if (v == null || Number.isNaN(v)) return '—'
   return String(v)
@@ -589,13 +686,34 @@ function rowHasTolerance(row) {
 
 const showToleranceCol = computed(() => filteredRows.value.some(rowHasTolerance))
 
-watch(filteredRows, layoutTable)
+watch(filteredRows, () => {
+  visibleRowCount.value = LAZY_INITIAL_ROWS
+  layoutTable()
+})
 watch(tableMaxHeight, layoutTable)
 watch(showToleranceCol, layoutTable)
+watch(metricParamGroups, layoutTable, { deep: true })
+
+watch(
+  () => props.highlightRowId,
+  (id) => {
+    if (!id || !isMetricCatalog.value) return
+    const index = filteredRows.value.findIndex((row) => row.id === id)
+    if (index >= visibleRowCount.value) {
+      visibleRowCount.value = Math.min(index + LAZY_BATCH_ROWS, filteredRows.value.length)
+    }
+  },
+)
 
 onMounted(() => {
   layoutTable()
+  nextTick(bindTableScroll)
   if (isImperialSeries.value) emit('display-unit-change', displayUnit.value)
+})
+
+onBeforeUnmount(() => {
+  tableScrollElement?.removeEventListener('scroll', handleTableScroll)
+  tableScrollElement = null
 })
 
 watch(
@@ -608,6 +726,7 @@ watch(
     tpiMax.value = null
     if (isImperialSeries.value) emit('display-unit-change', displayUnit.value)
     layoutTable()
+    nextTick(bindTableScroll)
   },
 )
 
@@ -641,6 +760,32 @@ function rowClassName({ row }) {
   min-width: 0;
   max-width: 100%;
   overflow-x: auto;
+}
+.metric-param-group-trigger {
+  color: var(--el-text-color-regular);
+}
+.metric-param-group-count {
+  margin-left: 6px;
+  color: var(--el-text-color-secondary);
+  font-size: 11px;
+}
+.metric-param-group-menu {
+  display: flex;
+  flex-direction: column;
+}
+.metric-param-group-menu :deep(.el-checkbox-group) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.metric-param-group-menu :deep(.el-checkbox) {
+  height: 26px;
+  margin-right: 0;
+}
+.metric-param-group-divider {
+  height: 1px;
+  margin: 7px 0;
+  background: var(--el-border-color-lighter);
 }
 .thread-data-table :deep(.thread-row-highlight) {
   background-color: rgb(64 158 255 / 0.08) !important;
