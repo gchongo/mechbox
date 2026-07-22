@@ -15,31 +15,29 @@
             </el-radio-button>
           </el-radio-group>
         </div>
-        <div class="grid gap-6 lg:grid-cols-[1fr_340px]">
-          <div class="space-y-6">
-            <section v-for="cat in filteredCategories" :key="cat.id" class="card-panel">
-              <h2 class="mb-3 font-semibold">{{ locale === 'en' ? cat.labelEn : cat.labelZh }}</h2>
-              <div class="grid gap-3 sm:grid-cols-2">
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div class="card-panel gdt-symbol-board">
+            <section v-for="cat in filteredCategories" :key="cat.id" class="gdt-symbol-cat">
+              <h2 class="gdt-symbol-cat__title">{{ locale === 'en' ? cat.labelEn : cat.labelZh }}</h2>
+              <div class="gdt-symbol-grid">
                 <button
                   v-for="s in cat.symbols"
                   :key="s.id"
                   type="button"
-                  class="flex gap-3 rounded-lg border p-3 text-left transition hover:border-primary"
-                  :class="selectedId === s.id ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700'"
+                  class="gdt-symbol-card"
+                  :class="{ 'is-active': selectedId === s.id }"
                   @click="selectSymbol(s.id)"
                 >
-                  <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded bg-gray-50 font-mono text-2xl dark:bg-gray-900">
-                    {{ s.glyph }}
-                  </div>
-                  <div class="min-w-0">
-                    <p class="font-medium">{{ locale === 'en' ? s.nameEn : s.nameZh }}</p>
-                    <p class="mt-1 text-xs text-gray-500">{{ locale === 'en' ? s.nameZh : s.noteZh }}</p>
-                  </div>
+                  <span class="gdt-symbol-card__glyph">{{ s.glyph }}</span>
+                  <span class="gdt-symbol-card__text">
+                    <span class="gdt-symbol-card__name">{{ locale === 'en' ? s.nameEn : s.nameZh }}</span>
+                    <span class="gdt-symbol-card__note">{{ locale === 'en' ? s.nameZh : s.noteZh }}</span>
+                  </span>
                 </button>
               </div>
             </section>
           </div>
-          <aside class="card-panel h-fit space-y-4 lg:sticky lg:top-4">
+          <aside class="card-panel h-fit space-y-3 lg:sticky lg:top-4">
             <template v-if="selected">
               <div class="flex items-center gap-3">
                 <span class="font-mono text-3xl">{{ selected.glyph }}</span>
@@ -773,3 +771,102 @@ async function copyFrame() {
   }
 }
 </script>
+
+<style scoped>
+.gdt-symbol-board {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.gdt-symbol-cat + .gdt-symbol-cat {
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.gdt-symbol-cat__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--el-text-color-secondary);
+}
+
+.gdt-symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .gdt-symbol-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .gdt-symbol-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.gdt-symbol-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.25rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 0.5rem;
+  background: transparent;
+  text-align: left;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.gdt-symbol-card:hover {
+  border-color: var(--el-color-primary);
+}
+
+.gdt-symbol-card.is-active {
+  border-color: var(--el-color-primary);
+  background: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
+}
+
+.gdt-symbol-card__glyph {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.35rem;
+  background: var(--el-fill-color-light);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.gdt-symbol-card__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.gdt-symbol-card__name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--el-text-color-primary);
+}
+
+.gdt-symbol-card__note {
+  font-size: 0.7rem;
+  line-height: 1.25;
+  color: var(--el-text-color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
